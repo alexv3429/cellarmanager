@@ -1,0 +1,22 @@
+services:
+  winecellar:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      # Read from a ".env" file next to this file, or an exported shell
+      # variable. Compose refuses to start with a clear error if it's
+      # missing, rather than silently running with a throwaway secret.
+      # Generate one with:
+      #   python3 -c "import secrets; print(secrets.token_hex(32))"
+      WINECELLAR_SECRET_KEY: ${WINECELLAR_SECRET_KEY:?Set WINECELLAR_SECRET_KEY in docker/.env - see docker/.env.example}
+      WINECELLAR_DEFAULT_LOCALE: ${WINECELLAR_DEFAULT_LOCALE:-en}
+      WINECELLAR_CORS_ORIGINS: ${WINECELLAR_CORS_ORIGINS:-*}
+    volumes:
+      - winecellar-data:/srv/backend/data
+    restart: unless-stopped
+
+volumes:
+  winecellar-data:

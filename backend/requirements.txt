@@ -1,0 +1,22 @@
+# Core API
+fastapi>=0.110,<1.0
+uvicorn[standard]>=0.29,<1.0
+pydantic>=2.6,<3.0
+python-multipart>=0.0.9   # required by FastAPI for file uploads (CSV import, bottle photos)
+
+# Photo recognition (requirement 7). The app degrades gracefully without
+# these installed - the /photos endpoints report that signal as
+# unavailable instead of crashing.
+Pillow>=10.3
+pytesseract>=0.3.10
+# pytesseract is a thin wrapper: it also needs the tesseract-ocr SYSTEM
+# package installed (it shells out to the `tesseract` binary), e.g.:
+#   Debian/Ubuntu: sudo apt-get install tesseract-ocr tesseract-ocr-fra
+#   macOS:         brew install tesseract tesseract-lang
+#   Windows:       https://github.com/UB-Mannheim/tesseract/wiki
+# The "-fra" / French language pack is optional but recommended since wine
+# labels are commonly French; English-only OCR still reads Latin-alphabet
+# text reasonably well without it. See docs/setup.md.
+
+# Everything else (SQLite access, password hashing, session tokens, CSV
+# parsing) is deliberately standard-library only - see docs/architecture.md.

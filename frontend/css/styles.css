@@ -1,0 +1,234 @@
+/* =========================================================================
+   Wine Cellar Manager - design tokens
+   A palette drawn from the subject itself: deep bordeaux, cellar stone,
+   parchment/limestone, and brass label accents - rather than a generic
+   admin-dashboard blue. Headers use a serif stack evoking wine-label
+   typography; body text stays in a plain system sans for readability.
+   ========================================================================= */
+:root {
+  --wine: #6b1f2a;
+  --wine-dark: #3a1620;
+  --wine-light: #8a3341;
+  --stone: #3a3630;
+  --parchment: #f4ecdd;
+  --parchment-card: #fbf6ea;
+  --parchment-dark: #e8dcc4;
+  --gold: #b08d57;
+  --gold-light: #d9c48f;
+  --success: #5f7d5c;
+  --warn: #a35d3f;
+  --danger: #7a1f2b;
+
+  --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif;
+  --font-body: -apple-system, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
+
+  --radius: 10px;
+  --shadow: 0 2px 10px rgba(58, 22, 32, 0.08);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--parchment);
+  color: var(--stone);
+  font-family: var(--font-body);
+  line-height: 1.5;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  color: var(--wine-dark);
+  font-weight: 600;
+  margin: 0.4em 0 0.5em;
+}
+h1 { font-size: 1.6rem; letter-spacing: 0.01em; }
+h2 { font-size: 1.2rem; border-bottom: 1px solid var(--gold-light); padding-bottom: 0.3em; margin-top: 1.4em; }
+h3 { font-size: 1rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gold); font-family: var(--font-body); font-weight: 700; }
+
+a { color: var(--wine); }
+
+/* ---- layout shell ------------------------------------------------------ */
+.status-banner {
+  background: var(--wine-dark);
+  color: var(--parchment);
+  text-align: center;
+  padding: 0.5em 1em;
+  font-size: 0.9rem;
+}
+
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5em;
+  background: var(--wine-dark);
+  color: var(--parchment);
+  padding: 0.7em 1em;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.nav-brand { font-family: var(--font-display); font-size: 1.2rem; color: var(--gold-light); white-space: nowrap; }
+.nav-links { display: flex; flex-wrap: wrap; gap: 0.9em; }
+.nav-link { color: var(--parchment); text-decoration: none; font-size: 0.92rem; border-bottom: 2px solid transparent; padding-bottom: 2px; }
+.nav-link:hover { border-bottom-color: var(--gold); }
+.nav-controls { display: flex; align-items: center; gap: 0.6em; }
+.locale-select { background: var(--wine); color: var(--parchment); border: 1px solid var(--gold); border-radius: 6px; padding: 0.2em 0.4em; }
+.logout-btn { background: transparent; color: var(--parchment); border: 1px solid var(--gold); border-radius: 6px; padding: 0.3em 0.7em; cursor: pointer; }
+
+.app-container { max-width: 920px; margin: 0 auto; padding: 1em 1em 3em; }
+.app-footer { text-align: center; color: var(--gold); font-size: 0.8rem; padding: 1.5em 1em; opacity: 0.8; }
+
+/* ---- auth ---------------------------------------------------------------*/
+.auth-page { max-width: 380px; margin: 3em auto; display: flex; flex-direction: column; gap: 2em; }
+.auth-form { background: var(--parchment-card); border: 1px solid var(--parchment-dark); border-radius: var(--radius); padding: 1.5em; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 0.8em; }
+.auth-form-secondary { opacity: 0.9; }
+.auth-form label { display: flex; flex-direction: column; gap: 0.3em; font-size: 0.9rem; }
+.auth-form input { padding: 0.5em; border: 1px solid var(--parchment-dark); border-radius: 6px; font-size: 1rem; }
+.hint { color: #6b6455; font-size: 0.88rem; }
+
+/* ---- buttons & forms ---------------------------------------------------*/
+button { font-family: var(--font-body); cursor: pointer; }
+button.primary, .button { background: var(--wine); color: var(--parchment); border: none; border-radius: 6px; padding: 0.55em 1.1em; font-size: 0.95rem; text-decoration: none; display: inline-block; }
+button.primary:hover, .button:hover { background: var(--wine-light); }
+button.small { padding: 0.3em 0.7em; font-size: 0.85rem; border: 1px solid var(--parchment-dark); background: var(--parchment-card); border-radius: 6px; }
+button.danger { border-color: var(--danger); color: var(--danger); }
+button:disabled { opacity: 0.6; cursor: not-allowed; }
+.icon-btn { border: 1px solid var(--parchment-dark); background: var(--parchment-card); border-radius: 4px; width: 1.8em; }
+
+.entity-form { display: flex; flex-direction: column; gap: 0.7em; max-width: 480px; background: var(--parchment-card); border: 1px solid var(--parchment-dark); border-radius: var(--radius); padding: 1.2em; margin-bottom: 1.2em; }
+.field { display: flex; flex-direction: column; gap: 0.25em; font-size: 0.9rem; }
+.field-label { color: var(--stone); font-weight: 600; font-size: 0.85rem; }
+.entity-form input, .entity-form select, .field input, .field select { padding: 0.5em; border: 1px solid var(--parchment-dark); border-radius: 6px; font-size: 0.95rem; font-family: var(--font-body); }
+.checkbox-field { display: flex; align-items: center; gap: 0.5em; font-size: 0.9rem; }
+.form-error { color: var(--danger); font-size: 0.88rem; }
+.form-host { margin-bottom: 1.5em; }
+.success-note { color: var(--success); }
+
+/* ---- cards / dashboard ---------------------------------------------------*/
+.card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.8em; margin: 1em 0; }
+.stat-card { background: var(--parchment-card); border: 1px solid var(--parchment-dark); border-radius: var(--radius); padding: 1em; text-align: center; box-shadow: var(--shadow); }
+.stat-number { font-family: var(--font-display); font-size: 1.8rem; color: var(--wine); }
+.stat-label { font-size: 0.8rem; color: var(--stone); text-transform: uppercase; letter-spacing: 0.04em; }
+.chart-card { grid-column: span 2; text-align: left; }
+.chart-wrap svg { max-width: 100%; height: auto; }
+.chart-with-legend { display: flex; align-items: center; gap: 1em; flex-wrap: wrap; }
+
+.legend { list-style: none; margin: 0.5em 0 0; padding: 0; font-size: 0.85rem; }
+.legend li { display: flex; align-items: center; gap: 0.5em; margin-bottom: 0.25em; }
+.legend .swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.legend-pct { color: #6b6455; margin-left: auto; }
+
+.quick-links { display: flex; gap: 0.7em; flex-wrap: wrap; margin-bottom: 1em; }
+
+/* ---- cellars ------------------------------------------------------------*/
+.cellar-gauges { display: flex; flex-direction: column; gap: 0.6em; }
+.cellar-gauge { display: block; text-decoration: none; color: inherit; background: var(--parchment-card); border: 1px solid var(--parchment-dark); border-radius: 8px; padding: 0.7em 1em; }
+.cellar-gauge-name { font-weight: 600; margin-bottom: 0.3em; }
+.gauge-track { background: var(--parchment-dark); border-radius: 999px; height: 10px; overflow: hidden; }
+.gauge-fill { background: var(--gold); height: 100%; transition: width 0.3s; }
+.gauge-fill-warn { background: var(--warn); }
+.cellar-gauge-fill-text { font-size: 0.8rem; color: #6b6455; margin-top: 0.2em; }
+
+.cellar-list { display: flex; flex-direction: column; gap: 0.5em; margin-bottom: 1em; }
+.cellar-row { display: flex; align-items: center; gap: 0.8em; background: var(--parchment-card); border: 1px solid var(--parchment-dark); border-radius: 8px; padding: 0.6em 1em; flex-wrap: wrap; }
+.cellar-row-name { font-weight: 600; flex: 1 1 140px; }
+.cellar-row-meta { color: var(--gold); font-size: 0.85rem; }
+.cellar-row-fill { font-size: 0.85rem; color: #6b6455; }
+.badge { font-size: 0.75rem; padding: 0.15em 0.6em; border-radius: 999px; }
+.badge-warn { background: var(--warn); color: white; }
+.back-link { display: inline-block; margin-bottom: 0.5em; text-decoration: none; }
+.cellar-meta { color: #6b6455; }
+
+.layout-editor { margin: 0.8em 0 1.5em; }
+.rack-controls { display: flex; gap: 0.8em; align-items: flex-end; flex-wrap: wrap; margin-bottom: 0.8em; }
+.rack-preview { display: flex; gap: 1em; flex-wrap: wrap; }
+.rack { display: grid; gap: 4px; background: var(--parchment-dark); padding: 8px; border-radius: 8px; }
+.rack-slot { width: 18px; height: 18px; background: var(--parchment-card); border: 1px solid var(--gold); }
+.rack-diamond .rack-slot { transform: rotate(45deg); border-radius: 2px; }
+
+.holding-list { display: flex; flex-direction: column; gap: 0.4em; }
+.holding-row { display: flex; gap: 1em; align-items: center; background: var(--parchment-card); border: 1px solid var(--parchment-dark); border-radius: 6px; padding: 0.5em 0.8em; flex-wrap: wrap; }
+.holding-wine { flex: 1 1 200px; font-weight: 600; }
+.holding-location { color: var(--gold); font-size: 0.85rem; }
+.holding-qty { font-size: 0.85rem; }
+
+/* ---- bottles / wine list -------------------------------------------------*/
+.filter-bar { display: flex; gap: 0.6em; margin-bottom: 1em; flex-wrap: wrap; }
+.filter-bar input, .filter-bar select { padding: 0.5em; border: 1px solid var(--parchment-dark); border-radius: 6px; }
+.wine-list { display: flex; flex-direction: column; gap: 0.5em; }
+.wine-row { display: flex; align-items: center; gap: 0.8em; background: var(--parchment-card); border: 1px solid var(--parchment-dark); border-radius: 8px; padding: 0.7em 1em; flex-wrap: wrap; }
+.wine-row-main { flex: 1 1 220px; }
+.wine-title { font-weight: 700; color: var(--wine-dark); }
+.wine-sub { font-size: 0.85rem; color: #6b6455; }
+.wine-qty { font-size: 0.85rem; white-space: nowrap; }
+.wine-actions { display: flex; gap: 0.4em; flex-wrap: wrap; }
+
+.swatch-tag { font-size: 0.75rem; padding: 0.2em 0.6em; border-radius: 999px; color: white; white-space: nowrap; }
+.swatch-red { background: #6b1f2a; }
+.swatch-white { background: #c7b36a; color: #3a3630; }
+.swatch-rose { background: #d68a94; }
+.swatch-sparkling { background: #cfa640; color: #3a3630; }
+.swatch-orange { background: #c8722f; }
+.swatch-fortified { background: #5a3320; }
+.swatch-other { background: #6b6455; }
+
+/* ---- modal dialogs --------------------------------------------------------*/
+.modal-overlay { position: fixed; inset: 0; background: rgba(58, 22, 32, 0.45); display: flex; align-items: center; justify-content: center; padding: 1em; z-index: 50; }
+.modal { background: var(--parchment-card); border-radius: var(--radius); padding: 1.4em; width: 100%; max-width: 380px; box-shadow: var(--shadow); }
+.modal label { display: flex; flex-direction: column; gap: 0.25em; font-size: 0.88rem; margin-bottom: 0.6em; }
+.modal input, .modal select { padding: 0.5em; border: 1px solid var(--parchment-dark); border-radius: 6px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 0.6em; margin-top: 0.8em; }
+
+/* ---- import / export ------------------------------------------------------*/
+.import-report { background: var(--parchment-card); border: 1px solid var(--parchment-dark); border-radius: var(--radius); padding: 1em 1.2em; }
+.reorder-list { list-style: none; padding: 0; max-width: 480px; }
+.reorder-list li { display: flex; align-items: center; gap: 0.6em; padding: 0.35em 0; border-bottom: 1px solid var(--parchment-dark); }
+.reorder-list li span { flex: 1; }
+
+/* ---- statistics -----------------------------------------------------------*/
+.stats-section { display: flex; flex-direction: column; gap: 0.5em; }
+.stat-block { background: var(--parchment-card); border: 1px solid var(--parchment-dark); border-radius: var(--radius); padding: 1em 1.2em; margin-bottom: 0.8em; }
+
+/* ---- move plan -------------------------------------------------------------*/
+.notice { padding: 0.7em 1em; border-radius: 8px; margin-bottom: 1em; }
+.notice-warn { background: #f3e0d3; border: 1px solid var(--warn); color: var(--warn); }
+.moveplan-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6em; background: var(--parchment-card); border: 1px solid var(--parchment-dark); border-radius: 8px; padding: 0.7em 1em; margin-bottom: 0.5em; }
+.moveplan-wine { font-weight: 700; flex: 1 1 200px; }
+.moveplan-route { font-size: 0.85rem; color: var(--gold); flex: 1 1 220px; }
+.moveplan-reason { font-size: 0.85rem; color: #6b6455; flex: 1 1 100%; }
+
+/* ---- daily picks -------------------------------------------------------------*/
+.picks-form { max-width: 620px; }
+.picks-results { display: flex; flex-direction: column; gap: 0.6em; margin-top: 1em; }
+.pick-card { background: var(--parchment-card); border: 1px solid var(--gold-light); border-left: 4px solid var(--wine); border-radius: 8px; padding: 0.8em 1em; }
+.pick-qty { font-size: 0.85rem; color: #6b6455; }
+.pick-reasons { font-size: 0.82rem; color: var(--gold); margin-top: 0.3em; }
+
+.empty-state { color: #6b6455; font-style: italic; padding: 1em 0; }
+
+/* ---- scan / OCR / enrichment -----------------------------------------------*/
+.scan-cta { margin-bottom: 1em; font-size: 1rem; }
+.scan-modal { max-width: 460px; }
+.ocr-text { background: var(--parchment-dark); border-radius: 6px; padding: 0.6em 0.8em; font-family: monospace; font-size: 0.85rem; white-space: pre-wrap; }
+.scan-match { border-top: 1px solid var(--parchment-dark); padding: 0.6em 0; }
+.scan-match-actions { display: flex; gap: 0.5em; margin-top: 0.4em; flex-wrap: wrap; }
+.enrich-body p { margin: 0.4em 0; }
+
+/* ---- install prompt --------------------------------------------------------*/
+.install-btn { background: transparent; color: var(--parchment); border: 1px solid var(--gold-light); border-radius: 6px; padding: 0.3em 0.7em; }
+
+/* ---- toast ------------------------------------------------------------------*/
+.toast { position: fixed; bottom: 1.2em; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--wine-dark); color: var(--parchment); padding: 0.7em 1.2em; border-radius: 8px; opacity: 0; transition: all 0.25s; z-index: 100; }
+.toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast-error { background: var(--danger); }
+
+/* ---- responsive -----------------------------------------------------------*/
+@media (max-width: 560px) {
+  .nav { flex-direction: column; align-items: flex-start; }
+  .chart-card { grid-column: span 1; }
+  h1 { font-size: 1.35rem; }
+}
