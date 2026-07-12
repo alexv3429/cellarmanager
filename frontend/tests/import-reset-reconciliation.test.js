@@ -15,6 +15,7 @@ test("CSV wizard exposes a real reset that clears the selected file", async () =
 
 test("cellar form explains location rules and exposes reconciliation", async () => {
   const source = await read("frontend/js/pages/cellars.js");
+  assert.match(source, /cellars\.location_naming/);
   assert.match(source, /cellars\.location_rule_help/);
   assert.match(source, /\/cellars\/unassigned-summary/);
   assert.match(source, /\/cellars\/reconcile-unassigned/);
@@ -31,5 +32,5 @@ test("backend automatically reconciles after cellar create and update", async ()
 
 test("service-worker cache is advanced for the new UI", async () => {
   const source = await read("frontend/service-worker.js");
-  assert.match(source, /winecellar-shell-v5/);
+  assert.match(source, /winecellar-shell-v7/);
 });

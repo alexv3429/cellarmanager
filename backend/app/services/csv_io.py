@@ -720,30 +720,44 @@ def _resolve_destination(
     cellar_id = default_cellar_id
     cellar_name = (row.get("cellar") or "").strip()
     location = (row.get("location") or "").strip() or None
+    selected_cellar = None
     if cellar_name:
-        match = repo.get_cellar_by_name(conn, cellar_name)
-        if match:
-            cellar_id = match.id
+        selected_cellar = repo.get_cellar_by_name(conn, cellar_name)
+        if selected_cellar:
+            cellar_id = selected_cellar.id
         else:
             warnings.append(f"Cellar '{cellar_name}' not found; bottle will be left unassigned")
             cellar_id = None
     elif location:
-        from app.services.cellar_rules import match_cellar_for_location
-        match = match_cellar_for_location(location, all_cellars)
-        cellar_id = match.id if match else default_cellar_id
-        if match is None and default_cellar_id is None:
+        from app.services import cellar_rules
+        selected_cellar = cellar_rules.match_cellar_for_location(location, all_cellars)
+        cellar_id = selected_cellar.id if selected_cellar else default_cellar_id
+        if selected_cellar is None and default_cellar_id:
+            selected_cellar = next(
+                (cellar for cellar in all_cellars if cellar.id == default_cellar_id),
+                None,
+            )
+        if selected_cellar is None and default_cellar_id is None:
             if all_cellars:
                 warnings.append(
-                    f"No cellar location rule matches '{location}'; bottle will remain unassigned until a matching rule is created"
+                    f"No cellar location naming scheme matches '{location}'; bottle will remain unassigned until a matching cellar is configured"
                 )
             else:
                 warnings.append(
-                    "No cellar exists yet; bottle will remain unassigned and will be matched automatically after a cellar with a suitable location rule is created"
+                    "No cellar exists yet; bottle will remain unassigned and will be matched automatically after a cellar with a suitable location naming scheme is created"
                 )
     elif cellar_id is None:
         warnings.append(
             "No cellar or location was provided; bottle will remain unassigned until assigned manually"
         )
+    if selected_cellar is None and cellar_id:
+        selected_cellar = next(
+            (cellar for cellar in all_cellars if cellar.id == cellar_id),
+            None,
+        )
+    if selected_cellar is not None and location:
+        from app.services import cellar_rules
+        location = cellar_rules.normalize_location_for_cellar(selected_cellar, location)
     return cellar_id, location, warnings
 
 

@@ -545,3 +545,286 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
   }
 }
 
+/* =========================================================================
+   CellarManager guided location naming wizard patch v1
+   ========================================================================= */
+.cellar-form-wide {
+  max-width: 780px;
+}
+
+.location-naming-card {
+  margin-top: 0.35rem;
+  padding: 1rem;
+  border: 1px solid var(--gold-light);
+  border-radius: var(--radius);
+  background: rgba(244, 236, 221, 0.55);
+}
+
+.location-naming-card h3 {
+  margin-top: 0;
+  text-transform: none;
+  letter-spacing: 0.01em;
+  color: var(--wine-dark);
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+}
+
+.location-wizard-controls,
+.location-advanced-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.8rem;
+}
+
+.location-wizard-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.location-wizard-row:nth-of-type(2) {
+  grid-template-columns: repeat(4, minmax(80px, 1fr));
+}
+
+.location-scheme-preview {
+  margin-top: 1rem;
+}
+
+.location-preview-summary {
+  margin: 0 0 0.65rem;
+  font-weight: 600;
+  color: var(--wine-dark);
+}
+
+.location-code-grid,
+.cellar-location-grid {
+  display: grid;
+  gap: 0.55rem;
+  overflow-x: auto;
+  padding: 0.2rem 0 0.65rem;
+}
+
+.location-code-cell,
+.cellar-location-slot {
+  min-width: 72px;
+  min-height: 68px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  padding: 0.55rem 0.4rem;
+  border: 1px solid var(--parchment-dark);
+  border-radius: 8px;
+  background: var(--parchment-card);
+  text-align: center;
+}
+
+.location-code-cell strong,
+.cellar-slot-code {
+  color: var(--wine-dark);
+  font-size: 1rem;
+}
+
+.location-code-cell small,
+.cellar-slot-import-code {
+  color: #6b6455;
+  font-size: 0.72rem;
+}
+
+.named-grid-panel {
+  margin-bottom: 1.5rem;
+}
+
+.cellar-location-slot.occupied {
+  border-color: var(--gold);
+  box-shadow: inset 0 0 0 2px rgba(176, 141, 87, 0.2);
+}
+
+.cellar-location-slot.empty {
+  opacity: 0.76;
+}
+
+.cellar-slot-quantity {
+  font-size: 0.75rem;
+  color: var(--stone);
+}
+
+.cellar-settings {
+  margin: 1rem 0;
+  border: 1px solid var(--parchment-dark);
+  border-radius: var(--radius);
+  background: var(--parchment-card);
+}
+
+.cellar-settings > summary {
+  cursor: pointer;
+  padding: 0.85rem 1rem;
+  color: var(--wine-dark);
+  font-weight: 600;
+}
+
+.cellar-settings > form {
+  margin: 0 1rem 1rem;
+  border: 0;
+  box-shadow: none;
+}
+
+.cellar-row-location-scheme {
+  color: #6b6455;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .location-wizard-row,
+  .location-wizard-row:nth-of-type(2) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .location-code-grid,
+  .cellar-location-grid {
+    grid-template-columns: repeat(2, minmax(82px, 1fr)) !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .location-wizard-row,
+  .location-wizard-row:nth-of-type(2) {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================================================
+   CellarManager structured location presets patch v1
+   ========================================================================= */
+.location-kind-select {
+  font-weight: 600;
+  color: var(--wine-dark);
+}
+
+.location-structure-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.location-wizard-four {
+  grid-template-columns: repeat(4, minmax(82px, 1fr));
+}
+
+.location-naming-card textarea {
+  width: 100%;
+  min-height: 5.5rem;
+  resize: vertical;
+}
+
+.form-warning {
+  margin: 0.75rem 0 0;
+  padding: 0.7rem 0.85rem;
+  border-left: 4px solid var(--gold);
+  background: rgba(176, 141, 87, 0.12);
+  color: var(--wine-dark);
+}
+
+.location-code-cell-missing {
+  visibility: hidden;
+}
+
+.location-code-group,
+.location-slot-group {
+  align-items: stretch;
+  min-height: 92px;
+}
+
+.location-subpositions,
+.cellar-subpositions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(38px, 1fr));
+  gap: 0.3rem;
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+.location-subposition,
+.cellar-subslot {
+  padding: 0.28rem 0.2rem;
+  border: 1px solid var(--parchment-dark);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.45);
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+.cellar-subslot {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.cellar-subslot.occupied {
+  border-color: var(--gold);
+  background: rgba(176, 141, 87, 0.16);
+}
+
+.cellar-slot-depth-label {
+  color: #6b6455;
+  font-size: 0.72rem;
+}
+
+.structure-loose {
+  grid-template-columns: minmax(180px, 360px) !important;
+}
+
+.structure-depth .location-code-cell,
+.structure-depth .cellar-location-slot {
+  min-width: 105px;
+}
+
+@media (max-width: 720px) {
+  .location-wizard-four {
+    grid-template-columns: repeat(2, minmax(82px, 1fr));
+  }
+}
+
+@media (max-width: 430px) {
+  .location-wizard-four {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================================================
+   CellarManager adaptive location wizard patch v1
+   ========================================================================= */
+/* Author CSS previously overrode the browser's [hidden] rule, causing every
+   location structure to appear at once. These selectors are deliberately
+   specific and important so only the selected structure is visible. */
+.location-wizard-controls[hidden],
+.location-structure-fields[hidden],
+.location-advanced-controls[hidden],
+.location-scheme-preview[hidden],
+.location-mode-help[hidden] {
+  display: none !important;
+}
+
+.location-mode-help {
+  margin: 0.2rem 0 0.9rem;
+  padding: 0.75rem 0.9rem;
+  border-left: 4px solid var(--gold);
+  border-radius: 4px;
+  background: rgba(176, 141, 87, 0.10);
+  color: var(--wine-dark);
+  line-height: 1.45;
+}
+
+.location-structure-fields:not([hidden]) {
+  animation: location-section-in 120ms ease-out;
+}
+
+@keyframes location-section-in {
+  from { opacity: 0; transform: translateY(-2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+

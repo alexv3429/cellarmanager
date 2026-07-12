@@ -134,3 +134,28 @@ pattern is created or edited, matching holdings are automatically reconciled
 and the move is recorded in the journal. The Cellars page also provides an
 explicit reconciliation action for remaining unassigned bottles.
 
+## Guided cellar location naming
+
+Cellar creation includes a guided location-naming wizard. A configuration such
+as cellar code `M`, columns `A-D`, and rows `1-3` creates the labelled grid
+`MA1 ... MD3` without asking the user to write a regular expression. CSV codes
+identify the cellar while internal positions can be stored as `A1 ... D3`.
+Legacy prefix/regex rules and custom rack layouts remain available under the
+advanced mode. See `docs/location-naming.md`.
+
+## Structured cellar locations
+
+The cellar editor provides five structured presets: loose storage, simple
+row/column grids, grids with sub-positions, sequentially labelled grids, and
+rows with depth. The backend stores a validated explicit location catalog in
+the existing layout JSON and uses exact matching during CSV import and later
+reconciliation. Regex remains available only as an advanced legacy option.
+See `docs/location-structures.md`.
+
+## Adaptive location wizard and physical orientation
+
+The cellar editor displays only the fields relevant to the selected physical
+structure. Simple grids and depth layouts support physical orientation without
+renaming their location codes. For example, `G1F` remains `G1F`, while choosing
+“Row 1 at the bottom” places it on the bottom row of the drawing.
+
