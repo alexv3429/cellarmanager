@@ -41,6 +41,7 @@ class RecommendationCriteria:
     on_date: Optional[date] = None  # must be inside the wine's drink window (if the wine has one)
     dish: Optional[str] = None
     mood: Optional[str] = None
+    strict_text_match: bool = False
 
 
 @dataclass
@@ -72,10 +73,12 @@ def recommend_wines(
             continue
         if criteria.vintage is not None and wine.vintage != criteria.vintage:
             continue
-        if criteria.vintage_before is not None and (wine.vintage or 0) > criteria.vintage_before:
-            continue
-        if criteria.vintage_after is not None and (wine.vintage or 9999) < criteria.vintage_after:
-            continue
+        if criteria.vintage_before is not None:
+            if wine.vintage is None or wine.vintage > criteria.vintage_before:
+                continue
+        if criteria.vintage_after is not None:
+            if wine.vintage is None or wine.vintage < criteria.vintage_after:
+                continue
         if criteria.appellation and (not wine.appellation or criteria.appellation.strip().lower() not in wine.appellation.lower()):
             continue
         if criteria.on_date and wine.drink_after and criteria.on_date < wine.drink_after:
@@ -86,18 +89,25 @@ def recommend_wines(
         score = 0.0
         reasons: list[str] = []
 
+        dish_overlap: set[str] = set()
+        mood_overlap: set[str] = set()
         if dish_tokens:
             target = _tokenize(wine.advice_pairing or "")
-            overlap = dish_tokens & target
-            if overlap:
-                score += 3.0 * len(overlap)
-                reasons.append(f"matches dish keywords: {', '.join(sorted(overlap))}")
+            dish_overlap = dish_tokens & target
+            if dish_overlap:
+                score += 3.0 * len(dish_overlap)
+                reasons.append(f"matches dish keywords: {', '.join(sorted(dish_overlap))}")
         if mood_tokens:
             target = _tokenize(f"{wine.advice_experience or ''} {wine.notes or ''}")
-            overlap = mood_tokens & target
-            if overlap:
-                score += 2.0 * len(overlap)
-                reasons.append(f"matches mood keywords: {', '.join(sorted(overlap))}")
+            mood_overlap = mood_tokens & target
+            if mood_overlap:
+                score += 2.0 * len(mood_overlap)
+                reasons.append(f"matches mood keywords: {', '.join(sorted(mood_overlap))}")
+        if criteria.strict_text_match:
+            if dish_tokens and not dish_overlap:
+                continue
+            if mood_tokens and not mood_overlap:
+                continue
 
         # Gentle nudge for wines that are urgent to drink, so they surface
         # even without a dish/mood query.

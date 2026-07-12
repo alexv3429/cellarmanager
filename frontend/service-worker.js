@@ -1,12 +1,10 @@
 /**
- * Caches the static app shell (HTML/CSS/JS/i18n/icons) so the app still
- * loads with no connection. API calls are NOT cached here - api.js handles
- * offline reads via its own IndexedDB cache and queues writes in the
- * outbox; letting API requests fail through to the network (or fail
- * outright when offline, which api.js catches) keeps this service worker
- * simple and avoids ever serving stale/incorrect cellar data silently.
+ * Cache only the known static application shell. API requests are deliberately
+ * left to the application/network layer so cellar data is never served from an
+ * accidental service-worker cache entry.
  */
-const CACHE_NAME = "winecellar-shell-v1";
+const CACHE_NAME = "winecellar-shell-v5";
+
 const APP_SHELL = [
   "./",
   "index.html",
@@ -29,14 +27,22 @@ const APP_SHELL = [
   "js/pages/stats.js",
   "js/pages/movePlan.js",
   "js/pages/dailyPicks.js",
+  "js/pages/syncProblems.js",
   "i18n/en.json",
   "i18n/fr.json",
   "icons/icon.svg",
 ];
 
+const APP_SHELL_PATHS = new Set(
+  APP_SHELL.map((path) => new URL(path, self.registration.scope).pathname)
+);
+
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)).then(() => self.skipWaiting())
+    caches
+      .open(CACHE_NAME)
+      .then((cache) => cache.addAll(APP_SHELL))
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -44,34 +50,53 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))))
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter((key) => key !== CACHE_NAME)
+            .map((key) => caches.delete(key))
+        )
+      )
       .then(() => self.clients.claim())
   );
 });
 
-function isApiRequest(url) {
-  // Anything not matching a known static asset path is treated as an API
-  // call and left to the network / api.js's own offline handling.
-  return !APP_SHELL.some((path) => url.pathname.endsWith(path.replace("./", "")));
+function isAppShellRequest(url) {
+  return APP_SHELL_PATHS.has(url.pathname);
+}
+
+async function networkFirst(request) {
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(CACHE_NAME);
+      await cache.put(request, response.clone());
+    }
+    return response;
+  } catch (error) {
+    const cached = await caches.match(request);
+    if (cached) return cached;
+
+    // Navigation requests can fall back to the cached application entry point.
+    if (request.mode === "navigate") {
+      const rootUrl = new URL("./", self.registration.scope).toString();
+      const root = await caches.match(rootUrl);
+      if (root) return root;
+    }
+    throw error;
+  }
 }
 
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
-  if (event.request.method !== "GET" || url.origin !== self.location.origin) return;
-  if (isApiRequest(url)) return; // let it hit the network normally
 
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const networkFetch = fetch(event.request)
-        .then((response) => {
-          if (response.ok) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          }
-          return response;
-        })
-        .catch(() => cached);
-      return cached || networkFetch;
-    })
-  );
+  if (
+    event.request.method !== "GET" ||
+    url.origin !== self.location.origin ||
+    !isAppShellRequest(url)
+  ) {
+    return;
+  }
+
+  event.respondWith(networkFirst(event.request));
 });

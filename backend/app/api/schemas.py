@@ -76,6 +76,9 @@ class CellarOut(BaseModel):
     location_rule: Optional[str]
     layout: Optional[str]
     current_fill: int = 0
+    version: int
+    reconciled_holdings: int = 0
+    reconciled_bottles: int = 0
 
 
 class HoldingOut(BaseModel):
@@ -125,6 +128,7 @@ class RemoveBottlesIn(BaseModel):
 class ActionOut(BaseModel):
     holding: HoldingOut
     warning: Optional[str] = None
+    duplicate: bool = False
 
 
 class LoginIn(BaseModel):
@@ -142,6 +146,7 @@ class RegisterIn(BaseModel):
     username: str = Field(min_length=3, max_length=64)
     password: str = Field(min_length=8)
     locale: str = "en"
+    setup_token: Optional[str] = None
 
 
 class ExportRequest(BaseModel):
@@ -160,7 +165,8 @@ class RecommendationRequestIn(BaseModel):
     on_date: Optional[date] = None
     dish: Optional[str] = None
     mood: Optional[str] = None
-    limit: int = 20
+    strict_text_match: bool = False
+    limit: int = Field(default=20, ge=1, le=100)
 
 
 class RecognizeMatchOut(BaseModel):

@@ -13,7 +13,9 @@ from app.services import enrichment
 from app.services import recognition_service as rs
 from app.storage import repositories as repo
 
-router = APIRouter(tags=["enrichment"], dependencies=[Depends(get_current_user_id)])
+router = APIRouter(
+    tags=["enrichment"], dependencies=[Depends(get_current_user_id)]
+)
 
 
 def _json_default(obj):
@@ -22,48 +24,96 @@ def _json_default(obj):
     raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
 
 
+def _providers_or_503():
+    providers = enrichment.get_active_providers()
+    if not providers:
+        raise HTTPException(
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "code": "enrichment_not_configured",
+                "message": (
+                    "No real enrichment provider is configured. Demo-generated "
+                    "wine dates and prices are disabled by default."
+                ),
+            },
+        )
+    return providers
+
+
 @router.post("/wines/{wine_id}/enrich/drinking-window")
-def enrich_drinking_window(wine_id: str, user_id: str = Depends(get_current_user_id), conn: sqlite3.Connection = Depends(get_conn)):
+def enrich_drinking_window(
+    wine_id: str,
+    user_id: str = Depends(get_current_user_id),
+    conn: sqlite3.Connection = Depends(get_conn),
+):
     wine = repo.get_wine(conn, wine_id)
     if wine is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="error.not_found")
-    providers = enrichment.get_active_providers()
+    providers = _providers_or_503()
     fetched = enrichment.fetch_and_aggregate_drinking_window(wine, providers)
     if fetched is None:
-        return {"applied": False, "note": "No provider had anything to offer for this wine (e.g. no vintage on file)."}
+        return {
+            "applied": False,
+            "note": "Configured providers returned no drinking-window data for this wine.",
+        }
     before = {"drink_after": wine.drink_after, "drink_before": wine.drink_before}
     decisions = enrichment.apply_drinking_window_enrichment(wine, fetched)
     repo.update_wine(conn, wine, expected_version=wine.version)
-    repo.insert_movement(conn, Movement(
-        id=new_id(), action=MovementAction.ENRICH.value, wine_id=wine.id, user_id=user_id,
-        note=f"drinking-window enrichment ({fetched.source_count} source(s))",
-        details_json=json.dumps({"before": before, "aggregated": asdict(fetched)}, default=_json_default),
-    ))
+    repo.insert_movement(
+        conn,
+        Movement(
+            id=new_id(),
+            action=MovementAction.ENRICH.value,
+            wine_id=wine.id,
+            user_id=user_id,
+            note=f"drinking-window enrichment ({fetched.source_count} source(s))",
+            details_json=json.dumps(
+                {"before": before, "aggregated": asdict(fetched)},
+                default=_json_default,
+            ),
+        ),
+    )
     conn.commit()
     return {
-        "decisions": [asdict(d) for d in decisions],
-        "aggregated": asdict(fetched),  # includes per_source breakdown for transparency
+        "decisions": [asdict(decision) for decision in decisions],
+        "aggregated": asdict(fetched),
         "wine": asdict(wine),
     }
 
 
 @router.post("/wines/{wine_id}/enrich/market-info")
-def enrich_market_info(wine_id: str, user_id: str = Depends(get_current_user_id), conn: sqlite3.Connection = Depends(get_conn)):
+def enrich_market_info(
+    wine_id: str,
+    user_id: str = Depends(get_current_user_id),
+    conn: sqlite3.Connection = Depends(get_conn),
+):
     wine = repo.get_wine(conn, wine_id)
     if wine is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="error.not_found")
-    providers = enrichment.get_active_providers()
+    providers = _providers_or_503()
     fetched = enrichment.fetch_and_aggregate_market_info(wine, providers)
     if fetched is None:
-        return {"applied": False, "note": "No provider had anything to offer for this wine."}
+        return {
+            "applied": False,
+            "note": "Configured providers returned no market information for this wine.",
+        }
     before_value = wine.market_value
     decision = enrichment.apply_market_info_enrichment(wine, fetched)
     repo.update_wine(conn, wine, expected_version=wine.version)
-    repo.insert_movement(conn, Movement(
-        id=new_id(), action=MovementAction.ENRICH.value, wine_id=wine.id, user_id=user_id,
-        note=f"market-info enrichment ({fetched.source_count} source(s))",
-        details_json=json.dumps({"before_value": before_value, "aggregated": asdict(fetched)}, default=_json_default),
-    ))
+    repo.insert_movement(
+        conn,
+        Movement(
+            id=new_id(),
+            action=MovementAction.ENRICH.value,
+            wine_id=wine.id,
+            user_id=user_id,
+            note=f"market-info enrichment ({fetched.source_count} source(s))",
+            details_json=json.dumps(
+                {"before_value": before_value, "aggregated": asdict(fetched)},
+                default=_json_default,
+            ),
+        ),
+    )
     conn.commit()
     return {
         "decision": asdict(decision),
@@ -73,9 +123,11 @@ def enrich_market_info(wine_id: str, user_id: str = Depends(get_current_user_id)
 
 
 @router.post("/wines/{wine_id}/photos")
-async def register_photo(wine_id: str, file: UploadFile, conn: sqlite3.Connection = Depends(get_conn)):
-    """Register a reference photo of a bottle you already have catalogued -
-    used as the fallback signal in /photos/recognize alongside OCR."""
+async def register_photo(
+    wine_id: str,
+    file: UploadFile,
+    conn: sqlite3.Connection = Depends(get_conn),
+):
     if repo.get_wine(conn, wine_id) is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="error.not_found")
     raw = await file.read()
@@ -89,29 +141,32 @@ async def register_photo(wine_id: str, file: UploadFile, conn: sqlite3.Connectio
 
 
 @router.post("/photos/recognize")
-async def recognize_photo(file: UploadFile, conn: sqlite3.Connection = Depends(get_conn)):
-    """Identify a bottle from a photo of its label. Reads the label via OCR
-    and fuzzy-matches it against your catalog (works for any bottle already
-    in your catalog, not just ones photographed before), and separately
-    checks the photo itself against any reference photos you've registered.
-    Either signal can be unavailable (missing OCR dependency) without
-    failing the request - the response says which ones ran."""
+async def recognize_photo(
+    file: UploadFile,
+    conn: sqlite3.Connection = Depends(get_conn),
+):
     raw = await file.read()
     wines = repo.list_wines(conn)
     known_hashes = repo.list_photo_hashes(conn)
     result = rs.recognize_bottle(raw, wines, known_hashes, top_k=5)
-
-    wines_by_id = {w.id: w for w in wines}
+    wines_by_id = {wine.id: wine for wine in wines}
     matches = []
-    for m in result.matches:
-        wine = wines_by_id.get(m.wine_id)
+    for match in result.matches:
+        wine = wines_by_id.get(match.wine_id)
         if not wine:
             continue
-        matches.append({
-            "wine_id": wine.id, "producer": wine.producer, "cuvee": wine.cuvee, "vintage": wine.vintage,
-            "confidence": round(m.confidence, 3), "ocr_score": m.ocr_score, "photo_score": m.photo_score,
-            "matched_via": m.matched_via,
-        })
+        matches.append(
+            {
+                "wine_id": wine.id,
+                "producer": wine.producer,
+                "cuvee": wine.cuvee,
+                "vintage": wine.vintage,
+                "confidence": round(match.confidence, 3),
+                "ocr_score": match.ocr_score,
+                "photo_score": match.photo_score,
+                "matched_via": match.matched_via,
+            }
+        )
     return {
         "ocr_available": result.ocr_available,
         "photo_match_available": result.photo_match_available,

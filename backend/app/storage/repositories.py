@@ -203,6 +203,7 @@ def _row_to_cellar(row: sqlite3.Row) -> Cellar:
         layout=row["layout"],
         created_at=_parse_dt(row["created_at"]),
         updated_at=_parse_dt(row["updated_at"]),
+        version=row["version"],
     )
 
 
@@ -266,6 +267,7 @@ def update_cellar(conn: sqlite3.Connection, cellar: Cellar, expected_version: in
         if current is None:
             raise NotFoundError(f"Cellar {cellar.id} not found")
         raise ConflictError(f"Cellar {cellar.id} was modified concurrently", current=current)
+    cellar.version = expected_version + 1
     cellar.updated_at = now
     return cellar
 
@@ -471,9 +473,13 @@ def _row_to_movement(row: sqlite3.Row) -> Movement:
 
 
 def insert_movement(conn: sqlite3.Connection, movement: Movement) -> Optional[Movement]:
-    """Insert a journal entry. Returns None (silently) if ``client_op_id`` was
-    already recorded before - this is what makes replaying a queued offline
-    action safe to retry without double-applying it."""
+    """Insert one immutable journal entry.
+
+    Server-side offline idempotency is handled *before* stock changes through
+    ``reserve_client_operation``. The legacy repository-level duplicate no-op
+    remains for direct callers, while mutation services treat ``None`` as an
+    error so their surrounding transaction rolls back.
+    """
     try:
         conn.execute(
             """
@@ -493,9 +499,134 @@ def insert_movement(conn: sqlite3.Connection, movement: Movement) -> Optional[Mo
         )
     except sqlite3.IntegrityError:
         if movement.client_op_id is not None:
-            return None  # already processed - idempotent no-op
+            return None
         raise
     return movement
+
+
+def get_movement(conn: sqlite3.Connection, movement_id: str) -> Optional[Movement]:
+    row = conn.execute("SELECT * FROM movements WHERE id = ?", (movement_id,)).fetchone()
+    return _row_to_movement(row) if row else None
+
+
+def get_movement_by_client_op_id(
+    conn: sqlite3.Connection, client_op_id: Optional[str]
+) -> Optional[Movement]:
+    if not client_op_id:
+        return None
+    row = conn.execute(
+        "SELECT * FROM movements WHERE client_op_id = ?", (client_op_id,)
+    ).fetchone()
+    return _row_to_movement(row) if row else None
+
+
+def get_processed_operation(conn: sqlite3.Connection, client_op_id: str) -> Optional[dict]:
+    row = conn.execute(
+        "SELECT * FROM processed_operations WHERE client_op_id = ?", (client_op_id,)
+    ).fetchone()
+    return dict(row) if row else None
+
+
+def reserve_client_operation(
+    conn: sqlite3.Connection,
+    client_op_id: Optional[str],
+    action: str,
+    request_fingerprint: str,
+) -> tuple[bool, Optional[dict]]:
+    """Reserve an offline operation before any stock mutation.
+
+    Returns ``(True, None)`` for a new/no-id operation. For an already completed
+    operation it returns ``(False, operation)`` so the service can replay the
+    stored result without touching quantities. The reservation and all later
+    writes share the caller's transaction, so an exception rolls everything
+    back atomically.
+    """
+    if not client_op_id:
+        return True, None
+
+    operation = get_processed_operation(conn, client_op_id)
+    if operation is not None:
+        if operation["action"] != action:
+            raise ConflictError(
+                f"Client operation {client_op_id} was already used for '{operation['action']}'"
+            )
+        if operation.get("request_fingerprint") != request_fingerprint:
+            raise ConflictError(
+                f"Client operation {client_op_id} was replayed with a different payload"
+            )
+        if operation["status"] != "completed":
+            raise ConflictError(f"Client operation {client_op_id} is already in progress")
+        return False, operation
+
+    # Backfill compatibility for operations processed before this table existed.
+    legacy = get_movement_by_client_op_id(conn, client_op_id)
+    if legacy is not None:
+        conn.execute(
+            """
+            INSERT INTO processed_operations
+              (client_op_id, action, request_fingerprint, status, holding_id, movement_id, created_at, completed_at)
+            VALUES (?, ?, ?, 'completed', ?, ?, ?, ?)
+            """,
+            (
+                client_op_id,
+                legacy.action,
+                request_fingerprint,
+                legacy.holding_id,
+                legacy.id,
+                _dt(legacy.recorded_at),
+                _dt(legacy.recorded_at),
+            ),
+        )
+        operation = get_processed_operation(conn, client_op_id)
+        if legacy.action != action:
+            raise ConflictError(
+                f"Client operation {client_op_id} was already used for '{legacy.action}'"
+            )
+        return False, operation
+
+    try:
+        conn.execute(
+            """
+            INSERT INTO processed_operations
+              (client_op_id, action, request_fingerprint, status, created_at)
+            VALUES (?, ?, ?, 'pending', ?)
+            """,
+            (client_op_id, action, request_fingerprint, _dt(utcnow())),
+        )
+        return True, None
+    except sqlite3.IntegrityError:
+        # A concurrent request may have inserted between the read and INSERT.
+        operation = get_processed_operation(conn, client_op_id)
+        if operation is None:
+            raise
+        if operation["action"] != action or operation.get("request_fingerprint") != request_fingerprint:
+            raise ConflictError(
+                f"Client operation {client_op_id} was replayed with different semantics"
+            )
+        if operation["status"] != "completed":
+            raise ConflictError(f"Client operation {client_op_id} is already in progress")
+        return False, operation
+
+
+def complete_client_operation(
+    conn: sqlite3.Connection,
+    client_op_id: Optional[str],
+    *,
+    holding_id: str,
+    movement_id: str,
+) -> None:
+    if not client_op_id:
+        return
+    cur = conn.execute(
+        """
+        UPDATE processed_operations
+        SET status='completed', holding_id=?, movement_id=?, completed_at=?
+        WHERE client_op_id=? AND status='pending'
+        """,
+        (holding_id, movement_id, _dt(utcnow()), client_op_id),
+    )
+    if cur.rowcount != 1:
+        raise ConflictError(f"Could not complete client operation {client_op_id}")
 
 
 def list_movements(

@@ -15,7 +15,8 @@ from app.storage.database import Database
 _db = Database(config.DATABASE_PATH)
 _bearer = HTTPBearer(auto_error=False)
 login_rate_limiter = auth_service.LoginRateLimiter(
-    max_attempts=config.LOGIN_MAX_ATTEMPTS, window_seconds=config.LOGIN_WINDOW_SECONDS
+    max_attempts=config.LOGIN_MAX_ATTEMPTS,
+    window_seconds=config.LOGIN_WINDOW_SECONDS,
 )
 
 
@@ -27,8 +28,12 @@ def get_conn() -> Iterator[sqlite3.Connection]:
     conn = _db.connect()
     try:
         yield conn
-    finally:
-        pass  # thread-local connection is reused across requests on this worker thread
+    except Exception:
+        # Routers commit successful mutations explicitly. Any exception must
+        # roll back pending stock changes before this thread-local connection
+        # is reused by another request.
+        conn.rollback()
+        raise
 
 
 def get_current_user_id(
@@ -39,7 +44,10 @@ def get_current_user_id(
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
     payload = auth_service.verify_token(credentials.credentials, secret=config.SECRET_KEY)
     if payload is None:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail="Session expired or invalid, please log in again")
+        raise HTTPException(
+            status.HTTP_401_UNAUTHORIZED,
+            detail="Session expired or invalid, please log in again",
+        )
     user = repo.get_user(conn, payload.user_id)
     if user is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail="User no longer exists")
@@ -50,6 +58,7 @@ def get_locale(accept_language: Optional[str] = Header(default=None)) -> str:
     if accept_language:
         primary = accept_language.split(",")[0].split("-")[0].strip().lower()
         from app.i18n.loader import available_locales
+
         if primary in available_locales():
             return primary
     return config.DEFAULT_LOCALE

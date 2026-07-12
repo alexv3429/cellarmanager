@@ -1,3 +1,4 @@
+import os
 import unittest
 from datetime import date
 
@@ -136,6 +137,20 @@ class TestApplyDrinkingWindowEnrichment(unittest.TestCase):
 
 
 class TestMultipleProvidersRegistered(unittest.TestCase):
+    def setUp(self):
+        self._previous_demo_enrichment = os.environ.get(
+            "WINECELLAR_ENABLE_DEMO_ENRICHMENT"
+        )
+        os.environ["WINECELLAR_ENABLE_DEMO_ENRICHMENT"] = "true"
+
+    def tearDown(self):
+        if self._previous_demo_enrichment is None:
+            os.environ.pop("WINECELLAR_ENABLE_DEMO_ENRICHMENT", None)
+        else:
+            os.environ["WINECELLAR_ENABLE_DEMO_ENRICHMENT"] = (
+                self._previous_demo_enrichment
+            )
+
     def test_get_active_providers_returns_more_than_one(self):
         providers = enrichment.get_active_providers()
         self.assertGreaterEqual(len(providers), 2, "the whole point is combining several sources, not just one")
