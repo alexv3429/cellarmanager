@@ -3,7 +3,7 @@
  * left to the application/network layer so cellar data is never served from an
  * accidental service-worker cache entry.
  */
-const CACHE_NAME = "winecellar-shell-v5";
+const CACHE_NAME = "winecellar-shell-v8";
 
 const APP_SHELL = [
   "./",
@@ -18,6 +18,7 @@ const APP_SHELL = [
   "js/router.js",
   "js/charts.js",
   "js/offlineQueue.js",
+  "js/locationScheme.js",
   "js/pages/login.js",
   "js/pages/dashboard.js",
   "js/pages/cellars.js",

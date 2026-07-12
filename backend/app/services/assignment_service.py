@@ -80,14 +80,15 @@ def reconcile_unassigned(
             continue
 
         quantity = holding.quantity
+        destination_location = cellar_rules.normalize_location_for_cellar(matched, location)
         holdings_service.move_bottles(
             conn,
             holding_id=holding.id,
             quantity=quantity,
             to_cellar_id=matched.id,
-            to_location=holding.location,
+            to_location=destination_location,
             user_id=user_id,
-            note="Automatic assignment from cellar location rule",
+            note="Automatic assignment from cellar location naming scheme",
             expected_version=holding.version,
         )
         result.assigned_holdings += 1

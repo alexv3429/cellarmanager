@@ -80,11 +80,18 @@ def create_cellar(
     user_id: str = Depends(get_current_user_id),
 ):
     existing = repo.list_cellars(conn)
+    payload_data = payload.model_dump()
     try:
-        cellar_rules.validate_rule_uniqueness(payload.location_rule, None, existing)
+        normalized_rule, normalized_layout = cellar_rules.normalize_location_configuration(
+            payload_data.get("location_rule"),
+            payload_data.get("layout"),
+        )
+        payload_data["location_rule"] = normalized_rule
+        payload_data["layout"] = normalized_layout
+        cellar_rules.validate_rule_uniqueness(normalized_rule, None, existing)
     except ConfigurationError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
-    cellar = Cellar(id=new_id(), **payload.model_dump())
+    cellar = Cellar(id=new_id(), **payload_data)
     if cellar.is_overflow:
         cellar.purpose_level = None
     try:
@@ -118,11 +125,18 @@ def update_cellar(
     if existing is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="error.not_found")
     others = [cellar for cellar in repo.list_cellars(conn) if cellar.id != cellar_id]
+    payload_data = payload.model_dump()
     try:
-        cellar_rules.validate_rule_uniqueness(payload.location_rule, cellar_id, others)
+        normalized_rule, normalized_layout = cellar_rules.normalize_location_configuration(
+            payload_data.get("location_rule"),
+            payload_data.get("layout"),
+        )
+        payload_data["location_rule"] = normalized_rule
+        payload_data["layout"] = normalized_layout
+        cellar_rules.validate_rule_uniqueness(normalized_rule, cellar_id, others)
     except ConfigurationError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
-    for field_name, value in payload.model_dump().items():
+    for field_name, value in payload_data.items():
         setattr(existing, field_name, value)
     if existing.is_overflow:
         existing.purpose_level = None
