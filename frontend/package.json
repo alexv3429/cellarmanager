@@ -1,0 +1,1 @@
+{"type": "module", "private": true, "description": "No build step needed - this file only tells Node how to run tests/logic.test.js; the browser ignores it."}
