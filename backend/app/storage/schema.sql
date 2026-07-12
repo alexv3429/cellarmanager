@@ -76,6 +76,20 @@ CREATE TABLE IF NOT EXISTS movements (
     client_op_id TEXT UNIQUE
 );
 
+-- Idempotency ledger for offline mutations. A client operation is reserved
+-- before any holding changes happen and completed in the same transaction.
+-- This prevents a retried request from mutating stock twice.
+CREATE TABLE IF NOT EXISTS processed_operations (
+    client_op_id TEXT PRIMARY KEY,
+    action TEXT NOT NULL,
+    request_fingerprint TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('pending', 'completed')),
+    holding_id TEXT,
+    movement_id TEXT,
+    created_at TEXT NOT NULL,
+    completed_at TEXT
+);
+
 CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
     username TEXT NOT NULL UNIQUE COLLATE NOCASE,
@@ -102,3 +116,5 @@ CREATE INDEX IF NOT EXISTS idx_movements_holding ON movements(holding_id);
 CREATE INDEX IF NOT EXISTS idx_movements_occurred ON movements(occurred_at);
 CREATE INDEX IF NOT EXISTS idx_wines_identity ON wines(producer, cuvee, appellation, vintage, format);
 CREATE INDEX IF NOT EXISTS idx_photo_hashes_wine ON photo_hashes(wine_id);
+
+CREATE INDEX IF NOT EXISTS idx_processed_operations_status ON processed_operations(status);

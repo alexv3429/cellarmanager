@@ -72,14 +72,14 @@ test("offlineQueue: classifyReplayResult - 2xx is done", () => {
   assert.equal(classifyReplayResult(200, 5, 0), "done");
 });
 
-test("offlineQueue: classifyReplayResult - 409 is done (idempotent dedup or real conflict, either way no auto-retry)", () => {
-  assert.equal(classifyReplayResult(409, 5, 0), "done");
+test("offlineQueue: classifyReplayResult - 409 is preserved as a conflict", () => {
+  assert.equal(classifyReplayResult(409, 5, 0), "conflict");
 });
 
-test("offlineQueue: classifyReplayResult - other errors retry until the attempt cap", () => {
+test("offlineQueue: transient errors retry, then become a preserved dead letter", () => {
   assert.equal(classifyReplayResult(500, 5, 0), "retry");
   assert.equal(classifyReplayResult(500, 5, 3), "retry");
-  assert.equal(classifyReplayResult(500, 5, 4), "give_up");
+  assert.equal(classifyReplayResult(500, 5, 4), "dead_letter");
 });
 
 test("charts: barChartSvg handles an empty series without throwing", () => {

@@ -16,4 +16,7 @@ __pycache__/
 *.pyc
 
 target/
-
+.patch-backups/
+backend/data/*.db
+backend/data/*.db-*
+backend/data/backups/

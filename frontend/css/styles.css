@@ -232,3 +232,316 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
   .chart-card { grid-column: span 1; }
   h1 { font-size: 1.35rem; }
 }
+
+/* =========================================================================
+   CellarManager comprehensive audit patch v2
+   ========================================================================= */
+.app-container {
+  width: min(calc(100% - 2rem), 1280px);
+  max-width: none;
+  margin: 0 auto;
+  padding: 1.25rem 0 3rem;
+}
+.nav { column-gap: 1rem; }
+.nav-brand, .nav-controls { flex: 0 0 auto; }
+.nav-links {
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+  padding: 0.2rem 0;
+}
+.nav-link { flex: 0 0 auto; white-space: nowrap; }
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 1.25rem 0 2rem;
+}
+.stat-card {
+  grid-column: span 3;
+  min-height: 150px;
+  display: grid;
+  place-content: center;
+  padding: 1.25rem;
+}
+.chart-card { grid-column: span 6; display: block; min-height: 150px; text-align: left; }
+.stat-label { text-transform: none; letter-spacing: 0.02em; }
+.dashboard-empty-chart {
+  min-height: 120px;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+  color: #6b6455;
+  padding: 0.75rem;
+}
+.dashboard-empty-chart p { max-width: 36rem; margin: 0.4rem 0 0; }
+.dashboard-empty-icon { font-size: 2rem; line-height: 1; }
+.dashboard-onboarding {
+  background: var(--parchment-card);
+  border: 1px solid var(--parchment-dark);
+  border-radius: var(--radius);
+  padding: 1rem 1.2rem;
+  margin-bottom: 1.5rem;
+}
+.dashboard-onboarding .empty-state { padding: 0; margin: 0 0 0.8rem; }
+.status-error, .sync-warning { border-color: #9b2c2c; background: #fff0f0; color: #721c24; }
+.sync-problems { display: grid; gap: 1rem; }
+.sync-problem-card {
+  border: 1px solid var(--parchment-dark);
+  border-radius: var(--radius);
+  background: var(--parchment-card);
+  padding: 1rem;
+}
+.sync-problem-detail { display: grid; grid-template-columns: max-content 1fr; gap: .35rem .8rem; }
+.sync-problem-detail dt { font-weight: 700; }
+.sync-problem-detail dd { margin: 0; overflow-wrap: anywhere; }
+.sync-problem-card pre { max-height: 18rem; overflow: auto; white-space: pre-wrap; }
+.sync-problem-actions { display: flex; flex-wrap: wrap; gap: .7rem; margin-top: 1rem; }
+.rack-preview-svg { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.rack-card { border: 1px solid var(--parchment-dark); border-radius: var(--radius); padding: .75rem; overflow: auto; }
+.rack-svg { width: 100%; min-width: 260px; height: auto; display: block; }
+.rack-svg-title { font-weight: 700; fill: currentColor; }
+.rack-svg-slot circle, .rack-svg-slot rect { fill: #f5efe4; stroke: #8a7b65; stroke-width: 1.5; }
+.rack-svg-slot.occupied circle, .rack-svg-slot.occupied rect { fill: #d8ead4; stroke: #3f6f44; }
+.rack-svg-slot text { font-size: 9px; fill: #302b25; pointer-events: none; }
+.rack-svg-count { font-weight: 700; fill: #7a1631 !important; }
+.rack-controls { align-items: end; }
+@media (max-width: 900px) {
+  .nav-brand { width: 100%; }
+  .nav-links { order: 3; width: 100%; }
+  .nav-controls { margin-left: auto; }
+  .stat-card { grid-column: span 6; }
+  .chart-card { grid-column: span 12; }
+}
+@media (max-width: 560px) {
+  .app-container { width: min(calc(100% - 1.2rem), 1280px); padding-top: .8rem; }
+  .nav { flex-direction: row; align-items: center; }
+  .nav-controls { margin-left: 0; }
+  .stat-card, .chart-card { grid-column: span 12; }
+  .sync-problem-detail { grid-template-columns: 1fr; }
+}
+
+/* =========================================================================
+   CellarManager CSV column mapping patch v1
+   ========================================================================= */
+.import-wizard {
+  display: grid;
+  gap: 1.25rem;
+  margin-top: 1.25rem;
+}
+
+.wizard-step {
+  background: var(--paper, #fff);
+  border: 1px solid rgba(80, 60, 50, 0.16);
+  border-radius: 14px;
+  padding: clamp(1rem, 2vw, 1.5rem);
+  box-shadow: 0 8px 24px rgba(45, 34, 30, 0.06);
+}
+
+.wizard-step-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.wizard-step-heading h2 { margin: 0; }
+
+.wizard-step-number {
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  color: #fff;
+  background: var(--wine, #6d1235);
+  font-weight: 700;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.file-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.file-picker-name {
+  min-width: 12rem;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+
+.import-analysis-state { color: var(--stone, #6d625d); }
+
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.column-mapping-table {
+  width: 100%;
+  min-width: 850px;
+}
+
+.column-mapping-table th,
+.column-mapping-table td {
+  vertical-align: middle;
+}
+
+.column-mapping-table select {
+  width: 100%;
+  min-width: 12rem;
+}
+
+.mapping-target {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mapping-badge {
+  display: inline-flex;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.mapping-required {
+  color: #7b1520;
+  background: #fbe8ea;
+}
+
+.mapping-optional {
+  color: #4d5558;
+  background: #edf0f1;
+}
+
+.mapping-sample {
+  display: block;
+  max-width: 22rem;
+  color: var(--stone, #6d625d);
+  font-size: 0.88rem;
+  overflow-wrap: anywhere;
+}
+
+.import-notices,
+.import-preview-warnings { margin: 0.75rem 0; }
+
+.import-warning-list {
+  margin: 0.5rem 0 1rem;
+  padding-left: 1.4rem;
+}
+
+.warning-error { color: #9b1725; }
+
+.preview-count-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.preview-count {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  background: rgba(54, 104, 75, 0.08);
+}
+
+.preview-count strong { font-size: 1.4rem; }
+.preview-count-error { background: rgba(155, 23, 37, 0.09); }
+
+.import-preview-table { min-width: 1100px; }
+
+.status-pill {
+  display: inline-flex;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.status-valid { color: #245c39; background: #e4f3e9; }
+.status-skipped { color: #665b21; background: #f7f0c8; }
+.status-error { color: #8e1421; background: #f8e1e4; }
+.preview-row-error { background: rgba(155, 23, 37, 0.035); }
+
+@media (max-width: 700px) {
+  .wizard-step { border-radius: 10px; padding: 1rem; }
+  .preview-count-grid { grid-template-columns: 1fr; }
+  .file-picker { align-items: flex-start; flex-direction: column; }
+}
+
+/* =========================================================================
+   CellarManager import reset and cellar reconciliation patch v1
+   ========================================================================= */
+.field-help {
+  display: block;
+  margin-top: 0.4rem;
+  color: var(--stone, #6f6762);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.import-no-cellar-callout,
+.import-unassigned-callout,
+.unassigned-holdings-callout {
+  border: 1px solid rgba(143, 94, 22, 0.35);
+  border-left: 5px solid #9a661c;
+  border-radius: 12px;
+  background: rgba(255, 247, 226, 0.8);
+  padding: 1rem 1.1rem;
+  margin: 1rem 0;
+}
+
+.import-no-cellar-callout p,
+.import-unassigned-callout p,
+.unassigned-holdings-callout p {
+  margin: 0.45rem 0 0.85rem;
+}
+
+.unassigned-holdings-host:empty {
+  display: none;
+}
+
+.preview-count-warn {
+  border-color: rgba(143, 94, 22, 0.45);
+  background: rgba(255, 247, 226, 0.7);
+}
+
+@media (max-width: 640px) {
+  .import-no-cellar-callout .button,
+  .import-unassigned-callout .button,
+  .unassigned-holdings-callout button {
+    width: 100%;
+  }
+}
+

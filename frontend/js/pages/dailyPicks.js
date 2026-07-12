@@ -38,7 +38,7 @@ export async function renderDailyPicks(container) {
       color: colorSelect.value || null,
       dish: dishInput.value.trim() || null,
       mood: moodInput.value.trim() || null,
-      appellation: appellationInput.value.trim() || null,
+      strict_text_match: Boolean(dishInput.value.trim() || moodInput.value.trim()), appellation: appellationInput.value.trim() || null,
       vintage: vintageInput.value ? Number(vintageInput.value) : null,
       limit: 20,
     };

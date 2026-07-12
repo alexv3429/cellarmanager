@@ -3,7 +3,6 @@ import * as api from "./api.js";
 import { initI18n, t, getLocale, setLocale, SUPPORTED_LOCALES } from "./i18n.js";
 import { registerRoute, startRouter, navigate } from "./router.js";
 import { el, clear, showToast } from "./dom.js";
-
 import { renderLogin } from "./pages/login.js";
 import { renderDashboard } from "./pages/dashboard.js";
 import { renderCellars, renderCellarDetail } from "./pages/cellars.js";
@@ -13,11 +12,12 @@ import { renderExport } from "./pages/exportPage.js";
 import { renderStats } from "./pages/stats.js";
 import { renderMovePlan } from "./pages/movePlan.js";
 import { renderDailyPicks } from "./pages/dailyPicks.js";
+import { renderSyncProblems } from "./pages/syncProblems.js";
 
 const appRoot = document.getElementById("app");
 const navRoot = document.getElementById("nav");
 const statusBanner = document.getElementById("status-banner");
-
+const footerAppName = document.getElementById("footer-app-name");
 const NAV_ITEMS = [
   ["/dashboard", "nav.dashboard"],
   ["/cellars", "nav.cellars"],
@@ -27,16 +27,19 @@ const NAV_ITEMS = [
   ["/stats", "nav.stats"],
   ["/import", "nav.import"],
   ["/export", "nav.export"],
+  ["/sync", "nav.sync"],
 ];
 
-// Captured by the 'beforeinstallprompt' event (Chrome/Edge/Android only -
-// see the isInstallable()/isIos() helpers below for why Safari/iOS needs a
-// different approach). Kept at module scope so renderNav() can check it
-// after the event may have already fired before the nav was first drawn.
 let deferredInstallPrompt = null;
-window.addEventListener("beforeinstallprompt", (e) => {
-  e.preventDefault();
-  deferredInstallPrompt = e;
+
+function updateStaticTranslations() {
+  document.title = t("app.name");
+  if (footerAppName) footerAppName.textContent = t("app.name");
+}
+
+window.addEventListener("beforeinstallprompt", (event) => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
   renderNav();
 });
 window.addEventListener("appinstalled", () => {
@@ -53,33 +56,26 @@ function isIos() {
 }
 
 function renderNav() {
+  updateStaticTranslations();
   clear(navRoot);
   const brand = el("div", { class: "nav-brand", text: t("app.name") });
-  const links = el(
-    "div",
-    { class: "nav-links" },
-    NAV_ITEMS.map(([path, key]) =>
-      el("a", { href: `#${path}`, class: "nav-link", text: t(key) })
-    )
-  );
+  const links = el("div", { class: "nav-links" }, NAV_ITEMS.map(([path, key]) =>
+    el("a", { href: `#${path}`, class: "nav-link", text: t(key) }),
+  ));
   const controls = el("div", { class: "nav-controls" }, [
-    el(
-      "select",
-      {
-        class: "locale-select",
-        "aria-label": "Language",
-        onchange: async (e) => {
-          await setLocale(e.target.value);
-          renderNav();
-          startRouter(appRoot);
-        },
+    el("select", {
+      class: "locale-select",
+      "aria-label": "Language",
+      onchange: async (event) => {
+        await setLocale(event.target.value);
+        renderNav();
+        startRouter(appRoot);
       },
-      SUPPORTED_LOCALES.map((code) => {
-        const opt = el("option", { value: code, text: code.toUpperCase() });
-        if (code === getLocale()) opt.selected = true;
-        return opt;
-      })
-    ),
+    }, SUPPORTED_LOCALES.map((code) => {
+      const option = el("option", { value: code, text: code.toUpperCase() });
+      if (code === getLocale()) option.selected = true;
+      return option;
+    })),
     el("button", {
       class: "logout-btn",
       text: t("nav.logout"),
@@ -90,27 +86,24 @@ function renderNav() {
       },
     }),
   ]);
+
   if (!isStandalone() && deferredInstallPrompt) {
-    controls.appendChild(
-      el("button", {
-        class: "install-btn",
-        text: t("install.button"),
-        onclick: async () => {
-          deferredInstallPrompt.prompt();
-          await deferredInstallPrompt.userChoice;
-          deferredInstallPrompt = null;
-          renderNav();
-        },
-      })
-    );
+    controls.appendChild(el("button", {
+      class: "install-btn",
+      text: t("install.button"),
+      onclick: async () => {
+        deferredInstallPrompt.prompt();
+        await deferredInstallPrompt.userChoice;
+        deferredInstallPrompt = null;
+        renderNav();
+      },
+    }));
   } else if (!isStandalone() && isIos()) {
-    controls.appendChild(
-      el("button", {
-        class: "install-btn",
-        text: `\u{1F4F1} ${t("install.button")}`,
-        onclick: () => showToast(t("install.ios_hint")),
-      })
-    );
+    controls.appendChild(el("button", {
+      class: "install-btn",
+      text: `📱 ${t("install.button")}`,
+      onclick: () => showToast(t("install.ios_hint")),
+    }));
   }
   navRoot.append(brand, links, controls);
 }
@@ -126,14 +119,31 @@ function registerRoutes() {
   registerRoute("/stats", renderStats);
   registerRoute("/moveplan", renderMovePlan);
   registerRoute("/picks", renderDailyPicks);
+  registerRoute("/sync", renderSyncProblems);
   registerRoute("/", renderDashboard);
 }
 
-function updateOnlineStatus() {
+async function showStoredSyncProblems() {
+  const [conflicts, failed] = await Promise.all([
+    api.conflictCount(),
+    api.failedOfflineCount(),
+  ]);
+  if (conflicts || failed) {
+    statusBanner.hidden = false;
+    statusBanner.textContent = t("offline.problems", { conflicts, failed });
+    statusBanner.classList.add("status-error");
+    return true;
+  }
+  statusBanner.classList.remove("status-error");
+  return false;
+}
+
+async function updateOnlineStatus() {
   if (!navigator.onLine) {
     statusBanner.textContent = t("offline.banner");
     statusBanner.hidden = false;
-  } else {
+    statusBanner.classList.remove("status-error");
+  } else if (!(await showStoredSyncProblems())) {
     statusBanner.hidden = true;
   }
 }
@@ -141,26 +151,35 @@ function updateOnlineStatus() {
 async function trySync() {
   if (!navigator.onLine) return;
   const before = await api.pendingOutboxCount();
-  if (before === 0) return;
+  if (before === 0) {
+    await showStoredSyncProblems();
+    return;
+  }
   statusBanner.hidden = false;
+  statusBanner.classList.remove("status-error");
   statusBanner.textContent = t("offline.syncing");
-  const { synced, stillPending } = await api.syncOutbox();
-  if (stillPending === 0) {
+  const { synced, stillPending, conflicts, failed } = await api.syncOutbox();
+  if (conflicts || failed) {
+    statusBanner.classList.add("status-error");
+    statusBanner.textContent = t("offline.sync_result_problems", {
+      synced,
+      pending: stillPending,
+      conflicts,
+      failed,
+    });
+  } else if (stillPending === 0) {
     statusBanner.hidden = true;
     if (synced > 0) showToast(t("offline.synced"));
   } else {
-    statusBanner.textContent = `${synced} synced, ${stillPending} pending`;
+    statusBanner.textContent = t("offline.sync_result", { synced, pending: stillPending });
   }
 }
 
 async function main() {
   await initI18n();
-
+  updateStaticTranslations();
   const token = await db.getMeta("token");
-  if (!token && window.location.hash !== "#/login") {
-    navigate("/login");
-  }
-
+  if (!token && window.location.hash !== "#/login") navigate("/login");
   registerRoutes();
   navRoot.hidden = !token;
   if (token) renderNav();
@@ -170,27 +189,26 @@ async function main() {
     showToast(t("auth.session_expired"), { isError: true });
     navigate("/login");
   });
-
-  window.addEventListener("online", () => {
-    updateOnlineStatus();
-    trySync();
-  });
+  window.addEventListener("online", () => { updateOnlineStatus(); trySync(); });
   window.addEventListener("offline", updateOnlineStatus);
-  updateOnlineStatus();
-
-  // After a successful login, login.js dispatches this so nav/router can start.
+  window.addEventListener("offline:cache-used", () => {
+    if (!navigator.onLine) updateOnlineStatus();
+  });
   window.addEventListener("auth:login", () => {
     navRoot.hidden = false;
     renderNav();
     navigate("/dashboard");
   });
 
+  await updateOnlineStatus();
   await startRouter(appRoot);
   trySync();
 
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("service-worker.js").catch((err) => {
-      console.warn("Service worker registration failed (app still works, just without offline caching):", err);
+    navigator.serviceWorker.register("service-worker.js").then((registration) => {
+      registration.update().catch(() => {});
+    }).catch((error) => {
+      console.warn("Service worker registration failed:", error);
     });
   }
 }

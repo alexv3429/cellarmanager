@@ -28,9 +28,16 @@ export function getLocale() {
 }
 
 async function fetchDictionary(locale) {
-  const response = await fetch(`i18n/${locale}.json`);
-  if (!response.ok) throw new Error(`Failed to load i18n/${locale}.json`);
-  return response.json();
+  const url = `i18n/${locale}.json`;
+  const response = await fetch(url, { cache: "no-cache" });
+  if (!response.ok) {
+    throw new Error(`Failed to load ${url}: HTTP ${response.status}`);
+  }
+  const result = await response.json();
+  if (!result || typeof result !== "object" || !result["app.name"] || !result["dashboard.title"]) {
+    throw new Error(`Invalid translation dictionary for locale ${locale}`);
+  }
+  return result;
 }
 
 export async function setLocale(locale) {

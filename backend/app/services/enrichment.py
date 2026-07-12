@@ -30,6 +30,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import date
+import os
 from typing import Optional
 
 from app.core.domain import Wine, utcnow
@@ -117,9 +118,22 @@ class MockEnrichmentProvider(EnrichmentProvider):
 
 
 def get_active_providers() -> list[EnrichmentProvider]:
-    """Every provider consulted for a fetch. Swap/add entries here once you
-    have real, licensed data sources - nothing else needs to change."""
-    return [MockEnrichmentProvider("conservative"), MockEnrichmentProvider("generous"), MockEnrichmentProvider("community")]
+    """Return configured providers.
+
+    Demonstration providers are disabled by default because their deterministic
+    output is not real internet wine data. Developers may explicitly enable
+    them with ``WINECELLAR_ENABLE_DEMO_ENRICHMENT=true`` while building a UI.
+    Production deployments should register licensed provider implementations
+    here instead.
+    """
+    enabled = os.environ.get("WINECELLAR_ENABLE_DEMO_ENRICHMENT", "false").strip().lower()
+    if enabled in {"1", "true", "yes", "on"}:
+        return [
+            MockEnrichmentProvider("conservative"),
+            MockEnrichmentProvider("generous"),
+            MockEnrichmentProvider("community"),
+        ]
+    return []
 
 
 # ---------------------------------------------------------------------------

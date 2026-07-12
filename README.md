@@ -108,3 +108,29 @@ See `docs/testing.md` for details on what runs where and why.
 
 MIT - see `LICENSE`. This is a sensible default for a personal project;
 change it if you'd prefer something else.
+
+## Comprehensive audit corrections
+
+The audit correction patch hardens offline idempotency and conflict handling,
+adds real IndexedDB read fallback, exposes cellar versions, corrects movement/CSV/recommendation edge cases, disables fabricated enrichment by default, fixes localization and responsive layout problems, and adds CI regression coverage. See [`docs/audit-fixes.md`](docs/audit-fixes.md).
+
+Accounts in one installation intentionally share one household cellar. This is
+not an independent multi-tenant SaaS security boundary. Real enrichment also
+requires licensed provider implementations.
+
+## Interactive CSV column mapping
+
+CSV files are analyzed before import. The browser proposes mappings for known
+English, French and legacy headers, then lets the user choose any source column,
+add a fallback column and inspect normalized rows before committing changes.
+See `docs/csv-column-mapping.md`.
+
+## CSV reset and unassigned-bottle reconciliation
+
+The CSV wizard can be reset after an import, and a successful import cannot be
+submitted twice accidentally. Imports performed before cellar creation remain
+visible as unassigned stock. When a cellar with a matching location prefix or
+pattern is created or edited, matching holdings are automatically reconciled
+and the move is recorded in the journal. The Cellars page also provides an
+explicit reconciliation action for remaining unassigned bottles.
+

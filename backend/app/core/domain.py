@@ -124,6 +124,7 @@ class Cellar:
     layout: Optional[str] = None  # JSON-encoded rack layout, see services.cellar_rules
     created_at: datetime = field(default_factory=utcnow)
     updated_at: datetime = field(default_factory=utcnow)
+    version: int = 1
 
 
 @dataclass
