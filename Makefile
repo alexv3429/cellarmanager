@@ -2,7 +2,7 @@ SHELL := /bin/bash
 PUBLIC_PYPI_INDEX ?= https://pypi.org/simple
 .DEFAULT_GOAL := help
 
-.PHONY: help setup sync lock format lint test test-backend test-frontend ci run hooks requirements protect-main clean
+.PHONY: help setup sync lock format lint test test-backend test-frontend ci run hooks requirements protect-main audit clean
 
 help:
 	@printf '%s\n' \
@@ -51,6 +51,7 @@ ci:
 	$(MAKE) lint
 	$(MAKE) repository-check
 	$(MAKE) test
+	$(MAKE) audit
 
 run:
 	cd backend && ../.venv/bin/python run.py
@@ -63,6 +64,9 @@ requirements:
 
 protect-main:
 	./scripts/protect_main.sh
+
+audit:
+	uv audit --frozen
 
 clean:
 	rm -rf .pytest_cache .ruff_cache htmlcov coverage.xml .coverage
