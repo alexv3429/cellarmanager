@@ -1,17 +1,16 @@
 import unittest
 from datetime import date
 
-from tests.conftest_helpers import DatabaseTestCase
+from app.core.exceptions import ValidationError
 from app.services import csv_io
 from app.storage import repositories as repo
-from app.core.exceptions import ValidationError
-
+from tests.conftest_helpers import DatabaseTestCase
 
 SAMPLE_CSV_EN = (
-    "Producer,Cuvee,Appellation,Vintage,Color,Area,Format,Quantity,Price bought,Cellar,Location\n"
-    "Domaine Jean-Marc Burgaud,James,Cote du Py,2020,red,Beaujolais,75cl,6,18.50,Cave Nord,A1\n"
-    "Veuve Cliquot,Brut,Champagne,,sparkling,Champagne,75cl,3,32,Cave Nord,B2\n"
-).encode("utf-8")
+    b"Producer,Cuvee,Appellation,Vintage,Color,Area,Format,Quantity,Price bought,Cellar,Location\n"
+    b"Domaine Jean-Marc Burgaud,James,Cote du Py,2020,red,Beaujolais,75cl,6,18.50,Cave Nord,A1\n"
+    b"Veuve Cliquot,Brut,Champagne,,sparkling,Champagne,75cl,3,32,Cave Nord,B2\n"
+)
 
 # French-style export: semicolon delimiter, comma decimal separator, accented headers.
 SAMPLE_CSV_FR = (
@@ -94,7 +93,11 @@ class TestImportCsv(DatabaseTestCase):
         # them (feature 4): a CSV row naming a cellar that doesn't exist yet should
         # warn rather than silently create one (a typo shouldn't spawn a bogus cellar).
         from app.core.domain import Cellar, new_id
-        repo.insert_cellar(self.conn, Cellar(id=new_id(), name="Cave Nord", purpose_level=5, max_capacity=200, threshold=180))
+
+        repo.insert_cellar(
+            self.conn,
+            Cellar(id=new_id(), name="Cave Nord", purpose_level=5, max_capacity=200, threshold=180),
+        )
 
         report = csv_io.import_csv(SAMPLE_CSV_EN, conn=self.conn, user_id="u1")
         self.assertEqual(report.total_rows, 2)
@@ -105,11 +108,17 @@ class TestImportCsv(DatabaseTestCase):
         self.assertEqual(len(wines), 2)
 
         champagne = next(w for w in wines if w.producer == "Veuve Cliquot")
-        self.assertIsNone(champagne.vintage, "Champagne with blank vintage must import as NV, not fail")
+        self.assertIsNone(
+            champagne.vintage, "Champagne with blank vintage must import as NV, not fail"
+        )
 
         cellar = repo.get_cellar_by_name(self.conn, "Cave Nord")
         holdings = repo.list_holdings(self.conn, cellar_id=cellar.id)
-        self.assertEqual(sum(h.quantity for h in holdings), 9, "both rows' bottles should land in the pre-defined cellar")
+        self.assertEqual(
+            sum(h.quantity for h in holdings),
+            9,
+            "both rows' bottles should land in the pre-defined cellar",
+        )
 
     def test_unknown_cellar_name_warns_instead_of_auto_creating(self):
         report = csv_io.import_csv(SAMPLE_CSV_EN, conn=self.conn, user_id="u1")
@@ -132,17 +141,16 @@ class TestImportCsv(DatabaseTestCase):
         self.assertEqual(report2.merged_into_existing_wine, 2)
         self.assertEqual(report2.imported, 0)
         wines = repo.list_wines(self.conn)
-        self.assertEqual(len(wines), 2, "Re-importing the same rows must not duplicate the Wine catalog entry")
+        self.assertEqual(
+            len(wines), 2, "Re-importing the same rows must not duplicate the Wine catalog entry"
+        )
         # quantities should have merged into the same holding (6+6=12)
         burgaud = next(w for w in wines if w.producer.startswith("Domaine"))
         holdings = repo.list_holdings(self.conn, wine_id=burgaud.id)
         self.assertEqual(sum(h.quantity for h in holdings), 12)
 
     def test_row_with_no_identity_is_skipped_with_warning(self):
-        csv = (
-            "Producer,Cuvee,Appellation,Vintage,Color,Area,Format\n"
-            ",,,,red,,75cl\n"
-        ).encode("utf-8")
+        csv = b"Producer,Cuvee,Appellation,Vintage,Color,Area,Format\n,,,,red,,75cl\n"
         report = csv_io.import_csv(csv, conn=self.conn, user_id=None)
         self.assertEqual(report.skipped, 1)
         self.assertEqual(len(report.warnings), 1)
@@ -154,15 +162,21 @@ class TestExportCsv(DatabaseTestCase):
         pairs = repo.list_holdings_with_wines(self.conn)
         rows = [(w, h, None) for h, w in pairs]
 
-        exported_en = csv_io.export_csv(rows, columns=["producer", "cuvee", "vintage", "color", "quantity"], language="en")
+        exported_en = csv_io.export_csv(
+            rows, columns=["producer", "cuvee", "vintage", "color", "quantity"], language="en"
+        )
         self.assertIn("Producer", exported_en.splitlines()[0])
         self.assertIn("Domaine Jean-Marc Burgaud", exported_en)
 
-        exported_fr = csv_io.export_csv(rows, columns=["producer", "cuvee", "vintage", "color", "quantity"], language="fr")
+        exported_fr = csv_io.export_csv(
+            rows, columns=["producer", "cuvee", "vintage", "color", "quantity"], language="fr"
+        )
         header_fr = exported_fr.splitlines()[0]
         self.assertIn("Producteur", header_fr)
         self.assertIn(";", header_fr, "French export should default to semicolon delimiter")
-        self.assertIn("Rouge", exported_fr, "Color enum value should be translated in French export")
+        self.assertIn(
+            "Rouge", exported_fr, "Color enum value should be translated in French export"
+        )
 
     def test_unknown_column_rejected(self):
         with self.assertRaises(ValidationError):

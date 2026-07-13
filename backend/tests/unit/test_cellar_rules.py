@@ -1,13 +1,15 @@
 import unittest
 
-from tests.conftest_helpers import DatabaseTestCase  # noqa: F401 (ensures sys.path setup runs)
 from app.core.domain import Cellar, new_id
 from app.core.exceptions import ConfigurationError
 from app.services import cellar_rules
+from tests.conftest_helpers import DatabaseTestCase  # noqa: F401 (ensures sys.path setup runs)
 
 
 def _cellar(name, rule):
-    return Cellar(id=new_id(), name=name, purpose_level=0, max_capacity=100, threshold=90, location_rule=rule)
+    return Cellar(
+        id=new_id(), name=name, purpose_level=0, max_capacity=100, threshold=90, location_rule=rule
+    )
 
 
 class TestPrefixRules(unittest.TestCase):

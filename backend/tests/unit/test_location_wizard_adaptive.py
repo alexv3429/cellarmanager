@@ -11,7 +11,9 @@ class LocationStructureTests(unittest.TestCase):
             None,
             json.dumps({"location_scheme": scheme}),
         )
-        return Cellar(id=scheme.get("prefix", "x") or "x", name="Test", location_rule=rule, layout=layout)
+        return Cellar(
+            id=scheme.get("prefix", "x") or "x", name="Test", location_rule=rule, layout=layout
+        )
 
     def test_loose_storage_accepts_unspecified_and_box_suffix(self):
         scheme = {
@@ -25,7 +27,9 @@ class LocationStructureTests(unittest.TestCase):
         cellar = self.cellar(scheme)
         self.assertIsNone(cellar_rules.normalize_location_for_cellar(cellar, "STC"))
         self.assertEqual(cellar_rules.normalize_location_for_cellar(cellar, "STC Box 2"), "Box 2")
-        self.assertEqual(cellar_rules.normalize_location_for_cellar(cellar, "STC Carton rouge"), "Carton rouge")
+        self.assertEqual(
+            cellar_rules.normalize_location_for_cellar(cellar, "STC Carton rouge"), "Carton rouge"
+        )
         self.assertIs(cellar_rules.match_cellar_for_location("STC Box 1", [cellar]), cellar)
 
     def test_simple_grid_remains_backwards_compatible(self):
@@ -60,7 +64,9 @@ class LocationStructureTests(unittest.TestCase):
             "store_internal": True,
         }
         locations = cellar_rules.generate_locations(scheme)
-        self.assertEqual([item["import"] for item in locations[:4]], ["A1.1", "A1.2", "B1.1", "B1.2"])
+        self.assertEqual(
+            [item["import"] for item in locations[:4]], ["A1.1", "A1.2", "B1.1", "B1.2"]
+        )
         cellar = self.cellar(scheme)
         self.assertEqual(cellar_rules.normalize_location_for_cellar(cellar, "B2.2"), "B2.2")
 
@@ -102,7 +108,6 @@ class LocationStructureTests(unittest.TestCase):
         cellar = self.cellar(scheme)
         self.assertEqual(cellar_rules.normalize_location_for_cellar(cellar, "G1B"), "1B")
         self.assertEqual(cellar_rules.normalize_location_for_cellar(cellar, "9F"), "9F")
-
 
     def test_grid_orientation_changes_physical_coordinates_only(self):
         scheme = {
@@ -148,7 +153,9 @@ class LocationStructureTests(unittest.TestCase):
             "row_end": 2,
             "order": "column_row",
         }
-        _, layout = cellar_rules.normalize_location_configuration(None, json.dumps({"location_scheme": scheme}))
+        _, layout = cellar_rules.normalize_location_configuration(
+            None, json.dumps({"location_scheme": scheme})
+        )
         stored = json.loads(layout)
         self.assertEqual(stored["location_catalog"]["version"], 1)
         self.assertEqual(len(stored["location_catalog"]["positions"]), 4)

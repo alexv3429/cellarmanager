@@ -13,9 +13,7 @@ from app.services import enrichment
 from app.services import recognition_service as rs
 from app.storage import repositories as repo
 
-router = APIRouter(
-    tags=["enrichment"], dependencies=[Depends(get_current_user_id)]
-)
+router = APIRouter(tags=["enrichment"], dependencies=[Depends(get_current_user_id)])
 
 
 def _json_default(obj):

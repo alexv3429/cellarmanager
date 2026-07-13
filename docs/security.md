@@ -71,4 +71,13 @@ required for the offline feature to work too, not just for security.
 - [ ] Restrict access at the network level too if possible (VPN/Tailscale,
       IP allowlist, or Basic Auth on the reverse proxy as a second layer)
 - [ ] Keep regular backups of the SQLite file
-- [ ] Keep Python and the pinned dependency versions up to date
+- [ ] Keep Python and the locked dependency versions up to date through reviewed pull requests
+
+
+## Development and supply-chain controls
+
+Runtime and development dependencies are resolved in `uv.lock`; CI and Docker refuse an out-of-date lock through frozen synchronization. Dependabot opens reviewed updates for uv dependencies and GitHub Actions. Pull requests run GitHub dependency review and reject newly introduced dependencies with known moderate-or-higher vulnerabilities.
+
+Repository policy checks reject tracked database files, `.env`, private-key-like files, coverage output, and patch backups. These checks reduce accidental disclosure but are not a replacement for GitHub secret scanning or careful review. Enable GitHub secret scanning and CodeQL default setup when available.
+
+Protect `main` and include administrators in the rule. A workflow file without required branch protection can still be bypassed by a direct push or an unchecked merge. Follow `docs/github-protection.md`.

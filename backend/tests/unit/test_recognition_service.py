@@ -6,6 +6,7 @@ from app.services import recognition_service as rs
 
 try:
     from PIL import Image, ImageDraw
+
     PILLOW_AVAILABLE = True
 except ImportError:
     PILLOW_AVAILABLE = False
@@ -40,6 +41,7 @@ def _wine(**kwargs):
 # perceptual hash (photo-vs-photo) matching
 # ---------------------------------------------------------------------------
 
+
 @unittest.skipUnless(PILLOW_AVAILABLE, "Pillow not installed")
 class TestPhotoHashMatching(unittest.TestCase):
     def test_identical_images_have_identical_hash(self):
@@ -65,6 +67,7 @@ class TestPhotoHashMatching(unittest.TestCase):
 # If it isn't in yours, these are skipped rather than failing the suite.
 # ---------------------------------------------------------------------------
 
+
 def _tesseract_ready():
     if not (PILLOW_AVAILABLE and rs.PYTESSERACT_AVAILABLE):
         return False
@@ -78,7 +81,9 @@ def _tesseract_ready():
 TESSERACT_READY = _tesseract_ready()
 
 
-@unittest.skipUnless(TESSERACT_READY, "tesseract-ocr / pytesseract not available in this environment")
+@unittest.skipUnless(
+    TESSERACT_READY, "tesseract-ocr / pytesseract not available in this environment"
+)
 class TestOcrExtraction(unittest.TestCase):
     def test_extracts_recognizable_text_from_a_clean_label_image(self):
         image = _label_image_bytes(["CHATEAU MARGAUX", "2018"])
@@ -116,7 +121,12 @@ class TestTextNormalizationAndScoring(unittest.TestCase):
         self.assertGreater(score, 0.0, "a near-miss token should still contribute partial credit")
 
     def test_vintage_match_gives_a_bonus(self):
-        wine = _wine(producer="Domaine Jean-Marc Burgaud", cuvee="James", appellation="Cote du Py", vintage=2020)
+        wine = _wine(
+            producer="Domaine Jean-Marc Burgaud",
+            cuvee="James",
+            appellation="Cote du Py",
+            vintage=2020,
+        )
         # Omit "JAMES" from the OCR tokens so the base (no-vintage) score sits
         # below the 1.0 ceiling, leaving room to observe the vintage bonus.
         # ("Jean-Marc" tokenizes to separate JEAN/MARC; "du" and "Py" are
@@ -160,13 +170,24 @@ class TestCombinedRecognition(unittest.TestCase):
             bonus = 0.1 if len(parts) > 1 else 0.0
             combined.append((wine_id, min(1.0, max(parts) + bonus)))
         combined.sort(key=lambda pair: pair[1], reverse=True)
-        self.assertEqual(combined[0][0], "wine-a", "agreement between OCR and photo-hash should win over a single stronger signal")
+        self.assertEqual(
+            combined[0][0],
+            "wine-a",
+            "agreement between OCR and photo-hash should win over a single stronger signal",
+        )
 
-    @unittest.skipUnless(TESSERACT_READY, "tesseract-ocr / pytesseract not available in this environment")
+    @unittest.skipUnless(
+        TESSERACT_READY, "tesseract-ocr / pytesseract not available in this environment"
+    )
     def test_recognize_bottle_end_to_end_with_real_ocr(self):
         wines = [
             _wine(producer="Chateau Margaux", cuvee=None, appellation="Margaux", vintage=2018),
-            _wine(producer="Domaine Leflaive", cuvee="Puligny-Montrachet", appellation="Puligny-Montrachet", vintage=2019),
+            _wine(
+                producer="Domaine Leflaive",
+                cuvee="Puligny-Montrachet",
+                appellation="Puligny-Montrachet",
+                vintage=2019,
+            ),
         ]
         image = _label_image_bytes(["CHATEAU MARGAUX", "MARGAUX", "2018"])
         result = rs.recognize_bottle(image, wines, known_hashes=[])

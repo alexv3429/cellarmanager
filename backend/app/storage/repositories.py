@@ -9,11 +9,11 @@ Every function takes an open ``sqlite3.Connection`` as its first argument so
 callers (services, tests) control transaction boundaries via
 ``Database.session()``.
 """
+
 from __future__ import annotations
 
 import sqlite3
 from datetime import date, datetime
-from typing import Optional
 
 from app.core.domain import Cellar, Holding, Movement, User, Wine, utcnow
 from app.core.exceptions import ConflictError, NotFoundError
@@ -23,19 +23,19 @@ from app.core.exceptions import ConflictError, NotFoundError
 # ---------------------------------------------------------------------------
 
 
-def _d(value: Optional[date]) -> Optional[str]:
+def _d(value: date | None) -> str | None:
     return value.isoformat() if value else None
 
 
-def _dt(value: Optional[datetime]) -> Optional[str]:
+def _dt(value: datetime | None) -> str | None:
     return value.isoformat() if value else None
 
 
-def _parse_date(value: Optional[str]) -> Optional[date]:
+def _parse_date(value: str | None) -> date | None:
     return date.fromisoformat(value) if value else None
 
 
-def _parse_dt(value: Optional[str]) -> Optional[datetime]:
+def _parse_dt(value: str | None) -> datetime | None:
     return datetime.fromisoformat(value) if value else None
 
 
@@ -46,6 +46,7 @@ def _bool(value) -> int:
 # ---------------------------------------------------------------------------
 # wines
 # ---------------------------------------------------------------------------
+
 
 def _row_to_wine(row: sqlite3.Row) -> Wine:
     return Wine(
@@ -89,20 +90,37 @@ def insert_wine(conn: sqlite3.Connection, wine: Wine) -> Wine:
         ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         """,
         (
-            wine.id, wine.producer, wine.cuvee, wine.appellation, wine.vintage,
-            wine.color, wine.area, wine.format, wine.format_ml,
-            _d(wine.drink_after), wine.drink_after_confidence, wine.drink_after_source,
-            _d(wine.drink_before), wine.drink_before_confidence, wine.drink_before_source,
-            wine.market_value, wine.market_value_confidence, wine.market_value_source,
+            wine.id,
+            wine.producer,
+            wine.cuvee,
+            wine.appellation,
+            wine.vintage,
+            wine.color,
+            wine.area,
+            wine.format,
+            wine.format_ml,
+            _d(wine.drink_after),
+            wine.drink_after_confidence,
+            wine.drink_after_source,
+            _d(wine.drink_before),
+            wine.drink_before_confidence,
+            wine.drink_before_source,
+            wine.market_value,
+            wine.market_value_confidence,
+            wine.market_value_source,
             _dt(wine.market_value_updated_at),
-            wine.advice_experience, wine.advice_pairing, wine.notes,
-            _dt(wine.created_at), _dt(wine.updated_at), wine.version,
+            wine.advice_experience,
+            wine.advice_pairing,
+            wine.notes,
+            _dt(wine.created_at),
+            _dt(wine.updated_at),
+            wine.version,
         ),
     )
     return wine
 
 
-def get_wine(conn: sqlite3.Connection, wine_id: str) -> Optional[Wine]:
+def get_wine(conn: sqlite3.Connection, wine_id: str) -> Wine | None:
     row = conn.execute("SELECT * FROM wines WHERE id = ?", (wine_id,)).fetchone()
     return _row_to_wine(row) if row else None
 
@@ -110,11 +128,11 @@ def get_wine(conn: sqlite3.Connection, wine_id: str) -> Optional[Wine]:
 def find_wine_by_identity(
     conn: sqlite3.Connection,
     producer: str,
-    cuvee: Optional[str],
-    appellation: Optional[str],
-    vintage: Optional[int],
+    cuvee: str | None,
+    appellation: str | None,
+    vintage: int | None,
     format: str,
-) -> Optional[Wine]:
+) -> Wine | None:
     row = conn.execute(
         """
         SELECT * FROM wines
@@ -129,7 +147,7 @@ def find_wine_by_identity(
     return _row_to_wine(row) if row else None
 
 
-def list_wines(conn: sqlite3.Connection, search: Optional[str] = None) -> list[Wine]:
+def list_wines(conn: sqlite3.Connection, search: str | None = None) -> list[Wine]:
     if search:
         like = f"%{search.strip().lower()}%"
         rows = conn.execute(
@@ -167,14 +185,30 @@ def update_wine(conn: sqlite3.Connection, wine: Wine, expected_version: int) -> 
         WHERE id=? AND version=?
         """,
         (
-            wine.producer, wine.cuvee, wine.appellation, wine.vintage, wine.color, wine.area,
-            wine.format, wine.format_ml,
-            _d(wine.drink_after), wine.drink_after_confidence, wine.drink_after_source,
-            _d(wine.drink_before), wine.drink_before_confidence, wine.drink_before_source,
-            wine.market_value, wine.market_value_confidence, wine.market_value_source,
+            wine.producer,
+            wine.cuvee,
+            wine.appellation,
+            wine.vintage,
+            wine.color,
+            wine.area,
+            wine.format,
+            wine.format_ml,
+            _d(wine.drink_after),
+            wine.drink_after_confidence,
+            wine.drink_after_source,
+            _d(wine.drink_before),
+            wine.drink_before_confidence,
+            wine.drink_before_source,
+            wine.market_value,
+            wine.market_value_confidence,
+            wine.market_value_source,
             _dt(wine.market_value_updated_at),
-            wine.advice_experience, wine.advice_pairing, wine.notes, _dt(now),
-            wine.id, expected_version,
+            wine.advice_experience,
+            wine.advice_pairing,
+            wine.notes,
+            _dt(now),
+            wine.id,
+            expected_version,
         ),
     )
     if cur.rowcount == 0:
@@ -190,6 +224,7 @@ def update_wine(conn: sqlite3.Connection, wine: Wine, expected_version: int) -> 
 # ---------------------------------------------------------------------------
 # cellars
 # ---------------------------------------------------------------------------
+
 
 def _row_to_cellar(row: sqlite3.Row) -> Cellar:
     return Cellar(
@@ -217,9 +252,16 @@ def insert_cellar(conn: sqlite3.Connection, cellar: Cellar) -> Cellar:
             ) VALUES (?,?,?,?,?,?,?,?,?,?,1)
             """,
             (
-                cellar.id, cellar.name, cellar.purpose_level, _bool(cellar.is_overflow),
-                cellar.max_capacity, cellar.threshold, cellar.location_rule, cellar.layout,
-                _dt(cellar.created_at), _dt(cellar.updated_at),
+                cellar.id,
+                cellar.name,
+                cellar.purpose_level,
+                _bool(cellar.is_overflow),
+                cellar.max_capacity,
+                cellar.threshold,
+                cellar.location_rule,
+                cellar.layout,
+                _dt(cellar.created_at),
+                _dt(cellar.updated_at),
             ),
         )
     except sqlite3.IntegrityError as exc:
@@ -227,12 +269,12 @@ def insert_cellar(conn: sqlite3.Connection, cellar: Cellar) -> Cellar:
     return cellar
 
 
-def get_cellar(conn: sqlite3.Connection, cellar_id: str) -> Optional[Cellar]:
+def get_cellar(conn: sqlite3.Connection, cellar_id: str) -> Cellar | None:
     row = conn.execute("SELECT * FROM cellars WHERE id = ?", (cellar_id,)).fetchone()
     return _row_to_cellar(row) if row else None
 
 
-def get_cellar_by_name(conn: sqlite3.Connection, name: str) -> Optional[Cellar]:
+def get_cellar_by_name(conn: sqlite3.Connection, name: str) -> Cellar | None:
     row = conn.execute(
         "SELECT * FROM cellars WHERE lower(trim(name)) = lower(trim(?))", (name,)
     ).fetchone()
@@ -240,7 +282,9 @@ def get_cellar_by_name(conn: sqlite3.Connection, name: str) -> Optional[Cellar]:
 
 
 def list_cellars(conn: sqlite3.Connection) -> list[Cellar]:
-    rows = conn.execute("SELECT * FROM cellars ORDER BY is_overflow, purpose_level, name").fetchall()
+    rows = conn.execute(
+        "SELECT * FROM cellars ORDER BY is_overflow, purpose_level, name"
+    ).fetchall()
     return [_row_to_cellar(r) for r in rows]
 
 
@@ -255,9 +299,16 @@ def update_cellar(conn: sqlite3.Connection, cellar: Cellar, expected_version: in
             WHERE id=? AND version=?
             """,
             (
-                cellar.name, cellar.purpose_level, _bool(cellar.is_overflow),
-                cellar.max_capacity, cellar.threshold, cellar.location_rule, cellar.layout,
-                _dt(now), cellar.id, expected_version,
+                cellar.name,
+                cellar.purpose_level,
+                _bool(cellar.is_overflow),
+                cellar.max_capacity,
+                cellar.threshold,
+                cellar.location_rule,
+                cellar.layout,
+                _dt(now),
+                cellar.id,
+                expected_version,
             ),
         )
     except sqlite3.IntegrityError as exc:
@@ -296,6 +347,7 @@ def cellar_fill(conn: sqlite3.Connection, cellar_id: str) -> int:
 # holdings
 # ---------------------------------------------------------------------------
 
+
 def _row_to_holding(row: sqlite3.Row) -> Holding:
     return Holding(
         id=row["id"],
@@ -321,23 +373,30 @@ def insert_holding(conn: sqlite3.Connection, holding: Holding) -> Holding:
         ) VALUES (?,?,?,?,?,?,?,?,?,?,?)
         """,
         (
-            holding.id, holding.wine_id, holding.cellar_id, holding.location,
-            holding.quantity, holding.state, holding.price_bought,
-            _d(holding.acquired_date), _dt(holding.created_at), _dt(holding.updated_at),
+            holding.id,
+            holding.wine_id,
+            holding.cellar_id,
+            holding.location,
+            holding.quantity,
+            holding.state,
+            holding.price_bought,
+            _d(holding.acquired_date),
+            _dt(holding.created_at),
+            _dt(holding.updated_at),
             holding.version,
         ),
     )
     return holding
 
 
-def get_holding(conn: sqlite3.Connection, holding_id: str) -> Optional[Holding]:
+def get_holding(conn: sqlite3.Connection, holding_id: str) -> Holding | None:
     row = conn.execute("SELECT * FROM holdings WHERE id = ?", (holding_id,)).fetchone()
     return _row_to_holding(row) if row else None
 
 
 def find_active_holding(
-    conn: sqlite3.Connection, wine_id: str, cellar_id: Optional[str], location: Optional[str]
-) -> Optional[Holding]:
+    conn: sqlite3.Connection, wine_id: str, cellar_id: str | None, location: str | None
+) -> Holding | None:
     """Find an existing IN_CELLAR holding of the same wine at the same spot,
     so add/import/move operations can merge into it instead of fragmenting
     quantities across many near-duplicate rows."""
@@ -356,9 +415,9 @@ def find_active_holding(
 
 def list_holdings(
     conn: sqlite3.Connection,
-    wine_id: Optional[str] = None,
-    cellar_id: Optional[str] = None,
-    state: Optional[str] = None,
+    wine_id: str | None = None,
+    cellar_id: str | None = None,
+    state: str | None = None,
     active_only: bool = False,
 ) -> list[Holding]:
     clauses = []
@@ -389,9 +448,15 @@ def update_holding(conn: sqlite3.Connection, holding: Holding, expected_version:
         WHERE id=? AND version=?
         """,
         (
-            holding.cellar_id, holding.location, holding.quantity, holding.state,
-            holding.price_bought, _d(holding.acquired_date), _dt(now),
-            holding.id, expected_version,
+            holding.cellar_id,
+            holding.location,
+            holding.quantity,
+            holding.state,
+            holding.price_bought,
+            _d(holding.acquired_date),
+            _dt(now),
+            holding.id,
+            expected_version,
         ),
     )
     if cur.rowcount == 0:
@@ -405,7 +470,7 @@ def update_holding(conn: sqlite3.Connection, holding: Holding, expected_version:
 
 
 def list_holdings_with_wines(
-    conn: sqlite3.Connection, cellar_id: Optional[str] = None, active_only: bool = True
+    conn: sqlite3.Connection, cellar_id: str | None = None, active_only: bool = True
 ) -> list[tuple[Holding, Wine]]:
     """Convenience join used heavily by stats/recommendations/export."""
     clauses = []
@@ -428,21 +493,41 @@ def list_holdings_with_wines(
     results = []
     for r in rows:
         holding = Holding(
-            id=r["h_id"], wine_id=r["wine_id"], cellar_id=r["cellar_id"], location=r["location"],
-            quantity=r["quantity"], state=r["state"], price_bought=r["price_bought"],
-            acquired_date=_parse_date(r["acquired_date"]), created_at=_parse_dt(r["created_at"]),
-            updated_at=_parse_dt(r["updated_at"]), version=r["version"],
+            id=r["h_id"],
+            wine_id=r["wine_id"],
+            cellar_id=r["cellar_id"],
+            location=r["location"],
+            quantity=r["quantity"],
+            state=r["state"],
+            price_bought=r["price_bought"],
+            acquired_date=_parse_date(r["acquired_date"]),
+            created_at=_parse_dt(r["created_at"]),
+            updated_at=_parse_dt(r["updated_at"]),
+            version=r["version"],
         )
         wine = Wine(
-            id=r["w_id"], producer=r["producer"], cuvee=r["cuvee"], appellation=r["appellation"],
-            vintage=r["vintage"], color=r["color"], area=r["area"], format=r["format"],
-            format_ml=r["format_ml"], drink_after=_parse_date(r["drink_after"]),
-            drink_after_confidence=r["drink_after_confidence"], drink_after_source=r["drink_after_source"],
-            drink_before=_parse_date(r["drink_before"]), drink_before_confidence=r["drink_before_confidence"],
-            drink_before_source=r["drink_before_source"], market_value=r["market_value"],
-            market_value_confidence=r["market_value_confidence"], market_value_source=r["market_value_source"],
+            id=r["w_id"],
+            producer=r["producer"],
+            cuvee=r["cuvee"],
+            appellation=r["appellation"],
+            vintage=r["vintage"],
+            color=r["color"],
+            area=r["area"],
+            format=r["format"],
+            format_ml=r["format_ml"],
+            drink_after=_parse_date(r["drink_after"]),
+            drink_after_confidence=r["drink_after_confidence"],
+            drink_after_source=r["drink_after_source"],
+            drink_before=_parse_date(r["drink_before"]),
+            drink_before_confidence=r["drink_before_confidence"],
+            drink_before_source=r["drink_before_source"],
+            market_value=r["market_value"],
+            market_value_confidence=r["market_value_confidence"],
+            market_value_source=r["market_value_source"],
             market_value_updated_at=_parse_dt(r["market_value_updated_at"]),
-            advice_experience=r["advice_experience"], advice_pairing=r["advice_pairing"], notes=r["notes"],
+            advice_experience=r["advice_experience"],
+            advice_pairing=r["advice_pairing"],
+            notes=r["notes"],
         )
         results.append((holding, wine))
     return results
@@ -451,6 +536,7 @@ def list_holdings_with_wines(
 # ---------------------------------------------------------------------------
 # movements (the journal)
 # ---------------------------------------------------------------------------
+
 
 def _row_to_movement(row: sqlite3.Row) -> Movement:
     return Movement(
@@ -472,7 +558,7 @@ def _row_to_movement(row: sqlite3.Row) -> Movement:
     )
 
 
-def insert_movement(conn: sqlite3.Connection, movement: Movement) -> Optional[Movement]:
+def insert_movement(conn: sqlite3.Connection, movement: Movement) -> Movement | None:
     """Insert one immutable journal entry.
 
     Server-side offline idempotency is handled *before* stock changes through
@@ -490,11 +576,21 @@ def insert_movement(conn: sqlite3.Connection, movement: Movement) -> Optional[Mo
             ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             """,
             (
-                movement.id, movement.action, movement.wine_id, movement.holding_id,
-                movement.from_cellar_id, movement.from_location, movement.to_cellar_id,
-                movement.to_location, movement.quantity_delta, _dt(movement.occurred_at),
-                _dt(movement.recorded_at), movement.user_id, movement.note,
-                movement.details_json, movement.client_op_id,
+                movement.id,
+                movement.action,
+                movement.wine_id,
+                movement.holding_id,
+                movement.from_cellar_id,
+                movement.from_location,
+                movement.to_cellar_id,
+                movement.to_location,
+                movement.quantity_delta,
+                _dt(movement.occurred_at),
+                _dt(movement.recorded_at),
+                movement.user_id,
+                movement.note,
+                movement.details_json,
+                movement.client_op_id,
             ),
         )
     except sqlite3.IntegrityError:
@@ -504,23 +600,21 @@ def insert_movement(conn: sqlite3.Connection, movement: Movement) -> Optional[Mo
     return movement
 
 
-def get_movement(conn: sqlite3.Connection, movement_id: str) -> Optional[Movement]:
+def get_movement(conn: sqlite3.Connection, movement_id: str) -> Movement | None:
     row = conn.execute("SELECT * FROM movements WHERE id = ?", (movement_id,)).fetchone()
     return _row_to_movement(row) if row else None
 
 
 def get_movement_by_client_op_id(
-    conn: sqlite3.Connection, client_op_id: Optional[str]
-) -> Optional[Movement]:
+    conn: sqlite3.Connection, client_op_id: str | None
+) -> Movement | None:
     if not client_op_id:
         return None
-    row = conn.execute(
-        "SELECT * FROM movements WHERE client_op_id = ?", (client_op_id,)
-    ).fetchone()
+    row = conn.execute("SELECT * FROM movements WHERE client_op_id = ?", (client_op_id,)).fetchone()
     return _row_to_movement(row) if row else None
 
 
-def get_processed_operation(conn: sqlite3.Connection, client_op_id: str) -> Optional[dict]:
+def get_processed_operation(conn: sqlite3.Connection, client_op_id: str) -> dict | None:
     row = conn.execute(
         "SELECT * FROM processed_operations WHERE client_op_id = ?", (client_op_id,)
     ).fetchone()
@@ -529,10 +623,10 @@ def get_processed_operation(conn: sqlite3.Connection, client_op_id: str) -> Opti
 
 def reserve_client_operation(
     conn: sqlite3.Connection,
-    client_op_id: Optional[str],
+    client_op_id: str | None,
     action: str,
     request_fingerprint: str,
-) -> tuple[bool, Optional[dict]]:
+) -> tuple[bool, dict | None]:
     """Reserve an offline operation before any stock mutation.
 
     Returns ``(True, None)`` for a new/no-id operation. For an already completed
@@ -599,7 +693,10 @@ def reserve_client_operation(
         operation = get_processed_operation(conn, client_op_id)
         if operation is None:
             raise
-        if operation["action"] != action or operation.get("request_fingerprint") != request_fingerprint:
+        if (
+            operation["action"] != action
+            or operation.get("request_fingerprint") != request_fingerprint
+        ):
             raise ConflictError(
                 f"Client operation {client_op_id} was replayed with different semantics"
             )
@@ -610,7 +707,7 @@ def reserve_client_operation(
 
 def complete_client_operation(
     conn: sqlite3.Connection,
-    client_op_id: Optional[str],
+    client_op_id: str | None,
     *,
     holding_id: str,
     movement_id: str,
@@ -631,10 +728,10 @@ def complete_client_operation(
 
 def list_movements(
     conn: sqlite3.Connection,
-    wine_id: Optional[str] = None,
-    cellar_id: Optional[str] = None,
-    holding_id: Optional[str] = None,
-    since: Optional[datetime] = None,
+    wine_id: str | None = None,
+    cellar_id: str | None = None,
+    holding_id: str | None = None,
+    since: datetime | None = None,
     limit: int = 200,
 ) -> list[Movement]:
     clauses = []
@@ -663,10 +760,14 @@ def list_movements(
 # users
 # ---------------------------------------------------------------------------
 
+
 def _row_to_user(row: sqlite3.Row) -> User:
     return User(
-        id=row["id"], username=row["username"], password_hash=row["password_hash"],
-        password_salt=row["password_salt"], locale=row["locale"],
+        id=row["id"],
+        username=row["username"],
+        password_hash=row["password_hash"],
+        password_salt=row["password_salt"],
+        locale=row["locale"],
         created_at=_parse_dt(row["created_at"]),
     )
 
@@ -676,20 +777,26 @@ def insert_user(conn: sqlite3.Connection, user: User) -> User:
         conn.execute(
             "INSERT INTO users (id, username, password_hash, password_salt, locale, created_at) "
             "VALUES (?,?,?,?,?,?)",
-            (user.id, user.username, user.password_hash, user.password_salt, user.locale,
-             _dt(user.created_at)),
+            (
+                user.id,
+                user.username,
+                user.password_hash,
+                user.password_salt,
+                user.locale,
+                _dt(user.created_at),
+            ),
         )
     except sqlite3.IntegrityError as exc:
         raise ConflictError(f"Username '{user.username}' is already taken") from exc
     return user
 
 
-def get_user(conn: sqlite3.Connection, user_id: str) -> Optional[User]:
+def get_user(conn: sqlite3.Connection, user_id: str) -> User | None:
     row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
     return _row_to_user(row) if row else None
 
 
-def get_user_by_username(conn: sqlite3.Connection, username: str) -> Optional[User]:
+def get_user_by_username(conn: sqlite3.Connection, username: str) -> User | None:
     row = conn.execute(
         "SELECT * FROM users WHERE lower(username) = lower(?)", (username,)
     ).fetchone()
@@ -709,6 +816,7 @@ def list_users(conn: sqlite3.Connection) -> list[User]:
 # photo hashes (bottle-photo recognition)
 # ---------------------------------------------------------------------------
 
+
 def insert_photo_hash(conn: sqlite3.Connection, hash_id: str, wine_id: str, phash: str) -> None:
     conn.execute(
         "INSERT INTO photo_hashes (id, wine_id, phash, created_at) VALUES (?,?,?,?)",
@@ -716,7 +824,9 @@ def insert_photo_hash(conn: sqlite3.Connection, hash_id: str, wine_id: str, phas
     )
 
 
-def list_photo_hashes(conn: sqlite3.Connection, wine_id: Optional[str] = None) -> list[tuple[str, str]]:
+def list_photo_hashes(
+    conn: sqlite3.Connection, wine_id: str | None = None
+) -> list[tuple[str, str]]:
     if wine_id:
         rows = conn.execute(
             "SELECT wine_id, phash FROM photo_hashes WHERE wine_id = ?", (wine_id,)

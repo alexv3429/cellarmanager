@@ -18,6 +18,7 @@ Both signals degrade gracefully and independently: if `pytesseract` or the
 crash) and the photo-hash signal alone is still used, and vice versa if
 Pillow is missing.
 """
+
 from __future__ import annotations
 
 import difflib
@@ -25,18 +26,19 @@ import io
 import re
 import unicodedata
 from dataclasses import dataclass, field
-from typing import Optional
 
 from app.core.domain import Wine
 
 try:
     from PIL import Image
+
     PILLOW_AVAILABLE = True
 except ImportError:  # pragma: no cover - exercised only when Pillow is missing
     PILLOW_AVAILABLE = False
 
 try:
     import pytesseract
+
     PYTESSERACT_AVAILABLE = True
 except ImportError:  # pragma: no cover - exercised only when pytesseract is missing
     PYTESSERACT_AVAILABLE = False
@@ -54,6 +56,7 @@ class RecognitionUnavailable(Exception):
 # ---------------------------------------------------------------------------
 # perceptual-hash photo matching ("have I photographed this bottle before")
 # ---------------------------------------------------------------------------
+
 
 def compute_phash(image_bytes: bytes) -> str:
     """A 64-bit average hash, computed directly with Pillow (no need for the
@@ -80,7 +83,9 @@ class PhotoMatch:
     confidence: float  # 0..1, 1 = identical hash
 
 
-def match_photo_hash(query_image_bytes: bytes, known_hashes: list[tuple[str, str]], *, top_k: int = 3) -> list[PhotoMatch]:
+def match_photo_hash(
+    query_image_bytes: bytes, known_hashes: list[tuple[str, str]], *, top_k: int = 3
+) -> list[PhotoMatch]:
     """`known_hashes` is a list of (wine_id, phash) pairs - see
     ``repositories.list_photo_hashes``."""
     query_hash = compute_phash(query_image_bytes)
@@ -96,6 +101,7 @@ def match_photo_hash(query_image_bytes: bytes, known_hashes: list[tuple[str, str
 # ---------------------------------------------------------------------------
 # OCR label reading + fuzzy catalog matching
 # ---------------------------------------------------------------------------
+
 
 def _tesseract_languages() -> str:
     """Use French+English if the French language pack is installed (common
@@ -140,9 +146,30 @@ _TOKEN_RE = re.compile(r"[A-Z0-9]+")
 # identity-matching token set so scoring is driven by the actually
 # distinctive words (producer surname, cuvée name, appellation).
 _LABEL_STOPWORDS = {
-    "DE", "DU", "DES", "LA", "LE", "LES", "ET", "EN", "AU", "AUX",
-    "CHATEAU", "DOMAINE", "CLOS", "MAS", "CAVE", "CAVES", "VIN", "VINS",
-    "APPELLATION", "CONTROLEE", "MIS", "BOUTEILLE", "PRODUCE", "PRODUCT",
+    "DE",
+    "DU",
+    "DES",
+    "LA",
+    "LE",
+    "LES",
+    "ET",
+    "EN",
+    "AU",
+    "AUX",
+    "CHATEAU",
+    "DOMAINE",
+    "CLOS",
+    "MAS",
+    "CAVE",
+    "CAVES",
+    "VIN",
+    "VINS",
+    "APPELLATION",
+    "CONTROLEE",
+    "MIS",
+    "BOUTEILLE",
+    "PRODUCE",
+    "PRODUCT",
 }
 
 
@@ -200,18 +227,19 @@ def match_text_to_catalog(ocr_text: str, wines: list[Wine], *, top_k: int = 3) -
 # combined entry point
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class CombinedMatch:
     wine_id: str
     confidence: float
-    ocr_score: Optional[float] = None
-    photo_score: Optional[float] = None
+    ocr_score: float | None = None
+    photo_score: float | None = None
     matched_via: list[str] = field(default_factory=list)
 
 
 @dataclass
 class RecognitionResult:
-    ocr_text: Optional[str]
+    ocr_text: str | None
     ocr_available: bool
     photo_match_available: bool
     matches: list[CombinedMatch] = field(default_factory=list)
@@ -223,7 +251,7 @@ def recognize_bottle(
     """Run OCR-based catalog matching and photo-hash matching, and combine
     them. Either signal can be unavailable (missing dependency) without
     failing the whole request - the result says which ones ran."""
-    ocr_text: Optional[str] = None
+    ocr_text: str | None = None
     ocr_available = True
     text_scores: dict[str, float] = {}
     try:
@@ -245,18 +273,29 @@ def recognize_bottle(
     for wine_id in set(text_scores) | set(photo_scores):
         ocr_score = text_scores.get(wine_id)
         photo_score = photo_scores.get(wine_id)
-        matched_via = [name for name, val in (("ocr", ocr_score), ("photo_match", photo_score)) if val is not None]
+        matched_via = [
+            name
+            for name, val in (("ocr", ocr_score), ("photo_match", photo_score))
+            if val is not None
+        ]
         parts = [v for v in (ocr_score, photo_score) if v is not None]
         # Agreement bonus: a wine flagged by both independent signals is much
         # more likely to be the right one than a wine flagged by only one.
         agreement_bonus = 0.1 if len(parts) > 1 else 0.0
-        combined.append(CombinedMatch(
-            wine_id=wine_id, confidence=min(1.0, max(parts) + agreement_bonus),
-            ocr_score=ocr_score, photo_score=photo_score, matched_via=matched_via,
-        ))
+        combined.append(
+            CombinedMatch(
+                wine_id=wine_id,
+                confidence=min(1.0, max(parts) + agreement_bonus),
+                ocr_score=ocr_score,
+                photo_score=photo_score,
+                matched_via=matched_via,
+            )
+        )
     combined.sort(key=lambda m: m.confidence, reverse=True)
 
     return RecognitionResult(
-        ocr_text=ocr_text, ocr_available=ocr_available, photo_match_available=photo_available,
+        ocr_text=ocr_text,
+        ocr_available=ocr_available,
+        photo_match_available=photo_available,
         matches=combined[:top_k],
     )

@@ -2,9 +2,12 @@
 
 ## Prerequisites
 
-* Python 3.11+ (only if running without Docker)
-* A modern browser (for the frontend - no Node/build step needed to run it)
-* Docker, for the recommended path below
+* Docker for the recommended daily-use deployment
+* A modern browser
+* For development: Git, uv, Node.js 22+, Bash/make, and optionally GitHub CLI
+* Tesseract plus the French language pack when testing OCR locally
+
+Python environments and dependencies are managed from `pyproject.toml` and the committed `uv.lock`; manual `venv`/`pip install` setup is no longer the supported developer path.
 
 ## Recommended: the easiest complete path
 
@@ -115,26 +118,18 @@ login - see `docs/security.md` for hardening before doing this).
 
 ## Local development (for hacking on the code, not for daily phone use)
 
+Install uv and Node.js 22+, then from the repository root:
+
 ```bash
-cd backend
-python3 -m venv .venv
-source .venv/bin/activate        # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-pip install -r requirements-dev.txt   # only needed to run tests
-
-cp .env.example .env
-# edit .env and set WINECELLAR_SECRET_KEY, e.g.:
-python3 -c "import secrets; print(secrets.token_hex(32))"
-
-python run.py
+./scripts/bootstrap_dev.sh
+cp backend/.env.example backend/.env
+# edit backend/.env and set WINECELLAR_SECRET_KEY
+make run
 ```
 
-Then open `http://localhost:8000/` - the backend serves the frontend
-directly (it mounts `../frontend` as static files). This is `localhost`,
-which browsers treat as secure by default, so the service worker/install
-prompt do work here too - just only on this one computer, which is why
-it's not the recommended path for actually using this day to day from your
-phone.
+`bootstrap_dev.sh` synchronizes `.venv` from `uv.lock`, applies the one-time Ruff migration, installs commit/push hooks, and runs the complete local CI gate. Subsequent work normally uses `make format`, `make test`, and `make ci`. See `docs/development.md`.
+
+The application opens at `http://localhost:8000/`. `localhost` is treated as a secure context by browsers, so the PWA and service worker work for local testing.
 
 ### Try it with the sample data
 
@@ -170,3 +165,24 @@ outside Docker) backed up, since it's the entire database, and read
 See `.env.example` in `backend/` (or `docker/.env.example` for the Docker
 path) for the full list with explanations: secret key, database path,
 token lifetime, CORS origins, login throttle.
+
+## Dependency and workflow maintenance
+
+Do not edit `backend/requirements*.txt` directly. Change dependencies with `uv add` / `uv add --dev`, commit `pyproject.toml` and `uv.lock`, regenerate compatibility exports with `make requirements`, and run `make ci`. Activate required GitHub checks using `docs/github-protection.md`.
+
+<!-- modern-dev-portability-fix -->
+## Portable uv lock files and virtual environments
+
+The committed `uv.lock` must use public, portable package sources. It must not
+contain developer-specific, corporate-only, or build-environment registry URLs.
+Generate or verify it with `make lock` and `make ci`; the repository policy check
+rejects known private build-registry references.
+
+CellarManager's uv environment is the repository-level `.venv`. If an older
+`backend/.venv` is active, deactivate it or run `unset VIRTUAL_ENV` before setup.
+The bootstrap script also ignores that obsolete activation automatically.
+
+If dependency installation fails against `pypi.org` or
+`files.pythonhosted.org`, inspect corporate proxy/TLS settings. A failure against
+`internal.api.openai.org` means an old, non-portable lockfile is still present.
+

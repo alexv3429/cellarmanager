@@ -13,11 +13,12 @@ The server validates each scheme, generates an explicit location catalog in
 the layout JSON, and performs exact matching against that catalog. Legacy
 plain-prefix and regular-expression rules remain supported in advanced mode.
 """
+
 from __future__ import annotations
 
 import json
 import re
-from typing import Any, Optional
+from typing import Any
 
 from app.core.domain import Cellar
 from app.core.exceptions import ConfigurationError
@@ -56,7 +57,7 @@ def rule_matches(rule: str, location: str) -> bool:
     return location.strip().casefold().startswith(rule.strip().casefold())
 
 
-def _layout_object(layout: Optional[str]) -> dict[str, Any]:
+def _layout_object(layout: str | None) -> dict[str, Any]:
     if not layout:
         return {}
     try:
@@ -202,7 +203,9 @@ def normalize_grid_scheme(raw: dict[str, Any]) -> dict[str, Any]:
         raise ConfigurationError("Unsupported location code order")
     count = (ord(column_end) - ord(column_start) + 1) * (row_end - row_start + 1)
     if count > _MAX_LOCATIONS:
-        raise ConfigurationError(f"This structure would create {count} positions; maximum {_MAX_LOCATIONS}")
+        raise ConfigurationError(
+            f"This structure would create {count} positions; maximum {_MAX_LOCATIONS}"
+        )
     horizontal_direction = str(raw.get("horizontal_direction") or "ltr")
     if horizontal_direction not in {"ltr", "rtl"}:
         raise ConfigurationError("Unsupported horizontal direction")
@@ -236,8 +239,16 @@ def _normalize_grid_sub(raw: dict[str, Any]) -> dict[str, Any]:
         * (sub_end - sub_start + 1)
     )
     if count > _MAX_LOCATIONS:
-        raise ConfigurationError(f"This structure would create {count} positions; maximum {_MAX_LOCATIONS}")
-    return {**base, "kind": "grid_sub", "sub_start": sub_start, "sub_end": sub_end, "sub_separator": sub_separator}
+        raise ConfigurationError(
+            f"This structure would create {count} positions; maximum {_MAX_LOCATIONS}"
+        )
+    return {
+        **base,
+        "kind": "grid_sub",
+        "sub_start": sub_start,
+        "sub_end": sub_end,
+        "sub_separator": sub_separator,
+    }
 
 
 def _normalize_loose(raw: dict[str, Any]) -> dict[str, Any]:
@@ -258,7 +269,9 @@ def _normalize_sequential(raw: dict[str, Any]) -> dict[str, Any]:
     rows = _integer(raw.get("rows", 7), "Number of rows", minimum=1, maximum=100)
     columns = _integer(raw.get("columns", 4), "Number of columns", minimum=1, maximum=100)
     capacity = rows * columns
-    position_count = _integer(raw.get("position_count", capacity), "Number of positions", minimum=1, maximum=capacity)
+    position_count = _integer(
+        raw.get("position_count", capacity), "Number of positions", minimum=1, maximum=capacity
+    )
     start_number = _excel_label_to_number(str(raw.get("start_label") or "A"))
     if start_number + position_count - 1 > _excel_label_to_number("ZZZ"):
         raise ConfigurationError("Sequential labels cannot go beyond ZZZ")
@@ -291,7 +304,9 @@ def _normalize_depth(raw: dict[str, Any]) -> dict[str, Any]:
     row_end = _integer(raw.get("row_end", 9), "Last row")
     if row_start > row_end:
         raise ConfigurationError("The first row must be less than or equal to the last row")
-    depths = _parse_depths(raw.get("depths") or [{"code": "F", "label": "Front"}, {"code": "B", "label": "Back"}])
+    depths = _parse_depths(
+        raw.get("depths") or [{"code": "F", "label": "Front"}, {"code": "B", "label": "Back"}]
+    )
     order = str(raw.get("order") or "prefix_row_depth")
     if order not in _DEPTH_ORDERS:
         raise ConfigurationError("Unsupported depth code order")
@@ -300,7 +315,9 @@ def _normalize_depth(raw: dict[str, Any]) -> dict[str, Any]:
         raise ConfigurationError("Unsupported vertical direction")
     count = (row_end - row_start + 1) * len(depths)
     if count > _MAX_LOCATIONS:
-        raise ConfigurationError(f"This structure would create {count} positions; maximum {_MAX_LOCATIONS}")
+        raise ConfigurationError(
+            f"This structure would create {count} positions; maximum {_MAX_LOCATIONS}"
+        )
     return {
         **common,
         "row_start": row_start,
@@ -328,7 +345,7 @@ def normalize_location_scheme(raw: dict[str, Any]) -> dict[str, Any]:
     raise ConfigurationError(f"Unsupported location structure '{kind}'")
 
 
-def get_location_scheme(layout: Optional[str]) -> Optional[dict[str, Any]]:
+def get_location_scheme(layout: str | None) -> dict[str, Any] | None:
     """Return a validated structured scheme, or ``None`` for legacy/custom layouts."""
     if not layout:
         return None
@@ -356,7 +373,11 @@ def _join(parts: list[Any], separator: str) -> str:
 
 
 def _grid_parts(scheme: dict[str, Any], column: str, row: int) -> list[str]:
-    return [str(row), column] if scheme["order"] in {"prefix_row_column", "row_column"} else [column, str(row)]
+    return (
+        [str(row), column]
+        if scheme["order"] in {"prefix_row_column", "row_column"}
+        else [column, str(row)]
+    )
 
 
 def _with_prefix(scheme: dict[str, Any], parts: list[str]) -> list[str]:
@@ -368,8 +389,14 @@ def _with_prefix(scheme: dict[str, Any], parts: list[str]) -> list[str]:
 def _sequential_coordinates(scheme: dict[str, Any]) -> list[tuple[int, int]]:
     visual_rows = list(range(scheme["rows"]))
     visual_columns = list(range(scheme["columns"]))
-    row_order = visual_rows if scheme["vertical_direction"] == "ttb" else list(reversed(visual_rows))
-    column_order = visual_columns if scheme["horizontal_direction"] == "ltr" else list(reversed(visual_columns))
+    row_order = (
+        visual_rows if scheme["vertical_direction"] == "ttb" else list(reversed(visual_rows))
+    )
+    column_order = (
+        visual_columns
+        if scheme["horizontal_direction"] == "ltr"
+        else list(reversed(visual_columns))
+    )
     if scheme["fill_order"] == "column_major":
         return [(row, column) for column in column_order for row in row_order]
     return [(row, column) for row in row_order for column in column_order]
@@ -383,61 +410,79 @@ def generate_locations(scheme: dict[str, Any]) -> list[dict[str, Any]]:
 
     if kind == "loose":
         if value["prefix"]:
-            items.append({
-                "row": 0,
-                "column": 0,
-                "internal": "",
-                "import": value["prefix"],
-                "label": "Unspecified",
-                "unspecified": True,
-            })
+            items.append(
+                {
+                    "row": 0,
+                    "column": 0,
+                    "internal": "",
+                    "import": value["prefix"],
+                    "label": "Unspecified",
+                    "unspecified": True,
+                }
+            )
         for index, container in enumerate(value["containers"]):
-            import_code = _join([value["prefix"], container], value["separator"]) if value["prefix"] else container
-            items.append({
-                "row": index + 1,
-                "column": 0,
-                "internal": container,
-                "import": import_code,
-                "label": container,
-                "container": container,
-            })
+            import_code = (
+                _join([value["prefix"], container], value["separator"])
+                if value["prefix"]
+                else container
+            )
+            items.append(
+                {
+                    "row": index + 1,
+                    "column": 0,
+                    "internal": container,
+                    "import": import_code,
+                    "label": container,
+                    "container": container,
+                }
+            )
         return items
 
     if kind in {"grid", "grid_sub"}:
         rows = _rows(value)
         columns = _columns(value)
         for row_index, row in enumerate(rows):
-            physical_row = len(rows) - 1 - row_index if value["vertical_direction"] == "btt" else row_index
+            physical_row = (
+                len(rows) - 1 - row_index if value["vertical_direction"] == "btt" else row_index
+            )
             for column_index, column in enumerate(columns):
-                physical_column = len(columns) - 1 - column_index if value["horizontal_direction"] == "rtl" else column_index
+                physical_column = (
+                    len(columns) - 1 - column_index
+                    if value["horizontal_direction"] == "rtl"
+                    else column_index
+                )
                 base_parts = _grid_parts(value, column, row)
                 base_internal = _join(base_parts, value["separator"])
                 base_import = _join(_with_prefix(value, base_parts), value["separator"])
                 if kind == "grid":
-                    items.append({
-                        "row": physical_row,
-                        "column": physical_column,
-                        "row_value": row,
-                        "column_value": column,
-                        "internal": base_internal,
-                        "import": base_import,
-                        "label": base_internal,
-                    })
+                    items.append(
+                        {
+                            "row": physical_row,
+                            "column": physical_column,
+                            "row_value": row,
+                            "column_value": column,
+                            "internal": base_internal,
+                            "import": base_import,
+                            "label": base_internal,
+                        }
+                    )
                     continue
                 for sub in range(value["sub_start"], value["sub_end"] + 1):
                     internal = f"{base_internal}{value['sub_separator']}{sub}"
                     import_code = f"{base_import}{value['sub_separator']}{sub}"
-                    items.append({
-                        "row": physical_row,
-                        "column": physical_column,
-                        "row_value": row,
-                        "column_value": column,
-                        "sub_position": sub,
-                        "group": base_internal,
-                        "internal": internal,
-                        "import": import_code,
-                        "label": str(sub),
-                    })
+                    items.append(
+                        {
+                            "row": physical_row,
+                            "column": physical_column,
+                            "row_value": row,
+                            "column_value": column,
+                            "sub_position": sub,
+                            "group": base_internal,
+                            "internal": internal,
+                            "import": import_code,
+                            "label": str(sub),
+                        }
+                    )
         return items
 
     if kind == "sequential":
@@ -445,39 +490,51 @@ def generate_locations(scheme: dict[str, Any]) -> list[dict[str, Any]]:
         coordinates = _sequential_coordinates(value)[: value["position_count"]]
         for index, (row, column) in enumerate(coordinates):
             label = _number_to_excel_label(start + index)
-            import_code = _join([value["prefix"], label], value["separator"]) if value["prefix"] else label
-            items.append({
-                "row": row,
-                "column": column,
-                "sequence": index + 1,
-                "internal": label,
-                "import": import_code,
-                "label": label,
-            })
+            import_code = (
+                _join([value["prefix"], label], value["separator"]) if value["prefix"] else label
+            )
+            items.append(
+                {
+                    "row": row,
+                    "column": column,
+                    "sequence": index + 1,
+                    "internal": label,
+                    "import": import_code,
+                    "label": label,
+                }
+            )
         items.sort(key=lambda item: (item["row"], item["column"]))
         return items
 
     if kind == "depth":
         rows = _rows(value)
         for row_index, row in enumerate(rows):
-            physical_row = len(rows) - 1 - row_index if value["vertical_direction"] == "btt" else row_index
+            physical_row = (
+                len(rows) - 1 - row_index if value["vertical_direction"] == "btt" else row_index
+            )
             for depth_index, depth in enumerate(value["depths"]):
                 if value["order"] in {"prefix_depth_row", "depth_row"}:
                     parts = [depth["code"], str(row)]
                 else:
                     parts = [str(row), depth["code"]]
                 internal = _join(parts, value["separator"])
-                import_parts = [value["prefix"], *parts] if value["prefix"] and value["order"].startswith("prefix_") else parts
-                items.append({
-                    "row": physical_row,
-                    "column": depth_index,
-                    "row_value": row,
-                    "depth": depth["code"],
-                    "depth_label": depth["label"],
-                    "internal": internal,
-                    "import": _join(import_parts, value["separator"]),
-                    "label": depth["label"],
-                })
+                import_parts = (
+                    [value["prefix"], *parts]
+                    if value["prefix"] and value["order"].startswith("prefix_")
+                    else parts
+                )
+                items.append(
+                    {
+                        "row": physical_row,
+                        "column": depth_index,
+                        "row_value": row,
+                        "depth": depth["code"],
+                        "depth_label": depth["label"],
+                        "internal": internal,
+                        "import": _join(import_parts, value["separator"]),
+                        "label": depth["label"],
+                    }
+                )
         return items
 
     raise ConfigurationError(f"Unsupported location structure '{kind}'")
@@ -491,11 +548,19 @@ def grid_locations(scheme: dict[str, Any]) -> list[dict[str, Any]]:
 
 def _grid_pattern(scheme: dict[str, Any]) -> str:
     columns = _columns(scheme)
-    column = re.escape(columns[0]) if len(columns) == 1 else f"[{re.escape(columns[0])}-{re.escape(columns[-1])}]"
+    column = (
+        re.escape(columns[0])
+        if len(columns) == 1
+        else f"[{re.escape(columns[0])}-{re.escape(columns[-1])}]"
+    )
     rows = sorted((str(row) for row in _rows(scheme)), key=lambda text: (-len(text), text))
     row = "(?:" + "|".join(re.escape(text) for text in rows) + ")"
     separator = re.escape(scheme["separator"])
-    return f"{row}{separator}{column}" if scheme["order"] in {"prefix_row_column", "row_column"} else f"{column}{separator}{row}"
+    return (
+        f"{row}{separator}{column}"
+        if scheme["order"] in {"prefix_row_column", "row_column"}
+        else f"{column}{separator}{row}"
+    )
 
 
 def build_grid_rule(scheme: dict[str, Any]) -> str:
@@ -507,7 +572,7 @@ def build_grid_rule(scheme: dict[str, Any]) -> str:
     return f"^(?P<sub>{internal})$"
 
 
-def build_location_rule(scheme: dict[str, Any]) -> Optional[str]:
+def build_location_rule(scheme: dict[str, Any]) -> str | None:
     value = normalize_location_scheme(scheme)
     if value["kind"] == "grid":
         return build_grid_rule(value)
@@ -524,9 +589,9 @@ def build_location_rule(scheme: dict[str, Any]) -> Optional[str]:
 
 
 def normalize_location_configuration(
-    location_rule: Optional[str],
-    layout: Optional[str],
-) -> tuple[Optional[str], Optional[str]]:
+    location_rule: str | None,
+    layout: str | None,
+) -> tuple[str | None, str | None]:
     """Validate a structured scheme and persist its explicit catalog."""
     if not layout:
         return location_rule, layout
@@ -564,7 +629,7 @@ def _match_loose(value: dict[str, Any], text: str, *, allow_internal: bool) -> o
     if prefix and folded == prefix.casefold():
         return None
     if prefix and folded.startswith(prefix.casefold()) and value["allow_free_text"]:
-        raw_remainder = text[len(prefix):]
+        raw_remainder = text[len(prefix) :]
         # Avoid treating a longer unrelated code such as STC2 as free text for
         # STC. A suffix must be separated by whitespace or visible punctuation.
         if raw_remainder and raw_remainder[0] not in " \t-.:/":
@@ -589,7 +654,7 @@ def _match_scheme(value: dict[str, Any], text: str, *, allow_internal: bool) -> 
     return _NO_MATCH
 
 
-def normalize_location_for_cellar(cellar: Cellar, location: Optional[str]) -> Optional[str]:
+def normalize_location_for_cellar(cellar: Cellar, location: str | None) -> str | None:
     """Return the canonical location stored inside a structured cellar."""
     if location is None:
         return None
@@ -603,7 +668,7 @@ def normalize_location_for_cellar(cellar: Cellar, location: Optional[str]) -> Op
     return text if result is _NO_MATCH else result  # type: ignore[return-value]
 
 
-def match_cellar_for_location(location: Optional[str], cellars: list[Cellar]) -> Optional[Cellar]:
+def match_cellar_for_location(location: str | None, cellars: list[Cellar]) -> Cellar | None:
     """Return the most specific cellar matching an imported/unassigned code."""
     if not location or not location.strip():
         return None
@@ -633,8 +698,8 @@ def match_cellar_for_location(location: Optional[str], cellars: list[Cellar]) ->
 
 
 def validate_rule_uniqueness(
-    new_rule: Optional[str],
-    cellar_id: Optional[str],
+    new_rule: str | None,
+    cellar_id: str | None,
     existing: list[Cellar],
 ) -> None:
     """Reject an identical generated or legacy rule used by another cellar."""
@@ -650,7 +715,7 @@ def validate_rule_uniqueness(
             )
 
 
-def parse_sub_location(rule: str, location: str) -> Optional[str]:
+def parse_sub_location(rule: str, location: str) -> str | None:
     """Return a regex ``sub`` capture or remainder after a plain prefix."""
     if _looks_like_regex(rule):
         try:
@@ -661,5 +726,5 @@ def parse_sub_location(rule: str, location: str) -> Optional[str]:
             return match.group("sub")
         return None
     if location.strip().casefold().startswith(rule.strip().casefold()):
-        return location.strip()[len(rule.strip()):]
+        return location.strip()[len(rule.strip()) :]
     return None

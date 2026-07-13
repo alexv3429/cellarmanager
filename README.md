@@ -17,24 +17,15 @@ See `docs/architecture.md` for the full reasoning.
 
 ## Quick start
 
-**To actually use this from your phone day to day**, see the
-"Recommended: the easiest complete path" section in
-[`docs/setup.md`](docs/setup.md) - it walks through renting a ~$5/month
-cloud server, running this with Docker, and connecting your phone to it
-privately over HTTPS via Tailscale, start to finish.
-
-**To just try it locally first:**
+The supported local workflow uses **uv** and the committed lock file:
 
 ```bash
-cd backend
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env   # then set WINECELLAR_SECRET_KEY (see docs/security.md)
-python run.py
+uv sync --frozen --group dev
+cp backend/.env.example backend/.env   # set WINECELLAR_SECRET_KEY
+make run
 ```
 
-Open `http://localhost:8000/` and create your account (the very first
-registration bootstraps the owner account - see `docs/security.md`).
+Open `http://localhost:8000/` and create the first owner account. For a complete developer setup with Ruff, local hooks, and tests, run `./scripts/bootstrap_dev.sh` and read [`docs/development.md`](docs/development.md). For a daily-use server deployment, see [`docs/setup.md`](docs/setup.md).
 
 ## Features
 
@@ -77,32 +68,40 @@ original spec (what's fully tested vs. a documented extension point).
 | [`docs/api.md`](docs/api.md) | Endpoint index (full reference at `/docs` when running) |
 | [`docs/setup.md`](docs/setup.md) | Local dev, Docker, deploying with HTTPS |
 | [`docs/testing.md`](docs/testing.md) | How to run tests, what's covered |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Contributor quick start and pull-request rules |
+| [`docs/development.md`](docs/development.md) | uv, Ruff, hooks, dependency updates, and pull-request workflow |
+| [`docs/github-protection.md`](docs/github-protection.md) | Required CI checks and main-branch protection |
 | [`docs/i18n.md`](docs/i18n.md) | How translation works, adding a language |
 | [`docs/security.md`](docs/security.md) | Auth model, secrets, hardening checklist |
 | [`docs/roadmap.md`](docs/roadmap.md) | Requirement-by-requirement status |
 
 ## Repository layout
 
-```
-backend/    Python API (app/core, app/storage, app/services, app/api) + tests
-frontend/   Dependency-free JS PWA (no build step)
-docs/       The documentation above
-docker/     Dockerfile + docker-compose.yml
-.github/    CI workflow (pytest + node --test on every push)
+```text
+backend/      Python API and tests
+frontend/     Dependency-free JavaScript PWA
+scripts/      Developer, policy, export, and branch-protection helpers
+docs/         Product, operations, and contributor documentation
+docker/       Locked production image and Compose configuration
+.github/      Required CI, dependency updates, and pull-request template
+pyproject.toml + uv.lock  Dependency and tool source of truth
 ```
 
-## Tests
+## Tests and quality
 
 ```bash
-# zero installation required:
-cd backend && python3 -m unittest discover -s tests/unit -v
-node --test frontend/tests/logic.test.js
-
-# full suite, incl. real HTTP requests against the API:
-pip install -r backend/requirements-dev.txt && pytest backend
+./scripts/bootstrap_dev.sh  # first setup
+make format                 # apply Ruff fixes/formatting
+make ci                     # same pre-merge gate as GitHub
 ```
 
-See `docs/testing.md` for details on what runs where and why.
+CI runs the backend suite on Python 3.11–3.13, frontend syntax and unit tests on Node 22, Ruff, lock-file verification, repository policy checks, and dependency review. `main` must also be protected so the stable **CI Gate** status is required before merge; see [`docs/github-protection.md`](docs/github-protection.md).
+
+The legacy `backend/requirements*.txt` files are generated compatibility exports. Edit dependencies in `pyproject.toml`, update `uv.lock`, and regenerate exports with `make requirements`.
+
+## Modern development workflow
+
+Development, CI, and Docker now use uv's locked project environment. Ruff replaces separate formatter/import/linter tools. Local pre-commit and pre-push hooks provide fast feedback, while a protected GitHub pull request and required **CI Gate** are the authoritative merge control. Dependabot updates both uv dependencies and GitHub Actions weekly.
 
 ## License
 
@@ -158,4 +157,20 @@ The cellar editor displays only the fields relevant to the selected physical
 structure. Simple grids and depth layouts support physical orientation without
 renaming their location codes. For example, `G1F` remains `G1F`, while choosing
 “Row 1 at the bottom” places it on the bottom row of the drawing.
+
+<!-- modern-dev-portability-fix -->
+## Portable uv lock files and virtual environments
+
+The committed `uv.lock` must use public, portable package sources. It must not
+contain developer-specific, corporate-only, or build-environment registry URLs.
+Generate or verify it with `make lock` and `make ci`; the repository policy check
+rejects known private build-registry references.
+
+CellarManager's uv environment is the repository-level `.venv`. If an older
+`backend/.venv` is active, deactivate it or run `unset VIRTUAL_ENV` before setup.
+The bootstrap script also ignores that obsolete activation automatically.
+
+If dependency installation fails against `pypi.org` or
+`files.pythonhosted.org`, inspect corporate proxy/TLS settings. A failure against
+`internal.api.openai.org` means an old, non-portable lockfile is still present.
 

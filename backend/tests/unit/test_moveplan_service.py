@@ -4,7 +4,6 @@ from datetime import date, timedelta
 from app.core.domain import Cellar, Holding, Wine, new_id
 from app.services import moveplan_service
 
-
 TODAY = date(2026, 7, 9)
 
 
@@ -60,7 +59,9 @@ class TestSuggestMovePlan(unittest.TestCase):
         urgent_wine = _wine(drink_before=TODAY + timedelta(days=30))
         holding = _holding(wine_id=urgent_wine.id, cellar_id=aging.id, quantity=2)
 
-        plan = moveplan_service.suggest_move_plan([aging, service], [(holding, urgent_wine)], today=TODAY)
+        plan = moveplan_service.suggest_move_plan(
+            [aging, service], [(holding, urgent_wine)], today=TODAY
+        )
         self.assertEqual(len(plan.steps), 1)
         self.assertEqual(plan.steps[0].to_cellar_id, service.id)
         self.assertEqual(plan.steps[0].from_cellar_id, aging.id)
@@ -78,7 +79,9 @@ class TestSuggestMovePlan(unittest.TestCase):
         urgent_wine = _wine(drink_before=TODAY + timedelta(days=10))
         holding = _holding(wine_id=urgent_wine.id, cellar_id=aging.id, quantity=2)
         other_wine = _wine(color="white")
-        filler = _holding(wine_id=other_wine.id, cellar_id=full_service.id, quantity=5)  # fills the service cellar
+        filler = _holding(
+            wine_id=other_wine.id, cellar_id=full_service.id, quantity=5
+        )  # fills the service cellar
 
         plan = moveplan_service.suggest_move_plan(
             [aging, full_service], [(holding, urgent_wine), (filler, other_wine)], today=TODAY
@@ -91,8 +94,12 @@ class TestSuggestMovePlan(unittest.TestCase):
         service = _cellar(name="Service", purpose_level=10, max_capacity=50, threshold=45)
         mystery_wine = _wine()  # no drink_after/drink_before at all
         holding = _holding(wine_id=mystery_wine.id, cellar_id=service.id, quantity=3)
-        plan = moveplan_service.suggest_move_plan([aging, service], [(holding, mystery_wine)], today=TODAY)
-        self.assertEqual(len(plan.steps), 0, "no signal to justify moving a bottle we know nothing about")
+        plan = moveplan_service.suggest_move_plan(
+            [aging, service], [(holding, mystery_wine)], today=TODAY
+        )
+        self.assertEqual(
+            len(plan.steps), 0, "no signal to justify moving a bottle we know nothing about"
+        )
 
     def test_cellar_over_threshold_is_flagged(self):
         aging = _cellar(name="Aging", purpose_level=0, max_capacity=100, threshold=5)
@@ -102,7 +109,13 @@ class TestSuggestMovePlan(unittest.TestCase):
         self.assertIn("Aging", plan.cellars_over_threshold)
 
     def test_overflow_bottles_prioritized_into_real_cellar_when_room_exists(self):
-        overflow = _cellar(name="Garage overflow", purpose_level=None, is_overflow=True, max_capacity=0, threshold=0)
+        overflow = _cellar(
+            name="Garage overflow",
+            purpose_level=None,
+            is_overflow=True,
+            max_capacity=0,
+            threshold=0,
+        )
         real = _cellar(name="Real Cellar", purpose_level=5, max_capacity=50, threshold=45)
         w = _wine()
         holding = _holding(wine_id=w.id, cellar_id=overflow.id, quantity=3)

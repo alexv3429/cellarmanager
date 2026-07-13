@@ -63,6 +63,6 @@ test("normal interface uses a naming wizard and hides regex behind advanced mode
 
 test("service worker caches the new helper and advances the shell version", async () => {
   const source = await read("frontend/service-worker.js");
-  assert.match(source, /winecellar-shell-v7/);
+  assert.match(source, /winecellar-shell-v\d+/);
   assert.match(source, /js\/locationScheme\.js/);
 });

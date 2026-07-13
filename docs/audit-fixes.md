@@ -73,3 +73,8 @@ multi-tenant ownership. The current account model is a shared household: every
 account in one installation can access the same cellar. Deploy separate
 instances for unrelated owners, or design a household/owner migration before
 turning it into a public multi-tenant service.
+
+
+## Modern development and merge controls
+
+A later workflow patch replaces ad-hoc `venv`/pip setup with uv and a committed lock file, introduces Ruff as the single Python formatter/linter/import sorter, runs backend tests across supported Python versions, keeps frontend checks on Node's built-in runner, adds dependency review and Dependabot, and documents required branch protection. The stable required status is `CI Gate`; repository owners must activate protection because committing a workflow alone does not block direct merges.

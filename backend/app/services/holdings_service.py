@@ -5,13 +5,13 @@ completed in the same SQLite transaction. Replaying a completed request returns
 the original result without touching stock; a real optimistic-concurrency
 conflict remains a conflict for the client to resolve.
 """
+
 from __future__ import annotations
 
 import hashlib
 import json
 from dataclasses import dataclass
 from datetime import date
-from typing import Optional
 
 from app.core.domain import Holding, HoldingState, Movement, MovementAction, new_id
 from app.core.exceptions import ConflictError, NotFoundError, ValidationError
@@ -21,12 +21,12 @@ from app.storage import repositories as repo
 @dataclass
 class ActionResult:
     holding: Holding
-    movement: Optional[Movement]
-    warning: Optional[str] = None
+    movement: Movement | None
+    warning: str | None = None
     duplicate: bool = False
 
 
-def _capacity_warning(conn, cellar_id: Optional[str]) -> Optional[str]:
+def _capacity_warning(conn, cellar_id: str | None) -> str | None:
     if not cellar_id:
         return None
     cellar = repo.get_cellar(conn, cellar_id)
@@ -48,8 +48,8 @@ def _fingerprint(action: str, payload: dict) -> str:
 
 
 def _reserve_or_replay(
-    conn, *, client_op_id: Optional[str], action: str, payload: dict
-) -> Optional[ActionResult]:
+    conn, *, client_op_id: str | None, action: str, payload: dict
+) -> ActionResult | None:
     is_new, operation = repo.reserve_client_operation(
         conn, client_op_id, action, _fingerprint(action, payload)
     )
@@ -68,7 +68,7 @@ def _reserve_or_replay(
     return ActionResult(holding=holding, movement=movement, duplicate=True)
 
 
-def _complete(conn, client_op_id: Optional[str], holding: Holding, movement: Movement) -> None:
+def _complete(conn, client_op_id: str | None, holding: Holding, movement: Movement) -> None:
     repo.complete_client_operation(
         conn, client_op_id, holding_id=holding.id, movement_id=movement.id
     )
@@ -79,8 +79,8 @@ def _merge_purchase_metadata(
     *,
     existing_quantity: int,
     incoming_quantity: int,
-    incoming_price: Optional[float],
-    incoming_date: Optional[date],
+    incoming_price: float | None,
+    incoming_date: date | None,
 ) -> None:
     """Merge acquisition metadata without pretending unknown costs are known.
 
@@ -93,10 +93,7 @@ def _merge_purchase_metadata(
     elif destination.price_bought is not None and incoming_price is not None:
         total = existing_quantity + incoming_quantity
         destination.price_bought = round(
-            (
-                destination.price_bought * existing_quantity
-                + incoming_price * incoming_quantity
-            )
+            (destination.price_bought * existing_quantity + incoming_price * incoming_quantity)
             / total,
             4,
         )
@@ -113,14 +110,14 @@ def add_bottles(
     conn,
     *,
     wine_id: str,
-    cellar_id: Optional[str],
-    location: Optional[str],
+    cellar_id: str | None,
+    location: str | None,
     quantity: int,
-    price_bought: Optional[float] = None,
-    acquired_date: Optional[date] = None,
-    user_id: Optional[str] = None,
-    note: Optional[str] = None,
-    client_op_id: Optional[str] = None,
+    price_bought: float | None = None,
+    acquired_date: date | None = None,
+    user_id: str | None = None,
+    note: str | None = None,
+    client_op_id: str | None = None,
 ) -> ActionResult:
     replay = _reserve_or_replay(
         conn,
@@ -204,12 +201,12 @@ def move_bottles(
     *,
     holding_id: str,
     quantity: int,
-    to_cellar_id: Optional[str],
-    to_location: Optional[str],
-    user_id: Optional[str] = None,
-    note: Optional[str] = None,
-    client_op_id: Optional[str] = None,
-    expected_version: Optional[int] = None,
+    to_cellar_id: str | None,
+    to_location: str | None,
+    user_id: str | None = None,
+    note: str | None = None,
+    client_op_id: str | None = None,
+    expected_version: int | None = None,
 ) -> ActionResult:
     replay = _reserve_or_replay(
         conn,
@@ -316,10 +313,10 @@ def remove_bottles(
     holding_id: str,
     quantity: int,
     reason: HoldingState,
-    user_id: Optional[str] = None,
-    note: Optional[str] = None,
-    client_op_id: Optional[str] = None,
-    expected_version: Optional[int] = None,
+    user_id: str | None = None,
+    note: str | None = None,
+    client_op_id: str | None = None,
+    expected_version: int | None = None,
 ) -> ActionResult:
     replay = _reserve_or_replay(
         conn,

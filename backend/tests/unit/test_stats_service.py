@@ -57,7 +57,9 @@ class TestComputeStats(unittest.TestCase):
     def test_drink_window_buckets(self):
         today = date(2026, 7, 9)
         overdue = _wine(drink_before=today - timedelta(days=1))
-        ready = _wine(drink_after=today - timedelta(days=100), drink_before=today + timedelta(days=100))
+        ready = _wine(
+            drink_after=today - timedelta(days=100), drink_before=today + timedelta(days=100)
+        )
         not_ready = _wine(drink_after=today + timedelta(days=400))
         no_dates = _wine()
         pairs = [

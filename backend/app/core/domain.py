@@ -5,13 +5,13 @@ persistence layer. Keeping them here means the business logic in
 ``app.services`` can be unit tested without spinning up FastAPI or a real
 HTTP server - only the standard library is required.
 """
+
 from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field
-from datetime import date, datetime, timezone
-from enum import Enum
-from typing import Optional
+from datetime import UTC, date, datetime
+from enum import StrEnum
 
 
 def new_id() -> str:
@@ -20,10 +20,10 @@ def new_id() -> str:
 
 
 def utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
-class WineColor(str, Enum):
+class WineColor(StrEnum):
     RED = "red"
     WHITE = "white"
     ROSE = "rose"
@@ -33,7 +33,7 @@ class WineColor(str, Enum):
     OTHER = "other"
 
 
-class HoldingState(str, Enum):
+class HoldingState(StrEnum):
     IN_CELLAR = "in_cellar"
     GIFTED = "gifted"
     BROKEN = "broken"
@@ -42,11 +42,11 @@ class HoldingState(str, Enum):
     DRUNK = "drunk"
 
     @classmethod
-    def removed_states(cls) -> set["HoldingState"]:
+    def removed_states(cls) -> set[HoldingState]:
         return {cls.GIFTED, cls.BROKEN, cls.SOLD, cls.LOST, cls.DRUNK}
 
 
-class MovementAction(str, Enum):
+class MovementAction(StrEnum):
     IMPORT = "import"
     ADD = "add"
     MOVE = "move"
@@ -75,26 +75,26 @@ class Wine:
 
     id: str
     producer: str
-    cuvee: Optional[str] = None
-    appellation: Optional[str] = None
-    vintage: Optional[int] = None
+    cuvee: str | None = None
+    appellation: str | None = None
+    vintage: int | None = None
     color: str = WineColor.OTHER.value
-    area: Optional[str] = None
+    area: str | None = None
     format: str = "75cl"
-    format_ml: Optional[int] = None
-    drink_after: Optional[date] = None
-    drink_after_confidence: Optional[float] = None
-    drink_after_source: Optional[str] = None
-    drink_before: Optional[date] = None
-    drink_before_confidence: Optional[float] = None
-    drink_before_source: Optional[str] = None
-    market_value: Optional[float] = None
-    market_value_confidence: Optional[float] = None
-    market_value_source: Optional[str] = None
-    market_value_updated_at: Optional[datetime] = None
-    advice_experience: Optional[str] = None
-    advice_pairing: Optional[str] = None
-    notes: Optional[str] = None
+    format_ml: int | None = None
+    drink_after: date | None = None
+    drink_after_confidence: float | None = None
+    drink_after_source: str | None = None
+    drink_before: date | None = None
+    drink_before_confidence: float | None = None
+    drink_before_source: str | None = None
+    market_value: float | None = None
+    market_value_confidence: float | None = None
+    market_value_source: str | None = None
+    market_value_updated_at: datetime | None = None
+    advice_experience: str | None = None
+    advice_pairing: str | None = None
+    notes: str | None = None
     created_at: datetime = field(default_factory=utcnow)
     updated_at: datetime = field(default_factory=utcnow)
     version: int = 1
@@ -116,12 +116,12 @@ class Cellar:
 
     id: str
     name: str
-    purpose_level: Optional[int] = None  # 0..10, None when is_overflow=True
+    purpose_level: int | None = None  # 0..10, None when is_overflow=True
     is_overflow: bool = False
     max_capacity: int = 0
     threshold: int = 0
-    location_rule: Optional[str] = None
-    layout: Optional[str] = None  # JSON-encoded rack layout, see services.cellar_rules
+    location_rule: str | None = None
+    layout: str | None = None  # JSON-encoded rack layout, see services.cellar_rules
     created_at: datetime = field(default_factory=utcnow)
     updated_at: datetime = field(default_factory=utcnow)
     version: int = 1
@@ -137,12 +137,12 @@ class Holding:
 
     id: str
     wine_id: str
-    cellar_id: Optional[str] = None
-    location: Optional[str] = None
+    cellar_id: str | None = None
+    location: str | None = None
     quantity: int = 0
     state: str = HoldingState.IN_CELLAR.value
-    price_bought: Optional[float] = None
-    acquired_date: Optional[date] = None
+    price_bought: float | None = None
+    acquired_date: date | None = None
     created_at: datetime = field(default_factory=utcnow)
     updated_at: datetime = field(default_factory=utcnow)
     version: int = 1
@@ -154,19 +154,19 @@ class Movement:
 
     id: str
     action: str
-    wine_id: Optional[str] = None
-    holding_id: Optional[str] = None
-    from_cellar_id: Optional[str] = None
-    from_location: Optional[str] = None
-    to_cellar_id: Optional[str] = None
-    to_location: Optional[str] = None
+    wine_id: str | None = None
+    holding_id: str | None = None
+    from_cellar_id: str | None = None
+    from_location: str | None = None
+    to_cellar_id: str | None = None
+    to_location: str | None = None
     quantity_delta: int = 0
     occurred_at: datetime = field(default_factory=utcnow)
     recorded_at: datetime = field(default_factory=utcnow)
-    user_id: Optional[str] = None
-    note: Optional[str] = None
-    details_json: Optional[str] = None
-    client_op_id: Optional[str] = None
+    user_id: str | None = None
+    note: str | None = None
+    details_json: str | None = None
+    client_op_id: str | None = None
 
 
 @dataclass

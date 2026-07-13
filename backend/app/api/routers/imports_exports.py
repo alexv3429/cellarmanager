@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import PlainTextResponse
@@ -19,7 +19,7 @@ router = APIRouter(
 )
 
 
-def _decode_mapping(raw_mapping: Optional[str]) -> Optional[dict[str, Any]]:
+def _decode_mapping(raw_mapping: str | None) -> dict[str, Any] | None:
     if raw_mapping is None or not raw_mapping.strip():
         return None
     try:
@@ -53,7 +53,7 @@ async def analyze_csv(file: UploadFile = File(...)):
 async def preview_csv(
     file: UploadFile = File(...),
     mapping: str = Form(...),
-    default_cellar_id: Optional[str] = None,
+    default_cellar_id: str | None = None,
     conn: sqlite3.Connection = Depends(get_conn),
 ):
     """Validate a chosen mapping and return normalized sample rows."""
@@ -75,8 +75,8 @@ async def preview_csv(
 @router.post("/import")
 async def import_csv(
     file: UploadFile = File(...),
-    mapping: Optional[str] = Form(None),
-    default_cellar_id: Optional[str] = None,
+    mapping: str | None = Form(None),
+    default_cellar_id: str | None = None,
     user_id: str = Depends(get_current_user_id),
     conn: sqlite3.Connection = Depends(get_conn),
 ):
@@ -106,8 +106,7 @@ async def import_csv(
         "unassigned_rows": report.unassigned_rows,
         "unassigned_bottles": report.unassigned_bottles,
         "warnings": [
-            {"row": warning.row_number, "message": warning.message}
-            for warning in report.warnings
+            {"row": warning.row_number, "message": warning.message} for warning in report.warnings
         ],
     }
 

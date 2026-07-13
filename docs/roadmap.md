@@ -21,7 +21,7 @@ written.
 | 10.b | All locations for a given wine | `services/holdings_service.py: locations_for_wine` |
 | 10.c | CSV export, column selection/order, language | `services/csv_io.py: export_csv` |
 | - | English/French UI, easily extended | `docs/i18n.md` |
-| - | Unit + integration tests | `docs/testing.md` |
+| - | Unit + integration tests plus a protected pre-merge CI gate | `docs/testing.md`, `docs/github-protection.md` |
 
 ## Implemented as a real, working mechanism - but with placeholder data sources feeding it
 
@@ -78,3 +78,8 @@ which is exactly when the photo-hash signal helps most.
    works fine without it) and implement one `EnrichmentProvider`.
 3. Try the rack layout editor against your actual cellar's shape and adjust
    `frontend/js/pages/cellars.js` if the grid/diamond model doesn't fit.
+
+
+## Development workflow status
+
+The repository now has a locked uv environment, Ruff lint/format enforcement, local commit/push hooks, backend tests across Python 3.11–3.13, frontend checks on Node 22, dependency review, Dependabot, a stable aggregate `CI Gate`, and a script/recipe to protect `main`. Remaining testing work is primarily real-browser system coverage and agreeing a coverage percentage that can be raised over time.
