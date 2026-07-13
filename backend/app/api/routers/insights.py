@@ -2,22 +2,25 @@ from __future__ import annotations
 
 import sqlite3
 from dataclasses import asdict
-from typing import Optional
 
 from fastapi import APIRouter, Depends
 
 from app.api.deps import get_conn, get_current_user_id
 from app.api.schemas import RecommendationRequestIn
-from app.services import moveplan_service, recommendation_service as rec, stats_service
+from app.services import moveplan_service, stats_service
+from app.services import recommendation_service as rec
 from app.storage import repositories as repo
 
 router = APIRouter(tags=["insights"], dependencies=[Depends(get_current_user_id)])
 
 
 @router.get("/stats")
-def get_stats(cellar_id: Optional[str] = None, conn: sqlite3.Connection = Depends(get_conn)):
+def get_stats(cellar_id: str | None = None, conn: sqlite3.Connection = Depends(get_conn)):
     if cellar_id:
-        pairs = [(w, h) for h, w in repo.list_holdings_with_wines(conn, cellar_id=cellar_id, active_only=True)]
+        pairs = [
+            (w, h)
+            for h, w in repo.list_holdings_with_wines(conn, cellar_id=cellar_id, active_only=True)
+        ]
         return asdict(stats_service.compute_stats(pairs))
 
     all_pairs = repo.list_holdings_with_wines(conn, active_only=True)
@@ -28,7 +31,9 @@ def get_stats(cellar_id: Optional[str] = None, conn: sqlite3.Connection = Depend
             by_cellar.setdefault(holding.cellar_id, []).append((wine, holding))
     return {
         "overall": asdict(stats_service.compute_stats(overall)),
-        "per_cellar": {cid: asdict(stats_service.compute_stats(pairs)) for cid, pairs in by_cellar.items()},
+        "per_cellar": {
+            cid: asdict(stats_service.compute_stats(pairs)) for cid, pairs in by_cellar.items()
+        },
     }
 
 
@@ -41,8 +46,12 @@ def get_move_plan(conn: sqlite3.Connection = Depends(get_conn)):
 
 
 @router.post("/recommendations")
-def get_recommendations(payload: RecommendationRequestIn, conn: sqlite3.Connection = Depends(get_conn)):
-    holdings_with_wines = repo.list_holdings_with_wines(conn, cellar_id=payload.cellar_id, active_only=True)
+def get_recommendations(
+    payload: RecommendationRequestIn, conn: sqlite3.Connection = Depends(get_conn)
+):
+    holdings_with_wines = repo.list_holdings_with_wines(
+        conn, cellar_id=payload.cellar_id, active_only=True
+    )
     criteria = rec.RecommendationCriteria(**payload.model_dump(exclude={"limit"}))
     results = rec.recommend_wines(holdings_with_wines, criteria, limit=payload.limit)
     return [

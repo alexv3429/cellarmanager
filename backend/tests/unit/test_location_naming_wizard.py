@@ -6,7 +6,6 @@ from app.services import assignment_service, cellar_rules, csv_io
 from app.storage import repositories as repo
 from app.storage.database import Database
 
-
 SCHEME = {
     "kind": "grid",
     "enabled": True,
@@ -105,7 +104,7 @@ class LocationSchemeIntegrationTests(unittest.TestCase):
         content = (
             "Producer,Cuvee,Appellation,Vintage,Color,Area,Format,Quantity,Location\n"
             "Domaine,Cuvée,AOC,2020,red,Area,75cl,3,MB2\n"
-        ).encode("utf-8")
+        ).encode()
         with self.db.session() as conn:
             mapping = csv_io.analyze_csv(content)["suggested_mapping"]
             report = csv_io.import_csv(

@@ -11,6 +11,7 @@ name more than one source column; the first non-empty value wins. This supports
 files that contain, for example, a manually corrected drinking window followed
 by a calculated fallback window.
 """
+
 from __future__ import annotations
 
 import csv
@@ -21,7 +22,7 @@ import re
 import unicodedata
 from dataclasses import dataclass, field
 from datetime import date
-from typing import Any, Optional
+from typing import Any
 
 from app.core.domain import Cellar, Holding, HoldingState, Wine, WineColor, new_id, utcnow
 from app.core.exceptions import ValidationError
@@ -256,6 +257,7 @@ def map_headers(raw_headers: list[str]) -> dict[str, str]:
 # CSV document, column analysis and mapping
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class CsvColumn:
     id: str
@@ -287,8 +289,10 @@ def sniff_dialect(sample_text: str) -> type[csv.Dialect]:
     try:
         return csv.Sniffer().sniff(sample_text, delimiters=",;\t")
     except csv.Error:
+
         class _Fallback(csv.excel):
             delimiter = ";" if sample_text.count(";") > sample_text.count(",") else ","
+
         return _Fallback
 
 
@@ -394,11 +398,11 @@ def _manual_fallback_priority(canonical: str, label: str) -> tuple[int, int]:
     return (2, 0)
 
 
-def _fuzzy_canonical(label: str) -> tuple[Optional[str], float]:
+def _fuzzy_canonical(label: str) -> tuple[str | None, float]:
     normalized = normalize_header(label)
     if not normalized or len(normalized) < 3:
         return None, 0.0
-    best_field: Optional[str] = None
+    best_field: str | None = None
     best_score = 0.0
     for canonical, aliases in _NORMALIZED_ALIASES.items():
         for alias in aliases:
@@ -435,7 +439,9 @@ def suggest_mapping(columns: list[CsvColumn]) -> dict[str, dict[str, Any]]:
         selected = entries[:2]
         result[canonical] = {
             "columns": [entry[0].id for entry in selected],
-            "confidence": "exact" if all(entry[1] == "exact" for entry in selected) else "suggested",
+            "confidence": "exact"
+            if all(entry[1] == "exact" for entry in selected)
+            else "suggested",
         }
     return result
 
@@ -484,11 +490,13 @@ def _mapping_columns(spec: Any) -> list[str]:
             return [columns] if columns else []
         if isinstance(columns, list):
             return [str(item) for item in columns if item]
-    raise ValidationError("Each mapping entry must contain a source column or a list of source columns")
+    raise ValidationError(
+        "Each mapping entry must contain a source column or a list of source columns"
+    )
 
 
 def normalize_column_mapping(
-    mapping: Optional[dict[str, Any]],
+    mapping: dict[str, Any] | None,
     document: CsvDocument,
 ) -> dict[str, list[str]]:
     """Validate a user mapping and return canonical -> ordered column IDs."""
@@ -503,7 +511,9 @@ def normalize_column_mapping(
     for column in document.columns:
         by_label[column.label] = column.id
         if column.original_label:
-            original_counts[column.original_label] = original_counts.get(column.original_label, 0) + 1
+            original_counts[column.original_label] = (
+                original_counts.get(column.original_label, 0) + 1
+            )
     for column in document.columns:
         if column.original_label and original_counts[column.original_label] == 1:
             by_label[column.original_label] = column.id
@@ -536,8 +546,8 @@ def normalize_column_mapping(
     return normalized
 
 
-def _first_non_empty(raw_row: dict[str, str], source_ids: list[str]) -> Optional[str]:
-    first_value: Optional[str] = None
+def _first_non_empty(raw_row: dict[str, str], source_ids: list[str]) -> str | None:
+    first_value: str | None = None
     for source_id in source_ids:
         value = raw_row.get(source_id)
         if first_value is None:
@@ -547,7 +557,7 @@ def _first_non_empty(raw_row: dict[str, str], source_ids: list[str]) -> Optional
     return first_value
 
 
-def map_source_row(raw_row: dict[str, str], mapping: dict[str, list[str]]) -> dict[str, Optional[str]]:
+def map_source_row(raw_row: dict[str, str], mapping: dict[str, list[str]]) -> dict[str, str | None]:
     return {
         canonical: _first_non_empty(raw_row, source_ids)
         for canonical, source_ids in mapping.items()
@@ -558,7 +568,8 @@ def map_source_row(raw_row: dict[str, str], mapping: dict[str, list[str]]) -> di
 # value parsing
 # ---------------------------------------------------------------------------
 
-def parse_number(raw: Optional[str]) -> Optional[float]:
+
+def parse_number(raw: str | None) -> float | None:
     if raw is None:
         return None
     text = raw.strip()
@@ -583,7 +594,7 @@ def parse_number(raw: Optional[str]) -> Optional[float]:
         return None
 
 
-def parse_vintage(raw: Optional[str]) -> Optional[int]:
+def parse_vintage(raw: str | None) -> int | None:
     if raw is None:
         return None
     text = raw.strip().upper()
@@ -601,7 +612,7 @@ _DATE_PATTERNS = [
 ]
 
 
-def parse_date_value(raw: Optional[str], *, year_end_of_year: bool = False) -> Optional[date]:
+def parse_date_value(raw: str | None, *, year_end_of_year: bool = False) -> date | None:
     if raw is None:
         return None
     text = raw.strip()
@@ -611,6 +622,7 @@ def parse_date_value(raw: Optional[str], *, year_end_of_year: bool = False) -> O
         year = int(text)
         return date(year, 12, 31) if year_end_of_year else date(year, 1, 1)
     from datetime import datetime as _dt
+
     for fmt, _name in _DATE_PATTERNS:
         try:
             return _dt.strptime(text, fmt).date()
@@ -622,7 +634,7 @@ def parse_date_value(raw: Optional[str], *, year_end_of_year: bool = False) -> O
         return None
 
 
-def parse_positive_quantity(raw: Optional[str]) -> int:
+def parse_positive_quantity(raw: str | None) -> int:
     if raw is None or not raw.strip():
         return 1
     value = parse_number(raw)
@@ -636,7 +648,7 @@ def _merge_import_purchase_metadata(
     *,
     old_quantity: int,
     added_quantity: int,
-    incoming_price: Optional[float],
+    incoming_price: float | None,
 ) -> None:
     if incoming_price is not None and incoming_price < 0:
         raise ValidationError("Purchase price cannot be negative")
@@ -652,14 +664,14 @@ def _merge_import_purchase_metadata(
         holding.price_bought = None
 
 
-def normalize_color(raw: Optional[str]) -> str:
+def normalize_color(raw: str | None) -> str:
     if not raw:
         return WineColor.OTHER.value
     key = _strip_accents(raw.strip().lower())
     return _COLOR_ALIASES.get(key, WineColor.OTHER.value)
 
 
-def normalize_state(raw: Optional[str]) -> str:
+def normalize_state(raw: str | None) -> str:
     if not raw:
         return HoldingState.IN_CELLAR.value
     key = _strip_accents(raw.strip().lower())
@@ -669,7 +681,7 @@ def normalize_state(raw: Optional[str]) -> str:
 _FORMAT_RE = re.compile(r"(\d+(?:[.,]\d+)?)\s*(cl|ml|l)\b", re.IGNORECASE)
 
 
-def parse_format_ml(raw: Optional[str]) -> Optional[int]:
+def parse_format_ml(raw: str | None) -> int | None:
     if not raw:
         return None
     match = _FORMAT_RE.search(raw.replace(",", "."))
@@ -684,6 +696,7 @@ def parse_format_ml(raw: Optional[str]) -> Optional[int]:
 # ---------------------------------------------------------------------------
 # preview and import
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class ImportWarning:
@@ -708,12 +721,12 @@ class ImportReport:
 
 
 def _resolve_destination(
-    row: dict[str, Optional[str]],
+    row: dict[str, str | None],
     *,
     conn,
     all_cellars: list[Cellar],
-    default_cellar_id: Optional[str],
-) -> tuple[Optional[str], Optional[str], list[str]]:
+    default_cellar_id: str | None,
+) -> tuple[str | None, str | None, list[str]]:
     from app.storage import repositories as repo
 
     warnings: list[str] = []
@@ -730,6 +743,7 @@ def _resolve_destination(
             cellar_id = None
     elif location:
         from app.services import cellar_rules
+
         selected_cellar = cellar_rules.match_cellar_for_location(location, all_cellars)
         cellar_id = selected_cellar.id if selected_cellar else default_cellar_id
         if selected_cellar is None and default_cellar_id:
@@ -757,17 +771,18 @@ def _resolve_destination(
         )
     if selected_cellar is not None and location:
         from app.services import cellar_rules
+
         location = cellar_rules.normalize_location_for_cellar(selected_cellar, location)
     return cellar_id, location, warnings
 
 
 def _preview_values(
-    row: dict[str, Optional[str]],
+    row: dict[str, str | None],
     *,
     row_number: int,
     conn,
     all_cellars: list[Cellar],
-    default_cellar_id: Optional[str],
+    default_cellar_id: str | None,
 ) -> tuple[str, dict[str, Any], list[str]]:
     from app.storage import repositories as repo
 
@@ -783,7 +798,11 @@ def _preview_values(
 
     raw_color = row.get("color")
     color = normalize_color(raw_color)
-    if raw_color and color == WineColor.OTHER.value and normalize_header(raw_color) not in _COLOR_ALIASES:
+    if (
+        raw_color
+        and color == WineColor.OTHER.value
+        and normalize_header(raw_color) not in _COLOR_ALIASES
+    ):
         warnings.append(f"Unrecognized color '{raw_color}', stored as 'other'")
 
     try:
@@ -836,7 +855,7 @@ def preview_csv(
     *,
     mapping: dict[str, Any],
     conn,
-    default_cellar_id: Optional[str] = None,
+    default_cellar_id: str | None = None,
     max_preview_rows: int = 20,
 ) -> dict[str, Any]:
     from app.storage import repositories as repo
@@ -872,7 +891,13 @@ def preview_csv(
         else:
             error_rows += 1
         for message in row_warnings:
-            warnings.append({"row": index, "message": message, "severity": "error" if status == "error" else "warning"})
+            warnings.append(
+                {
+                    "row": index,
+                    "message": message,
+                    "severity": "error" if status == "error" else "warning",
+                }
+            )
         if len(preview_rows) < max_preview_rows:
             preview_rows.append(
                 {
@@ -900,9 +925,9 @@ def import_csv(
     raw: bytes,
     *,
     conn,
-    user_id: Optional[str],
-    default_cellar_id: Optional[str] = None,
-    mapping: Optional[dict[str, Any]] = None,
+    user_id: str | None,
+    default_cellar_id: str | None = None,
+    mapping: dict[str, Any] | None = None,
 ) -> ImportReport:
     """Import bytes using either a user mapping or automatic suggestions."""
     from app.storage import repositories as repo
@@ -923,7 +948,9 @@ def import_csv(
             continue
         if not producer:
             producer = cuvee or appellation or "Unknown producer"
-            report.add_warning(row_number, "Producer was empty; used cuvee/appellation as a placeholder")
+            report.add_warning(
+                row_number, "Producer was empty; used cuvee/appellation as a placeholder"
+            )
 
         # Validate stock data before creating a Wine. An invalid quantity must
         # not leave an orphan wine record behind.
@@ -941,8 +968,14 @@ def import_csv(
 
         vintage = parse_vintage(row.get("vintage"))
         color = normalize_color(row.get("color"))
-        if row.get("color") and color == WineColor.OTHER.value and normalize_header(row["color"] or "") not in _COLOR_ALIASES:
-            report.add_warning(row_number, f"Unrecognized color '{row.get('color')}', stored as 'other'")
+        if (
+            row.get("color")
+            and color == WineColor.OTHER.value
+            and normalize_header(row["color"] or "") not in _COLOR_ALIASES
+        ):
+            report.add_warning(
+                row_number, f"Unrecognized color '{row.get('color')}', stored as 'other'"
+            )
         area = (row.get("area") or "").strip() or None
         fmt = (row.get("format") or "75cl").strip() or "75cl"
 
@@ -1022,6 +1055,7 @@ def import_csv(
             holding_id = holding.id
 
         from app.core.domain import Movement, MovementAction
+
         repo.insert_movement(
             conn,
             Movement(
@@ -1048,11 +1082,11 @@ DEFAULT_EXPORT_COLUMNS = ALL_FIELDS
 
 
 def export_csv(
-    rows: list[tuple[Wine, Holding, Optional[Cellar]]],
+    rows: list[tuple[Wine, Holding, Cellar | None]],
     *,
-    columns: Optional[list[str]] = None,
+    columns: list[str] | None = None,
     language: str = "en",
-    delimiter: Optional[str] = None,
+    delimiter: str | None = None,
 ) -> str:
     columns = columns or DEFAULT_EXPORT_COLUMNS
     unknown = [column for column in columns if column not in ALL_FIELDS]
@@ -1062,14 +1096,18 @@ def export_csv(
 
     buffer = io.StringIO()
     writer = csv.writer(buffer, delimiter=delim, lineterminator="\n")
-    writer.writerow([EXPORT_HEADERS[column].get(language, EXPORT_HEADERS[column]["en"]) for column in columns])
+    writer.writerow(
+        [EXPORT_HEADERS[column].get(language, EXPORT_HEADERS[column]["en"]) for column in columns]
+    )
 
     getters = {
         "producer": lambda w, h, c: w.producer,
         "cuvee": lambda w, h, c: w.cuvee or "",
         "appellation": lambda w, h, c: w.appellation or "",
         "vintage": lambda w, h, c: w.vintage if w.vintage else ("NV" if language != "fr" else "SM"),
-        "color": lambda w, h, c: COLOR_LABELS.get(w.color, COLOR_LABELS["other"]).get(language, w.color),
+        "color": lambda w, h, c: COLOR_LABELS.get(w.color, COLOR_LABELS["other"]).get(
+            language, w.color
+        ),
         "area": lambda w, h, c: w.area or "",
         "format": lambda w, h, c: w.format,
         "price_bought": lambda w, h, c: h.price_bought if h.price_bought is not None else "",
@@ -1078,7 +1116,9 @@ def export_csv(
         "drink_after": lambda w, h, c: w.drink_after.isoformat() if w.drink_after else "",
         "cellar": lambda w, h, c: c.name if c else "",
         "location": lambda w, h, c: h.location or "",
-        "state": lambda w, h, c: STATE_LABELS.get(h.state, STATE_LABELS["in_cellar"]).get(language, h.state),
+        "state": lambda w, h, c: STATE_LABELS.get(h.state, STATE_LABELS["in_cellar"]).get(
+            language, h.state
+        ),
         "advice_experience": lambda w, h, c: w.advice_experience or "",
         "advice_pairing": lambda w, h, c: w.advice_pairing or "",
         "market_value": lambda w, h, c: w.market_value if w.market_value is not None else "",

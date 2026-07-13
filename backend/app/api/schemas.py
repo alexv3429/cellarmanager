@@ -2,28 +2,28 @@
 the internal dataclasses in ``app.core.domain`` so the two can evolve
 independently (e.g. the API can hide fields or add computed ones without
 touching storage)."""
+
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
 class WineIn(BaseModel):
     producer: str
-    cuvee: Optional[str] = None
-    appellation: Optional[str] = None
-    vintage: Optional[int] = None
+    cuvee: str | None = None
+    appellation: str | None = None
+    vintage: int | None = None
     color: str = "other"
-    area: Optional[str] = None
+    area: str | None = None
     format: str = "75cl"
-    drink_after: Optional[date] = None
-    drink_before: Optional[date] = None
-    market_value: Optional[float] = None
-    advice_experience: Optional[str] = None
-    advice_pairing: Optional[str] = None
-    notes: Optional[str] = None
+    drink_after: date | None = None
+    drink_before: date | None = None
+    market_value: float | None = None
+    advice_experience: str | None = None
+    advice_pairing: str | None = None
+    notes: str | None = None
 
 
 class WineOut(BaseModel):
@@ -31,37 +31,37 @@ class WineOut(BaseModel):
 
     id: str
     producer: str
-    cuvee: Optional[str]
-    appellation: Optional[str]
-    vintage: Optional[int]
+    cuvee: str | None
+    appellation: str | None
+    vintage: int | None
     color: str
-    area: Optional[str]
+    area: str | None
     format: str
-    format_ml: Optional[int]
-    drink_after: Optional[date]
-    drink_after_confidence: Optional[float]
-    drink_after_source: Optional[str]
-    drink_before: Optional[date]
-    drink_before_confidence: Optional[float]
-    drink_before_source: Optional[str]
-    market_value: Optional[float]
-    market_value_confidence: Optional[float]
-    market_value_source: Optional[str]
-    market_value_updated_at: Optional[datetime]
-    advice_experience: Optional[str]
-    advice_pairing: Optional[str]
-    notes: Optional[str]
+    format_ml: int | None
+    drink_after: date | None
+    drink_after_confidence: float | None
+    drink_after_source: str | None
+    drink_before: date | None
+    drink_before_confidence: float | None
+    drink_before_source: str | None
+    market_value: float | None
+    market_value_confidence: float | None
+    market_value_source: str | None
+    market_value_updated_at: datetime | None
+    advice_experience: str | None
+    advice_pairing: str | None
+    notes: str | None
     version: int
 
 
 class CellarIn(BaseModel):
     name: str
-    purpose_level: Optional[int] = Field(default=None, ge=0, le=10)
+    purpose_level: int | None = Field(default=None, ge=0, le=10)
     is_overflow: bool = False
     max_capacity: int = Field(default=0, ge=0)
     threshold: int = Field(default=0, ge=0)
-    location_rule: Optional[str] = None
-    layout: Optional[str] = None
+    location_rule: str | None = None
+    layout: str | None = None
 
 
 class CellarOut(BaseModel):
@@ -69,12 +69,12 @@ class CellarOut(BaseModel):
 
     id: str
     name: str
-    purpose_level: Optional[int]
+    purpose_level: int | None
     is_overflow: bool
     max_capacity: int
     threshold: int
-    location_rule: Optional[str]
-    layout: Optional[str]
+    location_rule: str | None
+    layout: str | None
     current_fill: int = 0
     version: int
     reconciled_holdings: int = 0
@@ -86,48 +86,48 @@ class HoldingOut(BaseModel):
 
     id: str
     wine_id: str
-    cellar_id: Optional[str]
-    location: Optional[str]
+    cellar_id: str | None
+    location: str | None
     quantity: int
     state: str
-    price_bought: Optional[float]
-    acquired_date: Optional[date]
+    price_bought: float | None
+    acquired_date: date | None
     version: int
 
 
 class AddBottlesIn(BaseModel):
     wine_id: str
-    cellar_id: Optional[str] = None
-    location: Optional[str] = None
+    cellar_id: str | None = None
+    location: str | None = None
     quantity: int = Field(gt=0)
-    price_bought: Optional[float] = None
-    acquired_date: Optional[date] = None
-    note: Optional[str] = None
-    client_op_id: Optional[str] = None
+    price_bought: float | None = None
+    acquired_date: date | None = None
+    note: str | None = None
+    client_op_id: str | None = None
 
 
 class MoveBottlesIn(BaseModel):
     holding_id: str
     quantity: int = Field(gt=0)
-    to_cellar_id: Optional[str] = None
-    to_location: Optional[str] = None
-    note: Optional[str] = None
-    client_op_id: Optional[str] = None
-    expected_version: Optional[int] = None
+    to_cellar_id: str | None = None
+    to_location: str | None = None
+    note: str | None = None
+    client_op_id: str | None = None
+    expected_version: int | None = None
 
 
 class RemoveBottlesIn(BaseModel):
     holding_id: str
     quantity: int = Field(gt=0)
     reason: str  # gifted|broken|sold|lost|drunk
-    note: Optional[str] = None
-    client_op_id: Optional[str] = None
-    expected_version: Optional[int] = None
+    note: str | None = None
+    client_op_id: str | None = None
+    expected_version: int | None = None
 
 
 class ActionOut(BaseModel):
     holding: HoldingOut
-    warning: Optional[str] = None
+    warning: str | None = None
     duplicate: bool = False
 
 
@@ -146,25 +146,25 @@ class RegisterIn(BaseModel):
     username: str = Field(min_length=3, max_length=64)
     password: str = Field(min_length=8)
     locale: str = "en"
-    setup_token: Optional[str] = None
+    setup_token: str | None = None
 
 
 class ExportRequest(BaseModel):
     columns: list[str]
     language: str = "en"
-    cellar_id: Optional[str] = None
+    cellar_id: str | None = None
 
 
 class RecommendationRequestIn(BaseModel):
-    cellar_id: Optional[str] = None
-    color: Optional[str] = None
-    vintage: Optional[int] = None
-    vintage_before: Optional[int] = None
-    vintage_after: Optional[int] = None
-    appellation: Optional[str] = None
-    on_date: Optional[date] = None
-    dish: Optional[str] = None
-    mood: Optional[str] = None
+    cellar_id: str | None = None
+    color: str | None = None
+    vintage: int | None = None
+    vintage_before: int | None = None
+    vintage_after: int | None = None
+    appellation: str | None = None
+    on_date: date | None = None
+    dish: str | None = None
+    mood: str | None = None
     strict_text_match: bool = False
     limit: int = Field(default=20, ge=1, le=100)
 
@@ -177,4 +177,4 @@ class RecognizeMatchOut(BaseModel):
 
 class ErrorOut(BaseModel):
     detail: str
-    field: Optional[str] = None
+    field: str | None = None

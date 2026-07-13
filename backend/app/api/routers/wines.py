@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import sqlite3
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -16,7 +15,7 @@ router = APIRouter(prefix="/wines", tags=["wines"], dependencies=[Depends(get_cu
 
 
 @router.get("", response_model=list[WineOut])
-def list_wines(search: Optional[str] = None, conn: sqlite3.Connection = Depends(get_conn)):
+def list_wines(search: str | None = None, conn: sqlite3.Connection = Depends(get_conn)):
     return repo.list_wines(conn, search=search)
 
 
@@ -37,7 +36,12 @@ def create_wine(payload: WineIn, conn: sqlite3.Connection = Depends(get_conn)):
 
 
 @router.put("/{wine_id}", response_model=WineOut)
-def update_wine(wine_id: str, payload: WineIn, expected_version: int, conn: sqlite3.Connection = Depends(get_conn)):
+def update_wine(
+    wine_id: str,
+    payload: WineIn,
+    expected_version: int,
+    conn: sqlite3.Connection = Depends(get_conn),
+):
     existing = repo.get_wine(conn, wine_id)
     if existing is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="error.not_found")
@@ -55,6 +59,7 @@ def update_wine(wine_id: str, payload: WineIn, expected_version: int, conn: sqli
 @router.get("/{wine_id}/locations")
 def wine_locations(wine_id: str, conn: sqlite3.Connection = Depends(get_conn)):
     from app.services.holdings_service import locations_for_wine
+
     if repo.get_wine(conn, wine_id) is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="error.not_found")
     return locations_for_wine(conn, wine_id)

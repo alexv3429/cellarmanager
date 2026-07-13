@@ -5,12 +5,12 @@ preserves a legitimate level 0 (pure aging), can suggest partial moves when a
 destination has only some free slots, and adds a small diversity penalty so a
 service cellar is not filled with one color/area/appellation by accident.
 """
+
 from __future__ import annotations
 
 from collections import Counter
 from dataclasses import dataclass, field
 from datetime import date
-from typing import Optional
 
 from app.core.domain import Cellar, Holding, Wine
 
@@ -25,7 +25,7 @@ class MoveStep:
     wine_id: str
     wine_label: str
     quantity: int
-    from_cellar_id: Optional[str]
+    from_cellar_id: str | None
     from_cellar_name: str
     to_cellar_id: str
     to_cellar_name: str
@@ -52,7 +52,7 @@ def cellar_level(cellar: Cellar) -> float:
     return NEUTRAL_READINESS if cellar.purpose_level is None else float(cellar.purpose_level)
 
 
-def compute_readiness(wine: Wine, *, today: Optional[date] = None) -> Readiness:
+def compute_readiness(wine: Wine, *, today: date | None = None) -> Readiness:
     today = today or date.today()
     after, before = wine.drink_after, wine.drink_before
 
@@ -91,7 +91,7 @@ def _wine_label(wine: Wine) -> str:
     return " ".join(bits)
 
 
-def _vintage_bucket(vintage: Optional[int]) -> str:
+def _vintage_bucket(vintage: int | None) -> str:
     return "NV" if vintage is None else f"{vintage // 5 * 5}-{vintage // 5 * 5 + 4}"
 
 
@@ -99,7 +99,7 @@ def suggest_move_plan(
     cellars: list[Cellar],
     holdings_with_wines: list[tuple[Holding, Wine]],
     *,
-    today: Optional[date] = None,
+    today: date | None = None,
     mismatch_tolerance: float = DEFAULT_MISMATCH_TOLERANCE,
 ) -> MovePlanResult:
     today = today or date.today()
@@ -140,11 +140,7 @@ def suggest_move_plan(
 
     candidates = []
     for holding, wine in holdings_with_wines:
-        if (
-            holding.quantity <= 0
-            or holding.state != "in_cellar"
-            or not holding.cellar_id
-        ):
+        if holding.quantity <= 0 or holding.state != "in_cellar" or not holding.cellar_id:
             continue
         current = cellars_by_id.get(holding.cellar_id)
         if current is None:
@@ -187,7 +183,9 @@ def suggest_move_plan(
             diversity_penalty = (
                 mix[cellar.id]["color"][wine.color or "other"] / destination_total * 0.8
                 + mix[cellar.id]["area"][wine.area or "unknown"] / destination_total * 0.35
-                + mix[cellar.id]["appellation"][wine.appellation or "unknown"] / destination_total * 0.35
+                + mix[cellar.id]["appellation"][wine.appellation or "unknown"]
+                / destination_total
+                * 0.35
                 + mix[cellar.id]["vintage"][_vintage_bucket(wine.vintage)] / destination_total * 0.2
             )
             destinations.append((purpose_gap + diversity_penalty, cellar, capacity))

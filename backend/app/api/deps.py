@@ -1,8 +1,9 @@
 """FastAPI dependencies: database access, authentication, locale resolution."""
+
 from __future__ import annotations
 
 import sqlite3
-from typing import Iterator, Optional
+from collections.abc import Iterator
 
 from fastapi import Depends, Header, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -37,7 +38,7 @@ def get_conn() -> Iterator[sqlite3.Connection]:
 
 
 def get_current_user_id(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(_bearer),
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
     conn: sqlite3.Connection = Depends(get_conn),
 ) -> str:
     if credentials is None:
@@ -54,7 +55,7 @@ def get_current_user_id(
     return user.id
 
 
-def get_locale(accept_language: Optional[str] = Header(default=None)) -> str:
+def get_locale(accept_language: str | None = Header(default=None)) -> str:
     if accept_language:
         primary = accept_language.split(",")[0].split("-")[0].strip().lower()
         from app.i18n.loader import available_locales

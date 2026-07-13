@@ -78,16 +78,14 @@ class AssignmentReconciliationTests(unittest.TestCase):
                 only_cellar_id="specific",
             )
             self.assertEqual(result.assigned_bottles, 3)
-            self.assertIsNotNone(
-                repo.find_active_holding(conn, "wine", "specific", "AG1")
-            )
+            self.assertIsNotNone(repo.find_active_holding(conn, "wine", "specific", "AG1"))
 
 
 class CsvUnassignedReportingTests(unittest.TestCase):
     CSV = (
         "Producer,Cuvee,Appellation,Vintage,Color,Area,Format,Quantity,Location\n"
         "Domaine,Cuvée,AOC,2020,red,Area,75cl,2,AG7\n"
-    ).encode("utf-8")
+    ).encode()
 
     def setUp(self):
         self.db = Database(":memory:")

@@ -32,19 +32,27 @@ class TestHardFilters(unittest.TestCase):
         w = _wine()
         gifted = _holding(wine_id=w.id, quantity=1, state="gifted")
         empty = _holding(wine_id=w.id, quantity=0, state="in_cellar")
-        results = rec.recommend_wines([(gifted, w), (empty, w)], rec.RecommendationCriteria(), today=TODAY)
+        results = rec.recommend_wines(
+            [(gifted, w), (empty, w)], rec.RecommendationCriteria(), today=TODAY
+        )
         self.assertEqual(len(results), 0)
 
     def test_appellation_partial_match(self):
         w = _wine(appellation="Cote du Py")
-        results = rec.recommend_wines([(_holding(wine_id=w.id), w)], rec.RecommendationCriteria(appellation="cote"), today=TODAY)
+        results = rec.recommend_wines(
+            [(_holding(wine_id=w.id), w)],
+            rec.RecommendationCriteria(appellation="cote"),
+            today=TODAY,
+        )
         self.assertEqual(len(results), 1)
 
     def test_vintage_range(self):
         old = _wine(vintage=2010)
         new = _wine(vintage=2023)
         pairs = [(_holding(wine_id=old.id), old), (_holding(wine_id=new.id), new)]
-        results = rec.recommend_wines(pairs, rec.RecommendationCriteria(vintage_before=2015), today=TODAY)
+        results = rec.recommend_wines(
+            pairs, rec.RecommendationCriteria(vintage_before=2015), today=TODAY
+        )
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].wine.vintage, 2010)
 
@@ -60,8 +68,13 @@ class TestScoring(unittest.TestCase):
     def test_dish_keyword_match_ranks_higher(self):
         steak_wine = _wine(advice_pairing="Excellent with grilled steak and red meat")
         fish_wine = _wine(advice_pairing="Pairs beautifully with fish and seafood")
-        pairs = [(_holding(wine_id=steak_wine.id), steak_wine), (_holding(wine_id=fish_wine.id), fish_wine)]
-        results = rec.recommend_wines(pairs, rec.RecommendationCriteria(dish="grilled steak"), today=TODAY)
+        pairs = [
+            (_holding(wine_id=steak_wine.id), steak_wine),
+            (_holding(wine_id=fish_wine.id), fish_wine),
+        ]
+        results = rec.recommend_wines(
+            pairs, rec.RecommendationCriteria(dish="grilled steak"), today=TODAY
+        )
         self.assertEqual(results[0].wine.id, steak_wine.id)
         self.assertGreater(results[0].score, results[1].score)
 
@@ -74,7 +87,11 @@ class TestScoring(unittest.TestCase):
 
     def test_reasons_are_populated(self):
         w = _wine(advice_pairing="great with roast chicken")
-        results = rec.recommend_wines([(_holding(wine_id=w.id), w)], rec.RecommendationCriteria(dish="roast chicken"), today=TODAY)
+        results = rec.recommend_wines(
+            [(_holding(wine_id=w.id), w)],
+            rec.RecommendationCriteria(dish="roast chicken"),
+            today=TODAY,
+        )
         self.assertTrue(results[0].reasons)
 
 

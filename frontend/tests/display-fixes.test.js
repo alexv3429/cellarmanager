@@ -13,7 +13,7 @@ test("backend i18n endpoint no longer shadows static dictionaries", async () => 
 
 test("service worker caches only explicit app-shell paths", async () => {
   const source = await read("frontend/service-worker.js");
-  assert.match(source, /winecellar-shell-v7/);
+  assert.match(source, /winecellar-shell-v\d+/);
   assert.match(source, /function isAppShellRequest/);
   assert.match(source, /APP_SHELL_PATHS\.has\(url\.pathname\)/);
   assert.doesNotMatch(source, /endsWith\(path\.replace\(["']\.\/["']/);

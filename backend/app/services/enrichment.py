@@ -25,13 +25,13 @@ each source you're licensed to use, and list them in
 ``get_active_providers()`` below - the aggregation, merge, and journal
 logic already works for any number of providers, real or mock.
 """
+
 from __future__ import annotations
 
+import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import date
-import os
-from typing import Optional
 
 from app.core.domain import Wine, utcnow
 
@@ -47,17 +47,17 @@ AGREEMENT_TOLERANCE_RELATIVE = 0.15
 
 @dataclass
 class DrinkingWindowResult:
-    drink_after: Optional[date]
-    drink_before: Optional[date]
+    drink_after: date | None
+    drink_before: date | None
     confidence: float  # 0..1
     source: str
 
 
 @dataclass
 class MarketInfoResult:
-    market_value: Optional[float]
-    advice_pairing: Optional[str]
-    advice_experience: Optional[str]
+    market_value: float | None
+    advice_pairing: str | None
+    advice_experience: str | None
     confidence: float
     source: str
 
@@ -66,12 +66,10 @@ class EnrichmentProvider(ABC):
     name: str = "base"
 
     @abstractmethod
-    def fetch_drinking_window(self, wine: Wine) -> Optional[DrinkingWindowResult]:
-        ...
+    def fetch_drinking_window(self, wine: Wine) -> DrinkingWindowResult | None: ...
 
     @abstractmethod
-    def fetch_market_info(self, wine: Wine) -> Optional[MarketInfoResult]:
-        ...
+    def fetch_market_info(self, wine: Wine) -> MarketInfoResult | None: ...
 
 
 class MockEnrichmentProvider(EnrichmentProvider):
@@ -85,9 +83,27 @@ class MockEnrichmentProvider(EnrichmentProvider):
 
     PROFILES = {
         # (aging-window years from vintage, price-per-year-of-age, confidence)
-        "conservative": {"after_years": 3, "before_years": 7, "price_base": 14.0, "price_per_year": 0.4, "confidence": 0.35},
-        "generous": {"after_years": 1, "before_years": 12, "price_base": 18.0, "price_per_year": 0.7, "confidence": 0.3},
-        "community": {"after_years": 2, "before_years": 9, "price_base": 16.0, "price_per_year": 0.55, "confidence": 0.45},
+        "conservative": {
+            "after_years": 3,
+            "before_years": 7,
+            "price_base": 14.0,
+            "price_per_year": 0.4,
+            "confidence": 0.35,
+        },
+        "generous": {
+            "after_years": 1,
+            "before_years": 12,
+            "price_base": 18.0,
+            "price_per_year": 0.7,
+            "confidence": 0.3,
+        },
+        "community": {
+            "after_years": 2,
+            "before_years": 9,
+            "price_base": 16.0,
+            "price_per_year": 0.55,
+            "confidence": 0.45,
+        },
     }
 
     def __init__(self, profile: str = "community"):
@@ -95,7 +111,7 @@ class MockEnrichmentProvider(EnrichmentProvider):
         self.name = f"mock-{profile}"
         self._settings = self.PROFILES[profile]
 
-    def fetch_drinking_window(self, wine: Wine) -> Optional[DrinkingWindowResult]:
+    def fetch_drinking_window(self, wine: Wine) -> DrinkingWindowResult | None:
         if not wine.vintage:
             return None
         s = self._settings
@@ -106,14 +122,17 @@ class MockEnrichmentProvider(EnrichmentProvider):
             source=self.name,
         )
 
-    def fetch_market_info(self, wine: Wine) -> Optional[MarketInfoResult]:
+    def fetch_market_info(self, wine: Wine) -> MarketInfoResult | None:
         s = self._settings
         base = s["price_base"]
         if wine.vintage:
             base += max(0, (2030 - wine.vintage)) * s["price_per_year"]
         return MarketInfoResult(
-            market_value=round(base, 2), advice_pairing=None, advice_experience=None,
-            confidence=s["confidence"], source=self.name,
+            market_value=round(base, 2),
+            advice_pairing=None,
+            advice_experience=None,
+            confidence=s["confidence"],
+            source=self.name,
         )
 
 
@@ -140,10 +159,11 @@ def get_active_providers() -> list[EnrichmentProvider]:
 # aggregation: combine several providers' results into one best estimate
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class AggregatedDrinkingWindow:
-    drink_after: Optional[date]
-    drink_before: Optional[date]
+    drink_after: date | None
+    drink_before: date | None
     confidence: float
     sources: list[str] = field(default_factory=list)
     source_count: int = 0
@@ -156,9 +176,9 @@ class AggregatedDrinkingWindow:
 
 @dataclass
 class AggregatedMarketInfo:
-    market_value: Optional[float]
-    advice_pairing: Optional[str]
-    advice_experience: Optional[str]
+    market_value: float | None
+    advice_pairing: str | None
+    advice_experience: str | None
     confidence: float
     sources: list[str] = field(default_factory=list)
     source_count: int = 0
@@ -169,7 +189,7 @@ class AggregatedMarketInfo:
         return "+".join(self.sources) if self.sources else "no-source"
 
 
-def _weighted_date_bound(pairs: list[tuple[date, float]]) -> tuple[Optional[date], float]:
+def _weighted_date_bound(pairs: list[tuple[date, float]]) -> tuple[date | None, float]:
     """Weighted-mean date plus the weighted standard deviation (in days),
     from (date, confidence) pairs. Returns (None, 0.0) if empty."""
     if not pairs:
@@ -180,7 +200,7 @@ def _weighted_date_bound(pairs: list[tuple[date, float]]) -> tuple[Optional[date
         pairs = [(d, 1.0) for d, _ in pairs]
     mean_ordinal = sum(d.toordinal() * w for d, w in pairs) / total_weight
     variance = sum(w * (d.toordinal() - mean_ordinal) ** 2 for d, w in pairs) / total_weight
-    return date.fromordinal(round(mean_ordinal)), variance ** 0.5
+    return date.fromordinal(round(mean_ordinal)), variance**0.5
 
 
 def _agreement_adjustment(spread: float, tolerance: float, n_sources: int) -> float:
@@ -195,7 +215,9 @@ def _agreement_adjustment(spread: float, tolerance: float, n_sources: int) -> fl
     return bonus - penalty
 
 
-def aggregate_drinking_windows(results: list[Optional[DrinkingWindowResult]]) -> Optional[AggregatedDrinkingWindow]:
+def aggregate_drinking_windows(
+    results: list[DrinkingWindowResult | None],
+) -> AggregatedDrinkingWindow | None:
     """Combine every provider's drinking-window estimate into one. Bounds
     are combined independently (some providers may only offer one of the
     two), each as a confidence-weighted mean, with the combined confidence
@@ -212,18 +234,26 @@ def aggregate_drinking_windows(results: list[Optional[DrinkingWindowResult]]) ->
     avg_confidence = sum(r.confidence for r in usable) / len(usable)
     adjustment = 0.0
     if after_pairs:
-        adjustment += _agreement_adjustment(after_spread, AGREEMENT_TOLERANCE_DAYS, len(after_pairs))
+        adjustment += _agreement_adjustment(
+            after_spread, AGREEMENT_TOLERANCE_DAYS, len(after_pairs)
+        )
     if before_pairs:
-        adjustment += _agreement_adjustment(before_spread, AGREEMENT_TOLERANCE_DAYS, len(before_pairs))
+        adjustment += _agreement_adjustment(
+            before_spread, AGREEMENT_TOLERANCE_DAYS, len(before_pairs)
+        )
     combined_confidence = max(0.05, min(0.95, avg_confidence + adjustment))
 
     return AggregatedDrinkingWindow(
-        drink_after=after_date, drink_before=before_date, confidence=round(combined_confidence, 3),
-        sources=[r.source for r in usable], source_count=len(usable), per_source=usable,
+        drink_after=after_date,
+        drink_before=before_date,
+        confidence=round(combined_confidence, 3),
+        sources=[r.source for r in usable],
+        source_count=len(usable),
+        per_source=usable,
     )
 
 
-def aggregate_market_info(results: list[Optional[MarketInfoResult]]) -> Optional[AggregatedMarketInfo]:
+def aggregate_market_info(results: list[MarketInfoResult | None]) -> AggregatedMarketInfo | None:
     usable = [r for r in results if r is not None and r.market_value is not None]
     if not usable:
         return None
@@ -232,8 +262,8 @@ def aggregate_market_info(results: list[Optional[MarketInfoResult]]) -> Optional
     weights = [(r.market_value, r.confidence or 1.0) for r in usable]
     mean_value = sum(v * w for v, w in weights) / total_weight
     variance = sum(w * (v - mean_value) ** 2 for v, w in weights) / total_weight
-    std = variance ** 0.5
-    relative_spread = (std / mean_value) if mean_value else 0.0
+    std = variance**0.5
+    (std / mean_value) if mean_value else 0.0
     tolerance = AGREEMENT_TOLERANCE_RELATIVE * (mean_value or 1.0)
 
     avg_confidence = sum(r.confidence for r in usable) / len(usable)
@@ -247,18 +277,25 @@ def aggregate_market_info(results: list[Optional[MarketInfoResult]]) -> Optional
     best_advice = max(with_advice, key=lambda r: r.confidence, default=None)
 
     return AggregatedMarketInfo(
-        market_value=round(mean_value, 2), confidence=round(combined_confidence, 3),
+        market_value=round(mean_value, 2),
+        confidence=round(combined_confidence, 3),
         advice_pairing=best_advice.advice_pairing if best_advice else None,
         advice_experience=best_advice.advice_experience if best_advice else None,
-        sources=[r.source for r in usable], source_count=len(usable), per_source=usable,
+        sources=[r.source for r in usable],
+        source_count=len(usable),
+        per_source=usable,
     )
 
 
-def fetch_and_aggregate_drinking_window(wine: Wine, providers: list[EnrichmentProvider]) -> Optional[AggregatedDrinkingWindow]:
+def fetch_and_aggregate_drinking_window(
+    wine: Wine, providers: list[EnrichmentProvider]
+) -> AggregatedDrinkingWindow | None:
     return aggregate_drinking_windows([p.fetch_drinking_window(wine) for p in providers])
 
 
-def fetch_and_aggregate_market_info(wine: Wine, providers: list[EnrichmentProvider]) -> Optional[AggregatedMarketInfo]:
+def fetch_and_aggregate_market_info(
+    wine: Wine, providers: list[EnrichmentProvider]
+) -> AggregatedMarketInfo | None:
     return aggregate_market_info([p.fetch_market_info(wine) for p in providers])
 
 
@@ -266,19 +303,20 @@ def fetch_and_aggregate_market_info(wine: Wine, providers: list[EnrichmentProvid
 # merge against whatever is already on the wine record
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class MergeDecision:
     applied: bool
     new_value: object
-    new_confidence: Optional[float]
-    new_source: Optional[str]
+    new_confidence: float | None
+    new_source: str | None
     note: str
 
 
 def merge_value(
     *,
     existing_value: object,
-    existing_confidence: Optional[float],
+    existing_confidence: float | None,
     fetched_value: object,
     fetched_confidence: float,
     fetched_source: str,
@@ -298,44 +336,86 @@ def merge_value(
        surfaced but not applied, so the person can decide by hand.
     """
     if fetched_value is None:
-        return MergeDecision(False, existing_value, existing_confidence, None, "fetched value unavailable")
+        return MergeDecision(
+            False, existing_value, existing_confidence, None, "fetched value unavailable"
+        )
     if existing_value is None:
-        return MergeDecision(True, fetched_value, fetched_confidence, fetched_source, "no existing value; filled from fetch")
+        return MergeDecision(
+            True,
+            fetched_value,
+            fetched_confidence,
+            fetched_source,
+            "no existing value; filled from fetch",
+        )
     if existing_confidence is not None and existing_confidence >= MANUAL_CONFIDENCE:
-        return MergeDecision(False, existing_value, existing_confidence, None, "existing value is manual; not auto-overwritten")
+        return MergeDecision(
+            False,
+            existing_value,
+            existing_confidence,
+            None,
+            "existing value is manual; not auto-overwritten",
+        )
     existing_confidence = existing_confidence or 0.0
     if fetched_confidence > existing_confidence + confidence_margin:
-        return MergeDecision(True, fetched_value, fetched_confidence, fetched_source, "fetched value has higher confidence")
+        return MergeDecision(
+            True,
+            fetched_value,
+            fetched_confidence,
+            fetched_source,
+            "fetched value has higher confidence",
+        )
     return MergeDecision(
-        False, existing_value, existing_confidence, None,
+        False,
+        existing_value,
+        existing_confidence,
+        None,
         "fetched value's confidence is not clearly better; kept existing value for review",
     )
 
 
-def apply_drinking_window_enrichment(wine: Wine, fetched: AggregatedDrinkingWindow) -> list[MergeDecision]:
+def apply_drinking_window_enrichment(
+    wine: Wine, fetched: AggregatedDrinkingWindow
+) -> list[MergeDecision]:
     decisions = []
     d = merge_value(
-        existing_value=wine.drink_after, existing_confidence=wine.drink_after_confidence,
-        fetched_value=fetched.drink_after, fetched_confidence=fetched.confidence, fetched_source=fetched.source,
+        existing_value=wine.drink_after,
+        existing_confidence=wine.drink_after_confidence,
+        fetched_value=fetched.drink_after,
+        fetched_confidence=fetched.confidence,
+        fetched_source=fetched.source,
     )
     decisions.append(d)
     if d.applied:
-        wine.drink_after, wine.drink_after_confidence, wine.drink_after_source = fetched.drink_after, fetched.confidence, fetched.source
+        wine.drink_after, wine.drink_after_confidence, wine.drink_after_source = (
+            fetched.drink_after,
+            fetched.confidence,
+            fetched.source,
+        )
 
     d2 = merge_value(
-        existing_value=wine.drink_before, existing_confidence=wine.drink_before_confidence,
-        fetched_value=fetched.drink_before, fetched_confidence=fetched.confidence, fetched_source=fetched.source,
+        existing_value=wine.drink_before,
+        existing_confidence=wine.drink_before_confidence,
+        fetched_value=fetched.drink_before,
+        fetched_confidence=fetched.confidence,
+        fetched_source=fetched.source,
     )
     decisions.append(d2)
     if d2.applied:
-        wine.drink_before, wine.drink_before_confidence, wine.drink_before_source = fetched.drink_before, fetched.confidence, fetched.source
+        wine.drink_before, wine.drink_before_confidence, wine.drink_before_source = (
+            fetched.drink_before,
+            fetched.confidence,
+            fetched.source,
+        )
     return decisions
 
 
 def apply_market_info_enrichment(wine: Wine, fetched: AggregatedMarketInfo) -> MergeDecision:
     decision = merge_value(
-        existing_value=wine.market_value, existing_confidence=wine.market_value_confidence,
-        fetched_value=fetched.market_value, fetched_confidence=fetched.confidence, fetched_source=fetched.source,
+        existing_value=wine.market_value,
+        existing_confidence=wine.market_value_confidence,
+        fetched_value=fetched.market_value,
+        fetched_confidence=fetched.confidence,
+        fetched_source=fetched.source,
     )
     if decision.applied:
         wine.market_value = fetched.market_value

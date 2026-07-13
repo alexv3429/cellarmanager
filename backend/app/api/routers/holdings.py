@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import sqlite3
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -45,9 +44,9 @@ def _action_out(result: hs.ActionResult) -> ActionOut:
 
 @router.get("", response_model=list[HoldingOut])
 def list_holdings(
-    wine_id: Optional[str] = None,
-    cellar_id: Optional[str] = None,
-    state: Optional[str] = None,
+    wine_id: str | None = None,
+    cellar_id: str | None = None,
+    state: str | None = None,
     conn: sqlite3.Connection = Depends(get_conn),
 ):
     return repo.list_holdings(conn, wine_id=wine_id, cellar_id=cellar_id, state=state)

@@ -5,11 +5,11 @@ the same keys as ``en.json``, and it is picked up automatically - nothing
 else in the codebase needs to change. Missing keys in a non-English locale
 fall back to English rather than showing a raw key to the person.
 """
+
 from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Optional
 
 _I18N_DIR = Path(__file__).parent
 DEFAULT_LOCALE = "en"

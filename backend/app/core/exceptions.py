@@ -4,9 +4,10 @@ Kept separate from the storage/service layers so the API layer can catch
 these and translate them into the right HTTP status codes without importing
 FastAPI-specific concepts into the business logic.
 """
+
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 
 class WineCellarError(Exception):
@@ -16,7 +17,7 @@ class WineCellarError(Exception):
 class ValidationError(WineCellarError):
     """Input did not pass validation (bad CSV row, bad field value, etc.)."""
 
-    def __init__(self, message: str, field: Optional[str] = None):
+    def __init__(self, message: str, field: str | None = None):
         super().__init__(message)
         self.field = field
 
@@ -28,7 +29,7 @@ class NotFoundError(WineCellarError):
 class ConflictError(WineCellarError):
     """Optimistic-concurrency version mismatch, or a uniqueness clash."""
 
-    def __init__(self, message: str, current: Optional[Any] = None):
+    def __init__(self, message: str, current: Any | None = None):
         super().__init__(message)
         self.current = current
 
