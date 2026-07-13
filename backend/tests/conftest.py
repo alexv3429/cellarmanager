@@ -44,9 +44,20 @@ def client(test_db):
 
 @pytest.fixture()
 def auth_headers(client):
-    resp = client.post(
-        "/auth/register", json={"username": "alice", "password": "correct horse battery staple"}
-    )
+    from app import config
+
+    payload = {
+        "username": "alice",
+        "password": "correct horse battery staple",
+    }
+
+    # CI deliberately enables bootstrap-token protection. Keep the fixture
+    # compatible with both protected CI and local development without a token.
+    if config.SETUP_TOKEN:
+        payload["setup_token"] = config.SETUP_TOKEN
+
+    resp = client.post("/auth/register", json=payload)
     assert resp.status_code == 200, resp.text
+
     token = resp.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
