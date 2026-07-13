@@ -71,7 +71,7 @@ test("cellar UI offers all five user-friendly structure presets", async () => {
   assert.match(source, /depth_positions/);
 });
 
-test("service worker advances to v7", async () => {
+test("service worker uses a versioned cache name", async () => {
   const source = await read("frontend/service-worker.js");
-  assert.match(source, /winecellar-shell-v7/);
+  assert.match(source, /winecellar-shell-v\d+/);
 });

@@ -17,6 +17,7 @@ interoperate with other systems that expect real JWTs, swap
 ``create_token(user_id) -> str`` and ``verify_token(token) -> dict | None``,
 so the change is fully contained here.
 """
+
 from __future__ import annotations
 
 import base64
@@ -25,13 +26,12 @@ import hmac
 import json
 import time
 from dataclasses import dataclass
-from typing import Optional
 
 PBKDF2_ITERATIONS = 210_000
 SALT_BYTES = 16
 
 
-def hash_password(password: str, salt_hex: Optional[str] = None) -> tuple[str, str]:
+def hash_password(password: str, salt_hex: str | None = None) -> tuple[str, str]:
     """Return (hash_hex, salt_hex). Generates a new random salt if none given."""
     if not password:
         raise ValueError("Password must not be empty")
@@ -47,6 +47,7 @@ def verify_password(password: str, salt_hex: str, expected_hash_hex: str) -> boo
 
 def _random_salt() -> bytes:
     import secrets
+
     return secrets.token_bytes(SALT_BYTES)
 
 
@@ -59,13 +60,17 @@ def _b64url_decode(data: str) -> bytes:
     return base64.urlsafe_b64decode(data + padding)
 
 
-def create_token(user_id: str, secret: str, ttl_seconds: int = 12 * 3600, now: Optional[float] = None) -> str:
+def create_token(
+    user_id: str, secret: str, ttl_seconds: int = 12 * 3600, now: float | None = None
+) -> str:
     """Create a compact signed session token: base64url(payload).base64url(signature)."""
     issued_at = int(now if now is not None else time.time())
     payload = {"sub": user_id, "iat": issued_at, "exp": issued_at + ttl_seconds}
     payload_bytes = json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8")
     payload_b64 = _b64url_encode(payload_bytes)
-    signature = hmac.new(secret.encode("utf-8"), payload_b64.encode("ascii"), hashlib.sha256).digest()
+    signature = hmac.new(
+        secret.encode("utf-8"), payload_b64.encode("ascii"), hashlib.sha256
+    ).digest()
     return f"{payload_b64}.{_b64url_encode(signature)}"
 
 
@@ -76,12 +81,14 @@ class TokenPayload:
     expires_at: int
 
 
-def verify_token(token: str, secret: str, now: Optional[float] = None) -> Optional[TokenPayload]:
+def verify_token(token: str, secret: str, now: float | None = None) -> TokenPayload | None:
     """Verify signature and expiry. Returns None (never raises) on any problem,
     so callers can treat "invalid" and "expired" identically as "not authenticated"."""
     try:
         payload_b64, signature_b64 = token.split(".", 1)
-        expected_sig = hmac.new(secret.encode("utf-8"), payload_b64.encode("ascii"), hashlib.sha256).digest()
+        expected_sig = hmac.new(
+            secret.encode("utf-8"), payload_b64.encode("ascii"), hashlib.sha256
+        ).digest()
         actual_sig = _b64url_decode(signature_b64)
         if not hmac.compare_digest(expected_sig, actual_sig):
             return None
@@ -89,7 +96,9 @@ def verify_token(token: str, secret: str, now: Optional[float] = None) -> Option
         current = now if now is not None else time.time()
         if current > payload["exp"]:
             return None
-        return TokenPayload(user_id=payload["sub"], issued_at=payload["iat"], expires_at=payload["exp"])
+        return TokenPayload(
+            user_id=payload["sub"], issued_at=payload["iat"], expires_at=payload["exp"]
+        )
     except (ValueError, KeyError, json.JSONDecodeError):
         return None
 
@@ -106,13 +115,13 @@ class LoginRateLimiter:
         self.window_seconds = window_seconds
         self._attempts: dict[str, list[float]] = {}
 
-    def is_blocked(self, key: str, now: Optional[float] = None) -> bool:
+    def is_blocked(self, key: str, now: float | None = None) -> bool:
         now = now if now is not None else time.time()
         attempts = [t for t in self._attempts.get(key, []) if now - t < self.window_seconds]
         self._attempts[key] = attempts
         return len(attempts) >= self.max_attempts
 
-    def record_failure(self, key: str, now: Optional[float] = None) -> None:
+    def record_failure(self, key: str, now: float | None = None) -> None:
         now = now if now is not None else time.time()
         self._attempts.setdefault(key, []).append(now)
 

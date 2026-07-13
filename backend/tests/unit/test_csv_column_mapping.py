@@ -6,13 +6,12 @@ from app.services import csv_io
 from app.storage import repositories as repo
 from tests.conftest_helpers import DatabaseTestCase
 
-
 LEGACY_CSV = (
-    'Place,Année Prod,Cuvée,Appellation,Vignoble,Couleur,Producteur, Prix,'
-    'Année Min,Année Max,Nb,Fmt,Manuel Min,Manuel Max,Premium,Commentaire,'
+    "Place,Année Prod,Cuvée,Appellation,Vignoble,Couleur,Producteur, Prix,"
+    "Année Min,Année Max,Nb,Fmt,Manuel Min,Manuel Max,Premium,Commentaire,"
     '"  38\u202f145,00   ","<= Prix Total\nNbre Bout =>",1215,Moy,"31,4",,\n'
     'A1,2018,Rouchaux,Moulin a Vent,Beaujolais,Rouge,Boillot,"  14,00   ",'
-    '2026,2033,3,75cl,,,,'
+    "2026,2033,3,75cl,,,,"
     '"Bcp de matière, agréable en jeunesse, garde possible",'
     '"  42,00   ",,,,,,2026\n'
 ).encode("utf-8")
@@ -36,7 +35,9 @@ class TestCsvAnalysis(unittest.TestCase):
     def test_duplicate_and_blank_headers_receive_stable_ids(self):
         raw = b"Producer,Producer,,Cuvee,Appellation,Vintage,Color,Area,Format\nA,B,x,C,D,2020,red,E,75cl\n"
         analysis = csv_io.analyze_csv(raw)
-        self.assertEqual(len({header["id"] for header in analysis["headers"]}), len(analysis["headers"]))
+        self.assertEqual(
+            len({header["id"] for header in analysis["headers"]}), len(analysis["headers"])
+        )
         labels = [header["label"] for header in analysis["headers"]]
         self.assertIn("Producer (2)", labels)
         self.assertIn("Column 3", labels)
@@ -78,7 +79,7 @@ class TestMappedImport(DatabaseTestCase):
         raw = (
             "Producer,Cuvee,Appellation,Vintage,Color,Area,Format,Manual Min,Year Min,Manual Max,Year Max\n"
             "Domaine,Cuvée,AOC,2020,red,Area,75cl,2028,2025,2030,2035\n"
-        ).encode("utf-8")
+        ).encode()
         analysis = csv_io.analyze_csv(raw)
         csv_io.import_csv(raw, conn=self.conn, user_id="u1", mapping=analysis["suggested_mapping"])
         wine = repo.list_wines(self.conn)[0]
@@ -89,7 +90,7 @@ class TestMappedImport(DatabaseTestCase):
         raw = (
             "Producer,Cuvee,Appellation,Vintage,Color,Area,Format,Quantity\n"
             "Domaine,Cuvée,AOC,2020,red,Area,75cl,-2\n"
-        ).encode("utf-8")
+        ).encode()
         analysis = csv_io.analyze_csv(raw)
         preview = csv_io.preview_csv(
             raw,
@@ -103,7 +104,7 @@ class TestMappedImport(DatabaseTestCase):
         raw = (
             "Producer,Cuvee,Appellation,Vintage,Color,Area,Format,Quantity\n"
             "Domaine,Cuvée,AOC,2020,red,Area,75cl,1.5\n"
-        ).encode("utf-8")
+        ).encode()
         analysis = csv_io.analyze_csv(raw)
         report = csv_io.import_csv(
             raw,

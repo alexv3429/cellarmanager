@@ -5,12 +5,12 @@ database connection, so the aggregation logic itself is pure and trivial to
 unit test with hand-built fixtures. The API layer is responsible for the one
 query that joins holdings to wines (see ``repositories.list_holdings_with_wines``).
 """
+
 from __future__ import annotations
 
 from collections import Counter
 from dataclasses import dataclass, field
 from datetime import date
-from typing import Optional
 
 from app.core.domain import Holding, Wine
 
@@ -23,9 +23,9 @@ class Breakdown:
 
 @dataclass
 class DrinkWindowBuckets:
-    overdue: int = 0          # drink_before has passed
-    ready_now: int = 0        # inside [drink_after, drink_before] today, or no drink_after set and drink_before is far off
-    not_ready_yet: int = 0    # drink_after is in the future
+    overdue: int = 0  # drink_before has passed
+    ready_now: int = 0  # inside [drink_after, drink_before] today, or no drink_after set and drink_before is far off
+    not_ready_yet: int = 0  # drink_after is in the future
     no_date_info: int = 0
 
 
@@ -48,7 +48,7 @@ def _breakdown(counter: Counter, total: int) -> Breakdown:
     return Breakdown(counts=counts, percentages=pct)
 
 
-def compute_stats(pairs: list[tuple[Wine, Holding]], *, today: Optional[date] = None) -> StatsResult:
+def compute_stats(pairs: list[tuple[Wine, Holding]], *, today: date | None = None) -> StatsResult:
     """`pairs` can be any (wine, holding) pairs you have handy - e.g. every
     holding in a cellar regardless of state. This function itself narrows to
     holdings that are actually ``in_cellar`` right now, since "how many
@@ -100,6 +100,8 @@ def compute_stats(pairs: list[tuple[Wine, Holding]], *, today: Optional[date] = 
 
 
 def compute_stats_per_cellar(
-    pairs_by_cellar: dict[Optional[str], list[tuple[Wine, Holding]]], *, today: Optional[date] = None
-) -> dict[Optional[str], StatsResult]:
-    return {cellar_id: compute_stats(pairs, today=today) for cellar_id, pairs in pairs_by_cellar.items()}
+    pairs_by_cellar: dict[str | None, list[tuple[Wine, Holding]]], *, today: date | None = None
+) -> dict[str | None, StatsResult]:
+    return {
+        cellar_id: compute_stats(pairs, today=today) for cellar_id, pairs in pairs_by_cellar.items()
+    }

@@ -110,3 +110,11 @@ is fully implemented and tested; the actual internet-connected data source
 is a `MockEnrichmentProvider` you're expected to replace, because which
 real service to call is a licensing/ToS decision for you to make, not a
 default this codebase should bake in.
+
+## Tooling and reproducibility
+
+`pyproject.toml` is the project manifest for runtime dependencies, development dependencies, pytest, coverage, and Ruff. `uv.lock` resolves the complete cross-platform dependency graph and is committed. Development uses `uv sync --frozen --group dev`; Docker uses `uv sync --frozen --no-dev`; CI uses the same lock file on every supported Python version. The `backend/requirements*.txt` files are generated compatibility exports only.
+
+Ruff is the single Python formatter, import sorter, and linter. Node remains necessary only for syntax checking and the dependency-free frontend test runner; there is still no frontend build step. `pre-commit` provides local commit/push hooks, but GitHub's protected `CI Gate` is the authoritative architecture-quality boundary.
+
+The CI workflow deliberately exposes one stable aggregate job name. This lets the internal test matrix evolve without repeatedly changing branch protection. See `docs/development.md` and `docs/github-protection.md`.

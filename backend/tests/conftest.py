@@ -3,6 +3,7 @@ tests/integration/test_api.py. Requires the packages in requirements-dev.txt
 to be installed (fastapi, httpx) - the unittest-style tests elsewhere in this
 suite deliberately do not depend on this file so they run with zero installs.
 """
+
 import os
 import sys
 from pathlib import Path
@@ -19,6 +20,7 @@ os.environ.setdefault("WINECELLAR_SECRET_KEY", "test-secret-key-not-for-producti
 @pytest.fixture()
 def test_db():
     from app.storage.database import Database
+
     db = Database(":memory:")
     yield db
     db.close_all()
@@ -42,7 +44,9 @@ def client(test_db):
 
 @pytest.fixture()
 def auth_headers(client):
-    resp = client.post("/auth/register", json={"username": "alice", "password": "correct horse battery staple"})
+    resp = client.post(
+        "/auth/register", json={"username": "alice", "password": "correct horse battery staple"}
+    )
     assert resp.status_code == 200, resp.text
     token = resp.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}

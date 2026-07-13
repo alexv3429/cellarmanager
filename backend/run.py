@@ -3,6 +3,7 @@
 serves the frontend) on http://localhost:8000. For production, prefer
 running uvicorn/gunicorn directly behind a reverse proxy that terminates
 HTTPS - see docs/security.md."""
+
 import os
 
 import uvicorn

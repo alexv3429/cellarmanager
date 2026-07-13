@@ -1,4 +1,5 @@
 """Authentication endpoints for a private household deployment."""
+
 from __future__ import annotations
 
 import hmac
@@ -38,15 +39,11 @@ def _token(user: User) -> TokenOut:
 @router.post("/register", response_model=TokenOut)
 def register(payload: RegisterIn, conn: sqlite3.Connection = Depends(get_conn)):
     if repo.count_users(conn) > 0:
-        raise HTTPException(
-            status.HTTP_403_FORBIDDEN, detail="auth.registration_closed"
-        )
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail="auth.registration_closed")
     if config.SETUP_TOKEN and not hmac.compare_digest(
         payload.setup_token or "", config.SETUP_TOKEN
     ):
-        raise HTTPException(
-            status.HTTP_403_FORBIDDEN, detail="auth.invalid_setup_token"
-        )
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail="auth.invalid_setup_token")
     user = _new_user(payload)
     try:
         repo.insert_user(conn, user)
@@ -66,17 +63,13 @@ def login(
     remote = request.client.host if request.client else "unknown"
     rate_limit_key = f"{remote}:{payload.username.strip().lower()}"
     if login_rate_limiter.is_blocked(rate_limit_key):
-        raise HTTPException(
-            status.HTTP_429_TOO_MANY_REQUESTS, detail="auth.too_many_attempts"
-        )
+        raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, detail="auth.too_many_attempts")
     user = repo.get_user_by_username(conn, payload.username)
     if user is None or not auth_service.verify_password(
         payload.password, user.password_salt, user.password_hash
     ):
         login_rate_limiter.record_failure(rate_limit_key)
-        raise HTTPException(
-            status.HTTP_401_UNAUTHORIZED, detail="auth.login_failed"
-        )
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail="auth.login_failed")
     login_rate_limiter.reset(rate_limit_key)
     return _token(user)
 

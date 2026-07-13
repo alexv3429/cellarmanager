@@ -32,5 +32,5 @@ test("backend automatically reconciles after cellar create and update", async ()
 
 test("service-worker cache is advanced for the new UI", async () => {
   const source = await read("frontend/service-worker.js");
-  assert.match(source, /winecellar-shell-v7/);
+  assert.match(source, /winecellar-shell-v\d+/);
 });

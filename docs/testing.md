@@ -1,85 +1,94 @@
-# Testing
+# Testing and quality gates
 
-## Philosophy
-
-Business logic (`app/core`, `app/storage`, `app/services`) depends only on
-the Python standard library, so it can be unit tested with zero
-installation. The HTTP layer (`app/api`) is a thin translation on top and is
-covered separately with FastAPI's `TestClient`, which does need the real
-dependencies installed. This split means you get fast, install-free
-feedback on the logic that matters most, and full end-to-end HTTP coverage
-whenever you do have the dependencies (locally, or in CI).
-
-## What to run, and when
-
-**Zero installation required** (unit tests + a pure-Python system test that
-exercises import -> add/move/remove -> stats -> move-plan -> recommend ->
-export end to end, all through the service layer directly):
+## One command before a pull request
 
 ```bash
-cd backend
-python3 -m unittest discover -s tests/unit -v
-python3 -m unittest tests.integration.test_end_to_end_flows -v
+make ci
 ```
 
-**Full suite, including real HTTP requests against the actual FastAPI app**
-(needs `pip install -r requirements-dev.txt`):
+This is the supported local pre-merge gate. It verifies that `uv.lock` matches `pyproject.toml`, runs Ruff formatting and lint checks, checks repository policy, runs the complete backend suite with coverage, checks all JavaScript syntax, and runs every frontend Node test.
+
+Set up the locked environment and hooks once with:
 
 ```bash
-cd backend
-pip install -r requirements-dev.txt
-pytest
+./scripts/bootstrap_dev.sh
 ```
 
-`pytest.ini` points `pytest` at the whole `tests/` tree, and pytest runs
-`unittest.TestCase`-based tests natively, so this one command also re-runs
-everything from the zero-install step above, plus `tests/integration/test_api.py`.
-
-Note: running `python -m unittest discover -s tests` (i.e. the *whole*
-tests folder, not just `tests/unit`) will report one import error for
-`tests/integration/test_api.py`, because that file needs `pytest`/`fastapi`/
-`httpx` to even import. That's expected, not a bug - either point
-`unittest discover` at `tests/unit` specifically (as above), or install the
-dev requirements and use `pytest` for everything.
-
-**Frontend logic** (pure functions only - i18n interpolation, the offline
-queue, chart rendering - no DOM/IndexedDB, so no browser or npm install
-needed):
+## Backend
 
 ```bash
-node --test frontend/tests/logic.test.js
+uv run --frozen pytest -c pyproject.toml backend/tests
+uv run --frozen pytest -c pyproject.toml --cov=backend/app --cov-report=term-missing backend/tests
 ```
 
-Page modules that touch `document`/`fetch`/`indexedDB` are best exercised
-manually in a real browser (open `frontend/index.html` served by the
-backend, try the flows) - a full headless-browser test setup (Playwright)
-would be a reasonable addition if this project grows a CI budget for it,
-but was left out here to keep the frontend's zero-dependency promise.
+CI executes the suite independently on Python 3.11, 3.12, and 3.13. The CI database and setup token are isolated through environment variables.
 
-## Continuous integration
+## Frontend
 
-`.github/workflows/ci.yml` installs both requirements files and runs
-`pytest` (backend, full suite) and `node --test` (frontend logic) on every
-push/PR - since GitHub Actions has normal internet access, this is where
-the FastAPI-dependent tests get exercised automatically even if your local
-machine hasn't installed them yet.
+```bash
+./scripts/check_javascript.sh
+node --test frontend/tests/*.test.js
+```
 
-## Coverage at the time of writing
+The frontend remains dependency-free at runtime and uses Node's built-in test runner. DOM-heavy end-to-end browser tests are still a future enhancement; visible changes should include screenshots and manual verification in the pull request until Playwright is introduced.
 
-- Backend unit tests: CSV import/export (header aliasing, delimiter/encoding
-  detection, number/date locale parsing), cellar location-rule matching,
-  statistics aggregation, the move-plan advisor's readiness scoring and
-  capacity constraints, the recommendation engine's filters and keyword
-  scoring, password hashing and session tokens, the enrichment
-  confidence-merge logic, photo-hash recognition, and the repository layer
-  against a real (in-memory) SQLite database.
-- One pure-Python integration test drives a full realistic session:
-  define cellars -> import a CSV -> add/move/remove bottles -> check the
-  journal -> compute stats -> generate a move plan -> get recommendations
-  -> export to CSV in French.
-- One HTTP-level integration test suite repeats the important parts of the
-  above through real requests (auth required, registration closes after
-  the first user, CSV upload, stats/moveplan/recommendations endpoints).
-- Frontend: i18n interpolation, the offline queue's ordering/dedup/retry
-  logic, and the chart renderers (including that they never emit
-  unescaped HTML from a wine's/cellar's own text).
+## Ruff
+
+```bash
+make format
+make lint
+```
+
+Ruff is configured in `pyproject.toml` and is the single Python formatter, import sorter, and linter. The commit hook applies safe fixes and formatting to staged Python files. CI always checks the complete backend and repository scripts.
+
+## Git hooks
+
+`pre-commit` runs Ruff, JavaScript syntax, and repository-policy checks before a commit. `pre-push` runs the complete backend and frontend suites. Install both with `make setup` or `make hooks`.
+
+Hooks are convenience feedback, not the security boundary: the protected GitHub **CI Gate** is authoritative.
+
+## GitHub CI
+
+`.github/workflows/ci.yml` runs on pull requests, pushes to `main`, merge queues, and manual dispatch. It contains:
+
+- **Quality**: frozen lock, Ruff, and repository policy;
+- **Backend tests**: Python 3.11–3.13 matrix with coverage;
+- **Frontend tests**: Node 22 syntax and unit tests;
+- **Dependency review**: blocks newly introduced dependencies with moderate-or-higher known vulnerabilities;
+- **CI Gate**: stable aggregate required by branch protection.
+
+A workflow alone does not prevent a bad merge. Follow `docs/github-protection.md` to require **CI Gate**, require pull requests, prevent force pushes, and apply protection to administrators.
+
+## Dependency updates
+
+Dependabot checks the uv ecosystem and GitHub Actions weekly. Its pull requests must pass the same gate. For manual changes:
+
+```bash
+uv add PACKAGE
+uv add --dev PACKAGE
+make requirements
+make ci
+```
+
+The files `backend/requirements.txt` and `backend/requirements-dev.txt` are generated pip compatibility exports, not dependency sources.
+
+## Current coverage
+
+Backend tests cover the domain/repository/services, HTTP API, CSV mapping and reconciliation, synchronization regressions, cellar structures and orientation, recommendations, statistics, movement planning, authentication, recognition, and export. Frontend tests cover pure logic and the patch regressions added to page modules. Coverage output is reported on every backend CI matrix job; a numeric failure threshold can be ratcheted upward once a stable baseline is agreed.
+
+<!-- modern-dev-portability-fix -->
+## Portable uv lock files and virtual environments
+
+The committed `uv.lock` must use public, portable package sources. It must not
+contain developer-specific, corporate-only, or build-environment registry URLs.
+Generate or verify it with `make lock` and `make ci`; the repository policy check
+rejects known private build-registry references.
+
+CellarManager's uv environment is the repository-level `.venv`. If an older
+`backend/.venv` is active, deactivate it or run `unset VIRTUAL_ENV` before setup.
+The bootstrap script also ignores that obsolete activation automatically.
+
+If dependency installation fails against `pypi.org` or
+`files.pythonhosted.org`, inspect corporate proxy/TLS settings. A failure against
+`internal.api.openai.org` means an old, non-portable lockfile is still present.
+

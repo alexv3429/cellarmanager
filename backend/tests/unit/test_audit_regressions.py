@@ -1,8 +1,8 @@
-from contextlib import closing
-from datetime import date
 import sqlite3
 import tempfile
 import unittest
+from contextlib import closing
+from datetime import date
 from pathlib import Path
 
 from app.core.domain import Cellar, Holding, HoldingState, Wine
@@ -263,12 +263,8 @@ class AuditRegressionTests(unittest.TestCase):
 
     def test_non_vintage_does_not_pass_vintage_range(self):
         wine = Wine(id="nv", producer="NV", vintage=None)
-        holding = Holding(
-            id="nv-h", wine_id="nv", quantity=1, state=HoldingState.IN_CELLAR.value
-        )
-        results = recommend_wines(
-            [(holding, wine)], RecommendationCriteria(vintage_before=2020)
-        )
+        holding = Holding(id="nv-h", wine_id="nv", quantity=1, state=HoldingState.IN_CELLAR.value)
+        results = recommend_wines([(holding, wine)], RecommendationCriteria(vintage_before=2020))
         self.assertEqual(results, [])
 
     def test_strict_dish_search_excludes_non_matches(self):

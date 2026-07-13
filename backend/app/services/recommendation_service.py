@@ -1,4 +1,4 @@
-""""Which wine should I open?" recommendation engine (requirement 10.a).
+""" "Which wine should I open?" recommendation engine (requirement 10.a).
 
 Hard filters (cellar, color, vintage, appellation, drink-window) narrow the
 candidate list first; a simple bag-of-words keyword overlap then scores
@@ -7,19 +7,42 @@ plain, explainable information retrieval - not a claimed "AI sommelier" -
 and every result carries the reasons it matched so the ranking is never a
 black box.
 """
+
 from __future__ import annotations
 
 import re
 import unicodedata
 from dataclasses import dataclass, field
 from datetime import date
-from typing import Optional
 
-from app.core.domain import Cellar, Holding, Wine
+from app.core.domain import Holding, Wine
 
 _STOPWORDS = {
-    "the", "a", "an", "with", "and", "or", "of", "for", "to", "in", "on", "avec", "et", "ou",
-    "de", "du", "des", "le", "la", "les", "un", "une", "pour", "au", "aux",
+    "the",
+    "a",
+    "an",
+    "with",
+    "and",
+    "or",
+    "of",
+    "for",
+    "to",
+    "in",
+    "on",
+    "avec",
+    "et",
+    "ou",
+    "de",
+    "du",
+    "des",
+    "le",
+    "la",
+    "les",
+    "un",
+    "une",
+    "pour",
+    "au",
+    "aux",
 }
 
 
@@ -32,15 +55,15 @@ def _tokenize(text: str) -> set[str]:
 
 @dataclass
 class RecommendationCriteria:
-    cellar_id: Optional[str] = None
-    color: Optional[str] = None
-    vintage: Optional[int] = None
-    vintage_before: Optional[int] = None  # e.g. "2015 or older"
-    vintage_after: Optional[int] = None
-    appellation: Optional[str] = None
-    on_date: Optional[date] = None  # must be inside the wine's drink window (if the wine has one)
-    dish: Optional[str] = None
-    mood: Optional[str] = None
+    cellar_id: str | None = None
+    color: str | None = None
+    vintage: int | None = None
+    vintage_before: int | None = None  # e.g. "2015 or older"
+    vintage_after: int | None = None
+    appellation: str | None = None
+    on_date: date | None = None  # must be inside the wine's drink window (if the wine has one)
+    dish: str | None = None
+    mood: str | None = None
     strict_text_match: bool = False
 
 
@@ -56,7 +79,7 @@ def recommend_wines(
     holdings_with_wines: list[tuple[Holding, Wine]],
     criteria: RecommendationCriteria,
     *,
-    today: Optional[date] = None,
+    today: date | None = None,
     limit: int = 20,
 ) -> list[Recommendation]:
     today = today or date.today()
@@ -79,7 +102,10 @@ def recommend_wines(
         if criteria.vintage_after is not None:
             if wine.vintage is None or wine.vintage < criteria.vintage_after:
                 continue
-        if criteria.appellation and (not wine.appellation or criteria.appellation.strip().lower() not in wine.appellation.lower()):
+        if criteria.appellation and (
+            not wine.appellation
+            or criteria.appellation.strip().lower() not in wine.appellation.lower()
+        ):
             continue
         if criteria.on_date and wine.drink_after and criteria.on_date < wine.drink_after:
             continue

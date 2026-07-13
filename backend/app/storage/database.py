@@ -10,13 +10,14 @@ If this project ever needs to scale beyond one household/server, swap this
 module for SQLAlchemy + PostgreSQL: every other module only calls functions
 in ``app.storage.repositories``, never raw SQL, so the change is localized.
 """
+
 from __future__ import annotations
 
 import sqlite3
 import threading
+from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Iterator, Optional
 
 SCHEMA_PATH = Path(__file__).parent / "schema.sql"
 
@@ -28,7 +29,7 @@ class Database:
         if not self._is_memory:
             Path(path).parent.mkdir(parents=True, exist_ok=True)
         self._local = threading.local()
-        self._memory_conn: Optional[sqlite3.Connection] = None
+        self._memory_conn: sqlite3.Connection | None = None
         if self._is_memory:
             self._memory_conn = self._new_connection()
             self._init_schema(self._memory_conn)

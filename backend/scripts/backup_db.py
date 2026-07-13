@@ -10,15 +10,15 @@ The default source is ``WINECELLAR_DB_PATH`` and the default destination is a
 so the application may remain running, although a quiet maintenance window is
 still preferable before a major upgrade.
 """
+
 from __future__ import annotations
 
 import argparse
 import os
 import sqlite3
 from contextlib import closing
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Optional
 
 
 def default_source() -> Path:
@@ -34,12 +34,12 @@ def default_source() -> Path:
 
 
 def default_destination(source: Path) -> Path:
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     suffix = source.suffix or ".db"
     return source.parent / "backups" / f"{source.stem}-{timestamp}{suffix}"
 
 
-def create_backup(source: Path, destination: Optional[Path] = None) -> Path:
+def create_backup(source: Path, destination: Path | None = None) -> Path:
     source = source.expanduser().resolve()
     if not source.is_file():
         raise FileNotFoundError(f"Database file not found: {source}")

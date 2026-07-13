@@ -4,10 +4,10 @@ CSV imports may happen before any cellar exists. In that case the holding keeps
 its physical location text but has no ``cellar_id`` yet. This service makes that
 state visible and safely reconciles it when cellars/rules are added later.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
 
 from app.core.domain import HoldingState
 from app.services import cellar_rules, holdings_service
@@ -56,8 +56,8 @@ def unassigned_summary(conn) -> dict[str, int]:
 def reconcile_unassigned(
     conn,
     *,
-    user_id: Optional[str],
-    only_cellar_id: Optional[str] = None,
+    user_id: str | None,
+    only_cellar_id: str | None = None,
 ) -> ReconciliationResult:
     """Move every matchable unassigned holding to its rule-selected cellar.
 
