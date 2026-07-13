@@ -30,7 +30,7 @@ pydantic==2.13.4
     # via
     #   cellarmanager
     #   fastapi
-pydantic-core==2.46.4
+pydantic-core==2.47.0
     # via pydantic
 pytesseract==0.3.13
     # via cellarmanager
