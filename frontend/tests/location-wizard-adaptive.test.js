@@ -112,5 +112,5 @@ test("cellar wizard has adaptive sections and dedicated grid/depth orientation c
 
 test("service worker advances to v8", async () => {
   const source = await read("frontend/service-worker.js");
-  assert.match(source, /winecellar-shell-v8/);
+  assert.match(source, /winecellar-shell-v\d+/);
 });

@@ -71,3 +71,10 @@ If dependency installation fails against `pypi.org` or
 `files.pythonhosted.org`, inspect corporate proxy/TLS settings. A failure against
 `internal.api.openai.org` means an old, non-portable lockfile is still present.
 
+## Enrichment changes
+
+Provider and extraction changes require deterministic tests with fake transports.
+Do not add live API calls to CI, embed credentials, scrape protected sites or
+weaken source/identity checks. Run `make format` and `make ci` before opening a
+pull request, and update `docs/internet-enrichment.md` when provider behavior or
+configuration changes.

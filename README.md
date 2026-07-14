@@ -174,3 +174,11 @@ If dependency installation fails against `pypi.org` or
 `files.pythonhosted.org`, inspect corporate proxy/TLS settings. A failure against
 `internal.api.openai.org` means an old, non-portable lockfile is still present.
 
+## Evidence-backed Internet research
+
+Configure OpenAI web search, or Brave Search plus OpenAI extraction, to research
+wines from the **Bottles → Research online** dialog. Factual candidates keep
+clickable sources and backend-calculated confidence; accepted candidates feed
+normal wine fields and the daily-picks ranking. See
+`docs/internet-enrichment.md`. Provider calls may incur external costs and no
+commercial data license is bundled.

@@ -78,3 +78,10 @@ turning it into a public multi-tenant service.
 ## Modern development and merge controls
 
 A later workflow patch replaces ad-hoc `venv`/pip setup with uv and a committed lock file, introduces Ruff as the single Python formatter/linter/import sorter, runs backend tests across supported Python versions, keeps frontend checks on Node's built-in runner, adds dependency review and Dependabot, and documents required branch protection. The stable required status is `CI Gate`; repository owners must activate protection because committing a workflow alone does not block direct merges.
+
+## Real enrichment supersedes demonstration data
+
+The demonstration providers remain only as legacy service tests. The active API
+and bottle UI now use configured evidence-backed research, retain sources and
+require candidate review. A missing provider is reported as configuration state,
+not rendered as `[object Object]`.
