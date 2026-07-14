@@ -661,9 +661,13 @@ class OpenAIResearchProvider:
             config.ENRICHMENT_TIMEOUT_SECONDS,
         ).body
         try:
-            parsed = json.loads(_extract_output_text(response))
+            raw_parsed = json.loads(_extract_output_text(response))
         except json.JSONDecodeError as exc:
             raise ProviderResponseError("Structured output was not valid JSON") from exc
+        parsed = _validate_research_response(
+            raw_parsed,
+            context="Automatic provider response",
+        )
         sources = supplied_sources or _extract_openai_sources(response)
         return parsed, sources, response.get("usage") or {}, response
 
@@ -1515,6 +1519,24 @@ def _manual_provider_sources(parsed: dict[str, Any]) -> list[dict[str, Any]]:
     return [{"url": url, "title": None, "publisher": None} for url in sorted(urls)]
 
 
+def _validate_research_response(
+    response: Any,
+    *,
+    context: str,
+) -> dict[str, Any]:
+    """Validate and normalize provider output with a consistent error shape."""
+    try:
+        validated = ResearchResponse.model_validate(response)
+    except ValidationError as exc:
+        details = []
+        for error in exc.errors(include_url=False)[:8]:
+            location = ".".join(str(part) for part in error["loc"]) or "response"
+            details.append(f"{location}: {error['msg']}")
+        suffix = "; ".join(details)
+        raise ProviderResponseError(f"{context} failed schema validation: {suffix}") from exc
+    return validated.model_dump(mode="json")
+
+
 def _validate_manual_response(response: dict[str, Any] | str) -> dict[str, Any]:
     if isinstance(response, str):
         raw = response.strip()
@@ -1533,18 +1555,10 @@ def _validate_manual_response(response: dict[str, Any] | str) -> dict[str, Any]:
     if not isinstance(response, dict):
         raise ProviderResponseError("Manual ChatGPT response must be a JSON object")
 
-    try:
-        validated = ResearchResponse.model_validate(response)
-    except ValidationError as exc:
-        details = []
-        for error in exc.errors(include_url=False)[:8]:
-            location = ".".join(str(part) for part in error["loc"]) or "response"
-            details.append(f"{location}: {error['msg']}")
-        suffix = "; ".join(details)
-        raise ProviderResponseError(
-            f"Manual ChatGPT response failed schema validation: {suffix}"
-        ) from exc
-    return validated.model_dump(mode="json")
+    return _validate_research_response(
+        response,
+        context="Manual ChatGPT response",
+    )
 
 
 def _manual_confidence_cap() -> float:
@@ -1821,13 +1835,22 @@ def apply_candidate(
             changed = True
     elif topic == "identifiers":
         for item in value:
+            nested_confidence = item.get("confidence")
+            if nested_confidence is None:
+                nested_confidence = candidate["confidence"]
+            item_confidence = min(
+                float(candidate["confidence"]),
+                float(nested_confidence),
+            )
+            # Keep both accepted stores consistent with the reviewed candidate.
+            item["confidence"] = item_confidence
             source_id = next(iter(candidate["source_ids"]), None)
             er.upsert_external_identifier(
                 conn,
                 wine_id=wine.id,
                 scheme=item.get("scheme", "unknown"),
                 value=item.get("value", ""),
-                confidence=float(item.get("confidence") or candidate["confidence"]),
+                confidence=item_confidence,
                 source_id=source_id,
             )
 
