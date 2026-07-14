@@ -456,6 +456,36 @@ def jobs_created_since(conn: sqlite3.Connection, since_iso: str) -> int:
     return int(row["n"])
 
 
+def automatic_jobs_created_since(conn: sqlite3.Connection, since_iso: str) -> int:
+    """Count only jobs that can consume automatic provider capacity."""
+    row = conn.execute(
+        """
+        SELECT COUNT(*) AS n
+        FROM enrichment_jobs
+        WHERE created_at>=? AND provider!='manual_chatgpt'
+        """,
+        (since_iso,),
+    ).fetchone()
+    return int(row["n"])
+
+
+def cap_candidate_confidence_for_job(
+    conn: sqlite3.Connection,
+    job_id: str,
+    maximum: float,
+) -> None:
+    """Lower candidate confidence for a job without increasing any value."""
+    maximum = max(0.0, min(1.0, float(maximum)))
+    conn.execute(
+        """
+        UPDATE enrichment_candidates
+        SET confidence=CASE WHEN confidence>? THEN ? ELSE confidence END
+        WHERE job_id=?
+        """,
+        (maximum, maximum, job_id),
+    )
+
+
 def tokens_used_since(conn: sqlite3.Connection, since_iso: str) -> int:
     row = conn.execute(
         """
