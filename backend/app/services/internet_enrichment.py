@@ -31,8 +31,10 @@ from collections import Counter
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
-from typing import Any
+from typing import Any, Literal
 from urllib.parse import urlparse
+
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 from app import config
 from app.core.domain import Movement, MovementAction, Wine, new_id, utcnow
@@ -60,8 +62,13 @@ SOURCE_RELIABILITY = {
     "community": 0.52,
     "editorial": 0.62,
     "unknown": 0.42,
+    "unverified_manual": 0.25,
     "ai_inference": 0.34,
 }
+
+MANUAL_CONFIDENCE_CAP = 0.69
+MAX_MANUAL_RESPONSE_ITEMS = 100
+MAX_MANUAL_TEXT_LENGTH = 4_000
 
 
 class EnrichmentError(RuntimeError):
@@ -315,262 +322,163 @@ def _wine_identity(wine: Wine) -> str:
     return " | ".join(part for part in parts if part)
 
 
+class StrictResearchModel(BaseModel):
+    """Shared strict validation for automatic and manual research output."""
+
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+
+def _validate_iso_date_or_datetime(value: str | None) -> str | None:
+    if value is None:
+        return None
+    try:
+        datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ValueError("must be an ISO-8601 date or datetime") from exc
+    return value
+
+
+class ResearchSourceFields(StrictResearchModel):
+    source_url: str = Field(max_length=2_048)
+    source_type: Literal[
+        "producer",
+        "official_appellation",
+        "critic",
+        "market_data",
+        "auction",
+        "merchant",
+        "community",
+        "editorial",
+        "unknown",
+        "ai_inference",
+    ]
+    published_at: str | None = Field(max_length=64)
+    exact_producer: bool
+    exact_cuvee: bool
+    exact_vintage: bool
+    exact_format: bool
+
+    @field_validator("published_at")
+    @classmethod
+    def validate_published_at(cls, value: str | None) -> str | None:
+        return _validate_iso_date_or_datetime(value)
+
+
+class ResearchIdentity(StrictResearchModel):
+    matched_name: str = Field(max_length=500)
+    confidence: float = Field(ge=0, le=1)
+    explanation: str = Field(max_length=MAX_MANUAL_TEXT_LENGTH)
+    ambiguities: list[str] = Field(max_length=MAX_MANUAL_RESPONSE_ITEMS)
+
+
+class DrinkingWindowObservation(ResearchSourceFields):
+    drink_after_year: int | None
+    drink_before_year: int | None
+    explicitly_stated: bool
+    notes: str = Field(max_length=MAX_MANUAL_TEXT_LENGTH)
+
+
+class MarketObservation(ResearchSourceFields):
+    amount: float = Field(gt=0)
+    currency: str = Field(min_length=1, max_length=16)
+    offer_type: Literal["retail", "secondary", "auction", "unknown"]
+    bottle_count: int = Field(ge=1)
+    format_ml: int | None
+    tax_included: bool | None
+    in_stock: bool | None
+    observed_at: str | None = Field(max_length=64)
+    notes: str = Field(max_length=MAX_MANUAL_TEXT_LENGTH)
+
+    @field_validator("observed_at")
+    @classmethod
+    def validate_observed_at(cls, value: str | None) -> str | None:
+        return _validate_iso_date_or_datetime(value)
+
+
+class PairingObservation(ResearchSourceFields):
+    dish: str = Field(max_length=500)
+    category: Literal[
+        "meat",
+        "fish",
+        "vegetarian",
+        "cheese",
+        "dessert",
+        "regional",
+        "casual",
+        "celebration",
+        "other",
+    ]
+    explicitly_stated: bool
+    rationale: str = Field(max_length=MAX_MANUAL_TEXT_LENGTH)
+    avoid: list[str] = Field(max_length=MAX_MANUAL_RESPONSE_ITEMS)
+
+
+class ServingResearch(StrictResearchModel):
+    available: bool
+    temperature_min_c: float | None
+    temperature_max_c: float | None
+    decant_minutes: int | None
+    stand_upright_hours: int | None
+    glass: str | None = Field(max_length=500)
+    rationale: str = Field(max_length=MAX_MANUAL_TEXT_LENGTH)
+    source_urls: list[str] = Field(max_length=MAX_MANUAL_RESPONSE_ITEMS)
+    method: Literal["source_backed", "style_inference", "unavailable"]
+
+
+class GrapeComposition(StrictResearchModel):
+    name: str = Field(max_length=200)
+    percentage: float | None = Field(ge=0, le=100)
+
+
+class CompositionResearch(StrictResearchModel):
+    available: bool
+    grapes: list[GrapeComposition] = Field(max_length=MAX_MANUAL_RESPONSE_ITEMS)
+    alcohol_percent: float | None = Field(ge=0, le=100)
+    sweetness: str | None = Field(max_length=200)
+    oak: str | None = Field(max_length=1_000)
+    certifications: list[str] = Field(max_length=MAX_MANUAL_RESPONSE_ITEMS)
+    source_urls: list[str] = Field(max_length=MAX_MANUAL_RESPONSE_ITEMS)
+
+
+class ReviewObservation(StrictResearchModel):
+    score: float | None
+    scale: float | None = Field(gt=0)
+    reviewer: str = Field(max_length=300)
+    review_date: str | None = Field(max_length=64)
+    note_excerpt: str = Field(max_length=240)
+    source_url: str = Field(max_length=2_048)
+    exact_vintage: bool
+
+    @field_validator("review_date")
+    @classmethod
+    def validate_review_date(cls, value: str | None) -> str | None:
+        return _validate_iso_date_or_datetime(value)
+
+
+class ExternalIdentifierObservation(StrictResearchModel):
+    scheme: str = Field(max_length=200)
+    value: str = Field(max_length=500)
+    source_url: str = Field(max_length=2_048)
+    confidence: float = Field(ge=0, le=1)
+
+
+class ResearchResponse(StrictResearchModel):
+    identity: ResearchIdentity
+    drinking_windows: list[DrinkingWindowObservation] = Field(max_length=MAX_MANUAL_RESPONSE_ITEMS)
+    market_observations: list[MarketObservation] = Field(max_length=MAX_MANUAL_RESPONSE_ITEMS)
+    pairings: list[PairingObservation] = Field(max_length=MAX_MANUAL_RESPONSE_ITEMS)
+    serving: ServingResearch
+    composition: CompositionResearch
+    reviews: list[ReviewObservation] = Field(max_length=MAX_MANUAL_RESPONSE_ITEMS)
+    external_identifiers: list[ExternalIdentifierObservation] = Field(
+        max_length=MAX_MANUAL_RESPONSE_ITEMS
+    )
+    summary: str = Field(max_length=MAX_MANUAL_TEXT_LENGTH)
+
+
 def _research_schema() -> dict[str, Any]:
-    nullable_string = {"type": ["string", "null"]}
-    nullable_number = {"type": ["number", "null"]}
-    nullable_integer = {"type": ["integer", "null"]}
-    nullable_boolean = {"type": ["boolean", "null"]}
-
-    source_fields = {
-        "source_url": {"type": "string"},
-        "source_type": {
-            "type": "string",
-            "enum": [
-                "producer",
-                "official_appellation",
-                "critic",
-                "market_data",
-                "auction",
-                "merchant",
-                "community",
-                "editorial",
-                "unknown",
-                "ai_inference",
-            ],
-        },
-        "published_at": nullable_string,
-        "exact_producer": {"type": "boolean"},
-        "exact_cuvee": {"type": "boolean"},
-        "exact_vintage": {"type": "boolean"},
-        "exact_format": {"type": "boolean"},
-    }
-
-    return {
-        "type": "object",
-        "additionalProperties": False,
-        "required": [
-            "identity",
-            "drinking_windows",
-            "market_observations",
-            "pairings",
-            "serving",
-            "composition",
-            "reviews",
-            "external_identifiers",
-            "summary",
-        ],
-        "properties": {
-            "identity": {
-                "type": "object",
-                "additionalProperties": False,
-                "required": [
-                    "matched_name",
-                    "confidence",
-                    "explanation",
-                    "ambiguities",
-                ],
-                "properties": {
-                    "matched_name": {"type": "string"},
-                    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
-                    "explanation": {"type": "string"},
-                    "ambiguities": {"type": "array", "items": {"type": "string"}},
-                },
-            },
-            "drinking_windows": {
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "additionalProperties": False,
-                    "required": [
-                        "drink_after_year",
-                        "drink_before_year",
-                        "explicitly_stated",
-                        "notes",
-                        *source_fields.keys(),
-                    ],
-                    "properties": {
-                        "drink_after_year": nullable_integer,
-                        "drink_before_year": nullable_integer,
-                        "explicitly_stated": {"type": "boolean"},
-                        "notes": {"type": "string"},
-                        **source_fields,
-                    },
-                },
-            },
-            "market_observations": {
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "additionalProperties": False,
-                    "required": [
-                        "amount",
-                        "currency",
-                        "offer_type",
-                        "bottle_count",
-                        "format_ml",
-                        "tax_included",
-                        "in_stock",
-                        "observed_at",
-                        "notes",
-                        *source_fields.keys(),
-                    ],
-                    "properties": {
-                        "amount": {"type": "number", "exclusiveMinimum": 0},
-                        "currency": {"type": "string"},
-                        "offer_type": {
-                            "type": "string",
-                            "enum": ["retail", "secondary", "auction", "unknown"],
-                        },
-                        "bottle_count": {"type": "integer", "minimum": 1},
-                        "format_ml": nullable_integer,
-                        "tax_included": nullable_boolean,
-                        "in_stock": nullable_boolean,
-                        "observed_at": nullable_string,
-                        "notes": {"type": "string"},
-                        **source_fields,
-                    },
-                },
-            },
-            "pairings": {
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "additionalProperties": False,
-                    "required": [
-                        "dish",
-                        "category",
-                        "explicitly_stated",
-                        "rationale",
-                        "avoid",
-                        *source_fields.keys(),
-                    ],
-                    "properties": {
-                        "dish": {"type": "string"},
-                        "category": {
-                            "type": "string",
-                            "enum": [
-                                "meat",
-                                "fish",
-                                "vegetarian",
-                                "cheese",
-                                "dessert",
-                                "regional",
-                                "casual",
-                                "celebration",
-                                "other",
-                            ],
-                        },
-                        "explicitly_stated": {"type": "boolean"},
-                        "rationale": {"type": "string"},
-                        "avoid": {"type": "array", "items": {"type": "string"}},
-                        **source_fields,
-                    },
-                },
-            },
-            "serving": {
-                "type": "object",
-                "additionalProperties": False,
-                "required": [
-                    "available",
-                    "temperature_min_c",
-                    "temperature_max_c",
-                    "decant_minutes",
-                    "stand_upright_hours",
-                    "glass",
-                    "rationale",
-                    "source_urls",
-                    "method",
-                ],
-                "properties": {
-                    "available": {"type": "boolean"},
-                    "temperature_min_c": nullable_number,
-                    "temperature_max_c": nullable_number,
-                    "decant_minutes": nullable_integer,
-                    "stand_upright_hours": nullable_integer,
-                    "glass": nullable_string,
-                    "rationale": {"type": "string"},
-                    "source_urls": {"type": "array", "items": {"type": "string"}},
-                    "method": {
-                        "type": "string",
-                        "enum": ["source_backed", "style_inference", "unavailable"],
-                    },
-                },
-            },
-            "composition": {
-                "type": "object",
-                "additionalProperties": False,
-                "required": [
-                    "available",
-                    "grapes",
-                    "alcohol_percent",
-                    "sweetness",
-                    "oak",
-                    "certifications",
-                    "source_urls",
-                ],
-                "properties": {
-                    "available": {"type": "boolean"},
-                    "grapes": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "additionalProperties": False,
-                            "required": ["name", "percentage"],
-                            "properties": {
-                                "name": {"type": "string"},
-                                "percentage": nullable_number,
-                            },
-                        },
-                    },
-                    "alcohol_percent": nullable_number,
-                    "sweetness": nullable_string,
-                    "oak": nullable_string,
-                    "certifications": {"type": "array", "items": {"type": "string"}},
-                    "source_urls": {"type": "array", "items": {"type": "string"}},
-                },
-            },
-            "reviews": {
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "additionalProperties": False,
-                    "required": [
-                        "score",
-                        "scale",
-                        "reviewer",
-                        "review_date",
-                        "note_excerpt",
-                        "source_url",
-                        "exact_vintage",
-                    ],
-                    "properties": {
-                        "score": nullable_number,
-                        "scale": nullable_number,
-                        "reviewer": {"type": "string"},
-                        "review_date": nullable_string,
-                        "note_excerpt": {"type": "string", "maxLength": 240},
-                        "source_url": {"type": "string"},
-                        "exact_vintage": {"type": "boolean"},
-                    },
-                },
-            },
-            "external_identifiers": {
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "additionalProperties": False,
-                    "required": ["scheme", "value", "source_url", "confidence"],
-                    "properties": {
-                        "scheme": {"type": "string"},
-                        "value": {"type": "string"},
-                        "source_url": {"type": "string"},
-                        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
-                    },
-                },
-            },
-            "summary": {"type": "string"},
-        },
-    }
+    """Generate the provider schema from the same model used for import."""
+    return ResearchResponse.model_json_schema()
 
 
 def _system_prompt() -> str:
@@ -1208,7 +1116,11 @@ def _persist_sources(
     for url, source in list(by_url.items())[: config.ENRICHMENT_MAX_SOURCES]:
         source_id = new_id()
         mapping[url] = source_id
-        source_type = _source_type_for_url(url, claims)
+        source_type = (
+            "unverified_manual"
+            if provider_name == "manual_chatgpt"
+            else _source_type_for_url(url, claims)
+        )
         domain = _domain(url)
         relevant_claims = [claim for claim in claims if claim.get("source_url") == url]
         identity_score = (
@@ -1280,8 +1192,10 @@ def _persist_candidates(
     topics: list[str],
     parsed: dict[str, Any],
     source_mapping: dict[str, str],
+    provider_name: str | None = None,
 ) -> list[str]:
     ids: list[str] = []
+    manual_import = provider_name == "manual_chatgpt"
     identity_conf = float((parsed.get("identity") or {}).get("confidence") or 0)
     if identity_conf < config.ENRICHMENT_MIN_IDENTITY_CONFIDENCE:
         return ids
@@ -1455,11 +1369,15 @@ def _persist_candidates(
             evidence=[
                 {
                     "source_url": url,
-                    "source_type": "producer" if len(urls) == 1 else "editorial",
-                    "exact_producer": True,
-                    "exact_cuvee": True,
-                    "exact_vintage": bool(wine.vintage),
-                    "exact_format": True,
+                    "source_type": (
+                        "unverified_manual"
+                        if manual_import
+                        else ("producer" if len(urls) == 1 else "editorial")
+                    ),
+                    "exact_producer": not manual_import,
+                    "exact_cuvee": not manual_import,
+                    "exact_vintage": bool(wine.vintage) and not manual_import,
+                    "exact_format": not manual_import,
                 }
                 for url in urls
             ],
@@ -1490,11 +1408,11 @@ def _persist_candidates(
             evidence=[
                 {
                     "source_url": url,
-                    "source_type": "producer",
-                    "exact_producer": True,
-                    "exact_cuvee": True,
-                    "exact_vintage": bool(wine.vintage),
-                    "exact_format": True,
+                    "source_type": ("unverified_manual" if manual_import else "producer"),
+                    "exact_producer": not manual_import,
+                    "exact_cuvee": not manual_import,
+                    "exact_vintage": bool(wine.vintage) and not manual_import,
+                    "exact_format": not manual_import,
                 }
                 for url in urls
             ],
@@ -1526,11 +1444,11 @@ def _persist_candidates(
             evidence=[
                 {
                     "source_url": item.get("source_url"),
-                    "source_type": "critic",
-                    "exact_producer": True,
-                    "exact_cuvee": True,
-                    "exact_vintage": item.get("exact_vintage", False),
-                    "exact_format": True,
+                    "source_type": ("unverified_manual" if manual_import else "critic"),
+                    "exact_producer": not manual_import,
+                    "exact_cuvee": not manual_import,
+                    "exact_vintage": (item.get("exact_vintage", False) and not manual_import),
+                    "exact_format": not manual_import,
                     "published_at": item.get("review_date"),
                 }
                 for item in reviews
@@ -1611,77 +1529,40 @@ def _validate_manual_response(response: dict[str, Any] | str) -> dict[str, Any]:
             response = json.loads(raw)
         except json.JSONDecodeError as exc:
             raise ProviderResponseError("Manual ChatGPT response is not valid JSON") from exc
+
     if not isinstance(response, dict):
         raise ProviderResponseError("Manual ChatGPT response must be a JSON object")
-    required = {
-        "identity",
-        "drinking_windows",
-        "market_observations",
-        "pairings",
-        "serving",
-        "composition",
-        "reviews",
-        "external_identifiers",
-        "summary",
-    }
-    missing = sorted(required - set(response))
-    if missing:
-        raise ProviderResponseError(f"Manual ChatGPT response is missing: {', '.join(missing)}")
-    expected_types = {
-        "identity": dict,
-        "drinking_windows": list,
-        "market_observations": list,
-        "pairings": list,
-        "serving": dict,
-        "composition": dict,
-        "reviews": list,
-        "external_identifiers": list,
-        "summary": str,
-    }
-    invalid = [
-        key for key, expected in expected_types.items() if not isinstance(response[key], expected)
-    ]
-    if invalid:
-        raise ProviderResponseError(
-            f"Manual ChatGPT response has invalid sections: {', '.join(sorted(invalid))}"
-        )
 
-    object_lists = (
-        "drinking_windows",
-        "market_observations",
-        "pairings",
-        "reviews",
-        "external_identifiers",
-    )
-    malformed_lists = [
-        key for key in object_lists if any(not isinstance(item, dict) for item in response[key])
-    ]
-    if malformed_lists:
+    try:
+        validated = ResearchResponse.model_validate(response)
+    except ValidationError as exc:
+        details = []
+        for error in exc.errors(include_url=False)[:8]:
+            location = ".".join(str(part) for part in error["loc"]) or "response"
+            details.append(f"{location}: {error['msg']}")
+        suffix = "; ".join(details)
         raise ProviderResponseError(
-            "Manual ChatGPT response contains non-object list items in: "
-            + ", ".join(sorted(malformed_lists))
-        )
+            f"Manual ChatGPT response failed schema validation: {suffix}"
+        ) from exc
+    return validated.model_dump(mode="json")
 
-    identity = response["identity"]
-    confidence = identity.get("confidence")
-    if confidence is not None and (
-        not isinstance(confidence, (int, float))
-        or isinstance(confidence, bool)
-        or not 0 <= float(confidence) <= 1
-    ):
-        raise ProviderResponseError("Manual ChatGPT identity confidence must be between 0 and 1")
-    for section_name in ("serving", "composition"):
-        source_urls = response[section_name].get("source_urls", [])
-        if not isinstance(source_urls, list) or any(
-            not isinstance(value, str) for value in source_urls
-        ):
-            raise ProviderResponseError(
-                f"Manual ChatGPT {section_name}.source_urls must be a list of strings"
-            )
-    grapes = response["composition"].get("grapes", [])
-    if not isinstance(grapes, list) or any(not isinstance(item, dict) for item in grapes):
-        raise ProviderResponseError("Manual ChatGPT composition.grapes must be a list of objects")
-    return response
+
+def _manual_confidence_cap() -> float:
+    """Keep manual candidates below both high-confidence and auto-apply levels."""
+    threshold = float(config.ENRICHMENT_AUTO_APPLY_THRESHOLD)
+    return min(MANUAL_CONFIDENCE_CAP, max(0.0, threshold - 0.01))
+
+
+def _mark_manual_evidence_unverified(parsed: dict[str, Any]) -> None:
+    """Prevent pasted model assertions from masquerading as verified evidence."""
+    for claim in _claim_items(parsed):
+        if not claim.get("source_url"):
+            continue
+        claim["source_type"] = "unverified_manual"
+        claim["exact_producer"] = False
+        claim["exact_cuvee"] = False
+        claim["exact_vintage"] = False
+        claim["exact_format"] = False
 
 
 def import_manual_chatgpt_response(
@@ -1692,7 +1573,6 @@ def import_manual_chatgpt_response(
     topics: list[str],
     locale: str,
     response: dict[str, Any] | str,
-    auto_apply: bool = False,
 ) -> dict[str, Any]:
     """Validate and persist a manually obtained ChatGPT response.
 
@@ -1703,6 +1583,7 @@ def import_manual_chatgpt_response(
         raise EnrichmentNotConfigured("Manual ChatGPT escalation is disabled")
     topics = _validated_topics(topics)
     parsed = _validate_manual_response(response)
+    _mark_manual_evidence_unverified(parsed)
     job = er.create_job(
         conn,
         job_id=new_id(),
@@ -1711,7 +1592,7 @@ def import_manual_chatgpt_response(
         provider="manual_chatgpt",
         topics=topics,
         locale=locale,
-        auto_apply=auto_apply,
+        auto_apply=False,
         model=None,
     )
     er.set_job_running(conn, job["id"])
@@ -1723,14 +1604,16 @@ def import_manual_chatgpt_response(
         sources,
         provider_name="manual_chatgpt",
     )
-    candidate_ids = _persist_candidates(
+    _persist_candidates(
         conn,
         job_id=job["id"],
         wine=wine,
         topics=topics,
         parsed=parsed,
         source_mapping=source_mapping,
+        provider_name="manual_chatgpt",
     )
+    er.cap_candidate_confidence_for_job(conn, job["id"], _manual_confidence_cap())
     er.complete_job(
         conn,
         job["id"],
@@ -1740,16 +1623,6 @@ def import_manual_chatgpt_response(
             json.dumps(parsed, ensure_ascii=False) if config.ENRICHMENT_STORE_RAW_RESPONSE else None
         ),
     )
-    if auto_apply:
-        for candidate_id in candidate_ids:
-            candidate = er.get_candidate(conn, candidate_id)
-            if candidate and candidate["confidence"] >= config.ENRICHMENT_AUTO_APPLY_THRESHOLD:
-                apply_candidate(
-                    conn,
-                    candidate_id=candidate_id,
-                    user_id=user_id,
-                    force=False,
-                )
     return er.get_job_with_results(conn, job["id"]) or job
 
 
@@ -1764,7 +1637,7 @@ def _day_start() -> str:
 
 
 def enforce_budget(conn) -> None:
-    if er.jobs_created_since(conn, _day_start()) >= config.ENRICHMENT_MAX_JOBS_PER_DAY:
+    if er.automatic_jobs_created_since(conn, _day_start()) >= config.ENRICHMENT_MAX_JOBS_PER_DAY:
         raise EnrichmentBudgetExceeded("Daily enrichment job limit reached")
     if (
         config.ENRICHMENT_MAX_TOKENS_PER_MONTH > 0
@@ -1829,6 +1702,7 @@ def execute_job(db: Database, job_id: str) -> None:
             topics=job["topics"],
             parsed=parsed,
             source_mapping=source_mapping,
+            provider_name=provider.name,
         )
         er.complete_job(
             conn,

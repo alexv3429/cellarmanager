@@ -12,7 +12,7 @@ from fastapi import (
     UploadFile,
     status,
 )
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.api.deps import get_conn, get_current_user_id, get_database
 from app.core.domain import new_id
@@ -33,13 +33,14 @@ class ResearchRequest(BaseModel):
 
 
 class ManualResearchRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     topics: list[str] = Field(default_factory=lambda: sorted(research.TOPICS))
     locale: str = "en"
 
 
 class ManualResearchImportRequest(ManualResearchRequest):
     response: dict[str, Any] | str
-    auto_apply: bool = False
 
 
 class CandidateDecisionRequest(BaseModel):
@@ -65,7 +66,7 @@ def enrichment_status(conn: sqlite3.Connection = Depends(get_conn)):
     provider = research.provider_status()
     return {
         **provider.__dict__,
-        "jobs_today": er.jobs_created_since(conn, research._day_start()),
+        "jobs_today": er.automatic_jobs_created_since(conn, research._day_start()),
         "tokens_this_month": er.tokens_used_since(conn, research._month_start()),
     }
 
@@ -117,7 +118,6 @@ def import_manual_chatgpt_research(
             topics=payload.topics,
             locale=payload.locale,
             response=payload.response,
-            auto_apply=payload.auto_apply,
         )
     except research.ProviderResponseError as exc:
         raise HTTPException(

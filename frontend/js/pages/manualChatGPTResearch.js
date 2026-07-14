@@ -138,7 +138,6 @@ export async function openManualChatGPTResearch(
         topics,
         locale,
         response: raw,
-        auto_apply: false,
       });
       await onImported(job);
     } catch (error) {

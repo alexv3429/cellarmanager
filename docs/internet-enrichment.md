@@ -52,8 +52,9 @@ is available.
 
 The imported response is never accepted directly as trusted cellar data. It
 passes through the same candidate review and explicit acceptance process as an
-automatic result. Manual jobs record provider `manual_chatgpt` and consume zero
-automatic API tokens.
+automatic result. Manual jobs record provider `manual_chatgpt`, consume zero
+automatic API tokens, and do not consume the automatic daily job allowance.
+Manual imports can never auto-apply: every candidate must be accepted explicitly.
 
 In the wine research dialog, **Prepare for ChatGPT** remains visible when no
 automatic provider is configured. The automatic **Start research** action is
@@ -144,7 +145,9 @@ Confidence is calculated by the backend from:
 - freshness;
 - a penalty for inference.
 
-The model cannot directly choose the final confidence score.
+The model cannot directly choose the final confidence score. Sources pasted through
+the manual ChatGPT route are recorded as unverified manual evidence, and manual
+candidate confidence is capped below the high-confidence range until a user reviews it.
 
 ## Data model
 
