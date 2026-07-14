@@ -3,6 +3,11 @@ import { t } from "../i18n.js";
 import { el, clear, showToast, field, selectEl, formatDate } from "../dom.js";
 
 import { apiErrorMessage, openWineResearchDialog } from "./enrichmentResearch.js";
+import {
+  bottleDetailsButtonLabel,
+  openBottleDetailsDialog,
+} from "./bottleDetails.js";
+
 const COLORS = ["red", "white", "rose", "sparkling", "orange", "fortified", "other"];
 const REMOVE_REASONS = ["gifted", "broken", "sold", "lost", "drunk"];
 
@@ -234,7 +239,15 @@ function wineRow(wine, holdingsForWine, cellars, cellarsById, onChanged) {
     actions.appendChild(el("button", { class: "small", text: t("common.move"), onclick: () => openMoveDialog(holdingsForWine[0], cellars, onChanged) }));
     actions.appendChild(el("button", { class: "small danger", text: t("common.remove"), onclick: () => openRemoveDialog(holdingsForWine[0], onChanged) }));
   }
-  actions.appendChild(el("button", { class: "small", text: t("bottles.locations"), onclick: () => openLocationsDialog(wine) }));
+  
+  actions.appendChild(
+    el("button", {
+      class: "small",
+      text: bottleDetailsButtonLabel(document.documentElement.lang),
+      onclick: () => openBottleDetailsDialog(wine),
+    }),
+  );
+actions.appendChild(el("button", { class: "small", text: t("bottles.locations"), onclick: () => openLocationsDialog(wine) }));
       actions.appendChild(
     el("button", {
       class: "small",

@@ -16,6 +16,19 @@ const COPY = {
     importing: "Validating and importing the response…",
     empty: "Paste the ChatGPT JSON response before importing it.",
     copyFailed: "Could not copy automatically. Select the prompt and copy it manually.",
+    formatTitle: "Before importing",
+    formatRules: [
+      'Use only normal double quotes (") for JSON keys and string delimiters.',
+      "Paste one complete JSON object, optionally inside a ```json code block.",
+      "Dates must be YYYY-MM-DD, a complete ISO-8601 datetime, or null — never YYYY-MM.",
+      "Do not add comments, trailing commas, ellipses, or prose outside the JSON.",
+    ],
+    invalidJson: "The pasted response is not valid JSON. Copy the JSON code block directly from ChatGPT.",
+    smartQuotes:
+      'The pasted response uses typographic quotes (“ ”). Replace them with normal double quotes (").',
+    monthOnlyDates:
+      "Month-only dates are not accepted. Use a complete YYYY-MM-DD date or null for: {paths}",
+
   },
   fr: {
     button: "Préparer pour ChatGPT",
@@ -32,6 +45,20 @@ const COPY = {
     empty: "Collez la réponse JSON de ChatGPT avant de l’importer.",
     copyFailed:
       "La copie automatique a échoué. Sélectionnez la consigne et copiez-la manuellement.",
+    formatTitle: "Avant l’import",
+    formatRules: [
+      'Utilisez uniquement des guillemets doubles droits (") pour les clés et chaînes JSON.',
+      "Collez un objet JSON complet, éventuellement dans un bloc ```json.",
+      "Les dates doivent être au format YYYY-MM-DD, une date-heure ISO-8601 complète ou null — jamais YYYY-MM.",
+      "N’ajoutez ni commentaires, ni virgules finales, ni points de suspension, ni texte hors du JSON.",
+    ],
+    invalidJson:
+      "La réponse collée n’est pas un JSON valide. Copiez directement le bloc de code JSON depuis ChatGPT.",
+    smartQuotes:
+      'La réponse utilise des guillemets typographiques (“ ”). Remplacez-les par des guillemets doubles droits (").',
+    monthOnlyDates:
+      "Les dates réduites au mois ne sont pas acceptées. Utilisez YYYY-MM-DD ou null pour : {paths}",
+
   },
 };
 
@@ -41,6 +68,54 @@ function messages(locale) {
 
 export function manualChatGPTButtonLabel(locale) {
   return messages(locale).button;
+}
+
+
+
+function stripJsonFence(raw) {
+  const trimmed = raw.trim();
+  const match = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  return match ? match[1].trim() : trimmed;
+}
+
+function monthOnlyDatePaths(value, path = "response", found = []) {
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => monthOnlyDatePaths(item, `${path}[${index}]`, found));
+    return found;
+  }
+  if (!value || typeof value !== "object") return found;
+
+  for (const [key, child] of Object.entries(value)) {
+    const childPath = `${path}.${key}`;
+    if (
+      ["published_at", "observed_at", "review_date"].includes(key) &&
+      typeof child === "string" &&
+      /^\d{4}-\d{2}$/.test(child)
+    ) {
+      found.push(childPath);
+    } else {
+      monthOnlyDatePaths(child, childPath, found);
+    }
+  }
+  return found;
+}
+
+export function parseManualChatGPTResponse(raw, locale = "en") {
+  const message = messages(locale);
+  const cleaned = stripJsonFence(raw);
+  let parsed;
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch (error) {
+    if (/[“”]/.test(cleaned)) throw new Error(message.smartQuotes);
+    throw new Error(message.invalidJson);
+  }
+
+  const monthOnly = monthOnlyDatePaths(parsed);
+  if (monthOnly.length) {
+    throw new Error(message.monthOnlyDates.replace("{paths}", monthOnly.slice(0, 5).join(", ")));
+  }
+  return parsed;
 }
 
 async function copyPrompt(textarea, button, message) {
@@ -105,6 +180,16 @@ export async function openManualChatGPTResearch(
   copyButton.addEventListener("click", () => copyPrompt(prompt, copyButton, message));
   body.appendChild(el("div", { class: "research-actions" }, [copyButton]));
 
+  body.appendChild(el("h4", { text: message.formatTitle }));
+  body.appendChild(
+    el(
+      "ul",
+      { class: "research-sources" },
+      message.formatRules.map((rule) => el("li", { text: rule })),
+    ),
+  );
+
+
   body.appendChild(el("label", { text: message.response }));
   const response = el("textarea", {
     class: "research-manual-response",
@@ -130,14 +215,24 @@ export async function openManualChatGPTResearch(
       errorNode.textContent = message.empty;
       return;
     }
-    errorNode.hidden = true;
+    
+    let parsed;
+    try {
+      parsed = parseManualChatGPTResponse(raw, locale);
+    } catch (error) {
+      errorNode.hidden = false;
+      errorNode.textContent = error.message;
+      return;
+    }
+
+errorNode.hidden = true;
     importButton.disabled = true;
     importButton.textContent = message.importing;
     try {
       const job = await api.post(`/wines/${wine.id}/research/manual-chatgpt/import`, {
         topics,
         locale,
-        response: raw,
+        response: parsed,
       });
       await onImported(job);
     } catch (error) {
