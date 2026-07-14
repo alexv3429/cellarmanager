@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sqlite3
-from typing import Literal
+from typing import Any, Literal
 
 from fastapi import (
     APIRouter,
@@ -32,6 +32,16 @@ class ResearchRequest(BaseModel):
     auto_apply: bool = False
 
 
+class ManualResearchRequest(BaseModel):
+    topics: list[str] = Field(default_factory=lambda: sorted(research.TOPICS))
+    locale: str = "en"
+
+
+class ManualResearchImportRequest(ManualResearchRequest):
+    response: dict[str, Any] | str
+    auto_apply: bool = False
+
+
 class CandidateDecisionRequest(BaseModel):
     decision: Literal["accepted", "rejected"]
     force: bool = False
@@ -58,6 +68,71 @@ def enrichment_status(conn: sqlite3.Connection = Depends(get_conn)):
         "jobs_today": er.jobs_created_since(conn, research._day_start()),
         "tokens_this_month": er.tokens_used_since(conn, research._month_start()),
     }
+
+
+@router.post("/wines/{wine_id}/research/manual-chatgpt")
+def prepare_manual_chatgpt_research(
+    wine_id: str,
+    payload: ManualResearchRequest,
+    conn: sqlite3.Connection = Depends(get_conn),
+):
+    wine = repo.get_wine(conn, wine_id)
+    if wine is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="error.not_found")
+    try:
+        return research.prepare_manual_chatgpt_request(
+            wine,
+            topics=payload.topics,
+            locale=payload.locale,
+        )
+    except research.ProviderResponseError as exc:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail={"code": exc.code, "message": str(exc)},
+        ) from exc
+    except research.EnrichmentError as exc:
+        raise _error(exc) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail={"code": "invalid_research_request", "message": str(exc)},
+        ) from exc
+
+
+@router.post("/wines/{wine_id}/research/manual-chatgpt/import")
+def import_manual_chatgpt_research(
+    wine_id: str,
+    payload: ManualResearchImportRequest,
+    user_id: str = Depends(get_current_user_id),
+    conn: sqlite3.Connection = Depends(get_conn),
+):
+    wine = repo.get_wine(conn, wine_id)
+    if wine is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="error.not_found")
+    try:
+        result = research.import_manual_chatgpt_response(
+            conn,
+            wine=wine,
+            user_id=user_id,
+            topics=payload.topics,
+            locale=payload.locale,
+            response=payload.response,
+            auto_apply=payload.auto_apply,
+        )
+    except research.ProviderResponseError as exc:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail={"code": exc.code, "message": str(exc)},
+        ) from exc
+    except research.EnrichmentError as exc:
+        raise _error(exc) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail={"code": "invalid_research_request", "message": str(exc)},
+        ) from exc
+    conn.commit()
+    return result
 
 
 @router.post("/wines/{wine_id}/research")

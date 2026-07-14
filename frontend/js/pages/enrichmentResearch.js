@@ -2,6 +2,11 @@ import * as api from "../api.js";
 import { clear, el } from "../dom.js";
 import { t } from "../i18n.js";
 
+import {
+  manualChatGPTButtonLabel,
+  openManualChatGPTResearch,
+} from "./manualChatGPTResearch.js";
+
 const TOPICS = [
   "drinking_window",
   "market_value",
@@ -281,21 +286,25 @@ export async function openWineResearchDialog(wine, onApplied = () => {}) {
     return;
   }
   clear(body);
-  if (!status.configured) {
+  if (!status.configured && !status.manual_available) {
     body.appendChild(el("p", { class: "empty-state", text: status.message }));
     body.appendChild(el("p", { class: "hint", text: t("research.configure_hint") }));
     return;
   }
 
-  body.appendChild(el("p", {
-    class: "hint",
-    text: t("research.provider_status", {
-      provider: status.provider,
-      model: status.model,
-      jobs: status.jobs_today,
-      tokens: status.tokens_this_month,
-    }),
-  }));
+  if (status.configured) {
+    body.appendChild(el("p", {
+      class: "hint",
+      text: t("research.provider_status", {
+        provider: status.provider,
+        model: status.model,
+        jobs: status.jobs_today,
+        tokens: status.tokens_this_month,
+      }),
+    }));
+  } else {
+    body.appendChild(el("p", { class: "hint", text: status.message }));
+  }
   body.appendChild(el("p", { class: "research-warning", text: t("research.review_warning") }));
 
   const topicInputs = TOPICS.map((topic) => {
@@ -304,30 +313,93 @@ export async function openWineResearchDialog(wine, onApplied = () => {}) {
   });
   body.appendChild(el("div", { class: "research-topics" }, topicInputs.map((item) => item.row)));
 
-  const startBtn = el("button", { class: "primary", text: t("research.start") });
+  const locale = document.documentElement.lang || "en";
+
+  const startBtn = status.configured
+    ? el("button", { class: "primary", text: t("research.start") })
+    : null;
+
+  const manualBtn = status.manual_available
+    ? el("button", {
+        class: "primary",
+        text: manualChatGPTButtonLabel(locale),
+      })
+    : null;
+
   const historyBtn = el("button", { text: t("research.history") });
-  const buttonRow = el("div", { class: "research-actions" }, [startBtn, historyBtn]);
+
+  const buttonRow = el(
+    "div",
+    { class: "research-actions" },
+    [startBtn, manualBtn, historyBtn].filter(Boolean),
+  );
+
   body.appendChild(buttonRow);
 
-  startBtn.addEventListener("click", async () => {
-    const topics = topicInputs.filter((item) => item.input.checked).map((item) => item.topic);
-    if (!topics.length) return;
-    clear(body);
-    body.appendChild(el("p", { class: "research-progress", text: t("research.starting") }));
-    try {
-      const job = await api.post(`/wines/${wine.id}/research`, {
-        topics,
-        locale: document.documentElement.lang || "en",
-        background: true,
-        auto_apply: false,
-      });
-      await pollJob(job.id, body, wine, onApplied);
-    } catch (error) {
-      clear(body);
-      body.appendChild(el("p", { class: "form-error", text: apiErrorMessage(error) }));
-    }
-  });
+  if (startBtn) {
+    startBtn.addEventListener("click", async () => {
+      const topics = topicInputs
+        .filter((item) => item.input.checked)
+        .map((item) => item.topic);
 
+      if (!topics.length) return;
+
+      clear(body);
+      body.appendChild(
+        el("p", {
+          class: "research-progress",
+          text: t("research.starting"),
+        }),
+      );
+
+      try {
+        const job = await api.post(`/wines/${wine.id}/research`, {
+          topics,
+          locale,
+          background: true,
+          auto_apply: false,
+        });
+
+        await pollJob(job.id, body, wine, onApplied);
+      } catch (error) {
+        clear(body);
+        body.appendChild(
+          el("p", {
+            class: "form-error",
+            text: apiErrorMessage(error),
+          }),
+        );
+      }
+    });
+  }
+
+  if (manualBtn) {
+    manualBtn.addEventListener("click", async () => {
+      const topics = topicInputs
+        .filter((item) => item.input.checked)
+        .map((item) => item.topic);
+
+      if (!topics.length) return;
+
+      await openManualChatGPTResearch(
+        body,
+        wine,
+        topics,
+        locale,
+        async (job) => {
+          const refresh = async () => {
+            const refreshed = await api.get(`/enrichment/jobs/${job.id}`);
+            renderJob(body, refreshed, wine, refresh, onApplied);
+          };
+
+          renderJob(body, job, wine, refresh, onApplied);
+        },
+        apiErrorMessage,
+      );
+    });
+  }
+
+  
   historyBtn.addEventListener("click", async () => {
     clear(body);
     body.appendChild(el("p", { text: t("research.loading_history") }));

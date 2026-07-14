@@ -4,8 +4,10 @@ The language model is used to search, match, extract and explain. It is never
 used as an untraceable source of truth: factual candidates retain source URLs,
 identity-match components, deterministic confidence scores and a review state.
 
-Two real provider modes are supported:
+Three enrichment modes are supported:
 
+* ``manual_chatgpt``: prepare a self-contained prompt, then validate and import
+  the JSON response without an API credential.
 * ``openai_web``: OpenAI Responses API with the hosted ``web_search`` tool.
 * ``brave_openai``: Brave Search API for discovery, followed by OpenAI
   Structured Outputs over the returned snippets.
@@ -85,9 +87,31 @@ class ProviderResponseError(EnrichmentError):
 
 
 @dataclass(frozen=True)
+class ProviderOption:
+    level: int
+    provider: str
+    mode: str
+    label: str
+    model: str | None = None
+    search_provider: str | None = None
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "level": self.level,
+            "provider": self.provider,
+            "mode": self.mode,
+            "label": self.label,
+            "model": self.model,
+            "search_provider": self.search_provider,
+        }
+
+
+@dataclass(frozen=True)
 class ProviderStatus:
     configured: bool
     provider: str
+    requested_provider: str
+    automatic_provider: str | None
     model: str | None
     search_provider: str | None
     allowed_domains: list[str]
@@ -95,6 +119,8 @@ class ProviderStatus:
     max_jobs_per_day: int
     max_tokens_per_month: int
     auto_apply_threshold: float
+    manual_available: bool
+    available_providers: list[dict[str, Any]]
     message: str
 
 
@@ -160,36 +186,117 @@ def _get_json(
         raise ProviderResponseError("Search provider returned invalid JSON") from exc
 
 
+def _validated_topics(topics: list[str]) -> list[str]:
+    invalid = set(topics) - TOPICS
+    if invalid:
+        raise ValueError(f"Unknown enrichment topics: {', '.join(sorted(invalid))}")
+    return sorted(set(topics)) or sorted(TOPICS)
+
+
+def _automatic_provider_is_configured(provider_name: str) -> bool:
+    if provider_name == "brave_openai":
+        return bool(config.OPENAI_API_KEY and config.BRAVE_SEARCH_API_KEY)
+    if provider_name == "openai_web":
+        return bool(config.OPENAI_API_KEY)
+    return False
+
+
+def _automatic_provider_priority() -> list[str]:
+    priority = [config.ENRICHMENT_PROVIDER, *config.ENRICHMENT_AUTOMATIC_PROVIDER_ORDER]
+    return list(dict.fromkeys(priority))
+
+
+def select_automatic_provider_name() -> str | None:
+    """Return the first credential-complete automatic provider.
+
+    Missing credentials remove a provider from consideration instead of making
+    the entire enrichment feature fail. This lets a preferred Brave+OpenAI
+    configuration fall back to OpenAI web search when only the OpenAI key is
+    present, and it returns ``None`` when no automatic provider is usable.
+    """
+    return next(
+        (
+            provider_name
+            for provider_name in _automatic_provider_priority()
+            if _automatic_provider_is_configured(provider_name)
+        ),
+        None,
+    )
+
+
+def provider_options() -> list[ProviderOption]:
+    """Return only currently usable enrichment options, in escalation order."""
+    options: list[ProviderOption] = []
+    if config.MANUAL_CHATGPT_ENABLED:
+        options.append(
+            ProviderOption(
+                level=4,
+                provider="manual_chatgpt",
+                mode="manual",
+                label="Manual ChatGPT escalation",
+            )
+        )
+    for provider_name in _automatic_provider_priority():
+        if not _automatic_provider_is_configured(provider_name):
+            continue
+        if provider_name == "brave_openai":
+            options.append(
+                ProviderOption(
+                    level=5,
+                    provider=provider_name,
+                    mode="automatic",
+                    label="Brave Search plus OpenAI extraction",
+                    model=config.OPENAI_ENRICHMENT_MODEL,
+                    search_provider="brave",
+                )
+            )
+        else:
+            options.append(
+                ProviderOption(
+                    level=5,
+                    provider=provider_name,
+                    mode="automatic",
+                    label="OpenAI web research",
+                    model=config.OPENAI_ENRICHMENT_MODEL,
+                    search_provider="openai_web_search",
+                )
+            )
+    return options
+
+
 def provider_status() -> ProviderStatus:
-    openai = bool(config.OPENAI_API_KEY)
-    brave = bool(config.BRAVE_SEARCH_API_KEY)
     requested = config.ENRICHMENT_PROVIDER
-    if requested == "brave_openai":
-        configured = openai and brave
-        message = (
-            "Brave Search and OpenAI are configured."
-            if configured
-            else "Set both BRAVE_SEARCH_API_KEY and OPENAI_API_KEY."
-        )
+    automatic_provider = select_automatic_provider_name()
+    if automatic_provider == "brave_openai":
+        message = "Brave Search and OpenAI are configured."
         search_provider = "brave"
-    else:
-        configured = openai
-        message = (
-            "OpenAI web research is configured."
-            if configured
-            else "Set OPENAI_API_KEY to enable evidence-backed research."
-        )
+    elif automatic_provider == "openai_web":
+        message = "OpenAI web research is configured."
         search_provider = "openai_web_search"
+    elif config.MANUAL_CHATGPT_ENABLED:
+        message = (
+            "No automatic provider has complete credentials. "
+            "Manual ChatGPT escalation is available."
+        )
+        search_provider = None
+    else:
+        message = "No enrichment provider is available."
+        search_provider = None
+    options = provider_options()
     return ProviderStatus(
-        configured=configured,
-        provider=requested,
-        model=config.OPENAI_ENRICHMENT_MODEL if openai else None,
+        configured=automatic_provider is not None,
+        provider=automatic_provider or requested,
+        requested_provider=requested,
+        automatic_provider=automatic_provider,
+        model=config.OPENAI_ENRICHMENT_MODEL if automatic_provider else None,
         search_provider=search_provider,
         allowed_domains=config.ENRICHMENT_ALLOWED_DOMAINS,
         available_topics=sorted(TOPICS),
         max_jobs_per_day=config.ENRICHMENT_MAX_JOBS_PER_DAY,
         max_tokens_per_month=config.ENRICHMENT_MAX_TOKENS_PER_MONTH,
         auto_apply_threshold=config.ENRICHMENT_AUTO_APPLY_THRESHOLD,
+        manual_available=config.MANUAL_CHATGPT_ENABLED,
+        available_providers=[option.as_dict() for option in options],
         message=message,
     )
 
@@ -497,6 +604,42 @@ return individual observed listings, not a made-up consensus. For pairings and
 serving, explain whether each item is explicit evidence or an inference."""
 
 
+def prepare_manual_chatgpt_request(
+    wine: Wine,
+    topics: list[str],
+    locale: str,
+) -> dict[str, Any]:
+    """Build a self-contained request for a user to run in ChatGPT manually."""
+    if not config.MANUAL_CHATGPT_ENABLED:
+        raise EnrichmentNotConfigured("Manual ChatGPT escalation is disabled")
+    topics = _validated_topics(topics)
+    schema = _research_schema()
+    prompt = f"""{_system_prompt()}
+
+{_user_prompt(wine, topics, locale)}
+
+This is a manual CellarManager escalation. Use web search/browsing where
+available. Return exactly one JSON object and no surrounding commentary. Every
+factual source URL must be a real page you consulted. Use empty arrays or
+available=false for unrequested topics or insufficient evidence.
+
+Required JSON Schema:
+{json.dumps(schema, ensure_ascii=False, indent=2)}
+"""
+    return {
+        "provider": "manual_chatgpt",
+        "level": 4,
+        "mode": "manual",
+        "wine_id": wine.id,
+        "wine_identity": _wine_identity(wine),
+        "topics": topics,
+        "locale": locale,
+        "prompt": prompt,
+        "response_schema": schema,
+        "next_step": "Paste ChatGPT's JSON response into the manual import endpoint.",
+    }
+
+
 def _extract_output_text(response: dict[str, Any]) -> str:
     for item in response.get("output", []):
         if item.get("type") != "message":
@@ -688,13 +831,19 @@ class BraveOpenAIResearchProvider:
         return self.openai.research(wine, topics, locale, supplied_sources=sources)
 
 
-def get_provider():
-    status = provider_status()
-    if not status.configured:
-        raise EnrichmentNotConfigured(status.message)
-    if config.ENRICHMENT_PROVIDER == "brave_openai":
+def get_provider(provider_name: str | None = None):
+    provider_name = provider_name or select_automatic_provider_name()
+    if provider_name is None:
+        raise EnrichmentNotConfigured(provider_status().message)
+    if not _automatic_provider_is_configured(provider_name):
+        raise EnrichmentNotConfigured(
+            f"Provider {provider_name} does not have all required credentials"
+        )
+    if provider_name == "brave_openai":
         return BraveOpenAIResearchProvider()
-    return OpenAIResearchProvider()
+    if provider_name == "openai_web":
+        return OpenAIResearchProvider()
+    raise EnrichmentNotConfigured(f"Unknown automatic provider: {provider_name}")
 
 
 def normalise_public_source_url(value: str | None) -> str | None:
@@ -1015,15 +1164,17 @@ def _persist_sources(
     job_id: str,
     parsed: dict[str, Any],
     provider_sources: list[dict[str, Any]],
+    *,
+    provider_name: str | None = None,
 ) -> dict[str, str]:
-    """Persist only URLs returned by the configured search provider.
+    """Persist only URLs present in the provider's evidence set.
 
-    The model may extract a claim's URL, but it is not allowed to manufacture
-    evidence. A URL becomes authoritative only when it also appears in the
-    OpenAI web-search sources/citations or the Brave result set supplied to the
-    model. Unsupported factual claims lose their URL and are filtered before
-    candidate aggregation; source-free AI inference remains allowed only for
-    pairing and serving advice.
+    For automatic jobs, a URL becomes authoritative only when it also appears
+    in OpenAI web-search citations or the Brave result set supplied to the
+    model. For a manual job, the imported response itself is the evidence set;
+    URLs are still restricted to safe public HTTP(S) targets and remain subject
+    to human review. Unsupported claims lose their URL before aggregation.
+    Source-free AI inference remains allowed only for pairing and serving.
     """
     claims = _claim_items(parsed)
     by_url: dict[str, dict[str, Any]] = {}
@@ -1085,7 +1236,7 @@ def _persist_sources(
             content_hash=(hashlib.sha256(excerpt.encode("utf-8")).hexdigest() if excerpt else None),
             reliability=_source_reliability(source_type),
             identity_score=identity_score,
-            metadata={"provider": config.ENRICHMENT_PROVIDER},
+            metadata={"provider": provider_name or config.ENRICHMENT_PROVIDER},
         )
     return mapping
 
@@ -1428,6 +1579,180 @@ def _persist_candidates(
     return ids
 
 
+def _manual_provider_sources(parsed: dict[str, Any]) -> list[dict[str, Any]]:
+    urls: set[str] = set()
+    for claim in _claim_items(parsed):
+        if safe := normalise_public_source_url(claim.get("source_url")):
+            urls.add(safe)
+    for section in (parsed.get("serving") or {}, parsed.get("composition") or {}):
+        for value in section.get("source_urls") or []:
+            if safe := normalise_public_source_url(value):
+                urls.add(safe)
+    for item in [
+        *(parsed.get("reviews") or []),
+        *(parsed.get("external_identifiers") or []),
+    ]:
+        if safe := normalise_public_source_url(item.get("source_url")):
+            urls.add(safe)
+    return [{"url": url, "title": None, "publisher": None} for url in sorted(urls)]
+
+
+def _validate_manual_response(response: dict[str, Any] | str) -> dict[str, Any]:
+    if isinstance(response, str):
+        raw = response.strip()
+        if raw.startswith("```"):
+            lines = raw.splitlines()
+            if lines and lines[0].strip().lower() in {"```", "```json"}:
+                lines = lines[1:]
+            if lines and lines[-1].strip() == "```":
+                lines = lines[:-1]
+            raw = "\n".join(lines).strip()
+        try:
+            response = json.loads(raw)
+        except json.JSONDecodeError as exc:
+            raise ProviderResponseError("Manual ChatGPT response is not valid JSON") from exc
+    if not isinstance(response, dict):
+        raise ProviderResponseError("Manual ChatGPT response must be a JSON object")
+    required = {
+        "identity",
+        "drinking_windows",
+        "market_observations",
+        "pairings",
+        "serving",
+        "composition",
+        "reviews",
+        "external_identifiers",
+        "summary",
+    }
+    missing = sorted(required - set(response))
+    if missing:
+        raise ProviderResponseError(f"Manual ChatGPT response is missing: {', '.join(missing)}")
+    expected_types = {
+        "identity": dict,
+        "drinking_windows": list,
+        "market_observations": list,
+        "pairings": list,
+        "serving": dict,
+        "composition": dict,
+        "reviews": list,
+        "external_identifiers": list,
+        "summary": str,
+    }
+    invalid = [
+        key for key, expected in expected_types.items() if not isinstance(response[key], expected)
+    ]
+    if invalid:
+        raise ProviderResponseError(
+            f"Manual ChatGPT response has invalid sections: {', '.join(sorted(invalid))}"
+        )
+
+    object_lists = (
+        "drinking_windows",
+        "market_observations",
+        "pairings",
+        "reviews",
+        "external_identifiers",
+    )
+    malformed_lists = [
+        key for key in object_lists if any(not isinstance(item, dict) for item in response[key])
+    ]
+    if malformed_lists:
+        raise ProviderResponseError(
+            "Manual ChatGPT response contains non-object list items in: "
+            + ", ".join(sorted(malformed_lists))
+        )
+
+    identity = response["identity"]
+    confidence = identity.get("confidence")
+    if confidence is not None and (
+        not isinstance(confidence, (int, float))
+        or isinstance(confidence, bool)
+        or not 0 <= float(confidence) <= 1
+    ):
+        raise ProviderResponseError("Manual ChatGPT identity confidence must be between 0 and 1")
+    for section_name in ("serving", "composition"):
+        source_urls = response[section_name].get("source_urls", [])
+        if not isinstance(source_urls, list) or any(
+            not isinstance(value, str) for value in source_urls
+        ):
+            raise ProviderResponseError(
+                f"Manual ChatGPT {section_name}.source_urls must be a list of strings"
+            )
+    grapes = response["composition"].get("grapes", [])
+    if not isinstance(grapes, list) or any(not isinstance(item, dict) for item in grapes):
+        raise ProviderResponseError("Manual ChatGPT composition.grapes must be a list of objects")
+    return response
+
+
+def import_manual_chatgpt_response(
+    conn,
+    *,
+    wine: Wine,
+    user_id: str,
+    topics: list[str],
+    locale: str,
+    response: dict[str, Any] | str,
+    auto_apply: bool = False,
+) -> dict[str, Any]:
+    """Validate and persist a manually obtained ChatGPT response.
+
+    This path never calls an API and therefore does not require provider
+    credentials or consume the automatic token budget.
+    """
+    if not config.MANUAL_CHATGPT_ENABLED:
+        raise EnrichmentNotConfigured("Manual ChatGPT escalation is disabled")
+    topics = _validated_topics(topics)
+    parsed = _validate_manual_response(response)
+    job = er.create_job(
+        conn,
+        job_id=new_id(),
+        wine_id=wine.id,
+        user_id=user_id,
+        provider="manual_chatgpt",
+        topics=topics,
+        locale=locale,
+        auto_apply=auto_apply,
+        model=None,
+    )
+    er.set_job_running(conn, job["id"])
+    sources = _manual_provider_sources(parsed)
+    source_mapping = _persist_sources(
+        conn,
+        job["id"],
+        parsed,
+        sources,
+        provider_name="manual_chatgpt",
+    )
+    candidate_ids = _persist_candidates(
+        conn,
+        job_id=job["id"],
+        wine=wine,
+        topics=topics,
+        parsed=parsed,
+        source_mapping=source_mapping,
+    )
+    er.complete_job(
+        conn,
+        job["id"],
+        summary=parsed.get("summary") or "Manual ChatGPT research imported.",
+        usage={},
+        raw_response_json=(
+            json.dumps(parsed, ensure_ascii=False) if config.ENRICHMENT_STORE_RAW_RESPONSE else None
+        ),
+    )
+    if auto_apply:
+        for candidate_id in candidate_ids:
+            candidate = er.get_candidate(conn, candidate_id)
+            if candidate and candidate["confidence"] >= config.ENRICHMENT_AUTO_APPLY_THRESHOLD:
+                apply_candidate(
+                    conn,
+                    candidate_id=candidate_id,
+                    user_id=user_id,
+                    force=False,
+                )
+    return er.get_job_with_results(conn, job["id"]) or job
+
+
 def _month_start() -> str:
     today = datetime.now(UTC)
     return today.replace(day=1, hour=0, minute=0, second=0, microsecond=0).isoformat()
@@ -1458,19 +1783,16 @@ def create_job(
     auto_apply: bool,
 ) -> dict[str, Any]:
     status = provider_status()
-    if not status.configured:
+    if not status.configured or status.automatic_provider is None:
         raise EnrichmentNotConfigured(status.message)
-    invalid = set(topics) - TOPICS
-    if invalid:
-        raise ValueError(f"Unknown enrichment topics: {', '.join(sorted(invalid))}")
-    topics = sorted(set(topics)) or sorted(TOPICS)
+    topics = _validated_topics(topics)
     enforce_budget(conn)
     return er.create_job(
         conn,
         job_id=new_id(),
         wine_id=wine.id,
         user_id=user_id,
-        provider=status.provider,
+        provider=status.automatic_provider,
         topics=topics,
         locale=locale,
         auto_apply=auto_apply,
@@ -1489,11 +1811,17 @@ def execute_job(db: Database, job_id: str) -> None:
         wine = repo.get_wine(conn, job["wine_id"])
         if wine is None:
             raise ProviderResponseError("Wine no longer exists")
-        provider = get_provider()
+        provider = get_provider(job.get("provider"))
         parsed, provider_sources, usage, raw_response = provider.research(
             wine, job["topics"], job["locale"]
         )
-        source_mapping = _persist_sources(conn, job_id, parsed, provider_sources)
+        source_mapping = _persist_sources(
+            conn,
+            job_id,
+            parsed,
+            provider_sources,
+            provider_name=provider.name,
+        )
         candidate_ids = _persist_candidates(
             conn,
             job_id=job_id,

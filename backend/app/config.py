@@ -57,6 +57,10 @@ OPENAI_API_KEY = (
 OPENAI_BASE_URL = os.environ.get("WINECELLAR_OPENAI_BASE_URL", "https://api.openai.com/v1").strip()
 OPENAI_ENRICHMENT_MODEL = os.environ.get("WINECELLAR_OPENAI_MODEL", "gpt-5.5").strip()
 BRAVE_SEARCH_API_KEY = os.environ.get("BRAVE_SEARCH_API_KEY", "").strip()
+MANUAL_CHATGPT_ENABLED = os.environ.get(
+    "WINECELLAR_MANUAL_CHATGPT_ENABLED", "true"
+).strip().lower() in {"1", "true", "yes", "on"}
+
 ENRICHMENT_PROVIDER = os.environ.get("WINECELLAR_ENRICHMENT_PROVIDER", "openai_web").strip().lower()
 if ENRICHMENT_PROVIDER not in {"openai_web", "brave_openai"}:
     logger.warning(
@@ -64,6 +68,24 @@ if ENRICHMENT_PROVIDER not in {"openai_web", "brave_openai"}:
         ENRICHMENT_PROVIDER,
     )
     ENRICHMENT_PROVIDER = "openai_web"
+
+_raw_provider_order = os.environ.get(
+    "WINECELLAR_ENRICHMENT_AUTOMATIC_PROVIDER_ORDER",
+    "brave_openai,openai_web",
+)
+ENRICHMENT_AUTOMATIC_PROVIDER_ORDER = []
+for _provider_name in _raw_provider_order.split(","):
+    _provider_name = _provider_name.strip().lower()
+    if not _provider_name:
+        continue
+    if _provider_name not in {"openai_web", "brave_openai"}:
+        logger.warning(
+            "Ignoring unknown automatic enrichment provider %s",
+            _provider_name,
+        )
+        continue
+    if _provider_name not in ENRICHMENT_AUTOMATIC_PROVIDER_ORDER:
+        ENRICHMENT_AUTOMATIC_PROVIDER_ORDER.append(_provider_name)
 ENRICHMENT_ALLOWED_DOMAINS = [
     domain.strip().lower()
     for domain in os.environ.get("WINECELLAR_ENRICHMENT_ALLOWED_DOMAINS", "").split(",")

@@ -10,6 +10,55 @@ CellarManager can research a bottle online for drinking windows, current market 
 - nothing is written to the accepted wine record until a user accepts a candidate;
 - automatic application never replaces an existing user value; the review screen can explicitly replace it when the user chooses **Accept**.
 
+
+## Escalation order and credential-aware availability
+
+CellarManager exposes only options that are currently usable:
+
+| Level | Mode | Availability |
+|---|---|---|
+| 4 | Manual ChatGPT escalation | Enabled by default; no API credential required |
+| 5 | Automatic OpenAI-backed research | Shown only when all credentials for that provider are present |
+
+A missing credential does not make the whole enrichment feature fail. The
+backend skips that provider and checks the next configured automatic provider.
+For example, `brave_openai` is ignored when `BRAVE_SEARCH_API_KEY` is absent;
+`openai_web` can still be used when an OpenAI key is present. When no OpenAI key
+is available, all level-5 providers are omitted and the level-4 manual workflow
+remains available.
+
+```dotenv
+WINECELLAR_MANUAL_CHATGPT_ENABLED=true
+WINECELLAR_ENRICHMENT_PROVIDER=brave_openai
+WINECELLAR_ENRICHMENT_AUTOMATIC_PROVIDER_ORDER=brave_openai,openai_web
+```
+
+`GET /enrichment/status` returns `available_providers` in escalation order,
+`requested_provider` for the configured preference, and `automatic_provider`
+for the provider that automatic jobs will actually use. The legacy `provider`
+field now reports the effective automatic provider when a fallback is selected.
+The existing `configured` field continues to mean that an automatic provider
+is available.
+
+### Manual ChatGPT workflow
+
+1. Call `POST /wines/{wine_id}/research/manual-chatgpt` with the requested
+   topics and locale.
+2. CellarManager returns a self-contained prompt and strict response schema.
+3. Run that prompt in ChatGPT manually and copy the returned JSON.
+4. Submit it to `POST /wines/{wine_id}/research/manual-chatgpt/import`.
+5. CellarManager validates the shape, rejects unsafe evidence URLs, recalculates
+   confidence deterministically and creates the normal review candidates.
+
+The imported response is never accepted directly as trusted cellar data. It
+passes through the same candidate review and explicit acceptance process as an
+automatic result. Manual jobs record provider `manual_chatgpt` and consume zero
+automatic API tokens.
+
+In the wine research dialog, **Prepare for ChatGPT** remains visible when no
+automatic provider is configured. The automatic **Start research** action is
+omitted whenever its required credentials are incomplete.
+
 ## Provider modes
 
 ### OpenAI web search
@@ -60,6 +109,8 @@ Never disable TLS verification. When a corporate proxy intercepts HTTPS, use the
 Only the wine identity and requested topics are sent to the configured provider; cellar names, locations, users and authentication data are not included. Search content and model output are treated as untrusted: strict schemas are validated, model-invented evidence URLs are discarded, factual candidates require a URL returned by the search provider, and no candidate is automatically allowed to replace a manual value.
 
 ## User workflow
+
+For automatic research, the workflow remains:
 
 1. Open **Bottles** and select **Research online**.
 2. Choose topics.
@@ -112,6 +163,8 @@ API keys are environment variables only. They are not stored in these tables.
 
 - `GET /enrichment/status`
 - `POST /wines/{wine_id}/research`
+- `POST /wines/{wine_id}/research/manual-chatgpt`
+- `POST /wines/{wine_id}/research/manual-chatgpt/import`
 - `GET /enrichment/jobs/{job_id}`
 - `GET /wines/{wine_id}/research/history`
 - `GET /wines/{wine_id}/enrichment-profile`
