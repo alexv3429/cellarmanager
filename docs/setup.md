@@ -186,3 +186,12 @@ If dependency installation fails against `pypi.org` or
 `files.pythonhosted.org`, inspect corporate proxy/TLS settings. A failure against
 `internal.api.openai.org` means an old, non-portable lockfile is still present.
 
+## Configure Internet enrichment
+
+Copy the documented variables from `backend/.env.example`. At minimum set
+`WINECELLAR_OPENAI_API_KEY` (or `OPENAI_API_KEY`) and keep
+`WINECELLAR_ENRICHMENT_PROVIDER=openai_web`. Restart the backend, then verify
+`GET /enrichment/status` reports `configured: true`.
+
+For Brave discovery set both `BRAVE_SEARCH_API_KEY` and the OpenAI key, then use
+`WINECELLAR_ENRICHMENT_PROVIDER=brave_openai`. External API usage may be billed.

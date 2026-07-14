@@ -105,3 +105,17 @@ Errors are returned as `{"detail": "...", "field": "..."?}` with the status
 code matching the problem: `400` validation, `401` not authenticated, `403`
 forbidden (e.g. registration closed), `404` not found, `409` conflict
 (stale version, duplicate name), `429` too many login attempts.
+
+## Evidence-backed enrichment API
+
+- `GET /enrichment/status` — provider availability and current job/token usage.
+- `POST /wines/{wine_id}/research` — create a research job.
+- `GET /enrichment/jobs/{job_id}` — poll status, evidence and candidates.
+- `GET /wines/{wine_id}/research/history` — previous jobs for a wine.
+- `GET /wines/{wine_id}/enrichment-profile` — accepted rich profile and identifiers.
+- `POST /enrichment/candidates/{candidate_id}/decision` — accept or reject a candidate.
+- `POST /recommendations?explain=true` — return recommendations plus hard-filter diagnostics.
+
+Research is asynchronous by default. A completed HTTP request only means the job
+was queued; clients poll the job endpoint. API errors use structured
+`detail.code` and `detail.message` objects.

@@ -141,3 +141,17 @@ not a point on that scale - overflow cellars are for "extra space, outside
 the real cellars" (e.g. a case sitting in a garage) and are treated by the
 move-plan advisor as a place bottles should move *out of* into a real
 cellar whenever room allows, regardless of the bottle's own readiness.
+
+## Internet enrichment records
+
+Research is append-only evidence plus reviewed candidates, not an opaque update:
+
+- `enrichment_jobs` records provider, topics, status, usage and errors;
+- `enrichment_sources` stores URLs, domains, reliability and identity match;
+- `enrichment_candidates` stores normalized values, confidence and decisions;
+- `market_observations` stores each offer before aggregation;
+- `wine_enrichment_profiles` stores accepted rich topics;
+- `wine_external_identifiers` stores identifiers such as LWIN.
+
+The ordinary `wines` fields remain the compatibility surface for accepted
+drinking windows, replacement value, pairing and serving advice.

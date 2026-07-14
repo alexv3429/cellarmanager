@@ -118,3 +118,106 @@ CREATE INDEX IF NOT EXISTS idx_wines_identity ON wines(producer, cuvee, appellat
 CREATE INDEX IF NOT EXISTS idx_photo_hashes_wine ON photo_hashes(wine_id);
 
 CREATE INDEX IF NOT EXISTS idx_processed_operations_status ON processed_operations(status);
+
+-- Evidence-backed Internet and AI enrichment.
+CREATE TABLE IF NOT EXISTS enrichment_jobs (
+    id TEXT PRIMARY KEY,
+    wine_id TEXT NOT NULL REFERENCES wines(id),
+    user_id TEXT REFERENCES users(id),
+    provider TEXT NOT NULL,
+    topics_json TEXT NOT NULL,
+    locale TEXT NOT NULL DEFAULT 'en',
+    auto_apply INTEGER NOT NULL DEFAULT 0,
+    status TEXT NOT NULL CHECK (status IN ('queued', 'running', 'completed', 'failed')),
+    model TEXT,
+    summary TEXT,
+    error_code TEXT,
+    error_message TEXT,
+    usage_json TEXT,
+    input_tokens INTEGER NOT NULL DEFAULT 0,
+    output_tokens INTEGER NOT NULL DEFAULT 0,
+    total_tokens INTEGER NOT NULL DEFAULT 0,
+    raw_response_json TEXT,
+    created_at TEXT NOT NULL,
+    started_at TEXT,
+    completed_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS enrichment_sources (
+    id TEXT PRIMARY KEY,
+    job_id TEXT NOT NULL REFERENCES enrichment_jobs(id) ON DELETE CASCADE,
+    url TEXT NOT NULL,
+    title TEXT,
+    publisher TEXT,
+    domain TEXT NOT NULL,
+    source_type TEXT NOT NULL,
+    retrieved_at TEXT NOT NULL,
+    published_at TEXT,
+    excerpt TEXT,
+    content_hash TEXT,
+    reliability REAL NOT NULL,
+    identity_score REAL NOT NULL,
+    metadata_json TEXT,
+    UNIQUE(job_id, url)
+);
+
+CREATE TABLE IF NOT EXISTS enrichment_candidates (
+    id TEXT PRIMARY KEY,
+    job_id TEXT NOT NULL REFERENCES enrichment_jobs(id) ON DELETE CASCADE,
+    wine_id TEXT NOT NULL REFERENCES wines(id),
+    topic TEXT NOT NULL,
+    label TEXT NOT NULL,
+    value_json TEXT NOT NULL,
+    confidence REAL NOT NULL,
+    method TEXT NOT NULL,
+    rationale TEXT NOT NULL,
+    source_ids_json TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('proposed', 'accepted', 'rejected')),
+    created_at TEXT NOT NULL,
+    reviewed_at TEXT,
+    reviewer_id TEXT REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS market_observations (
+    id TEXT PRIMARY KEY,
+    job_id TEXT NOT NULL REFERENCES enrichment_jobs(id) ON DELETE CASCADE,
+    wine_id TEXT NOT NULL REFERENCES wines(id),
+    source_id TEXT REFERENCES enrichment_sources(id),
+    amount REAL NOT NULL,
+    currency TEXT NOT NULL,
+    offer_type TEXT NOT NULL,
+    bottle_count INTEGER NOT NULL DEFAULT 1,
+    format_ml INTEGER,
+    tax_included INTEGER,
+    in_stock INTEGER,
+    exact_match INTEGER NOT NULL DEFAULT 0,
+    observed_at TEXT,
+    notes TEXT,
+    created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS wine_enrichment_profiles (
+    wine_id TEXT PRIMARY KEY REFERENCES wines(id) ON DELETE CASCADE,
+    profile_json TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    version INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS wine_external_identifiers (
+    wine_id TEXT NOT NULL REFERENCES wines(id) ON DELETE CASCADE,
+    scheme TEXT NOT NULL,
+    value TEXT NOT NULL,
+    confidence REAL NOT NULL,
+    source_id TEXT REFERENCES enrichment_sources(id),
+    updated_at TEXT NOT NULL,
+    PRIMARY KEY (wine_id, scheme)
+);
+
+CREATE INDEX IF NOT EXISTS idx_enrichment_jobs_wine_created
+    ON enrichment_jobs(wine_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_enrichment_jobs_status
+    ON enrichment_jobs(status, created_at);
+CREATE INDEX IF NOT EXISTS idx_enrichment_candidates_job
+    ON enrichment_candidates(job_id, topic, status);
+CREATE INDEX IF NOT EXISTS idx_market_observations_wine
+    ON market_observations(wine_id, observed_at);

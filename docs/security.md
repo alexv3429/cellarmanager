@@ -81,3 +81,18 @@ Runtime and development dependencies are resolved in `uv.lock`; CI and Docker re
 Repository policy checks reject tracked database files, `.env`, private-key-like files, coverage output, and patch backups. These checks reduce accidental disclosure but are not a replacement for GitHub secret scanning or careful review. Enable GitHub secret scanning and CodeQL default setup when available.
 
 Protect `main` and include administrators in the rule. A workflow file without required branch protection can still be bypassed by a direct push or an unchecked merge. Follow `docs/github-protection.md`.
+
+## External research security
+
+Provider keys are environment variables only. Do not commit `backend/.env`.
+CellarManager calls only the configured OpenAI and/or Brave API endpoints; it
+does not fetch model-supplied evidence URLs server-side. Displayed evidence is
+restricted to public HTTP(S) URLs and private/local targets are rejected.
+
+Use `WINECELLAR_ENRICHMENT_CA_BUNDLE` for an organisation-approved corporate TLS
+CA (for example Zscaler). Never disable certificate verification. Only wine
+identity and requested topics are sent to providers. Search/model output is
+untrusted: strict schemas are used, invented evidence URLs are discarded, and
+manual values require explicit replacement. Set job/token budgets, restrict
+allowed search domains where appropriate, and review provider terms before
+enabling the feature.

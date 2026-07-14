@@ -23,7 +23,9 @@ written.
 | - | English/French UI, easily extended | `docs/i18n.md` |
 | - | Unit + integration tests plus a protected pre-merge CI gate | `docs/testing.md`, `docs/github-protection.md` |
 
-## Implemented as a real, working mechanism - but with placeholder data sources feeding it
+## Historical mock enrichment implementation (superseded)
+
+> The section below documents the former deterministic mock providers. It is retained for audit history but is no longer the active HTTP/UI path. See `docs/internet-enrichment.md` and the current status section at the end of this document.
 
 | # | Requirement | Status |
 |---|---|---|
@@ -83,3 +85,16 @@ which is exactly when the photo-hash signal helps most.
 ## Development workflow status
 
 The repository now has a locked uv environment, Ruff lint/format enforcement, local commit/push hooks, backend tests across Python 3.11–3.13, frontend checks on Node 22, dependency review, Dependabot, a stable aggregate `CI Gate`, and a script/recipe to protect `main`. Remaining testing work is primarily real-browser system coverage and agreeing a coverage percentage that can be raised over time.
+
+## Evidence-backed enrichment status
+
+Implemented: real OpenAI web-search mode, optional Brave discovery, strict
+structured extraction, clickable evidence, deterministic confidence, drinking
+window/maturity, normalized market observations and retail/secondary/quick-sale
+candidates, pairing/serving/composition/review/identifier candidates, explicit
+review, budgets, history and recommendation integration.
+
+Still provider-specific: licensed Liv-ex/auction/critic adapters, currency
+conversion, bottle-condition/provenance appraisal and a durable multi-process
+worker. Those require contracts or deployment choices and are documented rather
+than simulated.

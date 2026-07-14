@@ -47,3 +47,48 @@ if not SETUP_TOKEN:
 ENABLE_DEMO_ENRICHMENT = os.environ.get(
     "WINECELLAR_ENABLE_DEMO_ENRICHMENT", "false"
 ).strip().lower() in {"1", "true", "yes", "on"}
+
+# Evidence-backed Internet enrichment. Credentials are environment-only and are
+# never stored in SQLite or returned by the status endpoint.
+OPENAI_API_KEY = (
+    os.environ.get("WINECELLAR_OPENAI_API_KEY", "").strip()
+    or os.environ.get("OPENAI_API_KEY", "").strip()
+)
+OPENAI_BASE_URL = os.environ.get("WINECELLAR_OPENAI_BASE_URL", "https://api.openai.com/v1").strip()
+OPENAI_ENRICHMENT_MODEL = os.environ.get("WINECELLAR_OPENAI_MODEL", "gpt-5.5").strip()
+BRAVE_SEARCH_API_KEY = os.environ.get("BRAVE_SEARCH_API_KEY", "").strip()
+ENRICHMENT_PROVIDER = os.environ.get("WINECELLAR_ENRICHMENT_PROVIDER", "openai_web").strip().lower()
+if ENRICHMENT_PROVIDER not in {"openai_web", "brave_openai"}:
+    logger.warning(
+        "Unknown WINECELLAR_ENRICHMENT_PROVIDER=%s; using openai_web",
+        ENRICHMENT_PROVIDER,
+    )
+    ENRICHMENT_PROVIDER = "openai_web"
+ENRICHMENT_ALLOWED_DOMAINS = [
+    domain.strip().lower()
+    for domain in os.environ.get("WINECELLAR_ENRICHMENT_ALLOWED_DOMAINS", "").split(",")
+    if domain.strip()
+]
+ENRICHMENT_TIMEOUT_SECONDS = float(os.environ.get("WINECELLAR_ENRICHMENT_TIMEOUT_SECONDS", "90"))
+ENRICHMENT_MAX_JOBS_PER_DAY = int(os.environ.get("WINECELLAR_ENRICHMENT_MAX_JOBS_PER_DAY", "20"))
+ENRICHMENT_MAX_TOKENS_PER_MONTH = int(
+    os.environ.get("WINECELLAR_ENRICHMENT_MAX_TOKENS_PER_MONTH", "500000")
+)
+ENRICHMENT_MIN_IDENTITY_CONFIDENCE = float(
+    os.environ.get("WINECELLAR_ENRICHMENT_MIN_IDENTITY_CONFIDENCE", "0.60")
+)
+ENRICHMENT_AUTO_APPLY_THRESHOLD = float(
+    os.environ.get("WINECELLAR_ENRICHMENT_AUTO_APPLY_THRESHOLD", "0.90")
+)
+ENRICHMENT_MAX_SOURCES = int(os.environ.get("WINECELLAR_ENRICHMENT_MAX_SOURCES", "12"))
+ENRICHMENT_MAX_PAIRINGS = int(os.environ.get("WINECELLAR_ENRICHMENT_MAX_PAIRINGS", "8"))
+ENRICHMENT_MAX_SEARCH_QUERIES = int(os.environ.get("WINECELLAR_ENRICHMENT_MAX_SEARCH_QUERIES", "4"))
+ENRICHMENT_SEARCH_CONTEXT_SIZE = (
+    os.environ.get("WINECELLAR_ENRICHMENT_SEARCH_CONTEXT_SIZE", "medium").strip().lower()
+)
+if ENRICHMENT_SEARCH_CONTEXT_SIZE not in {"low", "medium", "high"}:
+    ENRICHMENT_SEARCH_CONTEXT_SIZE = "medium"
+ENRICHMENT_CA_BUNDLE = os.environ.get("WINECELLAR_ENRICHMENT_CA_BUNDLE", "").strip()
+ENRICHMENT_STORE_RAW_RESPONSE = os.environ.get(
+    "WINECELLAR_ENRICHMENT_STORE_RAW_RESPONSE", "false"
+).strip().lower() in {"1", "true", "yes", "on"}

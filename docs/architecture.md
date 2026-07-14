@@ -118,3 +118,12 @@ default this codebase should bake in.
 Ruff is the single Python formatter, import sorter, and linter. Node remains necessary only for syntax checking and the dependency-free frontend test runner; there is still no frontend build step. `pre-commit` provides local commit/push hooks, but GitHub's protected `CI Gate` is the authoritative architecture-quality boundary.
 
 The CI workflow deliberately exposes one stable aggregate job name. This lets the internal test matrix evolve without repeatedly changing branch protection. See `docs/development.md` and `docs/github-protection.md`.
+
+## Research/enrichment pipeline
+
+`internet_enrichment.py` implements provider adapters, strict structured output,
+provider-authoritative source normalization, deterministic confidence and candidate aggregation.
+`enrichment_repository.py` owns durable jobs/evidence/review state. The frontend
+never receives API credentials. In-process FastAPI background tasks are suitable
+for the current single-server deployment; a future worker can execute the same
+durable jobs without changing the HTTP or data model.

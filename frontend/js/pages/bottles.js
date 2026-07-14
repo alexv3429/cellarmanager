@@ -2,6 +2,7 @@ import * as api from "../api.js";
 import { t } from "../i18n.js";
 import { el, clear, showToast, field, selectEl, formatDate } from "../dom.js";
 
+import { apiErrorMessage, openWineResearchDialog } from "./enrichmentResearch.js";
 const COLORS = ["red", "white", "rose", "sparkling", "orange", "fortified", "other"];
 const REMOVE_REASONS = ["gifted", "broken", "sold", "lost", "drunk"];
 
@@ -20,7 +21,7 @@ function actionDialog(title, bodyNodes, onConfirm) {
       await onConfirm();
       overlay.remove();
     } catch (err) {
-      errorBox.textContent = err.detail || t("common.error_generic");
+      errorBox.textContent = apiErrorMessage(err);
       errorBox.hidden = false;
     }
   });
@@ -119,7 +120,7 @@ function openEnrichDialog(kind, wine) {
       resp = await api.post(path, {});
     } catch (err) {
       clear(body);
-      body.appendChild(el("p", { class: "form-error", text: err.detail || t("common.error_generic") }));
+      body.appendChild(el("p", { class: "form-error", text: apiErrorMessage(err) }));
       return;
     }
     clear(body);
@@ -165,7 +166,7 @@ function openScanDialog(cellars, onRecognized) {
       result = await api.postForm("/photos/recognize", formData);
     } catch (err) {
       clear(body);
-      body.appendChild(el("p", { class: "form-error", text: err.detail || t("common.error_generic") }));
+      body.appendChild(el("p", { class: "form-error", text: apiErrorMessage(err) }));
       return;
     }
 
@@ -234,8 +235,13 @@ function wineRow(wine, holdingsForWine, cellars, cellarsById, onChanged) {
     actions.appendChild(el("button", { class: "small danger", text: t("common.remove"), onclick: () => openRemoveDialog(holdingsForWine[0], onChanged) }));
   }
   actions.appendChild(el("button", { class: "small", text: t("bottles.locations"), onclick: () => openLocationsDialog(wine) }));
-  actions.appendChild(el("button", { class: "small", text: t("bottles.enrich_dates"), onclick: () => openEnrichDialog("drinking-window", wine) }));
-  actions.appendChild(el("button", { class: "small", text: t("bottles.enrich_market"), onclick: () => openEnrichDialog("market-info", wine) }));
+      actions.appendChild(
+    el("button", {
+      class: "small",
+      text: t("bottles.research"),
+      onclick: () => openWineResearchDialog(wine, onChanged),
+    })
+  );
   row.appendChild(actions);
   return row;
 }

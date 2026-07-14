@@ -92,3 +92,11 @@ If dependency installation fails against `pypi.org` or
 `files.pythonhosted.org`, inspect corporate proxy/TLS settings. A failure against
 `internal.api.openai.org` means an old, non-portable lockfile is still present.
 
+## Enrichment tests
+
+CI uses injected fake transports and synthetic structured responses. It must
+never call OpenAI, Brave, merchants, critics or licensed providers. The tests
+cover confidence calculation, exact-format price normalization, source URL
+safety and authority, manual-value protection, persistence/review, enriched
+recommendation ranking and zero-result diagnostics. Live smoke tests are
+operational checks and must remain opt-in.
