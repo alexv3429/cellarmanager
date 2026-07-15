@@ -17,6 +17,7 @@ from app.api.routers import (
     holdings,
     imports_exports,
     insights,
+    inventory,
     wines,
 )
 from app.core.exceptions import (
@@ -99,6 +100,7 @@ app.include_router(auth.router)
 app.include_router(wines.router)
 app.include_router(cellars.router)
 app.include_router(holdings.router)
+app.include_router(inventory.router)
 app.include_router(imports_exports.router)
 app.include_router(insights.router)
 app.include_router(enrichment.router)

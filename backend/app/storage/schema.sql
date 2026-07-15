@@ -221,3 +221,117 @@ CREATE INDEX IF NOT EXISTS idx_enrichment_candidates_job
     ON enrichment_candidates(job_id, topic, status);
 CREATE INDEX IF NOT EXISTS idx_market_observations_wine
     ON market_observations(wine_id, observed_at);
+
+-- Unified Add inventory workflow (wine identity, acquisition, storage allocation and media).
+CREATE TABLE IF NOT EXISTS wine_identity_details (
+    wine_id TEXT PRIMARY KEY REFERENCES wines(id) ON DELETE CASCADE,
+    country TEXT,
+    region TEXT,
+    classification TEXT,
+    vineyard TEXT,
+    sweetness TEXT,
+    alcohol_percentage REAL,
+    grapes_json TEXT NOT NULL DEFAULT '[]',
+    certifications_json TEXT NOT NULL DEFAULT '[]',
+    external_identifiers_json TEXT NOT NULL DEFAULT '{}',
+    barcode TEXT,
+    field_sources_json TEXT NOT NULL DEFAULT '{}',
+    updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS acquisitions (
+    id TEXT PRIMARY KEY,
+    wine_id TEXT NOT NULL REFERENCES wines(id),
+    user_id TEXT REFERENCES users(id),
+    quantity INTEGER NOT NULL CHECK (quantity > 0),
+    price_mode TEXT NOT NULL CHECK (price_mode IN ('per_bottle', 'total')),
+    amount REAL,
+    currency TEXT NOT NULL,
+    tax_included INTEGER,
+    fees REAL NOT NULL DEFAULT 0,
+    shipping REAL NOT NULL DEFAULT 0,
+    effective_unit_cost REAL,
+    purchase_date TEXT,
+    vendor TEXT,
+    acquisition_type TEXT NOT NULL CHECK (
+        acquisition_type IN ('purchase', 'gift', 'inheritance', 'cellar_import', 'other')
+    ),
+    invoice_reference TEXT,
+    notes TEXT,
+    fill_level TEXT,
+    label_condition TEXT,
+    capsule_condition TEXT,
+    bottle_condition TEXT,
+    provenance TEXT,
+    storage_history TEXT,
+    original_case INTEGER,
+    serial_number TEXT,
+    personal_notes TEXT,
+    tags_json TEXT NOT NULL DEFAULT '[]',
+    client_op_id TEXT UNIQUE,
+    created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS acquisition_allocations (
+    id TEXT PRIMARY KEY,
+    acquisition_id TEXT NOT NULL REFERENCES acquisitions(id) ON DELETE CASCADE,
+    holding_id TEXT NOT NULL REFERENCES holdings(id),
+    cellar_id TEXT REFERENCES cellars(id),
+    location TEXT,
+    quantity INTEGER NOT NULL CHECK (quantity > 0),
+    created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS media_files (
+    id TEXT PRIMARY KEY,
+    storage_backend TEXT NOT NULL DEFAULT 'local',
+    relative_path TEXT NOT NULL,
+    thumbnail_path TEXT,
+    mime_type TEXT NOT NULL,
+    original_filename TEXT NOT NULL,
+    sha256 TEXT NOT NULL,
+    width INTEGER,
+    height INTEGER,
+    category TEXT NOT NULL CHECK (
+        category IN (
+            'front_label', 'back_label', 'full_bottle', 'capsule', 'original_case',
+            'receipt', 'condition', 'cellar_location', 'other'
+        )
+    ),
+    wine_id TEXT REFERENCES wines(id) ON DELETE CASCADE,
+    acquisition_id TEXT REFERENCES acquisitions(id) ON DELETE CASCADE,
+    holding_id TEXT REFERENCES holdings(id),
+    created_by TEXT REFERENCES users(id),
+    created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS inventory_ai_candidates (
+    id TEXT PRIMARY KEY,
+    wine_id TEXT NOT NULL REFERENCES wines(id) ON DELETE CASCADE,
+    acquisition_id TEXT REFERENCES acquisitions(id) ON DELETE CASCADE,
+    topic TEXT NOT NULL,
+    label TEXT NOT NULL,
+    value_json TEXT NOT NULL,
+    confidence REAL NOT NULL,
+    rationale TEXT,
+    evidence_links_json TEXT NOT NULL DEFAULT '[]',
+    status TEXT NOT NULL CHECK (status IN ('proposed', 'accepted', 'rejected')),
+    created_at TEXT NOT NULL,
+    reviewed_at TEXT,
+    reviewer_id TEXT REFERENCES users(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_acquisitions_wine_created
+    ON acquisitions(wine_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_acquisition_allocations_acquisition
+    ON acquisition_allocations(acquisition_id);
+CREATE INDEX IF NOT EXISTS idx_acquisition_allocations_holding
+    ON acquisition_allocations(holding_id);
+CREATE INDEX IF NOT EXISTS idx_media_files_wine
+    ON media_files(wine_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_media_files_acquisition
+    ON media_files(acquisition_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_media_files_hash
+    ON media_files(sha256);
+CREATE INDEX IF NOT EXISTS idx_inventory_ai_candidates_wine
+    ON inventory_ai_candidates(wine_id, status, created_at DESC);
