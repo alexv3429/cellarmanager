@@ -69,6 +69,7 @@ SOURCE_RELIABILITY = {
 MANUAL_CONFIDENCE_CAP = 0.69
 MAX_MANUAL_RESPONSE_ITEMS = 100
 MAX_MANUAL_TEXT_LENGTH = 4_000
+MAX_CANDIDATE_EDIT_BYTES = 64_000
 
 
 class EnrichmentError(RuntimeError):
@@ -328,13 +329,22 @@ class StrictResearchModel(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
 
 
+DATE_FIELD_DESCRIPTION = (
+    "Complete ISO-8601 date (YYYY-MM-DD) or datetime. Use null when the exact "
+    "day is unknown; month-only YYYY-MM values are not accepted."
+)
+
+
 def _validate_iso_date_or_datetime(value: str | None) -> str | None:
     if value is None:
         return None
     try:
         datetime.fromisoformat(value.replace("Z", "+00:00"))
     except ValueError as exc:
-        raise ValueError("must be an ISO-8601 date or datetime") from exc
+        raise ValueError(
+            "must be a complete ISO-8601 date (YYYY-MM-DD) or datetime; "
+            "use null when the exact day is unknown"
+        ) from exc
     return value
 
 
@@ -352,7 +362,7 @@ class ResearchSourceFields(StrictResearchModel):
         "unknown",
         "ai_inference",
     ]
-    published_at: str | None = Field(max_length=64)
+    published_at: str | None = Field(max_length=64, description=DATE_FIELD_DESCRIPTION)
     exact_producer: bool
     exact_cuvee: bool
     exact_vintage: bool
@@ -386,7 +396,7 @@ class MarketObservation(ResearchSourceFields):
     format_ml: int | None
     tax_included: bool | None
     in_stock: bool | None
-    observed_at: str | None = Field(max_length=64)
+    observed_at: str | None = Field(max_length=64, description=DATE_FIELD_DESCRIPTION)
     notes: str = Field(max_length=MAX_MANUAL_TEXT_LENGTH)
 
     @field_validator("observed_at")
@@ -444,7 +454,7 @@ class ReviewObservation(StrictResearchModel):
     score: float | None
     scale: float | None = Field(gt=0)
     reviewer: str = Field(max_length=300)
-    review_date: str | None = Field(max_length=64)
+    review_date: str | None = Field(max_length=64, description=DATE_FIELD_DESCRIPTION)
     note_excerpt: str = Field(max_length=240)
     source_url: str = Field(max_length=2_048)
     exact_vintage: bool
@@ -527,9 +537,20 @@ def prepare_manual_chatgpt_request(
 {_user_prompt(wine, topics, locale)}
 
 This is a manual CellarManager escalation. Use web search/browsing where
-available. Return exactly one JSON object and no surrounding commentary. Every
-factual source URL must be a real page you consulted. Use empty arrays or
-available=false for unrequested topics or insufficient evidence.
+available. Every factual source URL must be a real page you consulted. Use
+empty arrays or available=false for unrequested topics or insufficient evidence.
+
+Mandatory JSON formatting rules:
+- Return exactly one fenced ```json code block and no text before or after it.
+- Use standard ASCII double quotes (U+0022: ") for every JSON key and string
+  delimiter. Never use typographic/smart quotes such as “ or ” as delimiters.
+- The result must be directly parseable by JSON.parse: no comments, trailing
+  commas, ellipses, or unquoted keys.
+- published_at, observed_at and review_date must be complete YYYY-MM-DD dates,
+  complete ISO-8601 datetimes, or null. Never return a month-only YYYY-MM value.
+- When a source gives only a month or year, use null rather than inventing a day.
+- Preserve null as JSON null; do not return the strings "null", "unknown" or
+  "N/A" for nullable date or numeric fields.
 
 Required JSON Schema:
 {json.dumps(schema, ensure_ascii=False, indent=2)}
@@ -544,7 +565,12 @@ Required JSON Schema:
         "locale": locale,
         "prompt": prompt,
         "response_schema": schema,
-        "next_step": "Paste ChatGPT's JSON response into the manual import endpoint.",
+        "format_rules": {
+            "json_quotes": "Use standard ASCII double quotes (U+0022), not smart quotes.",
+            "dates": "Use YYYY-MM-DD, a complete ISO-8601 datetime, or null; never YYYY-MM.",
+            "wrapper": "Return one fenced json code block with no surrounding prose.",
+        },
+        "next_step": "Paste ChatGPT's complete JSON code block into the manual import endpoint.",
     }
 
 
@@ -1771,6 +1797,277 @@ def _serving_summary(value: dict[str, Any]) -> str:
     if value.get("glass"):
         parts.append(f"glass: {value['glass']}")
     return "; ".join(parts) or value.get("rationale") or ""
+
+
+def _candidate_source_urls(value: Any) -> set[str]:
+    """Collect evidence URLs embedded in a candidate value."""
+    found: set[str] = set()
+
+    def visit(item: Any) -> None:
+        if isinstance(item, list):
+            for child in item:
+                visit(child)
+            return
+        if not isinstance(item, dict):
+            return
+        for key, child in item.items():
+            if key == "source_url" and isinstance(child, str) and child:
+                found.add(child)
+            elif key == "source_urls" and isinstance(child, list):
+                found.update(url for url in child if isinstance(url, str) and url)
+            else:
+                visit(child)
+
+    visit(value)
+    return found
+
+
+def _candidate_number(
+    value: Any,
+    field: str,
+    *,
+    minimum: float | None = None,
+    maximum: float | None = None,
+    integer: bool = False,
+    nullable: bool = True,
+) -> int | float | None:
+    if value is None and nullable:
+        return None
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        kind = "integer" if integer else "number"
+        raise ValueError(f"{field} must be a {kind}{' or null' if nullable else ''}")
+    if integer and not isinstance(value, int):
+        raise ValueError(f"{field} must be an integer{' or null' if nullable else ''}")
+    numeric = int(value) if integer else float(value)
+    if minimum is not None and numeric < minimum:
+        raise ValueError(f"{field} must be at least {minimum}")
+    if maximum is not None and numeric > maximum:
+        raise ValueError(f"{field} must be at most {maximum}")
+    return numeric
+
+
+def _candidate_text(
+    value: Any,
+    field: str,
+    *,
+    required: bool = False,
+    max_length: int = MAX_MANUAL_TEXT_LENGTH,
+) -> str | None:
+    if value is None and not required:
+        return None
+    if not isinstance(value, str):
+        raise ValueError(f"{field} must be a string{' or null' if not required else ''}")
+    cleaned = value.strip()
+    if required and not cleaned:
+        raise ValueError(f"{field} must not be empty")
+    if len(cleaned) > max_length:
+        raise ValueError(f"{field} must be at most {max_length} characters")
+    return cleaned
+
+
+def _validate_candidate_edit(candidate: dict[str, Any], value: Any) -> dict[str, Any] | list[Any]:
+    """Validate a user correction without changing evidence or confidence.
+
+    Candidate edits intentionally update only ``value_json``. Confidence,
+    method provenance and source IDs remain under CellarManager control. URLs
+    may be removed, but new evidence URLs cannot be introduced through the
+    editor because they have not passed the research-source review pipeline.
+    """
+    if candidate.get("status") != "proposed":
+        raise ValueError("Only proposed candidates can be edited")
+    if not isinstance(value, (dict, list)):
+        raise ValueError("Candidate value must be a JSON object or array")
+    original = candidate.get("value")
+    if isinstance(original, list) != isinstance(value, list):
+        raise ValueError("Candidate value must keep its original JSON container type")
+
+    try:
+        encoded = json.dumps(value, ensure_ascii=False, allow_nan=False)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("Candidate value must be valid finite JSON") from exc
+    if len(encoded.encode("utf-8")) > MAX_CANDIDATE_EDIT_BYTES:
+        raise ValueError(f"Candidate value must be smaller than {MAX_CANDIDATE_EDIT_BYTES} bytes")
+
+    added_urls = _candidate_source_urls(value) - _candidate_source_urls(original)
+    if added_urls:
+        raise ValueError(
+            "Candidate edits cannot add evidence URLs; run new research to add sources"
+        )
+
+    topic = candidate.get("topic")
+    if topic == "drinking_window":
+        if not isinstance(value, dict):
+            raise ValueError("Drinking-window value must be a JSON object")
+        after = _candidate_number(
+            value.get("drink_after_year"),
+            "drink_after_year",
+            minimum=1800,
+            maximum=date.today().year + 100,
+            integer=True,
+        )
+        before = _candidate_number(
+            value.get("drink_before_year"),
+            "drink_before_year",
+            minimum=1800,
+            maximum=date.today().year + 100,
+            integer=True,
+        )
+        if after is not None and before is not None and after > before:
+            raise ValueError("drink_after_year must not be later than drink_before_year")
+        if "observation_count" in value:
+            _candidate_number(
+                value.get("observation_count"),
+                "observation_count",
+                minimum=0,
+                integer=True,
+                nullable=False,
+            )
+        if "maturity" in value and value["maturity"] is not None:
+            _validate_maturity_edit(value["maturity"])
+    elif topic == "maturity":
+        _validate_maturity_edit(value)
+    elif topic == "market_value":
+        if not isinstance(value, dict):
+            raise ValueError("Market-value candidate must be a JSON object")
+        amount = _candidate_number(value.get("amount"), "amount", minimum=0.01, nullable=False)
+        currency = _candidate_text(value.get("currency"), "currency", required=True, max_length=16)
+        low = _candidate_number(value.get("low"), "low", minimum=0.01)
+        high = _candidate_number(value.get("high"), "high", minimum=0.01)
+        if low is not None and high is not None and low > high:
+            raise ValueError("low must not be greater than high")
+        if low is not None and amount is not None and amount < low:
+            raise ValueError("amount must not be lower than low")
+        if high is not None and amount is not None and amount > high:
+            raise ValueError("amount must not be greater than high")
+        value["amount"] = amount
+        value["currency"] = currency.upper() if currency else currency
+    elif topic == "pairing":
+        if not isinstance(value, list):
+            raise ValueError("Pairing candidate must be a JSON array")
+        if len(value) > MAX_MANUAL_RESPONSE_ITEMS:
+            raise ValueError("Pairing candidate contains too many items")
+        for index, item in enumerate(value):
+            if not isinstance(item, dict):
+                raise ValueError(f"pairing[{index}] must be a JSON object")
+            _candidate_text(
+                item.get("dish"),
+                f"pairing[{index}].dish",
+                required=True,
+                max_length=500,
+            )
+            _candidate_text(item.get("rationale"), f"pairing[{index}].rationale")
+            avoid = item.get("avoid", [])
+            if not isinstance(avoid, list) or any(not isinstance(x, str) for x in avoid):
+                raise ValueError(f"pairing[{index}].avoid must be an array of strings")
+            published_at = item.get("published_at")
+            if published_at is not None:
+                _validate_iso_date_or_datetime(published_at)
+    elif topic == "serving":
+        if not isinstance(value, dict):
+            raise ValueError("Serving candidate must be a JSON object")
+        try:
+            value = ServingResearch.model_validate(value).model_dump(mode="json")
+        except ValidationError as exc:
+            message = exc.errors(include_url=False)[0]["msg"]
+            raise ValueError(f"Invalid serving candidate: {message}") from exc
+    elif topic == "composition":
+        if not isinstance(value, dict):
+            raise ValueError("Composition candidate must be a JSON object")
+        try:
+            value = CompositionResearch.model_validate(value).model_dump(mode="json")
+        except ValidationError as exc:
+            raise ValueError(
+                f"Invalid composition candidate: {exc.errors(include_url=False)[0]['msg']}"
+            ) from exc
+    elif topic == "reviews":
+        if not isinstance(value, list):
+            raise ValueError("Reviews candidate must be a JSON array")
+        try:
+            value = [
+                ReviewObservation.model_validate(item).model_dump(mode="json") for item in value
+            ]
+        except ValidationError as exc:
+            message = exc.errors(include_url=False)[0]["msg"]
+            raise ValueError(f"Invalid review candidate: {message}") from exc
+    elif topic == "identifiers":
+        if not isinstance(value, list):
+            raise ValueError("Identifiers candidate must be a JSON array")
+        try:
+            value = [
+                ExternalIdentifierObservation.model_validate(item).model_dump(mode="json")
+                for item in value
+            ]
+        except ValidationError as exc:
+            raise ValueError(
+                f"Invalid identifier candidate: {exc.errors(include_url=False)[0]['msg']}"
+            ) from exc
+    else:
+        raise ValueError(f"Candidate topic {topic!r} is not editable")
+
+    return value
+
+
+def _validate_maturity_edit(value: Any) -> None:
+    if not isinstance(value, dict):
+        raise ValueError("Maturity value must be a JSON object")
+    _candidate_text(value.get("state"), "maturity.state", required=True, max_length=100)
+    _candidate_number(
+        value.get("readiness_score"),
+        "maturity.readiness_score",
+        minimum=0,
+        maximum=10,
+    )
+    if not isinstance(value.get("drink_soon"), bool):
+        raise ValueError("maturity.drink_soon must be a boolean")
+    _candidate_text(value.get("rationale"), "maturity.rationale", required=True)
+
+
+def edit_candidate(
+    conn,
+    *,
+    candidate_id: str,
+    user_id: str,
+    value: dict[str, Any] | list[Any],
+) -> dict[str, Any]:
+    candidate = er.get_candidate(conn, candidate_id)
+    if candidate is None:
+        raise KeyError("Candidate not found")
+    edited = _validate_candidate_edit(candidate, value)
+    method = candidate.get("method") or "research"
+    if not method.endswith("+user_edit"):
+        method = f"{method}+user_edit"
+    rationale = (candidate.get("rationale") or "").rstrip()
+    edit_note = "Edited by the user before acceptance."
+    if edit_note not in rationale:
+        rationale = f"{rationale} {edit_note}".strip()
+    er.update_candidate_value(
+        conn,
+        candidate_id,
+        value=edited,
+        method=method,
+        rationale=rationale,
+    )
+    repo.insert_movement(
+        conn,
+        Movement(
+            id=new_id(),
+            action=MovementAction.ENRICH.value,
+            wine_id=candidate["wine_id"],
+            user_id=user_id,
+            note=f"edited enrichment candidate: {candidate['label']}",
+            details_json=json.dumps(
+                {
+                    "candidate_id": candidate_id,
+                    "job_id": candidate["job_id"],
+                    "topic": candidate["topic"],
+                    "previous_value": candidate["value"],
+                    "edited_value": edited,
+                },
+                ensure_ascii=False,
+            ),
+        ),
+    )
+    return er.get_candidate(conn, candidate_id) or candidate
 
 
 def apply_candidate(

@@ -6,6 +6,8 @@ import {
   manualChatGPTButtonLabel,
   openManualChatGPTResearch,
 } from "./manualChatGPTResearch.js";
+import { createCandidateEditor } from "./candidateEditor.js";
+
 
 const TOPICS = [
   "drinking_window",
@@ -135,12 +137,19 @@ function sourceLink(source) {
   );
 }
 
-function candidateCard(candidate, sourcesById, wine, onDecision) {
+function candidateCard(candidate, sourcesById, wine, onDecision, onEdit) {
   const sourceList = candidate.source_ids
     .map((id) => sourcesById[id])
     .filter(Boolean);
   const actions = el("div", { class: "research-actions" });
+  const editor = createCandidateEditor(
+    candidate,
+    onEdit,
+    document.documentElement.lang,
+  );
+
   if (candidate.status === "proposed") {
+    actions.appendChild(editor.button);
     actions.appendChild(el("button", {
       class: "small primary",
       text: t("research.accept"),
@@ -177,6 +186,7 @@ function candidateCard(candidate, sourcesById, wine, onDecision) {
           el("ul", { class: "research-sources" }, sourceList.map(sourceLink)),
         ])
       : el("p", { class: "hint", text: t("research.inferred_no_source") }),
+    candidate.status === "proposed" ? editor.panel : null,
     actions,
   ].filter(Boolean));
 }
@@ -231,9 +241,22 @@ function renderJob(body, job, wine, refresh, onApplied = () => {}) {
       body.prepend(el("p", { class: "form-error", text: apiErrorMessage(error) }));
     }
   };
+  
+  const onEdit = async (candidate, value) => {
+    try {
+      await api.put(`/enrichment/candidates/${candidate.id}`, { value });
+      await refresh();
+    } catch (error) {
+      throw new Error(apiErrorMessage(error));
+    }
+  };
+
   for (const candidate of candidates) {
-    body.appendChild(candidateCard(candidate, sourcesById, wine, onDecision));
+    body.appendChild(
+      candidateCard(candidate, sourcesById, wine, onDecision, onEdit),
+    );
   }
+
 
   if ((job.market_observations || []).length) {
     body.appendChild(el("details", { class: "market-observations" }, [

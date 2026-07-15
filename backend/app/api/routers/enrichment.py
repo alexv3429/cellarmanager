@@ -48,6 +48,12 @@ class CandidateDecisionRequest(BaseModel):
     force: bool = False
 
 
+class CandidateEditRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    value: dict[str, Any] | list[Any]
+
+
 def _error(exc: research.EnrichmentError) -> HTTPException:
     code_to_status = {
         research.EnrichmentNotConfigured.code: status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -217,6 +223,31 @@ def enrichment_profile(
         **er.get_profile(conn, wine_id),
         "external_identifiers": er.list_external_identifiers(conn, wine_id),
     }
+
+
+@router.put("/enrichment/candidates/{candidate_id}")
+def edit_candidate(
+    candidate_id: str,
+    payload: CandidateEditRequest,
+    user_id: str = Depends(get_current_user_id),
+    conn: sqlite3.Connection = Depends(get_conn),
+):
+    try:
+        result = research.edit_candidate(
+            conn,
+            candidate_id=candidate_id,
+            user_id=user_id,
+            value=payload.value,
+        )
+    except KeyError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="error.not_found") from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail={"code": "invalid_candidate_edit", "message": str(exc)},
+        ) from exc
+    conn.commit()
+    return result
 
 
 @router.post("/enrichment/candidates/{candidate_id}/decision")

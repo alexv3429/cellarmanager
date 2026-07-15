@@ -268,6 +268,31 @@ def get_candidate(conn: sqlite3.Connection, candidate_id: str) -> dict[str, Any]
     return _row_to_candidate(row) if row else None
 
 
+def update_candidate_value(
+    conn: sqlite3.Connection,
+    candidate_id: str,
+    *,
+    value: dict[str, Any] | list[Any],
+    method: str,
+    rationale: str,
+) -> None:
+    cursor = conn.execute(
+        """
+        UPDATE enrichment_candidates
+        SET value_json=?, method=?, rationale=?
+        WHERE id=? AND status='proposed'
+        """,
+        (
+            json.dumps(value, ensure_ascii=False),
+            method[:200],
+            rationale[:4000],
+            candidate_id,
+        ),
+    )
+    if cursor.rowcount != 1:
+        raise ValueError("Candidate is no longer editable")
+
+
 def list_candidates(conn: sqlite3.Connection, job_id: str) -> list[dict[str, Any]]:
     rows = conn.execute(
         """
