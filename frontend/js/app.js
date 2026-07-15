@@ -226,11 +226,27 @@ async function main() {
   trySync();
 
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("service-worker.js").then((registration) => {
-      registration.update().catch(() => {});
-    }).catch((error) => {
-      console.warn("Service worker registration failed:", error);
+    let reloadingForServiceWorker = false;
+
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (reloadingForServiceWorker) return;
+
+      reloadingForServiceWorker = true;
+      window.location.reload();
     });
+
+    navigator.serviceWorker
+      .register("service-worker.js", {
+        updateViaCache: "none",
+      })
+      .then((registration) => {
+        registration.update().catch((error) => {
+          console.warn("Service worker update check failed:", error);
+        });
+      })
+      .catch((error) => {
+        console.warn("Service worker registration failed:", error);
+      });
   }
 }
 

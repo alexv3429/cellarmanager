@@ -261,13 +261,31 @@ function waitForControllerChange(timeoutMs = 4000) {
 }
 
 async function checkForUpdate() {
-  if (!("serviceWorker" in navigator)) {
-    throw new Error(t("system.worker_unavailable"));
+  const supported =
+    window.isSecureContext &&
+    "serviceWorker" in navigator;
+
+  if (!supported) {
+    throw new Error(
+      "Service-worker updates require HTTPS or localhost.",
+    );
   }
-  const registration = await navigator.serviceWorker.getRegistration();
-  if (!registration) throw new Error(t("system.worker_unavailable"));
+
+  const registration =
+    await navigator.serviceWorker.getRegistration();
+
+  if (!registration) {
+    throw new Error(
+      "No service worker is currently registered.",
+    );
+  }
+
   await registration.update();
-  return Boolean(registration.waiting || registration.installing);
+
+  return Boolean(
+    registration.waiting ||
+    registration.installing,
+  );
 }
 
 async function forceRefresh() {
@@ -325,6 +343,16 @@ export async function renderSyncProblems(container) {
     type: "button",
     text: t("system.check_update"),
   });
+  const serviceWorkerAvailable =
+    window.isSecureContext &&
+    "serviceWorker" in navigator;
+
+  updateButton.disabled = !serviceWorkerAvailable;
+
+  if (!serviceWorkerAvailable) {
+    updateButton.title =
+      t("system.worker_unavailable");
+  }
   const syncButton = el("button", {
     type: "button",
     class: "primary",
@@ -347,7 +375,7 @@ export async function renderSyncProblems(container) {
     } catch (error) {
       showToast(error.message || t("common.error_generic"), { isError: true });
     } finally {
-      updateButton.disabled = false;
+      updateButton.disabled = !serviceWorkerAvailable;
     }
   });
 
