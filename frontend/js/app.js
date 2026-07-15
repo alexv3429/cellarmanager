@@ -150,15 +150,33 @@ async function updateOnlineStatus() {
 
 async function trySync() {
   if (!navigator.onLine) return;
+
+  const attemptedAt = new Date().toISOString();
+  await db.setMeta("last_sync_attempt_at", attemptedAt).catch(() => {});
   const before = await api.pendingOutboxCount();
+
   if (before === 0) {
+    await db.setMeta("last_sync_at", attemptedAt).catch(() => {});
     await showStoredSyncProblems();
+    window.dispatchEvent(
+      new CustomEvent("sync:completed", {
+        detail: { synced: 0, stillPending: 0, conflicts: 0, failed: 0 },
+      }),
+    );
     return;
   }
+
   statusBanner.hidden = false;
   statusBanner.classList.remove("status-error");
   statusBanner.textContent = t("offline.syncing");
-  const { synced, stillPending, conflicts, failed } = await api.syncOutbox();
+  const result = await api.syncOutbox();
+  const { synced, stillPending, conflicts, failed } = result;
+
+  if (!conflicts && !failed && stillPending === 0) {
+    await db.setMeta("last_sync_at", new Date().toISOString()).catch(() => {});
+  }
+  window.dispatchEvent(new CustomEvent("sync:completed", { detail: result }));
+
   if (conflicts || failed) {
     statusBanner.classList.add("status-error");
     statusBanner.textContent = t("offline.sync_result_problems", {
@@ -171,7 +189,10 @@ async function trySync() {
     statusBanner.hidden = true;
     if (synced > 0) showToast(t("offline.synced"));
   } else {
-    statusBanner.textContent = t("offline.sync_result", { synced, pending: stillPending });
+    statusBanner.textContent = t("offline.sync_result", {
+      synced,
+      pending: stillPending,
+    });
   }
 }
 
@@ -205,11 +226,27 @@ async function main() {
   trySync();
 
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("service-worker.js").then((registration) => {
-      registration.update().catch(() => {});
-    }).catch((error) => {
-      console.warn("Service worker registration failed:", error);
+    let reloadingForServiceWorker = false;
+
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (reloadingForServiceWorker) return;
+
+      reloadingForServiceWorker = true;
+      window.location.reload();
     });
+
+    navigator.serviceWorker
+      .register("service-worker.js", {
+        updateViaCache: "none",
+      })
+      .then((registration) => {
+        registration.update().catch((error) => {
+          console.warn("Service worker update check failed:", error);
+        });
+      })
+      .catch((error) => {
+        console.warn("Service worker registration failed:", error);
+      });
   }
 }
 
