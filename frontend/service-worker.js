@@ -3,7 +3,7 @@
  * left to the application/network layer so cellar data is never served from an
  * accidental service-worker cache entry.
  */
-const CACHE_NAME = "winecellar-shell-v12";
+const CACHE_NAME = "winecellar-shell-v13";
 
 const APP_SHELL = [
   "./",
@@ -101,4 +101,57 @@ self.addEventListener("fetch", (event) => {
   }
 
   event.respondWith(networkFirst(event.request));
+});
+
+
+// CellarManager system status messages v1
+async function rebuildAppShellCache() {
+  const cache = await caches.open(CACHE_NAME);
+  const requests = APP_SHELL.map(
+    (path) => new Request(new URL(path, self.registration.scope), { cache: "reload" }),
+  );
+  await cache.addAll(requests);
+
+  const keys = await caches.keys();
+  await Promise.all(
+    keys
+      .filter(
+        (key) => key.startsWith("winecellar-shell-") && key !== CACHE_NAME,
+      )
+      .map((key) => caches.delete(key)),
+  );
+}
+
+self.addEventListener("message", (event) => {
+  const message = event.data || {};
+  const reply = (payload) => {
+    if (event.ports && event.ports[0]) event.ports[0].postMessage(payload);
+  };
+
+  if (message.type === "GET_STATUS") {
+    reply({
+      ok: true,
+      cacheName: CACHE_NAME,
+      appShellCount: APP_SHELL.length,
+    });
+    return;
+  }
+
+  if (message.type === "SKIP_WAITING") {
+    event.waitUntil(
+      self
+        .skipWaiting()
+        .then(() => reply({ ok: true, cacheName: CACHE_NAME }))
+        .catch((error) => reply({ ok: false, error: String(error) })),
+    );
+    return;
+  }
+
+  if (message.type === "REFRESH_APP_SHELL") {
+    event.waitUntil(
+      rebuildAppShellCache()
+        .then(() => reply({ ok: true, cacheName: CACHE_NAME }))
+        .catch((error) => reply({ ok: false, error: String(error) })),
+    );
+  }
 });

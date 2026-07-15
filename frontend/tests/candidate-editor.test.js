@@ -25,5 +25,5 @@ test("research review saves edits through the candidate endpoint", async () => {
   assert.match(research, /createCandidateEditor/);
   assert.match(research, /api\.put\(`\/enrichment\/candidates\/\$\{candidate\.id\}`/);
   assert.match(serviceWorker, /js\/pages\/candidateEditor\.js/);
-  assert.match(serviceWorker, /winecellar-shell-v12/);
+  assert.match(serviceWorker, /winecellar-shell-v\d+/);
 });

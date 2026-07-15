@@ -193,7 +193,7 @@
   "dashboard.no_bottles_hint": "Import a CSV or add your first bottle to see your collection statistics.",
   "dashboard.no_cellars": "No cellar has been defined yet.",
   "dashboard.add_cellar": "Add a cellar",
-  "nav.sync": "Sync issues",
+  "nav.sync": "Status & sync",
   "offline.pending": "Pending sync",
   "offline.problems_title": "Sync issues",
   "offline.problems_intro": "Offline changes are never silently discarded. Review conflicts or failed changes here, then retry or explicitly discard them.",
@@ -466,5 +466,4 @@
   "picks.rejected_drinking_window": "{count} excluded by the requested drinking date",
   "picks.rejected_strict_dish": "{count} excluded because strict dish matching was enabled",
   "picks.no_rejection_detail": "No hard-filter rejection was recorded; check that stock is active and synchronized.",
-  "research.not_exact_match": "not an exact identity/format match"
-}
+  "research.not_exact_match": "not an exact identity/format match","system.title":"System status & sync","system.intro":"Check the installed version, offline queue and service worker, then update, synchronize or refresh the app safely.","system.api_version":"Backend version","system.frontend_cache":"Frontend cache","system.worker_state":"Service worker state","system.worker_controlled":"Page controlled by service worker","system.online":"Online","system.installed_app":"Running as installed app","system.pending_changes":"Pending offline changes","system.conflicts":"Conflicts","system.failed_changes":"Failed changes","system.last_successful_sync":"Last successful sync","system.last_sync_attempt":"Last sync attempt","system.last_force_refresh":"Last forced refresh","system.never":"Never","system.yes":"Yes","system.no":"No","system.unknown":"Unknown","system.unavailable":"Unavailable","system.not_supported":"Not supported","system.not_registered":"Not registered","system.update_waiting":"An application update is ready. Use Force refresh to activate it.","system.check_update":"Check for update","system.sync_now":"Sync now","system.force_refresh":"Force refresh","system.update_found":"An update was found and is ready to activate.","system.no_update":"The installed application is up to date.","system.sync_complete":"Synchronization complete ({count} queued change(s) sent).","system.sync_with_problems":"Sync finished with {pending} pending, {conflicts} conflict(s), and {failed} failed change(s).","system.force_refresh_confirm":"Rebuild the offline application cache and reload now? Unsynchronized changes remain in the local queue.","system.sync_requires_online":"Synchronization requires a network connection.","system.refresh_requires_online":"Force refresh requires a network connection so the application shell can be downloaded again.","system.worker_unavailable":"The service worker is unavailable.","system.worker_timeout":"The service worker did not respond in time."}
