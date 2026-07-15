@@ -7,6 +7,7 @@ import {
   bottleDetailsButtonLabel,
   openBottleDetailsDialog,
 } from "./bottleDetails.js";
+import { openAddInventory } from "./addInventory.js";
 
 const COLORS = ["red", "white", "rose", "sparkling", "orange", "fortified", "other"];
 const REMOVE_REASONS = ["gifted", "broken", "sold", "lost", "drunk"];
@@ -234,7 +235,7 @@ function wineRow(wine, holdingsForWine, cellars, cellarsById, onChanged) {
   row.appendChild(el("div", { class: "wine-qty", text: t("common.bottles_count", { count: totalQty }) }));
 
   const actions = el("div", { class: "wine-actions" });
-  actions.appendChild(el("button", { class: "small", text: t("common.add"), onclick: () => openAddDialog(wine, cellars, onChanged) }));
+  actions.appendChild(el("button", { class: "small", text: t("common.add"), onclick: () => openAddInventory({ cellars, existingWine: wine, onDone: onChanged }) }));
   if (holdingsForWine[0]) {
     actions.appendChild(el("button", { class: "small", text: t("common.move"), onclick: () => openMoveDialog(holdingsForWine[0], cellars, onChanged) }));
     actions.appendChild(el("button", { class: "small danger", text: t("common.remove"), onclick: () => openRemoveDialog(holdingsForWine[0], onChanged) }));
@@ -265,7 +266,7 @@ export async function renderBottles(container) {
   const cellars = await loadCellars();
 
   container.appendChild(
-    el("button", { class: "primary scan-cta", text: `\u{1F4F7} ${t("bottles.scan_photo")}`, onclick: () => openScanDialog(cellars, refreshBottlesList) })
+    el("button", { class: "primary scan-cta", text: document.documentElement.lang.startsWith("fr") ? "＋ Ajouter au stock" : "＋ Add inventory", onclick: () => openAddInventory({ cellars, onDone: refreshBottlesList }) })
   );
 
   const searchInput = el("input", { type: "search", placeholder: t("bottles.filter") });

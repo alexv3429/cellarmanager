@@ -3,6 +3,7 @@ export const QUEUEABLE_ACTIONS = new Set([
   "holdings/add",
   "holdings/move",
   "holdings/remove",
+  "inventory/add",
 ]);
 
 export function isQueueable(action) {

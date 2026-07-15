@@ -183,6 +183,63 @@ function stableStringify(value) {
 
 async function optimisticMutation(entry) {
   const payload = entry.payload;
+
+  if (entry.action === "inventory/add") {
+    const identity = payload.identity || {};
+    const acquisition = payload.acquisition || {};
+    const storage = payload.storage || {};
+    let wineId = identity.existing_wine_id || null;
+    if (!wineId) {
+      wineId = `offline-wine-${entry.clientOpId}`;
+      await db.put("wines", {
+        id: wineId,
+        producer: identity.producer || "",
+        cuvee: identity.cuvee || null,
+        appellation: identity.appellation || null,
+        vintage: identity.non_vintage ? null : (identity.vintage ?? null),
+        color: identity.wine_type || "other",
+        area: identity.region || identity.country || null,
+        format: identity.format || "75cl",
+        format_ml: identity.format_ml || 750,
+        version: 0,
+        pending_sync: true,
+      });
+    }
+    const quantity = Number(acquisition.quantity || storage.quantity || 0);
+    const holdings = await db.getAll("holdings");
+    const existing = holdings.find(
+      (holding) => holding.wine_id === wineId
+        && (holding.cellar_id || null) === (storage.cellar_id || null)
+        && (holding.location || "") === (storage.location || "")
+        && holding.state === "in_cellar",
+    );
+    if (existing) {
+      existing.quantity += quantity;
+      existing.pending_sync = true;
+      await db.put("holdings", existing);
+    } else {
+      const amount = acquisition.amount == null ? null : Number(acquisition.amount);
+      const fees = Number(acquisition.fees || 0);
+      const shipping = Number(acquisition.shipping || 0);
+      const price = amount == null ? null : (
+        acquisition.price_mode === "total" ? (amount + fees + shipping) / quantity : amount + (fees + shipping) / quantity
+      );
+      await db.put("holdings", {
+        id: `offline-${entry.clientOpId}`,
+        wine_id: wineId,
+        cellar_id: storage.cellar_id || null,
+        location: storage.location || null,
+        quantity,
+        state: "in_cellar",
+        price_bought: price,
+        acquired_date: acquisition.purchase_date || null,
+        version: 0,
+        pending_sync: true,
+        client_op_id: entry.clientOpId,
+      });
+    }
+    return;
+  }
   if (entry.action === "holdings/add") {
     const holdings = await db.getAll("holdings");
     const existing = holdings.find(
@@ -257,6 +314,7 @@ async function optimisticMutation(entry) {
 export async function mutateOrQueue(action, path, payload) {
   try {
     const result = await post(path, payload);
+    if (result?.wine) await db.put("wines", result.wine);
     if (result?.holding) await db.put("holdings", result.holding);
     return { queued: false, result };
   } catch (error) {
@@ -274,6 +332,7 @@ const ACTION_PATHS = {
   "holdings/add": "/holdings/add",
   "holdings/move": "/holdings/move",
   "holdings/remove": "/holdings/remove",
+  "inventory/add": "/inventory",
 };
 
 export async function syncOutbox() {
@@ -291,10 +350,21 @@ export async function syncOutbox() {
         json: entry.payload,
       });
       statusCode = 200;
-      if (result?.holding) {
+      if (entry.action === "inventory/add" && result?.wine) {
+          const temporaryWineId = `offline-wine-${entry.clientOpId}`;
+          await db.put("wines", result.wine);
+          const dependentEntries = await db.listOutbox();
+          for (const pendingEntry of dependentEntries) {
+            if (pendingEntry.payload?.identity?.existing_wine_id !== temporaryWineId) continue;
+            pendingEntry.payload.identity.existing_wine_id = result.wine.id;
+            await db.enqueueOutboxEntry(pendingEntry);
+          }
+          await db.remove("wines", temporaryWineId);
+        }
+        if (result?.holding) {
         const temporaryId = `offline-${entry.clientOpId}`;
         await db.put("holdings", result.holding);
-        if (entry.action === "holdings/add" || entry.action === "holdings/move") {
+        if (entry.action === "holdings/add" || entry.action === "holdings/move" || entry.action === "inventory/add") {
           await db.remapOutboxHoldingId(temporaryId, result.holding.id);
           if (temporaryId !== result.holding.id) {
             await db.remove("holdings", temporaryId);
@@ -343,6 +413,9 @@ export async function syncOutbox() {
       const fresh = await request("GET", "/holdings");
       await db.replaceAll("holdings", fresh);
       await db.cacheResponse("/holdings", fresh);
+      const freshWines = await request("GET", "/wines");
+      await db.replaceAll("wines", freshWines);
+      await db.cacheResponse("/wines", freshWines);
     } catch {
       // A later online event will refresh; never discard recorded sync status.
     }
