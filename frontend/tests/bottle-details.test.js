@@ -28,5 +28,5 @@ test("bottles page exposes details and the PWA caches its modules", async () => 
   assert.match(serviceWorker, /js\/pages\/bottleDetails\.js/);
   assert.match(serviceWorker, /js\/pages\/manualChatGPTResearch\.js/);
   assert.match(serviceWorker, /js\/pages\/candidateEditor\.js/);
-  assert.match(serviceWorker, /winecellar-shell-v11/);
+  assert.match(serviceWorker, /winecellar-shell-v12/);
 });

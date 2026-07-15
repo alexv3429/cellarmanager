@@ -1,3 +1,4 @@
+import { attachLocationBottleClick } from "./cellarLocationBottles.js";
 import * as api from "../api.js";
 import { t } from "../i18n.js";
 import { el, clear, showToast, field } from "../dom.js";
@@ -759,39 +760,101 @@ function locationQuantity(item, occupancy) {
     : internalQuantity + importQuantity;
 }
 
-function renderedLocationSlot(item, occupancy) {
+function renderedLocationSlot(cellar, item, occupancy, holdings) {
   if (!item) return el("div", { class: "cellar-location-slot location-code-cell-missing" });
+
   if (item.group && Array.isArray(item.children)) {
-    const quantity = item.children.reduce((total, child) => total + locationQuantity(child, occupancy), 0);
-    return el("div", { class: `cellar-location-slot location-slot-group ${quantity ? "occupied" : "empty"}` }, [
-      el("strong", { class: "cellar-slot-code", text: item.internal }),
-      el("div", { class: "cellar-subpositions" }, item.children.map((child) => {
-        const childQuantity = locationQuantity(child, occupancy);
-        return el("div", { class: `cellar-subslot ${childQuantity ? "occupied" : "empty"}` }, [
-          el("span", { text: child.label }),
-          el("small", { text: childQuantity ? String(childQuantity) : "-" }),
-        ]);
-      })),
-    ]);
+    const quantity = item.children.reduce(
+      (total, child) => total + locationQuantity(child, occupancy),
+      0,
+    );
+    return el(
+      "div",
+      {
+        class: `cellar-location-slot location-slot-group ${
+          quantity ? "occupied" : "empty"
+        }`,
+      },
+      [
+        el("strong", { class: "cellar-slot-code", text: item.internal }),
+        el(
+          "div",
+          { class: "cellar-subpositions" },
+          item.children.map((child) => {
+            const childQuantity = locationQuantity(child, occupancy);
+            const node = el(
+              "div",
+              {
+                class: `cellar-subslot ${
+                  childQuantity ? "occupied" : "empty"
+                }`,
+              },
+              [
+                el("span", { text: child.label }),
+                el("small", { text: childQuantity ? String(childQuantity) : "-" }),
+              ],
+            );
+            return attachLocationBottleClick(node, {
+              cellar,
+              item: child,
+              holdings,
+              quantity: childQuantity,
+            });
+          }),
+        ),
+      ],
+    );
   }
 
   const quantity = locationQuantity(item, occupancy);
-  const code = item.unspecified ? t("cellars.unspecified_location") : item.internal;
-  const children = [el("strong", { class: "cellar-slot-code", text: code || t("cellars.unspecified_location") })];
+  const code = item.unspecified
+    ? t("cellars.unspecified_location")
+    : item.internal;
+  const children = [
+    el("strong", {
+      class: "cellar-slot-code",
+      text: code || t("cellars.unspecified_location"),
+    }),
+  ];
   if (!item.unspecified && item.import !== item.internal) {
-    children.push(el("small", { class: "cellar-slot-import-code", text: t("cellars.import_code", { code: item.import }) }));
+    children.push(
+      el("small", {
+        class: "cellar-slot-import-code",
+        text: t("cellars.import_code", { code: item.import }),
+      }),
+    );
   }
   if (item.depth_label && item.depth_label !== item.depth) {
-    children.push(el("small", { class: "cellar-slot-depth-label", text: item.depth_label }));
+    children.push(
+      el("small", {
+        class: "cellar-slot-depth-label",
+        text: item.depth_label,
+      }),
+    );
   }
-  children.push(el("span", {
-    class: "cellar-slot-quantity",
-    text: quantity ? t("common.bottles_count", { count: quantity }) : t("cellars.slot_empty"),
-  }));
-  return el("div", {
-    class: `cellar-location-slot ${quantity ? "occupied" : "empty"}`,
-    title: `${item.import || code} · ${quantity}`,
-  }, children);
+  children.push(
+    el("span", {
+      class: "cellar-slot-quantity",
+      text: quantity
+        ? t("common.bottles_count", { count: quantity })
+        : t("cellars.slot_empty"),
+    }),
+  );
+
+  const node = el(
+    "div",
+    {
+      class: `cellar-location-slot ${quantity ? "occupied" : "empty"}`,
+      title: `${item.import || code} · ${quantity}`,
+    },
+    children,
+  );
+  return attachLocationBottleClick(node, {
+    cellar,
+    item,
+    holdings,
+    quantity,
+  });
 }
 
 function renderNamedGrid(cellar, holdings) {
@@ -800,15 +863,19 @@ function renderNamedGrid(cellar, holdings) {
   const matrix = buildLocationGrid(scheme);
   const occupancy = occupancyFor(holdings);
   const physicalColumns = Math.max(1, ...matrix.map((row) => row.length));
-  const grid = el("div", { class: `cellar-location-grid structure-${scheme.kind}` });
+  const grid = el("div", {
+    class: `cellar-location-grid structure-${scheme.kind}`,
+  });
   grid.style.gridTemplateColumns = `repeat(${physicalColumns}, minmax(92px, 1fr))`;
   for (const row of matrix) {
-    for (const item of row) grid.appendChild(renderedLocationSlot(item, occupancy));
+    for (const item of row) {
+      grid.appendChild(renderedLocationSlot(cellar, item, occupancy, holdings));
+    }
   }
-
   const locations = generateLocations(scheme);
   const first = locations.find((item) => item.import)?.import || "-";
-  const last = [...locations].reverse().find((item) => item.import)?.import || "-";
+  const last =
+    [...locations].reverse().find((item) => item.import)?.import || "-";
   return el("section", { class: "named-grid-panel" }, [
     el("p", {
       class: "field-help",
@@ -837,7 +904,7 @@ function svgNode(name, attributes = {}) {
   return node;
 }
 
-function renderLegacyRackSvg(rack, rackIndex, occupancy) {
+function renderLegacyRackSvg(cellar, rack, rackIndex, occupancy, holdings) {
   const cell = 56;
   const top = 34;
   const width = Math.max(1, rack.cols) * cell + 20;
@@ -849,7 +916,9 @@ function renderLegacyRackSvg(rack, rackIndex, occupancy) {
     "aria-label": `${t("cellars.rack")} ${rackIndex + 1}`,
   });
   const title = svgNode("text", { x: 10, y: 22, class: "rack-svg-title" });
-  title.textContent = `${t("cellars.rack")} ${rackIndex + 1} · ${rack.prefix || `R${rackIndex + 1}-`}`;
+  title.textContent = `${t("cellars.rack")} ${rackIndex + 1} · ${
+    rack.prefix || `R${rackIndex + 1}-`
+  }`;
   svg.appendChild(title);
 
   for (let row = 0; row < rack.rows; row += 1) {
@@ -862,16 +931,17 @@ function renderLegacyRackSvg(rack, rackIndex, occupancy) {
       const group = svgNode("g", {
         class: `rack-svg-slot ${quantity ? "occupied" : "empty"}`,
       });
-      const shape = rack.shape === "diamond"
-        ? svgNode("rect", {
-            x: cx - 18,
-            y: cy - 18,
-            width: 36,
-            height: 36,
-            rx: 4,
-            transform: `rotate(45 ${cx} ${cy})`,
-          })
-        : svgNode("circle", { cx, cy, r: 21 });
+      const shape =
+        rack.shape === "diamond"
+          ? svgNode("rect", {
+              x: cx - 18,
+              y: cy - 18,
+              width: 36,
+              height: 36,
+              rx: 4,
+              transform: `rotate(45 ${cx} ${cy})`,
+            })
+          : svgNode("circle", { cx, cy, r: 21 });
       const label = svgNode("text", {
         x: cx,
         y: cy + 4,
@@ -889,6 +959,12 @@ function renderLegacyRackSvg(rack, rackIndex, occupancy) {
         count.textContent = String(quantity);
         group.appendChild(count);
       }
+      attachLocationBottleClick(group, {
+        cellar,
+        item: { internal: code, import: code },
+        holdings,
+        quantity,
+      });
       svg.appendChild(group);
     }
   }
@@ -927,7 +1003,7 @@ function renderLegacyLayoutEditor(cellar, holdings, onLayoutChange) {
     layout.racks.forEach((rack, index) => {
       preview.appendChild(
         el("section", { class: "rack-card" }, [
-          renderLegacyRackSvg(rack, index, occupancy),
+          renderLegacyRackSvg(cellar, rack, index, occupancy, holdings),
           el("button", {
             type: "button",
             class: "button small danger",
