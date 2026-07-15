@@ -5,6 +5,15 @@
 ```mermaid
 erDiagram
     WINE ||--o{ HOLDING : "has stock in"
+    WINE ||--o{ ACQUISITION : "purchased or received as"
+    ACQUISITION ||--o{ ACQUISITION_ALLOCATION : "allocated through"
+    HOLDING ||--o{ ACQUISITION_ALLOCATION : "receives quantity from"
+    CELLAR ||--o{ ACQUISITION_ALLOCATION : "initially stores"
+    WINE ||--o{ MEDIA_FILE : "has generic or label media"
+    ACQUISITION ||--o{ MEDIA_FILE : "has receipt/condition media"
+    HOLDING ||--o{ MEDIA_FILE : "has location media"
+    WINE ||--o{ INVENTORY_AI_CANDIDATE : "has proposed enrichment"
+    ACQUISITION ||--o{ INVENTORY_AI_CANDIDATE : "may contextualize"
     CELLAR ||--o{ HOLDING : "stores"
     WINE ||--o{ MOVEMENT : "journal entries for"
     CELLAR ||--o{ MOVEMENT : "journal entries for"
@@ -54,6 +63,48 @@ erDiagram
         date acquired_date
         int version
     }
+    ACQUISITION {
+        string id PK
+        string wine_id FK
+        int quantity
+        string price_mode "per_bottle/total"
+        float amount "original transaction amount"
+        string currency
+        float fees
+        float shipping
+        float effective_unit_cost
+        date purchase_date
+        string vendor
+    }
+    ACQUISITION_ALLOCATION {
+        string id PK
+        string acquisition_id FK
+        string holding_id FK
+        int quantity
+        string cellar_id FK
+        string location
+    }
+    MEDIA_FILE {
+        string id PK
+        string storage_backend
+        string relative_path
+        string thumbnail_path
+        string mime_type
+        string sha256
+        string category
+        string wine_id FK
+        string acquisition_id FK
+        string holding_id FK
+    }
+    INVENTORY_AI_CANDIDATE {
+        string id PK
+        string wine_id FK
+        string acquisition_id FK
+        string topic
+        string value_json
+        float confidence
+        string status "proposed/accepted/rejected"
+    }
     MOVEMENT {
         string id PK
         string action "import/add/move/remove/update/enrich/..."
@@ -81,19 +132,33 @@ erDiagram
 
 ## Why Wine and Holding are separate
 
-A CSV row describes one purchase/lot: a wine's identity (producer, cuvee,
-appellation, vintage, color, area, format) plus where/how many/at what
-price. But the same wine can end up split across cellars (a case in the
-aging cellar, one bottle moved to the kitchen fridge), and re-importing the
-same CSV shouldn't create duplicate catalog entries. So:
+An inventory operation combines several facts: the wine identity, the original
+acquisition transaction, and the current storage allocation. The same wine can
+be bought repeatedly at different prices and split across cellars, so those
+facts must not be collapsed into one catalog row. Therefore:
 
 * **`Wine`** = the catalog identity + tasting metadata (drink window, market
   value, serving/pairing advice). Deduplicated on
   `(producer, cuvee, appellation, vintage, format)`, case-insensitively.
+* **`Acquisition`** = the original transaction: quantity, per-bottle or total
+  amount, currency, fees, shipping, purchase date, vendor and provenance. The
+  original amount is preserved while `effective_unit_cost` supports summaries.
 * **`Holding`** = "N bottles of this Wine, in this Cellar/location, in this
   state". Add/move/remove operate on Holdings; a partial move or removal
   splits a Holding into two rather than mutating quantities in place, so
   the removed/moved portion keeps its own state and location history.
+* **`AcquisitionAllocation`** = how much of an Acquisition was initially
+  assigned to a Holding/location. It lets one wine and even one purchase be
+  represented without duplicating identity data.
+
+Correcting an identity field updates the shared Wine and therefore every
+holding of it. Correcting price or purchase date updates only the selected
+Acquisition; the Holding's effective per-bottle cost/date is recomputed for
+compatibility. Legacy stock without an Acquisition keeps its direct Holding
+price/date. Every correction is optimistic-versioned, journaled, and enclosed
+in one database transaction. Before and after mutation the backend checks
+SQLite structure, foreign keys and core domain invariants; a failed check rolls
+the operation back. See `docs/editing-bottles.md`.
 
 ## CSV field mapping (requirements 1 & 2)
 
@@ -142,6 +207,20 @@ the real cellars" (e.g. a case sitting in a garage) and are treated by the
 move-plan advisor as a place bottles should move *out of* into a real
 cellar whenever room allows, regardless of the bottle's own readiness.
 
+
+## Inventory media and proposed enrichment
+
+The unified Add inventory workflow stores media files outside SQLite under the
+configured media directory. `media_files` keeps relative paths, MIME type,
+original filename, dimensions, category, SHA-256 hash, thumbnail path and the
+appropriate Wine/Acquisition/Holding relationship. Backups must therefore
+include both the SQLite database and the media directory.
+
+AI-assisted identity and enrichment are never committed as unquestioned owner
+facts. `inventory_ai_candidates` records editable proposed values, confidence,
+rationale/evidence and review status. Quantity, purchase facts, storage,
+condition and provenance remain user-confirmed data.
+
 ## Internet enrichment records
 
 Research is append-only evidence plus reviewed candidates, not an opaque update:
@@ -155,3 +234,9 @@ Research is append-only evidence plus reviewed candidates, not an opaque update:
 
 The ordinary `wines` fields remain the compatibility surface for accepted
 drinking windows, replacement value, pairing and serving advice.
+
+<!-- sweetness-preservation -->
+## Colour and sweetness
+
+Colour and sweetness are stored separately. CSV values such as `blanc moelleux`, `rouge liquoreux`, `sweet white`, and `sweet red` keep the base colour (`white` or `red`) and also populate the extended wine-identity sweetness field. A dedicated `Sweetness` / `Sucrosité` CSV column is supported and takes precedence over sweetness inferred from the colour cell. Sweetness can be corrected later from **Edit bottle**, and the update preserves all other identity details.
+

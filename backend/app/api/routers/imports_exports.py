@@ -10,7 +10,7 @@ from fastapi.responses import PlainTextResponse
 from app.api.deps import get_conn, get_current_user_id
 from app.api.schemas import ExportRequest
 from app.core.exceptions import ValidationError
-from app.services import csv_io
+from app.services import csv_io, sweetness_service
 from app.storage import repositories as repo
 
 router = APIRouter(
@@ -124,6 +124,7 @@ def export_csv(
     rows = []
     for holding, wine in holdings_with_wines:
         cellar = repo.get_cellar(conn, holding.cellar_id) if holding.cellar_id else None
+        wine.sweetness = sweetness_service.get_wine_sweetness(conn, wine.id)
         rows.append((wine, holding, cellar))
     try:
         csv_text = csv_io.export_csv(

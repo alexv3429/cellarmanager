@@ -131,6 +131,52 @@ class ActionOut(BaseModel):
     duplicate: bool = False
 
 
+class AcquisitionEditOut(BaseModel):
+    id: str
+    quantity: int
+    allocation_quantity: int
+    price_mode: str
+    amount: float | None
+    currency: str
+    fees: float
+    shipping: float
+    effective_unit_cost: float | None
+    purchase_date: date | None
+    vendor: str | None
+
+
+class BottleEditContextOut(BaseModel):
+    wine: WineOut
+    holding: HoldingOut
+    acquisitions: list[AcquisitionEditOut]
+    sweetness: str | None = None
+
+
+class BottleEditIn(BaseModel):
+    expected_wine_version: int = Field(ge=1)
+    expected_holding_version: int = Field(ge=1)
+    producer: str = Field(min_length=1, max_length=300)
+    cuvee: str | None = Field(default=None, max_length=300)
+    appellation: str | None = Field(default=None, max_length=300)
+    vintage: int | None = Field(default=None, ge=1000, le=3000)
+    color: str
+    area: str | None = Field(default=None, max_length=300)
+    sweetness: str | None = Field(default=None, max_length=100)
+    format: str = Field(min_length=1, max_length=100)
+    acquisition_id: str | None = None
+    price_mode: str = "per_bottle"
+    amount: float | None = Field(default=None, ge=0)
+    currency: str = Field(default="EUR", min_length=3, max_length=3)
+    purchase_date: date | None = None
+    legacy_price_bought: float | None = Field(default=None, ge=0)
+    legacy_acquired_date: date | None = None
+
+
+class BottleEditOut(BaseModel):
+    wine: WineOut
+    holding: HoldingOut
+
+
 class LoginIn(BaseModel):
     username: str
     password: str

@@ -48,3 +48,27 @@ The last example means: use `Manuel Min` when it is populated, otherwise use
 The old direct-import API remains compatible: omitting `mapping` uses the
 server's automatic aliases. The browser interface always previews an explicit
 mapping before import.
+
+## Colour normalization
+
+The importer stores the compact Wine colour/type enum used by the rest of the
+application. It accepts case-, accent-, punctuation- and word-order variants.
+For example:
+
+| CSV value | Stored value |
+|---|---|
+| `blanc moelleux`, `moelleux blanc`, `sweet white` | `white` |
+| `rouge moelleux`, `doux rouge`, `sweet red` | `red` |
+| `Champagne`, `effervescent`, `sparkling white` | `sparkling` |
+| `vin muté`, `Port`, `Sherry` | `fortified` |
+
+Sweetness remains a descriptor rather than a separate colour enum, so a sweet
+white or red wine retains its white/red base colour. A literal mixed value such
+as `red / white` or `blanc / rouge` is ambiguous and is deliberately stored as
+`other` with a preview/import warning instead of being guessed.
+
+<!-- sweetness-preservation -->
+## Colour and sweetness
+
+Colour and sweetness are stored separately. CSV values such as `blanc moelleux`, `rouge liquoreux`, `sweet white`, and `sweet red` keep the base colour (`white` or `red`) and also populate the extended wine-identity sweetness field. A dedicated `Sweetness` / `Sucrosité` CSV column is supported and takes precedence over sweetness inferred from the colour cell. Sweetness can be corrected later from **Edit bottle**, and the update preserves all other identity details.
+

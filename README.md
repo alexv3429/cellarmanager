@@ -1,7 +1,7 @@
 # Wine Cellar Manager
 
 A self-hosted app for managing one or more wine cellars: import your
-collection from a CSV, track bottles as you add/move/remove them with a
+collection from a CSV, track bottles as you add/edit/move/remove them with a
 full history journal, get statistics and move suggestions, find what to
 open tonight, and export back to CSV - in English or French, from a phone
 or a computer, online or offline.
@@ -33,12 +33,18 @@ Open `http://localhost:8000/` and create the first owner account. For a complete
   appellation, vintage, color, area, format; optional: price, quantity,
   drink-window dates, cellar/location, state, tasting/pairing advice,
   market value). English and French headers both work, in the same file.
+  Common style labels such as `blanc moelleux`, `rouge doux`, `sweet white`
+  and `sweet red` are normalized to the appropriate base colour.
+- **Unified Add inventory** with manual entry, adding another purchase of an
+  existing wine, manual ChatGPT JSON import, and optional configured vision
+  assistance. Wine identity, Acquisition, Holding allocation, media metadata,
+  and proposed enrichment remain separate records.
 - **Cellars** with a purpose from 0 (pure aging) to 10 (pure service), plus
   a separate "overflow" flag for extra/outside storage, capacity,
   an alert threshold, and an optional location-matching rule (e.g. `AG1`
   auto-assigns to the cellar whose rule is `AG`).
-- **Add / move / remove** bottles (gift, breakage, sale, loss, drinking),
-  every action logged to a journal.
+- **Add / edit / move / remove** bottles (including correcting identity,
+  purchase price and date), with every action logged to the journal.
 - **Statistics**: counts, color/vintage/area/appellation breakdowns, price
   totals, and drinking-window status - overall and per cellar.
 - **Move-plan advisor**: suggested moves to keep each cellar's mix matched
@@ -46,14 +52,16 @@ Open `http://localhost:8000/` and create the first owner account. For a complete
 - **Enrichment**: fetch a drinking window or market value with a
   confidence score, compared against what's already on file (see
   `docs/roadmap.md` for what's real vs. a placeholder here).
-- **Photo matching**: recognize a bottle you've photographed before.
+- **Optional legacy photo matching**: recognize a bottle already in the
+  catalog; the primary intake flow is Add inventory.
 - **Daily picks**: an ordered list of suitable wines by cellar, dish,
   color, vintage, appellation, drinking window, or mood/occasion.
 - **All locations for a wine**, and **CSV export** with your choice of
   columns, order, and language.
-- **Offline-first**: works with no connection; changes queue locally and
-  sync once you're back online, with a version-based conflict check so two
-  offline edits can never silently clobber each other.
+- **Offline-first stock actions**: add/move/remove requests can queue locally
+  and sync once you're back online, with idempotency and version checks. Bottle
+  identity and purchase-detail corrections require a connection so stale edits
+  are not replayed later.
 - **Authentication** required for everything; no open public sign-up.
 
 See `docs/roadmap.md` for an honest, item-by-item status against the
@@ -64,7 +72,9 @@ original spec (what's fully tested vs. a documented extension point).
 | Doc | Covers |
 |---|---|
 | [`docs/architecture.md`](docs/architecture.md) | Stack rationale, layering, offline-sync design |
-| [`docs/data-model.md`](docs/data-model.md) | ERD, CSV field mapping, why Wine/Holding are separate |
+| [`docs/data-model.md`](docs/data-model.md) | ERD, CSV field mapping, why Wine/Holding/Acquisition are separate |
+| [`docs/csv-column-mapping.md`](docs/csv-column-mapping.md) | Interactive mapping and colour normalization |
+| [`docs/editing-bottles.md`](docs/editing-bottles.md) | Correcting wine identity and purchase details safely |
 | [`docs/api.md`](docs/api.md) | Endpoint index (full reference at `/docs` when running) |
 | [`docs/setup.md`](docs/setup.md) | Local dev, Docker, deploying with HTTPS |
 | [`docs/testing.md`](docs/testing.md) | How to run tests, what's covered |
@@ -124,6 +134,15 @@ English, French and legacy headers, then lets the user choose any source column,
 add a fallback column and inspect normalized rows before committing changes.
 See `docs/csv-column-mapping.md`.
 
+## Correcting bottle and purchase details
+
+The Bottles page has an **Edit / Modifier** action for correcting typos in the
+shared wine identity and in a selected purchase lot. Identity changes apply to
+all holdings of that wine; purchase changes apply only to the selected
+acquisition or legacy holding. The backend runs SQLite integrity, foreign-key
+and domain checks before and after the transactional update. See
+[`docs/editing-bottles.md`](docs/editing-bottles.md).
+
 ## CSV reset and unassigned-bottle reconciliation
 
 The CSV wizard can be reset after an import, and a successful import cannot be
@@ -182,3 +201,9 @@ clickable sources and backend-calculated confidence; accepted candidates feed
 normal wine fields and the daily-picks ranking. See
 `docs/internet-enrichment.md`. Provider calls may incur external costs and no
 commercial data license is bundled.
+
+<!-- sweetness-preservation -->
+## Sweetness preservation
+
+Colour and sweetness are stored separately. CSV values such as `blanc moelleux`, `rouge liquoreux`, `sweet white`, and `sweet red` keep the base colour (`white` or `red`) and also populate the extended wine-identity sweetness field. A dedicated `Sweetness` / `Sucrosité` CSV column is supported and takes precedence over sweetness inferred from the colour cell. Sweetness can be corrected later from **Edit bottle**, and the update preserves all other identity details.
+

@@ -39,17 +39,46 @@ see what's available. All endpoints except `/auth/*`, `/health`, and
 | PUT | `/cellars/{id}?expected_version=N` | Update |
 | DELETE | `/cellars/{id}` | Rejected (409) while bottles still reference it |
 
-## Holdings (add / move / remove - requirement 5.a-c)
+## Unified inventory intake
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/inventory/manual-chatgpt-template` | Prompt plus strict JSON Schema for the no-API-key workflow |
+| POST | `/inventory/manual-chatgpt-validate` | Validate pasted ChatGPT JSON and convert it to editable prefill data |
+| POST | `/inventory/duplicates` | Advisory existing-wine suggestions; never forces a match |
+| GET | `/inventory/vision/status` | Reports whether automatic vision credentials are configured |
+| POST | `/inventory/vision-prefill` | Optional photo-assisted identity/enrichment prefill |
+| POST | `/inventory` | Transactionally create/select Wine, Acquisition, initial Holding allocation, and proposed enrichment |
+| POST | `/inventory/with-media` | Same transaction with staged image/document uploads |
+| GET | `/inventory/media/{id}?thumbnail=` | Serve authorized original media or its thumbnail |
+
+The first version assigns the full acquired quantity to one location. Manual
+no-media additions can be queued offline; file uploads and automatic provider
+calls require a connection. Local filesystem media is the default storage
+backend, with metadata and relationships stored in SQLite.
+
+## Holdings (add / edit / move / remove - requirement 5.a-c)
 
 | Method | Path | Notes |
 |---|---|---|
 | GET | `/holdings?wine_id=&cellar_id=&state=` | Filtered list |
+| GET | `/holdings/{id}/edit-context` | Wine, holding, and linked purchase lots needed by the editor |
+| PUT | `/holdings/{id}/bottle` | Correct shared wine identity and one selected purchase lot atomically; requires expected wine and holding versions and an online connection |
 | POST | `/holdings/add` | `{wine_id, cellar_id, location, quantity, price_bought?, acquired_date?, client_op_id?}` |
 | POST | `/holdings/move` | `{holding_id, quantity, to_cellar_id, to_location, expected_version?, client_op_id?}` |
 | POST | `/holdings/remove` | `{holding_id, quantity, reason, expected_version?, client_op_id?}` - `reason` is one of `gifted, broken, sold, lost, drunk` |
 
 `client_op_id` is optional but is how the frontend's offline queue makes a
 retried/replayed request idempotent (see `docs/architecture.md`).
+
+Bottle edits are transactional. The service runs `PRAGMA quick_check`,
+`PRAGMA foreign_key_check`, and core Wine/Holding/Acquisition invariant checks
+before changing anything and again before commit. A stale wine or holding
+version returns `409`; a pre-existing database-integrity problem also returns a
+structured `409` without committing any edit. Identity changes affect every
+holding of the selected Wine. Price/date changes affect only the chosen
+Acquisition; older holdings without normalized acquisition records retain a
+legacy per-bottle price/date path.
 
 ## Import / export (requirements 1, 2, 10.c)
 
@@ -119,3 +148,9 @@ forbidden (e.g. registration closed), `404` not found, `409` conflict
 Research is asynchronous by default. A completed HTTP request only means the job
 was queued; clients poll the job endpoint. API errors use structured
 `detail.code` and `detail.message` objects.
+
+<!-- sweetness-preservation -->
+## Colour and sweetness
+
+Colour and sweetness are stored separately. CSV values such as `blanc moelleux`, `rouge liquoreux`, `sweet white`, and `sweet red` keep the base colour (`white` or `red`) and also populate the extended wine-identity sweetness field. A dedicated `Sweetness` / `Sucrosité` CSV column is supported and takes precedence over sweetness inferred from the colour cell. Sweetness can be corrected later from **Edit bottle**, and the update preserves all other identity details.
+
