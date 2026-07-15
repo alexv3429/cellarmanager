@@ -9,10 +9,11 @@ written.
 
 | # | Requirement | Where |
 |---|---|---|
-| 1, 2 | CSV import, mandatory + optional fields, blanks allowed where sensible | `services/csv_io.py` |
+| 1, 2 | CSV import, mandatory + optional fields, blanks allowed where sensible, including sweet white/red colour aliases | `services/csv_io.py` |
 | 3 | Cellar definitions (purpose 0-10, overflow, capacity, threshold, location rule, name) | `core/domain.py: Cellar`, `services/cellar_rules.py` |
 | 4 | Import into DB + journal | `services/csv_io.py`, `storage/repositories.py: movements` |
-| 5.a-c | Add / move / remove, with journal + optimistic concurrency | `services/holdings_service.py` |
+| 5.a-c | Add / edit / move / remove, with journal, optimistic concurrency and integrity-checked transactions | `services/holdings_service.py`, `services/bottle_edit_service.py` |
+| - | Unified Add inventory: manual/existing-wine/ChatGPT/optional vision, normalized Acquisition/allocation, local media and editable AI candidates | `api/routers/inventory.py`, `services/inventory_service.py`, `services/media_service.py` |
 | 5.d | Statistics (counts, %, price, drink-window buckets; total and per cellar) | `services/stats_service.py` |
 | 5.e | Move-plan advisor (profile-aware, capacity-aware, color-diverse) | `services/moveplan_service.py` |
 | 8 | Offline data-integrity mechanism (versioning + client-op-id dedup) | `storage/repositories.py`, `frontend/js/offlineQueue.js` |
@@ -44,7 +45,7 @@ already works for any number of providers, real or mock.
 
 | # | Requirement | Status |
 |---|---|---|
-| 7 | Photo recognition for add/remove | Two complementary signals, both real: **OCR label reading** (`services/recognition_service.py: extract_label_text`, via `pytesseract`/`tesseract-ocr`) reads the text off a photographed label and fuzzy-matches it against your catalog's producer/cuvée/appellation/vintage (`difflib`-based, tolerant of common OCR misreads) - this works for *any* wine already in your catalog, not just ones photographed before. **Perceptual photo-hash matching** is kept as a second signal for when a label doesn't OCR well (handwritten, stylized, partly obscured) or to confirm "this is the exact bottle I catalogued before". `recognize_bottle()` runs both and combines them, and each signal degrades independently and gracefully if its dependency (Pillow / pytesseract / the tesseract-ocr binary) isn't installed. |
+| 7 | Legacy/secondary photo recognition | Two complementary signals remain available for matching bottles already in the catalog; the primary intake path is now the unified manual or AI-assisted Add inventory workflow. The legacy signals are: **OCR label reading** (`services/recognition_service.py: extract_label_text`, via `pytesseract`/`tesseract-ocr`) reads the text off a photographed label and fuzzy-matches it against your catalog's producer/cuvée/appellation/vintage (`difflib`-based, tolerant of common OCR misreads) - this works for *any* wine already in your catalog, not just ones photographed before. **Perceptual photo-hash matching** is kept as a second signal for when a label doesn't OCR well (handwritten, stylized, partly obscured) or to confirm "this is the exact bottle I catalogued before". `recognize_bottle()` runs both and combines them, and each signal degrades independently and gracefully if its dependency (Pillow / pytesseract / the tesseract-ocr binary) isn't installed. |
 
 OCR quality depends on which Tesseract language packs are installed on the
 host; only English is guaranteed out of the box via `pip install
@@ -69,8 +70,15 @@ which is exactly when the photo-hash signal helps most.
 * **Headless-browser (Playwright/Selenium) tests for the page modules** -
   the pure-logic frontend code is unit tested (see `docs/testing.md`); the
   DOM-touching pages are best verified by hand in a browser for now.
-* **Multi-currency handling for price/value** - fields are plain numbers
-  with no currency code; add one if you need it.
+* **Multiple-location allocation in one Add inventory operation** - the current
+  transaction assigns the full quantity to one Holding/location; split it with
+  later moves until multi-allocation UI support is added.
+* **S3-compatible media storage** - local filesystem storage is the current
+  default and backups must include the media directory.
+* **Automatic currency conversion and currency-aware aggregate statistics** -
+  normalized Acquisitions preserve their original three-letter currency, but
+  cross-currency conversion requires an exchange-rate source and policy. Legacy
+  Holding prices and market values remain plain numeric compatibility fields.
 
 ## If you only do three things next
 

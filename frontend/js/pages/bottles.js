@@ -9,6 +9,7 @@ import {
 } from "./bottleDetails.js";
 import { openAddInventory } from "./addInventory.js";
 
+import { bottleEditButtonLabel, openBottleEditor } from "./editBottle.js";
 const COLORS = ["red", "white", "rose", "sparkling", "orange", "fortified", "other"];
 const REMOVE_REASONS = ["gifted", "broken", "sold", "lost", "drunk"];
 
@@ -237,6 +238,19 @@ function wineRow(wine, holdingsForWine, cellars, cellarsById, onChanged) {
   const actions = el("div", { class: "wine-actions" });
   actions.appendChild(el("button", { class: "small", text: t("common.add"), onclick: () => openAddInventory({ cellars, existingWine: wine, onDone: onChanged }) }));
   if (holdingsForWine[0]) {
+    actions.appendChild(
+      el("button", {
+        class: "small",
+        text: bottleEditButtonLabel(),
+        onclick: () =>
+          openBottleEditor({
+            wine,
+            holdings: holdingsForWine,
+            cellarsById,
+            onDone: onChanged,
+          }),
+      }),
+    );
     actions.appendChild(el("button", { class: "small", text: t("common.move"), onclick: () => openMoveDialog(holdingsForWine[0], cellars, onChanged) }));
     actions.appendChild(el("button", { class: "small danger", text: t("common.remove"), onclick: () => openRemoveDialog(holdingsForWine[0], onChanged) }));
   }

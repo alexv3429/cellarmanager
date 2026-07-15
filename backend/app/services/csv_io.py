@@ -24,16 +24,33 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import Any
 
-from app.core.domain import Cellar, Holding, HoldingState, Wine, WineColor, new_id, utcnow
+from app.core.domain import (
+    Cellar,
+    Holding,
+    HoldingState,
+    Wine,
+    WineColor,
+    new_id,
+    utcnow,
+)
 from app.core.exceptions import ValidationError
 
 # ---------------------------------------------------------------------------
 # canonical fields and header aliases
 # ---------------------------------------------------------------------------
 
-MANDATORY_FIELDS = ["producer", "cuvee", "appellation", "vintage", "color", "area", "format"]
+MANDATORY_FIELDS = [
+    "producer",
+    "cuvee",
+    "appellation",
+    "vintage",
+    "color",
+    "area",
+    "format",
+]
 OPTIONAL_FIELDS = [
     "price_bought",
+    "sweetness",
     "quantity",
     "drink_before",
     "drink_after",
@@ -135,6 +152,15 @@ HEADER_ALIASES: dict[str, list[str]] = {
         "valeur estimee",
         "valeur estimée",
     ],
+    "sweetness": [
+        "sweetness",
+        "sugar style",
+        "residual sugar style",
+        "sucrosite",
+        "sucrosité",
+        "douceur",
+        "style sucre",
+    ],
 }
 
 EXPORT_HEADERS: dict[str, dict[str, str]] = {
@@ -155,6 +181,7 @@ EXPORT_HEADERS: dict[str, dict[str, str]] = {
     "advice_experience": {"en": "Serving advice", "fr": "Conseil de dégustation"},
     "advice_pairing": {"en": "Dish pairing", "fr": "Accord mets-vin"},
     "market_value": {"en": "Market value", "fr": "Valeur estimée"},
+    "sweetness": {"en": "Sweetness", "fr": "Sucrosité"},
 }
 
 COLOR_LABELS: dict[str, dict[str, str]] = {
@@ -179,8 +206,22 @@ STATE_LABELS: dict[str, dict[str, str]] = {
 _COLOR_ALIASES = {
     "red": "red",
     "rouge": "red",
+    "sweet red": "red",
+    "red sweet": "red",
+    "rouge moelleux": "red",
+    "rouge doux": "red",
+    "vin rouge moelleux": "red",
+    "vin rouge doux": "red",
     "white": "white",
     "blanc": "white",
+    "sweet white": "white",
+    "white sweet": "white",
+    "blanc moelleux": "white",
+    "blanc doux": "white",
+    "blanc liquoreux": "white",
+    "vin blanc moelleux": "white",
+    "vin blanc doux": "white",
+    "vin blanc liquoreux": "white",
     "rose": "rose",
     "rosé": "rose",
     "sparkling": "sparkling",
@@ -194,7 +235,27 @@ _COLOR_ALIASES = {
     "fortifié": "fortified",
     "vin mute": "fortified",
     "vin muté": "fortified",
+    # Sweetness is a separate attribute in the normalized inventory model.
+    # Legacy CSVs often combine it with colour; preserve the colour instead
+    # of degrading these rows to ``other``.
+    "dessert white": "white",
+    "dessert red": "red",
 }
+
+_COLOR_TOKEN_GROUPS = (
+    (
+        "sparkling",
+        {"sparkling", "effervescent", "petillant", "champagne", "mousseux", "cremant"},
+    ),
+    (
+        "fortified",
+        {"fortified", "fortifie", "mute", "porto", "port", "sherry", "xeres", "madere"},
+    ),
+    ("orange", {"orange"}),
+    ("rose", {"rose"}),
+    ("red", {"red", "rouge"}),
+    ("white", {"white", "blanc"}),
+)
 
 _STATE_ALIASES = {
     "in cellar": "in_cellar",
@@ -598,7 +659,13 @@ def parse_vintage(raw: str | None) -> int | None:
     if raw is None:
         return None
     text = raw.strip().upper()
-    if not text or text in ("NV", "N/V", "NON VINTAGE", "SANS MILLESIME", "SANS MILLÉSIME"):
+    if not text or text in (
+        "NV",
+        "N/V",
+        "NON VINTAGE",
+        "SANS MILLESIME",
+        "SANS MILLÉSIME",
+    ):
         return None
     match = re.search(r"(1[5-9]\d{2}|20\d{2})", text)
     return int(match.group(1)) if match else None
@@ -664,11 +731,105 @@ def _merge_import_purchase_metadata(
         holding.price_bought = None
 
 
+def _normalize_color_label(raw: str) -> str:
+    text = _strip_accents(raw.strip().lower())
+    text = re.sub(r"[^a-z0-9]+", " ", text)
+    return " ".join(text.split())
+
+
+def _recognized_color(raw: str | None) -> str | None:
+    if not raw or not raw.strip():
+        return None
+    key = _normalize_color_label(raw)
+    exact = _COLOR_ALIASES.get(key)
+    if exact:
+        return exact
+
+    tokens = set(key.split())
+    matches = [color for color, aliases in _COLOR_TOKEN_GROUPS if tokens & aliases]
+    # A literal mixed label such as "red/white" is ambiguous and must not be
+    # guessed. Style labels (sparkling/fortified/orange/rosé) take precedence
+    # over a base colour when only one style is present, e.g. "sparkling white".
+    styles = [color for color in matches if color in {"sparkling", "fortified", "orange", "rose"}]
+    base_colors = [color for color in matches if color in {"red", "white"}]
+    if len(styles) == 1:
+        return styles[0]
+    if not styles and len(base_colors) == 1:
+        return base_colors[0]
+    return None
+
+
+def is_recognized_color(raw: str | None) -> bool:
+    """Return whether a non-empty CSV colour label can be normalized safely."""
+    return _recognized_color(raw) is not None
+
+
 def normalize_color(raw: str | None) -> str:
     if not raw:
         return WineColor.OTHER.value
-    key = _strip_accents(raw.strip().lower())
-    return _COLOR_ALIASES.get(key, WineColor.OTHER.value)
+    return _recognized_color(raw) or WineColor.OTHER.value
+
+
+# BEGIN CELLARMANAGER SWEETNESS PRESERVATION
+_SWEETNESS_PATTERNS: tuple[tuple[tuple[str, ...], str], ...] = (
+    (("demi", "sec"), "demi-sec"),
+    (("off", "dry"), "off-dry"),
+    (("medium", "sweet"), "medium-sweet"),
+    (("moelleux",), "moelleux"),
+    (("liquoreux",), "liquoreux"),
+    (("luscious",), "luscious"),
+    (("sweet",), "sweet"),
+    (("doux",), "doux"),
+    (("dry",), "dry"),
+    (("sec",), "sec"),
+)
+
+
+def normalize_sweetness(
+    raw: str | None,
+    *,
+    preserve_unknown: bool = True,
+) -> str | None:
+    """Normalize a sweetness label without confusing it with wine colour.
+
+    Known English and French terms are reduced to stable, human-readable
+    labels.  An explicit Sweetness/Sucrosité column keeps unknown user text;
+    inference from a combined colour label only returns recognized terms.
+    """
+    if raw is None or not raw.strip():
+        return None
+    normalized = _normalize_color_label(raw)
+    tokens = normalized.split()
+    token_set = set(tokens)
+    for pattern, value in _SWEETNESS_PATTERNS:
+        if len(pattern) == 1 and pattern[0] in token_set:
+            return value
+        if len(pattern) > 1:
+            width = len(pattern)
+            if any(
+                tuple(tokens[index : index + width]) == pattern
+                for index in range(len(tokens) - width + 1)
+            ):
+                return value
+    return raw.strip() if preserve_unknown else None
+
+
+def parse_color_and_sweetness(
+    color_raw: str | None,
+    sweetness_raw: str | None = None,
+) -> tuple[str, str | None]:
+    """Return colour and sweetness as separate values.
+
+    An explicit sweetness column wins.  Otherwise terms such as ``moelleux``
+    or ``sweet`` are inferred from the colour cell while the base colour is
+    still normalized independently.
+    """
+    explicit = normalize_sweetness(sweetness_raw, preserve_unknown=True)
+    inferred = normalize_sweetness(color_raw, preserve_unknown=False)
+    return normalize_color(color_raw), explicit or inferred
+
+
+# END CELLARMANAGER SWEETNESS PRESERVATION
 
 
 def normalize_state(raw: str | None) -> str:
@@ -797,12 +958,8 @@ def _preview_values(
         warnings.append("Producer is empty; cuvee/appellation will be used as a placeholder")
 
     raw_color = row.get("color")
-    color = normalize_color(raw_color)
-    if (
-        raw_color
-        and color == WineColor.OTHER.value
-        and normalize_header(raw_color) not in _COLOR_ALIASES
-    ):
+    color, sweetness = parse_color_and_sweetness(raw_color, row.get("sweetness"))
+    if raw_color and color == WineColor.OTHER.value and not is_recognized_color(raw_color):
         warnings.append(f"Unrecognized color '{raw_color}', stored as 'other'")
 
     try:
@@ -837,6 +994,7 @@ def _preview_values(
         "appellation": appellation,
         "vintage": parse_vintage(row.get("vintage")),
         "color": color,
+        "sweetness": sweetness,
         "area": (row.get("area") or "").strip(),
         "format": (row.get("format") or "75cl").strip() or "75cl",
         "quantity": quantity,
@@ -930,6 +1088,7 @@ def import_csv(
     mapping: dict[str, Any] | None = None,
 ) -> ImportReport:
     """Import bytes using either a user mapping or automatic suggestions."""
+    from app.services import sweetness_service
     from app.storage import repositories as repo
 
     document = decode_csv_document(raw)
@@ -949,7 +1108,8 @@ def import_csv(
         if not producer:
             producer = cuvee or appellation or "Unknown producer"
             report.add_warning(
-                row_number, "Producer was empty; used cuvee/appellation as a placeholder"
+                row_number,
+                "Producer was empty; used cuvee/appellation as a placeholder",
             )
 
         # Validate stock data before creating a Wine. An invalid quantity must
@@ -967,14 +1127,15 @@ def import_csv(
             continue
 
         vintage = parse_vintage(row.get("vintage"))
-        color = normalize_color(row.get("color"))
+        color, sweetness = parse_color_and_sweetness(row.get("color"), row.get("sweetness"))
         if (
             row.get("color")
             and color == WineColor.OTHER.value
-            and normalize_header(row["color"] or "") not in _COLOR_ALIASES
+            and not is_recognized_color(row.get("color"))
         ):
             report.add_warning(
-                row_number, f"Unrecognized color '{row.get('color')}', stored as 'other'"
+                row_number,
+                f"Unrecognized color '{row.get('color')}', stored as 'other'",
             )
         area = (row.get("area") or "").strip() or None
         fmt = (row.get("format") or "75cl").strip() or "75cl"
@@ -1018,6 +1179,9 @@ def import_csv(
             report.imported += 1
         else:
             report.merged_into_existing_wine += 1
+
+        if sweetness is not None:
+            sweetness_service.set_wine_sweetness(conn, wine_id=wine.id, sweetness=sweetness)
 
         state = normalize_state(row.get("state"))
         if cellar_id is None and state == HoldingState.IN_CELLAR.value:
@@ -1108,6 +1272,7 @@ def export_csv(
         "color": lambda w, h, c: COLOR_LABELS.get(w.color, COLOR_LABELS["other"]).get(
             language, w.color
         ),
+        "sweetness": lambda w, h, c: getattr(w, "sweetness", None) or "",
         "area": lambda w, h, c: w.area or "",
         "format": lambda w, h, c: w.format,
         "price_bought": lambda w, h, c: h.price_bought if h.price_bought is not None else "",
