@@ -119,7 +119,7 @@ For automatic research, the workflow remains:
 4. The browser polls the job and shows candidates when complete.
 5. Open the source list for each candidate.
 6. Compare each proposal with the currently stored value, then accept or reject it individually. Replacing a current value requires an explicit confirmation.
-7. Accepted drinking windows, replacement value, pairing and serving advice update the normal wine fields. Richer data stays in the enrichment profile. Automatic application preserves existing manual fields.
+7. Accepted drinking windows, pairing and serving advice update the normal wine fields. For valuation, accepted secondary/auction value is the current market value; accepted retail replacement value is the fallback, and quick-sale remains a separate estimate. Richer data stays in the enrichment profile. Automatic application preserves existing manual fields.
 
 Background tasks survive page navigation but not a server process crash. A failed or interrupted job remains visible and can be run again. For a larger deployment, replace the in-process task runner with a dedicated worker while keeping the same tables and endpoints.
 
@@ -130,6 +130,8 @@ The engine distinguishes:
 - **Retail replacement value**: median current exact-format retail offer.
 - **Secondary-market value**: median secondary or auction observation.
 - **Quick-sale estimate**: a clearly labelled conservative derivative, not a quote.
+
+Accepted values are projected onto the Wine record with deterministic priority: secondary-market value first, otherwise retail replacement value. Quick-sale is stored separately. Amount, currency, basis, confidence, source and acceptance timestamp are retained. Statistics aggregate each currency independently and never add EUR, GBP, USD or unknown-currency values together.
 
 Offers are normalized per bottle, but different currencies are never silently converted. A pack is divided by its bottle count. A known mismatched bottle format is excluded rather than scaled linearly. Tax, stock status, observation date and market type remain visible.
 
@@ -195,7 +197,7 @@ Unit tests inject a fake transport and a deterministic structured response. CI n
 
 ## Recommendation integration
 
-Accepted pairing, maturity, composition, review and replacement-value data feed the daily-picks ranking. Cellar, color, vintage, appellation and date remain hard filters. Dish and occasion are ranking signals by default, so selecting **Casual** no longer discards every wine whose notes do not literally contain that word. Users can explicitly enable strict dish matching. When no bottle is returned, the UI reports how many holdings were examined and which hard filters excluded them.
+Accepted pairing, maturity, composition, review and current-market/replacement-value data feed the daily-picks ranking. Cellar, color, vintage, appellation and date remain hard filters. Dish and occasion are ranking signals by default, so selecting **Casual** no longer discards every wine whose notes do not literally contain that word. Users can explicitly enable strict dish matching. When no bottle is returned, the UI reports how many holdings were examined and which hard filters excluded them.
 
 The predefined occasions are Casual, Everyday, Important, Celebration and Discovery. Their scoring is deterministic and explained in each recommendation. For example, Casual favors ready bottles, sensible replacement value and stock with several bottles available; Celebration can favor accepted high scores, special-bottle value and celebration pairings.
 
@@ -204,3 +206,9 @@ The predefined occasions are Casual, Everyday, Important, Celebration and Discov
 A Liv-ex, auction-house or critic adapter that requires a commercial contract is not hard-coded without the vendor's licensed API schema and credentials. The provider interface and external-identifier tables are ready for such adapters. Do not scrape protected sites or bypass access controls.
 
 The built-in valuation is an evidence-backed estimate, not an appraisal or guaranteed sale price. It does not convert currencies, infer provenance, inspect bottle condition or calculate auction fees unless a source explicitly supplies those facts.
+
+## Manual ChatGPT market-value matching
+
+Manual ChatGPT imports keep source URLs as **unverified manual evidence** and cap their confidence, but they now retain the response's producer, cuvée, vintage and format match flags. Those flags are needed to create reviewable replacement/secondary-market candidates from exact bottle offers. Manual candidates never auto-apply: the user must inspect the sources and explicitly accept a valuation before it is projected onto the wine record and included in statistics.
+
+Imports created before this correction may contain observed offers but no market-value candidate because their match flags were discarded. Run the manual ChatGPT import again after upgrading, then accept the `secondary_market_value` or `replacement_value` candidate. The accepted amount and currency will appear in bottle data and currency-separated statistics.

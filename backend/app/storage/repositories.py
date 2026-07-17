@@ -66,9 +66,16 @@ def _row_to_wine(row: sqlite3.Row) -> Wine:
         drink_before_confidence=row["drink_before_confidence"],
         drink_before_source=row["drink_before_source"],
         market_value=row["market_value"],
+        market_value_currency=row["market_value_currency"],
+        market_value_basis=row["market_value_basis"],
         market_value_confidence=row["market_value_confidence"],
         market_value_source=row["market_value_source"],
         market_value_updated_at=_parse_dt(row["market_value_updated_at"]),
+        quick_sale_value=row["quick_sale_value"],
+        quick_sale_currency=row["quick_sale_currency"],
+        quick_sale_confidence=row["quick_sale_confidence"],
+        quick_sale_source=row["quick_sale_source"],
+        quick_sale_updated_at=_parse_dt(row["quick_sale_updated_at"]),
         advice_experience=row["advice_experience"],
         advice_pairing=row["advice_pairing"],
         notes=row["notes"],
@@ -79,15 +86,20 @@ def _row_to_wine(row: sqlite3.Row) -> Wine:
 
 
 def insert_wine(conn: sqlite3.Connection, wine: Wine) -> Wine:
+    if wine.market_value is not None and wine.market_value_basis is None:
+        wine.market_value_basis = "manual"
     conn.execute(
         """
         INSERT INTO wines (
             id, producer, cuvee, appellation, vintage, color, area, format, format_ml,
             drink_after, drink_after_confidence, drink_after_source,
             drink_before, drink_before_confidence, drink_before_source,
-            market_value, market_value_confidence, market_value_source, market_value_updated_at,
+            market_value, market_value_currency, market_value_basis,
+            market_value_confidence, market_value_source, market_value_updated_at,
+            quick_sale_value, quick_sale_currency, quick_sale_confidence,
+            quick_sale_source, quick_sale_updated_at,
             advice_experience, advice_pairing, notes, created_at, updated_at, version
-        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         """,
         (
             wine.id,
@@ -106,9 +118,16 @@ def insert_wine(conn: sqlite3.Connection, wine: Wine) -> Wine:
             wine.drink_before_confidence,
             wine.drink_before_source,
             wine.market_value,
+            wine.market_value_currency,
+            wine.market_value_basis,
             wine.market_value_confidence,
             wine.market_value_source,
             _dt(wine.market_value_updated_at),
+            wine.quick_sale_value,
+            wine.quick_sale_currency,
+            wine.quick_sale_confidence,
+            wine.quick_sale_source,
+            _dt(wine.quick_sale_updated_at),
             wine.advice_experience,
             wine.advice_pairing,
             wine.notes,
@@ -180,7 +199,10 @@ def update_wine(conn: sqlite3.Connection, wine: Wine, expected_version: int) -> 
             producer=?, cuvee=?, appellation=?, vintage=?, color=?, area=?, format=?, format_ml=?,
             drink_after=?, drink_after_confidence=?, drink_after_source=?,
             drink_before=?, drink_before_confidence=?, drink_before_source=?,
-            market_value=?, market_value_confidence=?, market_value_source=?, market_value_updated_at=?,
+            market_value=?, market_value_currency=?, market_value_basis=?,
+            market_value_confidence=?, market_value_source=?, market_value_updated_at=?,
+            quick_sale_value=?, quick_sale_currency=?, quick_sale_confidence=?,
+            quick_sale_source=?, quick_sale_updated_at=?,
             advice_experience=?, advice_pairing=?, notes=?, updated_at=?, version=version+1
         WHERE id=? AND version=?
         """,
@@ -200,9 +222,16 @@ def update_wine(conn: sqlite3.Connection, wine: Wine, expected_version: int) -> 
             wine.drink_before_confidence,
             wine.drink_before_source,
             wine.market_value,
+            wine.market_value_currency,
+            wine.market_value_basis,
             wine.market_value_confidence,
             wine.market_value_source,
             _dt(wine.market_value_updated_at),
+            wine.quick_sale_value,
+            wine.quick_sale_currency,
+            wine.quick_sale_confidence,
+            wine.quick_sale_source,
+            _dt(wine.quick_sale_updated_at),
             wine.advice_experience,
             wine.advice_pairing,
             wine.notes,
@@ -522,9 +551,16 @@ def list_holdings_with_wines(
             drink_before_confidence=r["drink_before_confidence"],
             drink_before_source=r["drink_before_source"],
             market_value=r["market_value"],
+            market_value_currency=r["market_value_currency"],
+            market_value_basis=r["market_value_basis"],
             market_value_confidence=r["market_value_confidence"],
             market_value_source=r["market_value_source"],
             market_value_updated_at=_parse_dt(r["market_value_updated_at"]),
+            quick_sale_value=r["quick_sale_value"],
+            quick_sale_currency=r["quick_sale_currency"],
+            quick_sale_confidence=r["quick_sale_confidence"],
+            quick_sale_source=r["quick_sale_source"],
+            quick_sale_updated_at=_parse_dt(r["quick_sale_updated_at"]),
             advice_experience=r["advice_experience"],
             advice_pairing=r["advice_pairing"],
             notes=r["notes"],
