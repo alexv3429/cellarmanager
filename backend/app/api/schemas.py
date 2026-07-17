@@ -45,9 +45,16 @@ class WineOut(BaseModel):
     drink_before_confidence: float | None
     drink_before_source: str | None
     market_value: float | None
+    market_value_currency: str | None
+    market_value_basis: str | None
     market_value_confidence: float | None
     market_value_source: str | None
     market_value_updated_at: datetime | None
+    quick_sale_value: float | None
+    quick_sale_currency: str | None
+    quick_sale_confidence: float | None
+    quick_sale_source: str | None
+    quick_sale_updated_at: datetime | None
     advice_experience: str | None
     advice_pairing: str | None
     notes: str | None

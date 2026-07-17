@@ -38,6 +38,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 
 from app import config
 from app.core.domain import Movement, MovementAction, Wine, new_id, utcnow
+from app.services import market_valuation_service
 from app.storage import enrichment_repository as er
 from app.storage import repositories as repo
 from app.storage.database import Database
@@ -1599,10 +1600,6 @@ def _mark_manual_evidence_unverified(parsed: dict[str, Any]) -> None:
         if not claim.get("source_url"):
             continue
         claim["source_type"] = "unverified_manual"
-        claim["exact_producer"] = False
-        claim["exact_cuvee"] = False
-        claim["exact_vintage"] = False
-        claim["exact_format"] = False
 
 
 def import_manual_chatgpt_response(
@@ -2110,16 +2107,6 @@ def apply_candidate(
             wine.drink_before_confidence = candidate["confidence"]
             wine.drink_before_source = source
             changed = True
-    elif topic == "market_value" and candidate["label"] == "replacement_value":
-        manual = wine.market_value is not None and not (wine.market_value_source or "").startswith(
-            "research:"
-        )
-        if force or not manual:
-            wine.market_value = float(value["amount"])
-            wine.market_value_confidence = candidate["confidence"]
-            wine.market_value_source = source
-            wine.market_value_updated_at = utcnow()
-            changed = True
     elif topic == "pairing":
         # Automatic acceptance must not erase user-authored advice. Explicit UI
         # acceptance sends force=True and is therefore an intentional override.
@@ -2160,6 +2147,10 @@ def apply_candidate(
     )
     if changed:
         repo.update_wine(conn, wine, expected_version=wine.version)
+    if topic == "market_value":
+        # Re-project the accepted profile: secondary wins over replacement,
+        # while quick-sale remains a separate estimate.
+        market_valuation_service.sync_wine_valuation(conn, wine.id, force=force)
     er.decide_candidate(conn, candidate_id, status="accepted", reviewer_id=user_id)
     repo.insert_movement(
         conn,

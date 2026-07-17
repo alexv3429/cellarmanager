@@ -89,9 +89,16 @@ class Wine:
     drink_before_confidence: float | None = None
     drink_before_source: str | None = None
     market_value: float | None = None
+    market_value_currency: str | None = None
+    market_value_basis: str | None = None
     market_value_confidence: float | None = None
     market_value_source: str | None = None
     market_value_updated_at: datetime | None = None
+    quick_sale_value: float | None = None
+    quick_sale_currency: str | None = None
+    quick_sale_confidence: float | None = None
+    quick_sale_source: str | None = None
+    quick_sale_updated_at: datetime | None = None
     advice_experience: str | None = None
     advice_pairing: str | None = None
     notes: str | None = None

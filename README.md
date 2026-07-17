@@ -67,6 +67,16 @@ Open `http://localhost:8000/` and create the first owner account. For a complete
 See `docs/roadmap.md` for an honest, item-by-item status against the
 original spec (what's fully tested vs. a documented extension point).
 
+### Market valuation semantics
+
+Accepted enrichment prices are used in cellar statistics. A reviewed
+secondary/auction value is the current market value; retail replacement value
+is used only when no accepted secondary value exists. Quick-sale estimates
+remain separate. Amounts retain their original currency and the statistics page
+reports one total per currency rather than adding unlike currencies. Existing
+accepted candidates are backfilled automatically at startup after an
+integrity-checked schema migration.
+
 ## Documentation
 
 | Doc | Covers |
@@ -207,3 +217,7 @@ commercial data license is bundled.
 
 Colour and sweetness are stored separately. CSV values such as `blanc moelleux`, `rouge liquoreux`, `sweet white`, and `sweet red` keep the base colour (`white` or `red`) and also populate the extended wine-identity sweetness field. A dedicated `Sweetness` / `Sucrosité` CSV column is supported and takes precedence over sweetness inferred from the colour cell. Sweetness can be corrected later from **Edit bottle**, and the update preserves all other identity details.
 
+
+## Manual ChatGPT market values
+
+Exact market offers imported through the manual ChatGPT workflow remain unverified and require explicit review, but accepted secondary-market or replacement-value candidates are saved on the wine and included in statistics by currency. Re-run older manual imports whose offers were shown only as non-exact observations.

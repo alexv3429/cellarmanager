@@ -8,7 +8,7 @@ query that joins holdings to wines (see ``repositories.list_holdings_with_wines`
 
 from __future__ import annotations
 
-from collections import Counter
+from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from datetime import date
 
@@ -38,7 +38,15 @@ class StatsResult:
     by_area: Breakdown = field(default_factory=Breakdown)
     by_appellation: Breakdown = field(default_factory=Breakdown)
     total_value_bought: float = 0.0
+    # Kept for old clients; only populated for a single currency bucket.
     total_value_market: float = 0.0
+    market_value_currency: str | None = None
+    market_value_mixed_currencies: bool = False
+    market_value_by_currency: dict[str, float] = field(default_factory=dict)
+    quick_sale_value_by_currency: dict[str, float] = field(default_factory=dict)
+    market_value_bottles: int = 0
+    market_value_missing_bottles: int = 0
+    market_value_basis_counts: dict[str, int] = field(default_factory=dict)
     drink_window: DrinkWindowBuckets = field(default_factory=DrinkWindowBuckets)
 
 
@@ -62,6 +70,9 @@ def compute_stats(pairs: list[tuple[Wine, Holding]], *, today: date | None = Non
     area_counter: Counter = Counter()
     appellation_counter: Counter = Counter()
     wine_ids_seen: set[str] = set()
+    market_totals: dict[str, float] = defaultdict(float)
+    quick_sale_totals: dict[str, float] = defaultdict(float)
+    market_basis_counter: Counter = Counter()
 
     for wine, holding in pairs:
         qty = holding.quantity
@@ -78,7 +89,15 @@ def compute_stats(pairs: list[tuple[Wine, Holding]], *, today: date | None = Non
         if holding.price_bought is not None:
             result.total_value_bought += holding.price_bought * qty
         if wine.market_value is not None:
-            result.total_value_market += wine.market_value * qty
+            currency = (wine.market_value_currency or "UNKNOWN").upper()
+            market_totals[currency] += wine.market_value * qty
+            result.market_value_bottles += qty
+            market_basis_counter[wine.market_value_basis or "unspecified"] += qty
+        else:
+            result.market_value_missing_bottles += qty
+        if wine.quick_sale_value is not None:
+            currency = (wine.quick_sale_currency or "UNKNOWN").upper()
+            quick_sale_totals[currency] += wine.quick_sale_value * qty
 
         if wine.drink_before and wine.drink_before < today:
             result.drink_window.overdue += qty
@@ -95,7 +114,19 @@ def compute_stats(pairs: list[tuple[Wine, Holding]], *, today: date | None = Non
     result.by_area = _breakdown(area_counter, result.total_bottles)
     result.by_appellation = _breakdown(appellation_counter, result.total_bottles)
     result.total_value_bought = round(result.total_value_bought, 2)
-    result.total_value_market = round(result.total_value_market, 2)
+    result.market_value_by_currency = {
+        currency: round(amount, 2) for currency, amount in sorted(market_totals.items())
+    }
+    result.quick_sale_value_by_currency = {
+        currency: round(amount, 2) for currency, amount in sorted(quick_sale_totals.items())
+    }
+    result.market_value_basis_counts = dict(market_basis_counter)
+    if len(result.market_value_by_currency) == 1:
+        result.market_value_currency, result.total_value_market = next(
+            iter(result.market_value_by_currency.items())
+        )
+    elif len(result.market_value_by_currency) > 1:
+        result.market_value_mixed_currencies = True
     return result
 
 

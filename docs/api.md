@@ -92,6 +92,8 @@ legacy per-bottle price/date path.
 | Method | Path | Notes |
 |---|---|---|
 | GET | `/stats?cellar_id=` | Omit `cellar_id` for `{overall, per_cellar}`; include it for one cellar's `StatsResult` |
+
+`StatsResult` exposes `market_value_by_currency`, `quick_sale_value_by_currency`, `market_value_bottles`, `market_value_missing_bottles`, and `market_value_basis_counts`. The legacy scalar `total_value_market` is populated only when all valued bottles share one currency; mixed currencies are never summed.
 | GET | `/moveplan` | Suggested moves (requirement 5.e) |
 | POST | `/recommendations` | "What should I open?" (requirement 10.a) |
 

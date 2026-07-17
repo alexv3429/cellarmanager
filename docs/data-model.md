@@ -36,7 +36,11 @@ erDiagram
         date drink_before
         float drink_before_confidence
         float market_value
+        string market_value_currency
+        string market_value_basis
         float market_value_confidence
+        float quick_sale_value
+        string quick_sale_currency
         string advice_experience
         string advice_pairing
         int version
@@ -233,7 +237,11 @@ Research is append-only evidence plus reviewed candidates, not an opaque update:
 - `wine_external_identifiers` stores identifiers such as LWIN.
 
 The ordinary `wines` fields remain the compatibility surface for accepted
-drinking windows, replacement value, pairing and serving advice.
+drinking windows, current market value, quick-sale estimate, pairing and
+serving advice. Current market value uses accepted secondary/auction evidence
+when available and otherwise accepted retail replacement evidence. Currency
+and valuation basis are stored with each amount; statistics aggregate by
+currency without conversion.
 
 <!-- sweetness-preservation -->
 ## Colour and sweetness

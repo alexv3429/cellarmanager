@@ -74,7 +74,7 @@ The files `backend/requirements.txt` and `backend/requirements-dev.txt` are gene
 
 ## Current coverage
 
-Backend tests cover the domain/repository/services, HTTP API, unified inventory transactions and media staging, strict manual-ChatGPT import, CSV mapping and reconciliation, sweet white/red colour normalization, transactional bottle corrections and pre-update database-integrity rejection, synchronization regressions, cellar structures and orientation, recommendations, statistics, movement planning, authentication, recognition, and export. Frontend tests cover pure logic and the patch regressions added to page modules. Coverage output is reported on every backend CI matrix job; a numeric failure threshold can be ratcheted upward once a stable baseline is agreed.
+Backend tests cover the domain/repository/services, HTTP API, unified inventory transactions and media staging, strict manual-ChatGPT import, CSV mapping and reconciliation, sweet white/red colour normalization, transactional bottle corrections and pre-update database-integrity rejection, synchronization regressions, cellar structures and orientation, recommendations, currency-separated market/quick-sale valuation priority and backfill, statistics, movement planning, authentication, recognition, and export. Frontend tests cover pure logic and the patch regressions added to page modules. Coverage output is reported on every backend CI matrix job; a numeric failure threshold can be ratcheted upward once a stable baseline is agreed.
 
 <!-- modern-dev-portability-fix -->
 ## Portable uv lock files and virtual environments
@@ -97,9 +97,10 @@ If dependency installation fails against `pypi.org` or
 CI uses injected fake transports and synthetic structured responses. It must
 never call OpenAI, Brave, merchants, critics or licensed providers. The tests
 cover confidence calculation, exact-format price normalization, source URL
-safety and authority, manual-value protection, persistence/review, enriched
-recommendation ranking and zero-result diagnostics. Live smoke tests are
-operational checks and must remain opt-in.
+safety and authority, manual-value protection, secondary-over-replacement
+priority, separate quick-sale projection, startup backfill, currency-safe
+statistics, persistence/review, enriched recommendation ranking and zero-result
+diagnostics. Live smoke tests are operational checks and must remain opt-in.
 
 <!-- sweetness-preservation -->
 ## Colour and sweetness

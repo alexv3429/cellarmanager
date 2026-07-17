@@ -14,7 +14,7 @@ written.
 | 4 | Import into DB + journal | `services/csv_io.py`, `storage/repositories.py: movements` |
 | 5.a-c | Add / edit / move / remove, with journal, optimistic concurrency and integrity-checked transactions | `services/holdings_service.py`, `services/bottle_edit_service.py` |
 | - | Unified Add inventory: manual/existing-wine/ChatGPT/optional vision, normalized Acquisition/allocation, local media and editable AI candidates | `api/routers/inventory.py`, `services/inventory_service.py`, `services/media_service.py` |
-| 5.d | Statistics (counts, %, price, drink-window buckets; total and per cellar) | `services/stats_service.py` |
+| 5.d | Statistics (counts, %, purchase price, currency-separated current/quick-sale valuation, coverage, drink-window buckets; total and per cellar) | `services/stats_service.py` |
 | 5.e | Move-plan advisor (profile-aware, capacity-aware, color-diverse) | `services/moveplan_service.py` |
 | 8 | Offline data-integrity mechanism (versioning + client-op-id dedup) | `storage/repositories.py`, `frontend/js/offlineQueue.js` |
 | 9 | Authentication, no open sign-up, hashed passwords, login throttle | `services/auth_service.py`, `api/routers/auth.py` |
@@ -75,10 +75,10 @@ which is exactly when the photo-hash signal helps most.
   later moves until multi-allocation UI support is added.
 * **S3-compatible media storage** - local filesystem storage is the current
   default and backups must include the media directory.
-* **Automatic currency conversion and currency-aware aggregate statistics** -
-  normalized Acquisitions preserve their original three-letter currency, but
-  cross-currency conversion requires an exchange-rate source and policy. Legacy
-  Holding prices and market values remain plain numeric compatibility fields.
+* **Automatic currency conversion** - normalized Acquisitions and market
+  valuations preserve their original currency, and statistics keep currency
+  totals separate. Converting those totals into one reporting currency still
+  requires an exchange-rate source and policy.
 
 ## If you only do three things next
 

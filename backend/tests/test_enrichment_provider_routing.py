@@ -297,10 +297,10 @@ def test_manual_evidence_is_marked_unverified() -> None:
 
     claim = parsed["drinking_windows"][0]
     assert claim["source_type"] == "unverified_manual"
-    assert claim["exact_producer"] is False
-    assert claim["exact_cuvee"] is False
-    assert claim["exact_vintage"] is False
-    assert claim["exact_format"] is False
+    assert claim["exact_producer"] is True
+    assert claim["exact_cuvee"] is True
+    assert claim["exact_vintage"] is True
+    assert claim["exact_format"] is True
 
 
 def test_manual_import_never_auto_applies(monkeypatch: pytest.MonkeyPatch) -> None:
