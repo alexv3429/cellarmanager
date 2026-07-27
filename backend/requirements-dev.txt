@@ -21,7 +21,7 @@ colorama==0.4.6 ; sys_platform == 'win32'
     # via
     #   click
     #   pytest
-coverage==7.15.1
+coverage==7.15.2
     # via pytest-cov
 distlib==0.4.3
     # via virtualenv
