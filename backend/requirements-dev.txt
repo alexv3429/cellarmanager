@@ -58,7 +58,7 @@ pillow==12.3.0
     # via
     #   cellarmanager
     #   pytesseract
-platformdirs==4.10.0
+platformdirs==4.10.1
     # via
     #   python-discovery
     #   virtualenv
