@@ -115,5 +115,5 @@ virtualenv==21.6.1
     # via pre-commit
 watchfiles==1.2.0
     # via uvicorn
-websockets==16.1
+websockets==16.1.1
     # via uvicorn
