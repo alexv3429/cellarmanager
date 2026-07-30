@@ -9,7 +9,7 @@ CellarManager uses **uv** as the Python project and dependency manager, **Ruff**
 - Git
 - Python is installed automatically by uv when needed; Python 3.12 is the project default
 - [uv](https://docs.astral.sh/uv/getting-started/installation/)
-- Node.js 22 or newer for frontend syntax checks and tests
+- Node.js 24.x for frontend syntax checks and tests
 - `make` and Bash for the convenience commands on Linux/macOS
 - Tesseract and its French language data when testing OCR locally
 

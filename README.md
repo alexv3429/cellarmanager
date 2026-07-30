@@ -115,7 +115,7 @@ make format                 # apply Ruff fixes/formatting
 make ci                     # same pre-merge gate as GitHub
 ```
 
-CI runs the backend suite on Python 3.11–3.13, frontend syntax and unit tests on Node 22, Ruff, lock-file verification, repository policy checks, and dependency review. `main` must also be protected so the stable **CI Gate** status is required before merge; see [`docs/github-protection.md`](docs/github-protection.md).
+CI runs the backend suite on Python 3.11–3.13, frontend syntax and unit tests on Node 24, Ruff, lock-file verification, repository policy checks, and dependency review. `main` must also be protected so the stable **CI Gate** status is required before merge; see [`docs/github-protection.md`](docs/github-protection.md).
 
 The legacy `backend/requirements*.txt` files are generated compatibility exports. Edit dependencies in `pyproject.toml`, update `uv.lock`, and regenerate exports with `make requirements`.
 

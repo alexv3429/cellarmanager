@@ -92,7 +92,7 @@ which is exactly when the photo-hash signal helps most.
 
 ## Development workflow status
 
-The repository now has a locked uv environment, Ruff lint/format enforcement, local commit/push hooks, backend tests across Python 3.11–3.13, frontend checks on Node 22, dependency review, Dependabot, a stable aggregate `CI Gate`, and a script/recipe to protect `main`. Remaining testing work is primarily real-browser system coverage and agreeing a coverage percentage that can be raised over time.
+The repository now has a locked uv environment, Ruff lint/format enforcement, local commit/push hooks, backend tests across Python 3.11–3.13, frontend checks on Node 24, dependency review, Dependabot, a stable aggregate `CI Gate`, and a script/recipe to protect `main`. Remaining testing work is primarily real-browser system coverage and agreeing a coverage percentage that can be raised over time.
 
 ## Evidence-backed enrichment status
 
