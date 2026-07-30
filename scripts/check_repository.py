@@ -13,6 +13,7 @@ REQUIRED_FILES = (
     "pyproject.toml",
     "uv.lock",
     ".python-version",
+    ".node-version",
     ".pre-commit-config.yaml",
     ".github/workflows/ci.yml",
     ".github/dependabot.yml",

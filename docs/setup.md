@@ -4,7 +4,7 @@
 
 * Docker for the recommended daily-use deployment
 * A modern browser
-* For development: Git, uv, Node.js 22+, Bash/make, and optionally GitHub CLI
+* For development: Git, uv, Node.js 24+, Bash/make, and optionally GitHub CLI
 * Tesseract plus the French language pack when testing OCR locally
 
 Python environments and dependencies are managed from `pyproject.toml` and the committed `uv.lock`; manual `venv`/`pip install` setup is no longer the supported developer path.
@@ -118,7 +118,7 @@ login - see `docs/security.md` for hardening before doing this).
 
 ## Local development (for hacking on the code, not for daily phone use)
 
-Install uv and Node.js 22+, then from the repository root:
+Install uv and Node.js 24+, then from the repository root:
 
 ```bash
 ./scripts/bootstrap_dev.sh

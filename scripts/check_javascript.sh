@@ -6,6 +6,15 @@ if ! command -v node >/dev/null 2>&1; then
   exit 1
 fi
 
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+required_node_major="$(tr -d '[:space:]' < "$ROOT/.node-version")"
+actual_node_major="$(node -p 'process.versions.node.split(".")[0]')"
+
+if [[ "$actual_node_major" != "$required_node_major" ]]; then
+  echo "Node.js ${required_node_major}.x is required; found $(node --version)." >&2
+  exit 1
+fi
+
 if [ "$#" -gt 0 ]; then
   files=("$@")
 else

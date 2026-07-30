@@ -7,7 +7,7 @@ if ! command -v uv >/dev/null 2>&1; then
   exit 1
 fi
 if ! command -v node >/dev/null 2>&1; then
-  echo "Node.js 22+ is required for frontend checks." >&2
+  echo "Node.js 24.x is required for frontend checks." >&2
   exit 1
 fi
 

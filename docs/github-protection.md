@@ -10,7 +10,7 @@ Every pull request runs:
 - Ruff formatting and lint checks;
 - repository policy checks for secrets/databases/generated files;
 - the complete backend suite on Python 3.11, 3.12, and 3.13;
-- JavaScript syntax and all frontend unit tests on Node 22;
+- JavaScript syntax and all frontend unit tests on Node 24;
 - GitHub dependency review for newly introduced vulnerable dependencies;
 - an aggregate `CI Gate` job that fails if any applicable job fails.
 

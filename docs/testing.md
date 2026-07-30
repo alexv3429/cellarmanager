@@ -53,7 +53,7 @@ Hooks are convenience feedback, not the security boundary: the protected GitHub 
 
 - **Quality**: frozen lock, Ruff, and repository policy;
 - **Backend tests**: Python 3.11–3.13 matrix with coverage;
-- **Frontend tests**: Node 22 syntax and unit tests;
+- **Frontend tests**: Node 24 syntax and unit tests;
 - **Dependency review**: blocks newly introduced dependencies with moderate-or-higher known vulnerabilities;
 - **CI Gate**: stable aggregate required by branch protection.
 
