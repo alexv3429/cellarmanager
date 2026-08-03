@@ -104,6 +104,9 @@ jobs:
         with:
           node-version-file: ".node-version"
 
+      - name: Install v0.2 frontend dependencies
+        run: npm ci
+
       - name: JavaScript syntax
         shell: bash
         run: |
@@ -111,6 +114,9 @@ jobs:
 
       - name: Frontend unit tests
         run: node --test frontend/tests/*.test.js
+
+      - name: Check v0.2 frontend
+        run: npm run web:ci
 
   dependency-review:
       name: Dependency audit

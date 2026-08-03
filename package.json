@@ -1,0 +1,21 @@
+{
+  "name": "cellarmanager-workspace",
+  "private": true,
+  "engines": {
+    "node": "24.x"
+  },
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "web:dev": "npm run dev --workspace @cellarmanager/web",
+    "web:lint": "npm run lint --workspace @cellarmanager/web",
+    "web:test": "npm run test --workspace @cellarmanager/web",
+    "web:build": "npm run build --workspace @cellarmanager/web",
+    "web:ci": "npm run web:lint && npm run web:test && npm run web:build",
+    "supabase": "supabase"
+  },
+  "devDependencies": {
+    "supabase": "^2.111.0"
+  }
+}
