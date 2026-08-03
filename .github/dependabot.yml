@@ -1,4 +1,5 @@
 version: 2
+
 updates:
   - package-ecosystem: "uv"
     directory: "/"
@@ -7,10 +8,30 @@ updates:
       day: "monday"
     cooldown:
       default-days: 7
-    open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
-      - "python"
+    open-pull-requests-limit: 2
+    groups:
+      python-minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 2
+    groups:
+      npm-minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
 
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -19,7 +40,8 @@ updates:
       day: "monday"
     cooldown:
       default-days: 7
-    open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
-      - "github-actions"
+    open-pull-requests-limit: 2
+    groups:
+      github-actions:
+        patterns:
+          - "*"
