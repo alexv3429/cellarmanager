@@ -2,7 +2,7 @@ SHELL := /bin/bash
 PUBLIC_PYPI_INDEX ?= https://pypi.org/simple
 .DEFAULT_GOAL := help
 
-.PHONY: help setup sync lock format lint test test-backend test-frontend ci run hooks requirements protect-main audit clean
+.PHONY: help setup sync lock format lint test test-backend test-frontend test-web-v02 ci run hooks requirements protect-main audit clean
 
 help:
 	@printf '%s\n' \
@@ -18,6 +18,7 @@ help:
 
 setup:
 	uv sync --frozen --group dev
+	npm ci
 	uv run --frozen pre-commit install --hook-type pre-commit --hook-type pre-push
 
 sync:
@@ -44,7 +45,10 @@ test-frontend:
 	./scripts/check_javascript.sh
 	node --test frontend/tests/*.test.js
 
-test: test-backend test-frontend
+test-web-v02:
+	npm run web:ci
+
+test: test-backend test-frontend test-web-v02
 
 ci:
 	UV_DEFAULT_INDEX="$(PUBLIC_PYPI_INDEX)" uv lock --check
