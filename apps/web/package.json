@@ -11,6 +11,9 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@powersync/react": "^2.0.0",
+    "@powersync/web": "^2.1.0",
+    "@supabase/supabase-js": "^2.112.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
