@@ -1,6 +1,13 @@
 import { useQuery, useStatus } from "@powersync/react"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 
+import {
+  type AuthoritativeHolding,
+  type InventoryLocation,
+  type InventoryOperation,
+  type ProjectedHolding,
+  projectHoldings,
+} from "../data/inventoryProjection"
 import { useRegisteredDevices } from "../devices/useRegisteredDevices"
 import {
   queueConsume,
@@ -14,28 +21,7 @@ interface HoldingsViewProps {
   userId: string
 }
 
-interface HoldingRow {
-  id: string
-  household_id: string
-  wine_id: string
-  location_id: string
-  producer: string
-  cuvee: string
-  vintage: number | null
-  location_code: string
-  authoritative_quantity: number
-  pending_delta: number
-  pending_operation_count: number
-  quantity: number
-  revision: number
-}
-
-interface LocationRow {
-  id: string
-  household_id: string
-  code: string
-}
-
+type HoldingRow = ProjectedHolding
 
 interface InventoryOperationRow {
   id: string
@@ -49,111 +35,25 @@ interface InventoryOperationRow {
 }
 
 const HOLDINGS_QUERY = `
-  with pending_operations as (
-    select
-      operation_type,
-      wine_id,
-      source_location_id,
-      destination_location_id,
-      quantity
-    from inventory_operations
-    where status = 'PENDING'
-      and operation_type in ('MOVE', 'CONSUME')
-  ),
-  pending_deltas as (
-    select
-      wine_id,
-      source_location_id as location_id,
-      -sum(quantity) as delta,
-      count(*) as operation_count
-    from pending_operations
-    group by wine_id, source_location_id
-
-    union all
-
-    select
-      wine_id,
-      destination_location_id as location_id,
-      sum(quantity) as delta,
-      count(*) as operation_count
-    from pending_operations
-    where operation_type = 'MOVE'
-      and destination_location_id is not null
-    group by wine_id, destination_location_id
-  ),
-  pending_by_position as (
-    select
-      wine_id,
-      location_id,
-      sum(delta) as pending_delta,
-      sum(operation_count) as pending_operation_count
-    from pending_deltas
-    group by wine_id, location_id
-  ),
-  position_keys as (
-    select wine_id, location_id
-    from holdings
-
-    union
-
-    select wine_id, location_id
-    from pending_by_position
-  ),
-  projected_holdings as (
-    select
-      coalesce(
-        holding.id,
-        'optimistic:' ||
-          position.wine_id ||
-          ':' ||
-          position.location_id
-      ) as id,
-      wine.household_id,
-      position.wine_id,
-      position.location_id,
-      wine.producer,
-      wine.cuvee,
-      wine.vintage,
-      location.code as location_code,
-      coalesce(
-        holding.quantity,
-        0
-      ) as authoritative_quantity,
-      coalesce(
-        pending.pending_delta,
-        0
-      ) as pending_delta,
-      coalesce(
-        pending.pending_operation_count,
-        0
-      ) as pending_operation_count,
-      max(
-        0,
-        coalesce(holding.quantity, 0) +
-          coalesce(pending.pending_delta, 0)
-      ) as quantity,
-      coalesce(holding.revision, 0) as revision
-    from position_keys position
-    join wines wine
-      on wine.id = position.wine_id
-    join locations location
-      on location.id = position.location_id
-    left join holdings holding
-      on holding.wine_id = position.wine_id
-      and holding.location_id = position.location_id
-    left join pending_by_position pending
-      on pending.wine_id = position.wine_id
-      and pending.location_id = position.location_id
-  )
-  select *
-  from projected_holdings
-  where quantity > 0
-    or pending_operation_count > 0
+  select
+    h.id,
+    h.household_id,
+    h.wine_id,
+    h.location_id,
+    w.producer,
+    w.cuvee,
+    w.vintage,
+    l.code as location_code,
+    h.quantity,
+    h.revision
+  from holdings h
+  join wines w on w.id = h.wine_id
+  join locations l on l.id = h.location_id
   order by
-    producer,
-    cuvee,
-    vintage,
-    location_code
+    w.producer,
+    w.cuvee,
+    w.vintage,
+    l.code
 `
 
 const LOCATIONS_QUERY = `
@@ -162,6 +62,20 @@ const LOCATIONS_QUERY = `
   order by code
 `
 
+
+const PENDING_OPERATIONS_QUERY = `
+  select
+    id,
+    operation_type,
+    wine_id,
+    source_location_id,
+    destination_location_id,
+    quantity,
+    status
+  from inventory_operations
+  where status = 'PENDING'
+    and operation_type in ('MOVE', 'CONSUME')
+`
 
 const OPERATIONS_QUERY = `
   select
@@ -193,17 +107,48 @@ export function HoldingsView({
   )
 
   const {
-    data: holdings,
-    error,
-    isLoading,
+    data: authoritativeHoldings,
+    error: holdingsError,
+    isLoading: holdingsLoading,
     isFetching,
-  } = useQuery<HoldingRow>(HOLDINGS_QUERY)
+  } = useQuery<AuthoritativeHolding>(HOLDINGS_QUERY)
 
-  const { data: locations } =
-    useQuery<LocationRow>(LOCATIONS_QUERY)
+  const {
+    data: locations,
+    error: locationsError,
+    isLoading: locationsLoading,
+  } = useQuery<InventoryLocation>(LOCATIONS_QUERY)
+
+  const {
+    data: pendingOperations,
+    error: pendingOperationsError,
+    isLoading: pendingOperationsLoading,
+  } = useQuery<InventoryOperation>(
+    PENDING_OPERATIONS_QUERY,
+  )
 
   const { data: operations } =
     useQuery<InventoryOperationRow>(OPERATIONS_QUERY)
+
+  const holdings = useMemo(
+    () =>
+      projectHoldings({
+        holdings: authoritativeHoldings,
+        locations,
+        operations: pendingOperations,
+      }),
+    [authoritativeHoldings, locations, pendingOperations],
+  )
+
+  const error =
+    holdingsError ??
+    locationsError ??
+    pendingOperationsError
+
+  const isLoading =
+    holdingsLoading ||
+    locationsLoading ||
+    pendingOperationsLoading
 
   const [destinationByHolding, setDestinationByHolding] =
     useState<Record<string, string>>({})
