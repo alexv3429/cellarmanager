@@ -45,5 +45,5 @@ export default function App() {
     )
   }
 
-  return <HoldingsView />
+  return <HoldingsView userId={session.user.id} />
 }
