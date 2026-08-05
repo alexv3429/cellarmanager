@@ -1,6 +1,7 @@
 import { useQuery, useStatus } from "@powersync/react"
 import { useState } from "react"
 
+import { useRegisteredDevices } from "../devices/useRegisteredDevices"
 import {
   queueConsume,
   queueMove,
@@ -35,10 +36,6 @@ interface LocationRow {
   code: string
 }
 
-interface DeviceRow {
-  id: string
-  household_id: string
-}
 
 interface InventoryOperationRow {
   id: string
@@ -165,11 +162,6 @@ const LOCATIONS_QUERY = `
   order by code
 `
 
-const DEVICES_QUERY = `
-  select id, household_id
-  from devices
-  order by created_at
-`
 
 const OPERATIONS_QUERY = `
   select
@@ -195,6 +187,11 @@ export function HoldingsView({
 }: HoldingsViewProps) {
   const status = useStatus()
 
+  const deviceRegistration = useRegisteredDevices(
+    userId,
+    status.hasSynced === true,
+  )
+
   const {
     data: holdings,
     error,
@@ -204,9 +201,6 @@ export function HoldingsView({
 
   const { data: locations } =
     useQuery<LocationRow>(LOCATIONS_QUERY)
-
-  const { data: devices } =
-    useQuery<DeviceRow>(DEVICES_QUERY)
 
   const { data: operations } =
     useQuery<InventoryOperationRow>(OPERATIONS_QUERY)
@@ -244,26 +238,26 @@ export function HoldingsView({
       destinationByHolding[holding.id] ??
       possibleDestinations[0]?.id
 
-    const device = devices.find(
-      (candidate) =>
-        candidate.household_id === holding.household_id,
-    )
+    const deviceId =
+      deviceRegistration.deviceIdByHousehold[
+        holding.household_id
+      ]
 
     if (!destinationLocationId) {
       setOperationError("No destination location is available")
       return
     }
 
-    if (!device) {
+    if (!deviceId) {
       setOperationError(
-        "No registered device is available for this household",
+        "This browser is not registered for this household yet",
       )
       return
     }
 
     const move: QueueMoveInput = {
       householdId: holding.household_id,
-      deviceId: device.id,
+      deviceId,
       userId,
       wineId: holding.wine_id,
       sourceLocationId: holding.location_id,
@@ -293,21 +287,21 @@ export function HoldingsView({
     setOperationMessage(null)
     setOperationError(null)
 
-    const device = devices.find(
-      (candidate) =>
-        candidate.household_id === holding.household_id,
-    )
+    const deviceId =
+      deviceRegistration.deviceIdByHousehold[
+        holding.household_id
+      ]
 
-    if (!device) {
+    if (!deviceId) {
       setOperationError(
-        "No registered device is available for this household",
+        "This browser is not registered for this household yet",
       )
       return
     }
 
     const consume: QueueConsumeInput = {
       householdId: holding.household_id,
-      deviceId: device.id,
+      deviceId,
       userId,
       wineId: holding.wine_id,
       sourceLocationId: holding.location_id,
@@ -346,6 +340,17 @@ export function HoldingsView({
               : "Initial synchronization pending"}
             {isFetching ? " · Refreshing" : ""}
           </p>
+
+          <p>
+            Device:{" "}
+            {deviceRegistration.isReady
+              ? "Ready"
+              : deviceRegistration.isRegistering
+                ? "Registering…"
+                : deviceRegistration.isLoading
+                  ? "Waiting for synchronized data…"
+                  : "Not ready"}
+          </p>
         </div>
 
         <button onClick={() => void signOut()} type="button">
@@ -359,6 +364,18 @@ export function HoldingsView({
       {error ? <p role="alert">{String(error)}</p> : null}
       {operationMessage ? <p>{operationMessage}</p> : null}
       {operationError ? <p role="alert">{operationError}</p> : null}
+
+      {deviceRegistration.error ? (
+        <div role="alert">
+          <p>{deviceRegistration.error}</p>
+          <button
+            onClick={deviceRegistration.retryRegistration}
+            type="button"
+          >
+            Retry device registration
+          </button>
+        </div>
+      ) : null}
 
       {!isLoading && holdings.length === 0 ? (
         <p>No synchronized holdings found.</p>
@@ -439,6 +456,9 @@ export function HoldingsView({
                     disabled={
                       holding.quantity < 1 ||
                       destinationLocationId.length === 0 ||
+                      !deviceRegistration.deviceIdByHousehold[
+                        holding.household_id
+                      ] ||
                       movingHoldingId === holding.id
                     }
                     onClick={() => void handleMove(holding)}
@@ -453,6 +473,9 @@ export function HoldingsView({
                   <button
                     disabled={
                       holding.quantity < 1 ||
+                      !deviceRegistration.deviceIdByHousehold[
+                        holding.household_id
+                      ] ||
                       consumingHoldingId === holding.id
                     }
                     onClick={() =>
