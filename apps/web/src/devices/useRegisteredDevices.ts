@@ -8,8 +8,10 @@ import {
 } from "react"
 
 import { supabase } from "../data/supabase"
-
-const STORAGE_KEY = "cellarmanager.device_ids.v1"
+import {
+  getBrowserName,
+  getOrCreateDeviceId,
+} from "./deviceIdentity"
 
 interface HouseholdMembershipRow {
   household_id: string
@@ -26,100 +28,6 @@ function getErrorMessage(error: unknown): string {
   return error instanceof Error
     ? error.message
     : "Unable to register this device"
-}
-
-function readStoredDeviceIds(): Record<string, string> {
-  const rawValue = window.localStorage.getItem(STORAGE_KEY)
-
-  if (!rawValue) {
-    return {}
-  }
-
-  const parsedValue: unknown = JSON.parse(rawValue)
-
-  if (
-    typeof parsedValue !== "object" ||
-    parsedValue === null ||
-    Array.isArray(parsedValue)
-  ) {
-    throw new Error("Stored device identity is invalid")
-  }
-
-  const deviceIds: Record<string, string> = {}
-
-  for (const [householdId, deviceId] of Object.entries(parsedValue)) {
-    if (
-      typeof householdId === "string" &&
-      typeof deviceId === "string" &&
-      deviceId.length > 0
-    ) {
-      deviceIds[householdId] = deviceId
-    }
-  }
-
-  return deviceIds
-}
-
-function getOrCreateDeviceId(householdId: string): string {
-  let deviceIds: Record<string, string>
-
-  try {
-    deviceIds = readStoredDeviceIds()
-  } catch (error: unknown) {
-    throw new Error(
-      `Unable to read browser device identity: ${getErrorMessage(error)}`,
-    )
-  }
-
-  const existingDeviceId = deviceIds[householdId]
-
-  if (existingDeviceId) {
-    return existingDeviceId
-  }
-
-  const deviceId = crypto.randomUUID()
-  deviceIds[householdId] = deviceId
-
-  try {
-    window.localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(deviceIds),
-    )
-  } catch (error: unknown) {
-    throw new Error(
-      `Unable to persist browser device identity: ${getErrorMessage(error)}`,
-    )
-  }
-
-  return deviceId
-}
-
-function getBrowserName(): string {
-  const userAgent = navigator.userAgent
-
-  let browser = "Web browser"
-
-  if (userAgent.includes("Edg/")) {
-    browser = "Edge"
-  } else if (
-    userAgent.includes("Chrome/") ||
-    userAgent.includes("CriOS/")
-  ) {
-    browser = "Chrome"
-  } else if (
-    userAgent.includes("Safari/") &&
-    !userAgent.includes("Chrome/")
-  ) {
-    browser = "Safari"
-  } else if (userAgent.includes("Firefox/")) {
-    browser = "Firefox"
-  }
-
-  const platform = navigator.platform.trim()
-
-  return platform
-    ? `${browser} on ${platform}`.slice(0, 120)
-    : browser
 }
 
 export function useRegisteredDevices(
@@ -178,7 +86,10 @@ export function useRegisteredDevices(
 
       for (const membership of memberships) {
         nextDeviceIds[membership.household_id] =
-          getOrCreateDeviceId(membership.household_id)
+          getOrCreateDeviceId(
+            window.localStorage,
+            membership.household_id,
+          )
       }
 
       setExpectedDeviceIds(nextDeviceIds)
@@ -232,7 +143,10 @@ export function useRegisteredDevices(
             {
               p_device_id: deviceId,
               p_household_id: householdId,
-              p_name: getBrowserName(),
+              p_name: getBrowserName(
+                navigator.userAgent,
+                navigator.platform,
+              ),
             },
           )
 
