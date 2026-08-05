@@ -2,7 +2,9 @@ import { useQuery, useStatus } from "@powersync/react"
 import { useState } from "react"
 
 import {
+  queueConsume,
   queueMove,
+  type QueueConsumeInput,
   type QueueMoveInput,
 } from "../data/powersync/inventoryOperations"
 import { supabase } from "../data/supabase"
@@ -50,15 +52,16 @@ interface InventoryOperationRow {
 }
 
 const HOLDINGS_QUERY = `
-  with pending_moves as (
+  with pending_operations as (
     select
+      operation_type,
       wine_id,
       source_location_id,
       destination_location_id,
       quantity
     from inventory_operations
-    where operation_type = 'MOVE'
-      and status = 'PENDING'
+    where status = 'PENDING'
+      and operation_type in ('MOVE', 'CONSUME')
   ),
   pending_deltas as (
     select
@@ -66,7 +69,7 @@ const HOLDINGS_QUERY = `
       source_location_id as location_id,
       -sum(quantity) as delta,
       count(*) as operation_count
-    from pending_moves
+    from pending_operations
     group by wine_id, source_location_id
 
     union all
@@ -76,8 +79,9 @@ const HOLDINGS_QUERY = `
       destination_location_id as location_id,
       sum(quantity) as delta,
       count(*) as operation_count
-    from pending_moves
-    where destination_location_id is not null
+    from pending_operations
+    where operation_type = 'MOVE'
+      and destination_location_id is not null
     group by wine_id, destination_location_id
   ),
   pending_by_position as (
@@ -102,7 +106,10 @@ const HOLDINGS_QUERY = `
     select
       coalesce(
         holding.id,
-        'optimistic:' || position.wine_id || ':' || position.location_id
+        'optimistic:' ||
+          position.wine_id ||
+          ':' ||
+          position.location_id
       ) as id,
       wine.household_id,
       position.wine_id,
@@ -111,14 +118,23 @@ const HOLDINGS_QUERY = `
       wine.cuvee,
       wine.vintage,
       location.code as location_code,
-      coalesce(holding.quantity, 0) as authoritative_quantity,
-      coalesce(pending.pending_delta, 0) as pending_delta,
+      coalesce(
+        holding.quantity,
+        0
+      ) as authoritative_quantity,
+      coalesce(
+        pending.pending_delta,
+        0
+      ) as pending_delta,
       coalesce(
         pending.pending_operation_count,
         0
       ) as pending_operation_count,
-      coalesce(holding.quantity, 0)
-        + coalesce(pending.pending_delta, 0) as quantity,
+      max(
+        0,
+        coalesce(holding.quantity, 0) +
+          coalesce(pending.pending_delta, 0)
+      ) as quantity,
       coalesce(holding.revision, 0) as revision
     from position_keys position
     join wines wine
@@ -135,6 +151,7 @@ const HOLDINGS_QUERY = `
   select *
   from projected_holdings
   where quantity > 0
+    or pending_operation_count > 0
   order by
     producer,
     cuvee,
@@ -200,10 +217,13 @@ export function HoldingsView({
   const [movingHoldingId, setMovingHoldingId] =
     useState<string | null>(null)
 
-  const [moveMessage, setMoveMessage] =
+  const [consumingHoldingId, setConsumingHoldingId] =
     useState<string | null>(null)
 
-  const [moveError, setMoveError] =
+  const [operationMessage, setOperationMessage] =
+    useState<string | null>(null)
+
+  const [operationError, setOperationError] =
     useState<string | null>(null)
 
   async function signOut() {
@@ -211,8 +231,8 @@ export function HoldingsView({
   }
 
   async function handleMove(holding: HoldingRow) {
-    setMoveMessage(null)
-    setMoveError(null)
+    setOperationMessage(null)
+    setOperationError(null)
 
     const possibleDestinations = locations.filter(
       (location) =>
@@ -230,12 +250,12 @@ export function HoldingsView({
     )
 
     if (!destinationLocationId) {
-      setMoveError("No destination location is available")
+      setOperationError("No destination location is available")
       return
     }
 
     if (!device) {
-      setMoveError(
+      setOperationError(
         "No registered device is available for this household",
       )
       return
@@ -255,17 +275,61 @@ export function HoldingsView({
 
     try {
       const operationId = await queueMove(move)
-      setMoveMessage(
+      setOperationMessage(
         `Move ${operationId.slice(0, 8)} queued locally`,
       )
     } catch (caughtError: unknown) {
-      setMoveError(
+      setOperationError(
         caughtError instanceof Error
           ? caughtError.message
           : "Unable to queue move",
       )
     } finally {
       setMovingHoldingId(null)
+    }
+  }
+
+  async function handleConsume(holding: HoldingRow) {
+    setOperationMessage(null)
+    setOperationError(null)
+
+    const device = devices.find(
+      (candidate) =>
+        candidate.household_id === holding.household_id,
+    )
+
+    if (!device) {
+      setOperationError(
+        "No registered device is available for this household",
+      )
+      return
+    }
+
+    const consume: QueueConsumeInput = {
+      householdId: holding.household_id,
+      deviceId: device.id,
+      userId,
+      wineId: holding.wine_id,
+      sourceLocationId: holding.location_id,
+      quantity: 1,
+    }
+
+    setConsumingHoldingId(holding.id)
+
+    try {
+      const operationId = await queueConsume(consume)
+
+      setOperationMessage(
+        `Consume ${operationId.slice(0, 8)} queued locally`,
+      )
+    } catch (caughtError: unknown) {
+      setOperationError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to queue consumption",
+      )
+    } finally {
+      setConsumingHoldingId(null)
     }
   }
 
@@ -293,8 +357,8 @@ export function HoldingsView({
 
       {isLoading ? <p>Opening local database…</p> : null}
       {error ? <p role="alert">{String(error)}</p> : null}
-      {moveMessage ? <p>{moveMessage}</p> : null}
-      {moveError ? <p role="alert">{moveError}</p> : null}
+      {operationMessage ? <p>{operationMessage}</p> : null}
+      {operationError ? <p role="alert">{operationError}</p> : null}
 
       {!isLoading && holdings.length === 0 ? (
         <p>No synchronized holdings found.</p>
@@ -309,6 +373,7 @@ export function HoldingsView({
             <th>Quantity</th>
             <th>Revision</th>
             <th>Move one bottle</th>
+            <th>Consume one bottle</th>
           </tr>
         </thead>
 
@@ -382,6 +447,22 @@ export function HoldingsView({
                     {movingHoldingId === holding.id
                       ? "Queuing…"
                       : "Move 1"}
+                  </button>
+                </td>
+                <td>
+                  <button
+                    disabled={
+                      holding.quantity < 1 ||
+                      consumingHoldingId === holding.id
+                    }
+                    onClick={() =>
+                      void handleConsume(holding)
+                    }
+                    type="button"
+                  >
+                    {consumingHoldingId === holding.id
+                      ? "Queuing…"
+                      : "Consume 1"}
                   </button>
                 </td>
               </tr>
