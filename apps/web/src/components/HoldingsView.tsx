@@ -20,6 +20,9 @@ interface HoldingRow {
   cuvee: string
   vintage: number | null
   location_code: string
+  authoritative_quantity: number
+  pending_delta: number
+  pending_operation_count: number
   quantity: number
   revision: number
 }
@@ -47,25 +50,96 @@ interface InventoryOperationRow {
 }
 
 const HOLDINGS_QUERY = `
-  select
-    h.id,
-    h.household_id,
-    h.wine_id,
-    h.location_id,
-    w.producer,
-    w.cuvee,
-    w.vintage,
-    l.code as location_code,
-    h.quantity,
-    h.revision
-  from holdings h
-  join wines w on w.id = h.wine_id
-  join locations l on l.id = h.location_id
+  with pending_moves as (
+    select
+      wine_id,
+      source_location_id,
+      destination_location_id,
+      quantity
+    from inventory_operations
+    where operation_type = 'MOVE'
+      and status = 'PENDING'
+  ),
+  pending_deltas as (
+    select
+      wine_id,
+      source_location_id as location_id,
+      -sum(quantity) as delta,
+      count(*) as operation_count
+    from pending_moves
+    group by wine_id, source_location_id
+
+    union all
+
+    select
+      wine_id,
+      destination_location_id as location_id,
+      sum(quantity) as delta,
+      count(*) as operation_count
+    from pending_moves
+    where destination_location_id is not null
+    group by wine_id, destination_location_id
+  ),
+  pending_by_position as (
+    select
+      wine_id,
+      location_id,
+      sum(delta) as pending_delta,
+      sum(operation_count) as pending_operation_count
+    from pending_deltas
+    group by wine_id, location_id
+  ),
+  position_keys as (
+    select wine_id, location_id
+    from holdings
+
+    union
+
+    select wine_id, location_id
+    from pending_by_position
+  ),
+  projected_holdings as (
+    select
+      coalesce(
+        holding.id,
+        'optimistic:' || position.wine_id || ':' || position.location_id
+      ) as id,
+      wine.household_id,
+      position.wine_id,
+      position.location_id,
+      wine.producer,
+      wine.cuvee,
+      wine.vintage,
+      location.code as location_code,
+      coalesce(holding.quantity, 0) as authoritative_quantity,
+      coalesce(pending.pending_delta, 0) as pending_delta,
+      coalesce(
+        pending.pending_operation_count,
+        0
+      ) as pending_operation_count,
+      coalesce(holding.quantity, 0)
+        + coalesce(pending.pending_delta, 0) as quantity,
+      coalesce(holding.revision, 0) as revision
+    from position_keys position
+    join wines wine
+      on wine.id = position.wine_id
+    join locations location
+      on location.id = position.location_id
+    left join holdings holding
+      on holding.wine_id = position.wine_id
+      and holding.location_id = position.location_id
+    left join pending_by_position pending
+      on pending.wine_id = position.wine_id
+      and pending.location_id = position.location_id
+  )
+  select *
+  from projected_holdings
+  where quantity > 0
   order by
-    w.producer,
-    w.cuvee,
-    w.vintage,
-    l.code
+    producer,
+    cuvee,
+    vintage,
+    location_code
 `
 
 const LOCATIONS_QUERY = `
@@ -259,7 +333,16 @@ export function HoldingsView({
                 </td>
                 <td>{holding.vintage ?? "NV"}</td>
                 <td>{holding.location_code}</td>
-                <td>{holding.quantity}</td>
+                <td>
+                  {holding.quantity}
+                  {holding.pending_delta !== 0 ? (
+                    <span>
+                      {" "}
+                      ({holding.pending_delta > 0 ? "+" : ""}
+                      {holding.pending_delta} pending)
+                    </span>
+                  ) : null}
+                </td>
                 <td>{holding.revision}</td>
                 <td>
                   <select
