@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest"
 import {
   DEVICE_IDS_STORAGE_KEY,
   type DeviceIdentityStorage,
+  clearDeviceIdentities,
   getBrowserName,
   getOrCreateDeviceId,
   readStoredDeviceIds,
@@ -17,6 +18,10 @@ class MemoryStorage implements DeviceIdentityStorage {
 
   setItem(key: string, value: string): void {
     this.values.set(key, value)
+  }
+
+  removeItem(key: string): void {
+    this.values.delete(key)
   }
 }
 
@@ -84,6 +89,20 @@ describe("browser device identity", () => {
     expect(() => readStoredDeviceIds(storage)).toThrow(
       "Stored device identity is invalid",
     )
+  })
+
+  it("clears stored browser device identities", () => {
+    const storage = new MemoryStorage()
+
+    getOrCreateDeviceId(
+      storage,
+      "household-1",
+      () => "device-1",
+    )
+
+    clearDeviceIdentities(storage)
+
+    expect(readStoredDeviceIds(storage)).toEqual({})
   })
 
   it("derives a readable browser name", () => {

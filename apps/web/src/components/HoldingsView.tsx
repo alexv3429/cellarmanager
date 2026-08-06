@@ -15,10 +15,13 @@ import {
   type QueueConsumeInput,
   type QueueMoveInput,
 } from "../data/powersync/inventoryOperations"
-import { supabase } from "../data/supabase"
 
 interface HoldingsViewProps {
   userId: string
+  isOnline: boolean
+  isOfflineAccess: boolean
+  syncError: string | null
+  onSignOut: () => Promise<void>
 }
 
 type HoldingRow = ProjectedHolding
@@ -98,6 +101,10 @@ const OPERATIONS_QUERY = `
 
 export function HoldingsView({
   userId,
+  isOnline,
+  isOfflineAccess,
+  syncError,
+  onSignOut,
 }: HoldingsViewProps) {
   const status = useStatus()
 
@@ -166,7 +173,24 @@ export function HoldingsView({
     useState<string | null>(null)
 
   async function signOut() {
-    await supabase.auth.signOut({ scope: "local" })
+    setOperationError(null)
+
+    if (!isOnline) {
+      setOperationError(
+        "Reconnect before signing out. Signing out offline would prevent access until the next online login.",
+      )
+      return
+    }
+
+    try {
+      await onSignOut()
+    } catch (caughtError: unknown) {
+      setOperationError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to sign out",
+      )
+    }
   }
 
   async function handleMove(holding: HoldingRow) {
@@ -296,9 +320,24 @@ export function HoldingsView({
                   ? "Waiting for synchronized data…"
                   : "Not ready"}
           </p>
+
+          {isOfflineAccess ? (
+            <p>
+              Local access only · authentication will refresh
+              after reconnection
+            </p>
+          ) : null}
         </div>
 
-        <button onClick={() => void signOut()} type="button">
+        <button
+          onClick={() => void signOut()}
+          title={
+            isOnline
+              ? undefined
+              : "Reconnect before signing out"
+          }
+          type="button"
+        >
           Sign out
         </button>
       </header>
@@ -309,6 +348,11 @@ export function HoldingsView({
       {error ? <p role="alert">{String(error)}</p> : null}
       {operationMessage ? <p>{operationMessage}</p> : null}
       {operationError ? <p role="alert">{operationError}</p> : null}
+      {syncError ? (
+        <p role="alert">
+          Synchronization paused: {syncError}
+        </p>
+      ) : null}
 
       {deviceRegistration.error ? (
         <div role="alert">

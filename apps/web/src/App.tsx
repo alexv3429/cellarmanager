@@ -1,49 +1,62 @@
 import { useEffect, useState } from "react"
 
 import "./App.css"
+import { signOutAndClearLocalData } from "./auth/signOut"
 import { useSession } from "./auth/useSession"
 import { HoldingsView } from "./components/HoldingsView"
 import { LoginForm } from "./components/LoginForm"
-import { setPowerSyncUser } from "./data/powersync/connection"
+import {
+  setPowerSyncAccess,
+} from "./data/powersync/connection"
 
 export default function App() {
-  const { session, isLoading, error: sessionError } = useSession()
-  const [syncError, setSyncError] = useState<string | null>(null)
+  const {
+    session,
+    userId,
+    isLoading,
+    isOnline,
+    isOfflineAccess,
+    error: sessionError,
+  } = useSession()
 
-  const userId = session?.user.id ?? null
+  const [syncError, setSyncError] =
+    useState<string | null>(null)
 
   useEffect(() => {
     setSyncError(null)
 
-    void setPowerSyncUser(userId).catch((error: unknown) => {
+    void setPowerSyncAccess({
+      userId,
+      connectToBackend:
+        session !== null && isOnline,
+    }).catch((error: unknown) => {
       setSyncError(
         error instanceof Error
           ? error.message
           : "Unable to connect PowerSync",
       )
     })
-  }, [userId])
+  }, [isOnline, session, userId])
 
   if (isLoading) {
     return <main>Loading session…</main>
   }
 
-  if (sessionError) {
+  if (sessionError && !userId) {
     return <main role="alert">{sessionError}</main>
   }
 
-  if (!session) {
+  if (!userId) {
     return <LoginForm />
   }
 
-  if (syncError) {
-    return (
-      <main>
-        <h1>PowerSync connection failed</h1>
-        <p role="alert">{syncError}</p>
-      </main>
-    )
-  }
-
-  return <HoldingsView userId={session.user.id} />
+  return (
+    <HoldingsView
+      isOfflineAccess={isOfflineAccess}
+      isOnline={isOnline}
+      onSignOut={signOutAndClearLocalData}
+      syncError={syncError ?? sessionError}
+      userId={userId}
+    />
+  )
 }
