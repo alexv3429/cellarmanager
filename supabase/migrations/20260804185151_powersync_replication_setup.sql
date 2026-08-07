@@ -17,10 +17,10 @@ begin
 end
 $$;
 
--- Keep the role disabled until a deployment-specific password is configured
--- outside Git.
+-- Preserve deployment-specific login credentials configured outside Git.
+-- Only replication-related attributes are managed by this migration.
 alter role powersync_role
-    with replication bypassrls nologin;
+    with replication bypassrls;
 
 -- Restrict PowerSync to reading the application schema and the eight tables
 -- required by the offline-sync spike.

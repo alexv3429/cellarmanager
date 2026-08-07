@@ -67,7 +67,7 @@ select is(
 );
 
 
--- 2: Accepted CONSUME.
+-- 2: Accepted REMOVE.
 select is(
     (
         select operation_status
@@ -75,16 +75,17 @@ select is(
             '00000000-0000-4000-8000-000000009002',
             '00000000-0000-4000-8000-000000000100',
             '00000000-0000-4000-8000-000000000101',
-            'CONSUME',
+            'REMOVE',
             '00000000-0000-4000-8000-000000000110',
             '00000000-0000-4000-8000-000000000122',
             null,
             1,
-            '2026-08-04T12:01:00Z'
+            '2026-08-04T12:01:00Z',
+            'DRANK'
         )
     ),
     'ACCEPTED',
-    'CONSUME is accepted'
+    'REMOVE is accepted'
 );
 
 select is(
@@ -97,7 +98,7 @@ select is(
             '00000000-0000-4000-8000-000000000122'
     ),
     1,
-    'CONSUME decreases the selected holding'
+    'REMOVE decreases the selected holding'
 );
 
 select is(
@@ -108,7 +109,7 @@ select is(
             '00000000-0000-4000-8000-000000009002'
     ),
     1::bigint,
-    'CONSUME is recorded exactly once'
+    'REMOVE is recorded exactly once'
 );
 
 
@@ -120,12 +121,13 @@ select is(
             '00000000-0000-4000-8000-000000009003',
             '00000000-0000-4000-8000-000000000100',
             '00000000-0000-4000-8000-000000000101',
-            'CONSUME',
+            'REMOVE',
             '00000000-0000-4000-8000-000000000110',
             '00000000-0000-4000-8000-000000000121',
             null,
             99,
-            '2026-08-04T12:02:00Z'
+            '2026-08-04T12:02:00Z',
+            'DRANK'
         )
     ),
     'REJECTED',

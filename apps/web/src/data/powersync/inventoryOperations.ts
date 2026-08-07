@@ -5,22 +5,39 @@ interface QueueInventoryOperationInput {
   deviceId: string
   userId: string
   wineId: string
-  sourceLocationId: string
   quantity: number
 }
 
-export interface QueueMoveInput
+export interface QueueAddInput
   extends QueueInventoryOperationInput {
   destinationLocationId: string
 }
 
-export type QueueConsumeInput =
-  QueueInventoryOperationInput
+export interface QueueMoveInput
+  extends QueueInventoryOperationInput {
+  sourceLocationId: string
+  destinationLocationId: string
+}
+
+export type RemoveReason =
+  | "DRANK"
+  | "GIFTED"
+  | "BROKEN"
+  | "LOST"
+  | "OTHER"
+
+export interface QueueRemoveInput
+  extends QueueInventoryOperationInput {
+  sourceLocationId: string
+  removeReason: RemoveReason
+}
 
 interface QueueOperationInput
   extends QueueInventoryOperationInput {
-  operationType: "MOVE" | "CONSUME"
+  operationType: "ADD" | "MOVE" | "REMOVE"
+  sourceLocationId: string | null
   destinationLocationId: string | null
+  removeReason: RemoveReason | null
 }
 
 type SqlParameter = string | number | null
@@ -49,6 +66,81 @@ function validatePositiveQuantity(
   }
 }
 
+function validateOperationShape(
+  input: QueueOperationInput,
+): void {
+  if (input.operationType === "ADD") {
+    if (input.sourceLocationId !== null) {
+      throw new Error(
+        "An ADD operation must not define a source",
+      )
+    }
+
+    if (input.destinationLocationId === null) {
+      throw new Error(
+        "An ADD operation requires a destination",
+      )
+    }
+
+    if (input.removeReason !== null) {
+      throw new Error(
+        "An ADD operation must not define a remove reason",
+      )
+    }
+
+    return
+  }
+
+  if (input.operationType === "MOVE") {
+    if (input.sourceLocationId === null) {
+      throw new Error(
+        "A MOVE operation requires a source",
+      )
+    }
+
+    if (input.destinationLocationId === null) {
+      throw new Error(
+        "A MOVE operation requires a destination",
+      )
+    }
+
+    if (
+      input.sourceLocationId ===
+      input.destinationLocationId
+    ) {
+      throw new Error(
+        "Source and destination locations must differ",
+      )
+    }
+
+    if (input.removeReason !== null) {
+      throw new Error(
+        "A MOVE operation must not define a remove reason",
+      )
+    }
+
+    return
+  }
+
+  if (input.sourceLocationId === null) {
+    throw new Error(
+      "A REMOVE operation requires a source",
+    )
+  }
+
+  if (input.destinationLocationId !== null) {
+    throw new Error(
+      "A REMOVE operation must not define a destination",
+    )
+  }
+
+  if (input.removeReason === null) {
+    throw new Error(
+      "A REMOVE operation requires a reason",
+    )
+  }
+}
+
 export function createInventoryOperationQueue(
   dependencies: QueueDependencies,
 ) {
@@ -56,25 +148,7 @@ export function createInventoryOperationQueue(
     input: QueueOperationInput,
   ): Promise<string> {
     validatePositiveQuantity(input.quantity)
-
-    if (
-      input.operationType === "MOVE" &&
-      input.destinationLocationId === null
-    ) {
-      throw new Error(
-        "A MOVE operation requires a destination",
-      )
-    }
-
-    if (
-      input.destinationLocationId !== null &&
-      input.sourceLocationId ===
-        input.destinationLocationId
-    ) {
-      throw new Error(
-        "Source and destination locations must differ",
-      )
-    }
+    validateOperationShape(input)
 
     const operationId =
       dependencies.createOperationId()
@@ -94,10 +168,11 @@ export function createInventoryOperationQueue(
           source_location_id,
           destination_location_id,
           quantity,
+          remove_reason,
           status,
           created_at_client
         )
-        values (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?)
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?)
       `,
       [
         operationId,
@@ -109,6 +184,7 @@ export function createInventoryOperationQueue(
         input.sourceLocationId,
         input.destinationLocationId,
         input.quantity,
+        input.removeReason,
         createdAtClient,
       ],
     )
@@ -117,19 +193,29 @@ export function createInventoryOperationQueue(
   }
 
   return {
+    queueAdd(input: QueueAddInput): Promise<string> {
+      return queueOperation({
+        ...input,
+        operationType: "ADD",
+        sourceLocationId: null,
+        removeReason: null,
+      })
+    },
+
     queueMove(input: QueueMoveInput): Promise<string> {
       return queueOperation({
         ...input,
         operationType: "MOVE",
+        removeReason: null,
       })
     },
 
-    queueConsume(
-      input: QueueConsumeInput,
+    queueRemove(
+      input: QueueRemoveInput,
     ): Promise<string> {
       return queueOperation({
         ...input,
-        operationType: "CONSUME",
+        operationType: "REMOVE",
         destinationLocationId: null,
       })
     },
@@ -144,8 +230,11 @@ const inventoryOperationQueue =
     now: () => new Date(),
   })
 
+export const queueAdd =
+  inventoryOperationQueue.queueAdd
+
 export const queueMove =
   inventoryOperationQueue.queueMove
 
-export const queueConsume =
-  inventoryOperationQueue.queueConsume
+export const queueRemove =
+  inventoryOperationQueue.queueRemove

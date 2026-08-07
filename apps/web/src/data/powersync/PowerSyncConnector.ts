@@ -117,7 +117,7 @@ export class PowerSyncConnector implements PowerSyncBackendConnector {
             "operation_type",
           ),
           p_wine_id: requireString(data, "wine_id"),
-          p_source_location_id: requireString(
+          p_source_location_id: optionalString(
             data,
             "source_location_id",
           ),
@@ -132,6 +132,10 @@ export class PowerSyncConnector implements PowerSyncBackendConnector {
           p_created_at_client: requireString(
             data,
             "created_at_client",
+          ),
+          p_remove_reason: optionalString(
+            data,
+            "remove_reason",
           ),
         },
       )

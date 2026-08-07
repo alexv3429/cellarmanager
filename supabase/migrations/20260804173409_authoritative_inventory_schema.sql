@@ -189,12 +189,23 @@ create table public.inventory_operations (
     device_id uuid not null,
     user_id uuid not null,
     operation_type text not null
-        check (operation_type in ('MOVE', 'CONSUME')),
+        check (operation_type in ('ADD', 'MOVE', 'REMOVE')),
     wine_id uuid not null,
-    source_location_id uuid not null,
+    source_location_id uuid,
     destination_location_id uuid,
     quantity integer not null
         check (quantity > 0),
+    remove_reason text
+        check (
+            remove_reason is null
+            or remove_reason in (
+                'DRANK',
+                'GIFTED',
+                'BROKEN',
+                'LOST',
+                'OTHER'
+            )
+        ),
     status text not null
         check (status in ('ACCEPTED', 'REJECTED')),
     error_code text,
@@ -221,14 +232,25 @@ create table public.inventory_operations (
     constraint inventory_operations_shape_check
         check (
             (
-                operation_type = 'MOVE'
+                operation_type = 'ADD'
+                and source_location_id is null
                 and destination_location_id is not null
-                and destination_location_id <> source_location_id
+                and remove_reason is null
             )
             or
             (
-                operation_type = 'CONSUME'
+                operation_type = 'MOVE'
+                and source_location_id is not null
+                and destination_location_id is not null
+                and destination_location_id <> source_location_id
+                and remove_reason is null
+            )
+            or
+            (
+                operation_type = 'REMOVE'
+                and source_location_id is not null
                 and destination_location_id is null
+                and remove_reason is not null
             )
         ),
 
@@ -414,7 +436,8 @@ create or replace function public.apply_inventory_operation(
     p_source_location_id uuid,
     p_destination_location_id uuid default null,
     p_quantity integer default 1,
-    p_created_at_client timestamptz default now()
+    p_created_at_client timestamptz default now(),
+    p_remove_reason text default null
 )
 returns table (
     operation_id uuid,
@@ -429,6 +452,8 @@ as $$
 declare
     v_user_id uuid := (select auth.uid());
     v_operation_type text := upper(trim(p_operation_type));
+    v_remove_reason text :=
+        nullif(upper(trim(p_remove_reason)), '');
     v_existing public.inventory_operations%rowtype;
     v_available integer;
     v_error_message text;
@@ -466,6 +491,8 @@ begin
            or v_existing.destination_location_id
                 is distinct from p_destination_location_id
            or v_existing.quantity is distinct from p_quantity
+           or v_existing.remove_reason
+                is distinct from v_remove_reason
         then
             raise exception using
                 errcode = '22023',
@@ -505,7 +532,7 @@ begin
             message = 'Device is not registered for this user and household';
     end if;
 
-    if v_operation_type not in ('MOVE', 'CONSUME') then
+    if v_operation_type not in ('ADD', 'MOVE', 'REMOVE') then
         raise exception using
             errcode = '22023',
             message = 'Unsupported inventory operation type';
@@ -528,24 +555,23 @@ begin
             message = 'Wine does not belong to the household';
     end if;
 
-    if not exists (
-        select 1
-        from public.locations loc
-        where loc.id = p_source_location_id
-          and loc.household_id = p_household_id
-    ) then
-        raise exception using
-            errcode = '22023',
-            message = 'Source location does not belong to the household';
-    end if;
-
-    if v_operation_type = 'MOVE' then
-        if p_destination_location_id is null
-           or p_destination_location_id = p_source_location_id
-        then
+    if v_operation_type = 'ADD' then
+        if p_source_location_id is not null then
             raise exception using
                 errcode = '22023',
-                message = 'MOVE requires a different destination location';
+                message = 'ADD must not define a source location';
+        end if;
+
+        if p_destination_location_id is null then
+            raise exception using
+                errcode = '22023',
+                message = 'ADD requires a destination location';
+        end if;
+
+        if v_remove_reason is not null then
+            raise exception using
+                errcode = '22023',
+                message = 'ADD must not define a remove reason';
         end if;
 
         if not exists (
@@ -558,77 +584,156 @@ begin
                 errcode = '22023',
                 message = 'Destination location does not belong to the household';
         end if;
-    elsif p_destination_location_id is not null then
-        raise exception using
-            errcode = '22023',
-            message = 'CONSUME must not define a destination location';
+
+    elsif v_operation_type = 'MOVE' then
+        if p_source_location_id is null then
+            raise exception using
+                errcode = '22023',
+                message = 'MOVE requires a source location';
+        end if;
+
+        if p_destination_location_id is null
+           or p_destination_location_id = p_source_location_id
+        then
+            raise exception using
+                errcode = '22023',
+                message = 'MOVE requires a different destination location';
+        end if;
+
+        if v_remove_reason is not null then
+            raise exception using
+                errcode = '22023',
+                message = 'MOVE must not define a remove reason';
+        end if;
+
+        if not exists (
+            select 1
+            from public.locations loc
+            where loc.id = p_source_location_id
+              and loc.household_id = p_household_id
+        ) then
+            raise exception using
+                errcode = '22023',
+                message = 'Source location does not belong to the household';
+        end if;
+
+        if not exists (
+            select 1
+            from public.locations loc
+            where loc.id = p_destination_location_id
+              and loc.household_id = p_household_id
+        ) then
+            raise exception using
+                errcode = '22023',
+                message = 'Destination location does not belong to the household';
+        end if;
+
+    else
+        if p_source_location_id is null then
+            raise exception using
+                errcode = '22023',
+                message = 'REMOVE requires a source location';
+        end if;
+
+        if p_destination_location_id is not null then
+            raise exception using
+                errcode = '22023',
+                message = 'REMOVE must not define a destination location';
+        end if;
+
+        if v_remove_reason not in (
+            'DRANK',
+            'GIFTED',
+            'BROKEN',
+            'LOST',
+            'OTHER'
+        ) then
+            raise exception using
+                errcode = '22023',
+                message = 'REMOVE requires a valid remove reason';
+        end if;
+
+        if not exists (
+            select 1
+            from public.locations loc
+            where loc.id = p_source_location_id
+              and loc.household_id = p_household_id
+        ) then
+            raise exception using
+                errcode = '22023',
+                message = 'Source location does not belong to the household';
+        end if;
     end if;
 
-    select h.quantity
-    into v_available
-    from public.holdings h
-    where h.household_id = p_household_id
-      and h.wine_id = p_wine_id
-      and h.location_id = p_source_location_id
-    for update;
+    if v_operation_type in ('MOVE', 'REMOVE') then
+        select h.quantity
+        into v_available
+        from public.holdings h
+        where h.household_id = p_household_id
+          and h.wine_id = p_wine_id
+          and h.location_id = p_source_location_id
+        for update;
 
-    if coalesce(v_available, 0) < p_quantity then
-        v_error_message := format(
-            'Requested quantity %s exceeds available quantity %s',
-            p_quantity,
-            coalesce(v_available, 0)
-        );
+        if coalesce(v_available, 0) < p_quantity then
+            v_error_message := format(
+                'Requested quantity %s exceeds available quantity %s',
+                p_quantity,
+                coalesce(v_available, 0)
+            );
 
-        insert into public.inventory_operations (
-            id,
-            household_id,
-            device_id,
-            user_id,
-            operation_type,
-            wine_id,
-            source_location_id,
-            destination_location_id,
-            quantity,
-            status,
-            error_code,
-            error_message,
-            created_at_client
-        )
-        values (
-            p_operation_id,
-            p_household_id,
-            p_device_id,
-            v_user_id,
-            v_operation_type,
-            p_wine_id,
-            p_source_location_id,
-            p_destination_location_id,
-            p_quantity,
-            'REJECTED',
-            'INSUFFICIENT_STOCK',
-            v_error_message,
-            coalesce(p_created_at_client, now())
-        );
+            insert into public.inventory_operations (
+                id,
+                household_id,
+                device_id,
+                user_id,
+                operation_type,
+                wine_id,
+                source_location_id,
+                destination_location_id,
+                quantity,
+                remove_reason,
+                status,
+                error_code,
+                error_message,
+                created_at_client
+            )
+            values (
+                p_operation_id,
+                p_household_id,
+                p_device_id,
+                v_user_id,
+                v_operation_type,
+                p_wine_id,
+                p_source_location_id,
+                p_destination_location_id,
+                p_quantity,
+                v_remove_reason,
+                'REJECTED',
+                'INSUFFICIENT_STOCK',
+                v_error_message,
+                coalesce(p_created_at_client, now())
+            );
 
-        return query
-        select
-            p_operation_id,
-            'REJECTED'::text,
-            'INSUFFICIENT_STOCK'::text,
-            v_error_message;
+            return query
+            select
+                p_operation_id,
+                'REJECTED'::text,
+                'INSUFFICIENT_STOCK'::text,
+                v_error_message;
 
-        return;
+            return;
+        end if;
+
+        update public.holdings
+        set quantity = quantity - p_quantity,
+            revision = revision + 1,
+            updated_at = now()
+        where household_id = p_household_id
+          and wine_id = p_wine_id
+          and location_id = p_source_location_id;
     end if;
 
-    update public.holdings
-    set quantity = quantity - p_quantity,
-        revision = revision + 1,
-        updated_at = now()
-    where household_id = p_household_id
-      and wine_id = p_wine_id
-      and location_id = p_source_location_id;
-
-    if v_operation_type = 'MOVE' then
+    if v_operation_type in ('ADD', 'MOVE') then
         insert into public.holdings as destination (
             household_id,
             wine_id,
@@ -662,6 +767,7 @@ begin
         source_location_id,
         destination_location_id,
         quantity,
+        remove_reason,
         status,
         created_at_client
     )
@@ -675,6 +781,7 @@ begin
         p_source_location_id,
         p_destination_location_id,
         p_quantity,
+        v_remove_reason,
         'ACCEPTED',
         coalesce(p_created_at_client, now())
     );
@@ -699,7 +806,8 @@ on function public.apply_inventory_operation(
     uuid,
     uuid,
     integer,
-    timestamptz
+    timestamptz,
+    text
 )
 from public;
 
@@ -713,7 +821,8 @@ on function public.apply_inventory_operation(
     uuid,
     uuid,
     integer,
-    timestamptz
+    timestamptz,
+    text
 )
 from anon;
 
@@ -727,7 +836,8 @@ on function public.apply_inventory_operation(
     uuid,
     uuid,
     integer,
-    timestamptz
+    timestamptz,
+    text
 )
 to authenticated;
 

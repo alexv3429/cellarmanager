@@ -79,6 +79,7 @@ const inventory_operations = new Table(
     source_location_id: column.text,
     destination_location_id: column.text,
     quantity: column.integer,
+    remove_reason: column.text,
     status: column.text,
     error_code: column.text,
     error_message: column.text,
