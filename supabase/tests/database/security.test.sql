@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(6);
+select plan(8);
 
 select ok(
     has_table_privilege(
@@ -29,6 +29,15 @@ select ok(
         'SELECT'
     ),
     'Anonymous users cannot read holdings'
+);
+
+select ok(
+    not has_table_privilege(
+        'authenticated',
+        'public.wines',
+        'INSERT'
+    ),
+    'Authenticated users cannot directly insert catalog wines'
 );
 
 set local role authenticated;
@@ -66,6 +75,27 @@ select throws_ok(
     '42501',
     'User is not a member of this household',
     'RPC rejects operations against another household'
+);
+
+select throws_ok(
+    $test$
+        select *
+        from public.apply_add_inventory_operation(
+            '00000000-0000-4000-8000-000000009102',
+            '00000000-0000-4000-8000-000000000200',
+            '00000000-0000-4000-8000-000000000201',
+            '00000000-0000-4000-8000-000000000211',
+            'Unauthorized Domaine',
+            'Private Cuvée',
+            2022,
+            '00000000-0000-4000-8000-000000000221',
+            1,
+            '2026-08-07T12:10:00Z'
+        )
+    $test$,
+    '42501',
+    'User is not a member of this household',
+    'ADD RPC rejects catalog creation for another household'
 );
 
 select * from finish();

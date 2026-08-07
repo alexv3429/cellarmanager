@@ -38,6 +38,26 @@ function optionalString(
   return value
 }
 
+function optionalInteger(
+  data: Record<string, unknown>,
+  field: string,
+): number | null {
+  const value = data[field]
+
+  if (value === null || value === undefined) {
+    return null
+  }
+
+  if (
+    typeof value !== "number" ||
+    !Number.isInteger(value)
+  ) {
+    throw new Error(`Invalid inventory operation field: ${field}`)
+  }
+
+  return value
+}
+
 function requirePositiveInteger(
   data: Record<string, unknown>,
   field: string,
@@ -103,20 +123,95 @@ export class PowerSyncConnector implements PowerSyncBackendConnector {
       const data: Record<string, unknown> =
         operation.opData ?? {}
 
+      const operationType = requireString(
+        data,
+        "operation_type",
+      )
+
+      const householdId = requireString(
+        data,
+        "household_id",
+      )
+
+      const deviceId = requireString(
+        data,
+        "device_id",
+      )
+
+      const wineId = requireString(
+        data,
+        "wine_id",
+      )
+
+      const quantity = requirePositiveInteger(
+        data,
+        "quantity",
+      )
+
+      const createdAtClient = requireString(
+        data,
+        "created_at_client",
+      )
+
+      const wineProducer = optionalString(
+        data,
+        "wine_producer",
+      )
+
+      const wineCuvee = optionalString(
+        data,
+        "wine_cuvee",
+      )
+
+      if (
+        operationType === "ADD" &&
+        (wineProducer !== null || wineCuvee !== null)
+      ) {
+        if (wineProducer === null || wineCuvee === null) {
+          throw new Error(
+            "Invalid new-wine ADD identity",
+          )
+        }
+
+        const { error } = await supabase.rpc(
+          "apply_add_inventory_operation",
+          {
+            p_operation_id: operation.id,
+            p_household_id: householdId,
+            p_device_id: deviceId,
+            p_requested_wine_id: wineId,
+            p_wine_producer: wineProducer,
+            p_wine_cuvee: wineCuvee,
+            p_wine_vintage: optionalInteger(
+              data,
+              "wine_vintage",
+            ),
+            p_destination_location_id: requireString(
+              data,
+              "destination_location_id",
+            ),
+            p_quantity: quantity,
+            p_created_at_client: createdAtClient,
+          },
+        )
+
+        if (error) {
+          throw new Error(
+            `Inventory ADD upload failed: ${error.message}`,
+          )
+        }
+
+        continue
+      }
+
       const { error } = await supabase.rpc(
         "apply_inventory_operation",
         {
           p_operation_id: operation.id,
-          p_household_id: requireString(
-            data,
-            "household_id",
-          ),
-          p_device_id: requireString(data, "device_id"),
-          p_operation_type: requireString(
-            data,
-            "operation_type",
-          ),
-          p_wine_id: requireString(data, "wine_id"),
+          p_household_id: householdId,
+          p_device_id: deviceId,
+          p_operation_type: operationType,
+          p_wine_id: wineId,
           p_source_location_id: optionalString(
             data,
             "source_location_id",
@@ -125,14 +220,8 @@ export class PowerSyncConnector implements PowerSyncBackendConnector {
             data,
             "destination_location_id",
           ),
-          p_quantity: requirePositiveInteger(
-            data,
-            "quantity",
-          ),
-          p_created_at_client: requireString(
-            data,
-            "created_at_client",
-          ),
+          p_quantity: quantity,
+          p_created_at_client: createdAtClient,
           p_remove_reason: optionalString(
             data,
             "remove_reason",
