@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { cleanSetupLabel } from "./cellarSetup"
+import { cleanSetupLabel } from "./cellarSetupLabels"
 
 describe("cellar setup labels", () => {
   it("normalizes surrounding and repeated whitespace", () => {

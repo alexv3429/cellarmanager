@@ -1,21 +1,5 @@
+import { requireSetupLabel } from "./cellarSetupLabels"
 import { supabase } from "./supabase"
-
-function cleanSetupLabel(value: string): string {
-  return value.trim().replace(/\s+/gu, " ")
-}
-
-function requireSetupLabel(
-  value: string,
-  fieldName: string,
-): string {
-  const cleaned = cleanSetupLabel(value)
-
-  if (cleaned.length === 0) {
-    throw new Error(`${fieldName} is required`)
-  }
-
-  return cleaned
-}
 
 async function requireRpcSuccess(
   promise: PromiseLike<{
@@ -80,4 +64,3 @@ export async function renameLocation(
   )
 }
 
-export { cleanSetupLabel }
