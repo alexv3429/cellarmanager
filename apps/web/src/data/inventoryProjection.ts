@@ -1,3 +1,5 @@
+import type { WineCatalogEntry } from "./wineCatalog"
+
 export interface InventoryLocation {
   id: string
   household_id: string
@@ -19,8 +21,12 @@ export interface AuthoritativeHolding {
 
 export interface InventoryOperation {
   id: string
+  household_id?: string
   operation_type: "ADD" | "MOVE" | "REMOVE"
   wine_id: string
+  wine_producer?: string | null
+  wine_cuvee?: string | null
+  wine_vintage?: number | null
   source_location_id: string | null
   destination_location_id: string | null
   quantity: number
@@ -39,6 +45,14 @@ interface ProjectionInput {
   holdings: AuthoritativeHolding[]
   locations: InventoryLocation[]
   operations: InventoryOperation[]
+  wines?: WineCatalogEntry[]
+}
+
+interface WineTemplate {
+  household_id: string
+  producer: string
+  cuvee: string
+  vintage: number | null
 }
 
 function positionKey(
@@ -52,6 +66,7 @@ export function projectHoldings({
   holdings,
   locations,
   operations,
+  wines = [],
 }: ProjectionInput): ProjectedHolding[] {
   const locationsById = new Map(
     locations.map((location) => [location.id, location]),
@@ -59,8 +74,17 @@ export function projectHoldings({
 
   const wineTemplates = new Map<
     string,
-    AuthoritativeHolding
+    WineTemplate
   >()
+
+  for (const wine of wines) {
+    wineTemplates.set(wine.id, {
+      household_id: wine.household_id,
+      producer: wine.producer,
+      cuvee: wine.cuvee,
+      vintage: wine.vintage,
+    })
+  }
 
   const projectedByPosition = new Map<
     string,
@@ -68,9 +92,12 @@ export function projectHoldings({
   >()
 
   for (const holding of holdings) {
-    if (!wineTemplates.has(holding.wine_id)) {
-      wineTemplates.set(holding.wine_id, holding)
-    }
+    wineTemplates.set(holding.wine_id, {
+      household_id: holding.household_id,
+      producer: holding.producer,
+      cuvee: holding.cuvee,
+      vintage: holding.vintage,
+    })
 
     projectedByPosition.set(
       positionKey(
@@ -85,6 +112,40 @@ export function projectHoldings({
         quantity: holding.quantity,
       },
     )
+  }
+
+  for (const operation of operations) {
+    if (
+      operation.status !== "PENDING" ||
+      operation.operation_type !== "ADD" ||
+      !operation.wine_producer ||
+      !operation.wine_cuvee ||
+      wineTemplates.has(operation.wine_id)
+    ) {
+      continue
+    }
+
+    const destination =
+      operation.destination_location_id
+        ? locationsById.get(
+            operation.destination_location_id,
+          )
+        : undefined
+
+    const householdId =
+      operation.household_id ??
+      destination?.household_id
+
+    if (!householdId) {
+      continue
+    }
+
+    wineTemplates.set(operation.wine_id, {
+      household_id: householdId,
+      producer: operation.wine_producer,
+      cuvee: operation.wine_cuvee,
+      vintage: operation.wine_vintage ?? null,
+    })
   }
 
   function ensurePosition(

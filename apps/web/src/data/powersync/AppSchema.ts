@@ -76,6 +76,9 @@ const inventory_operations = new Table(
     user_id: column.text,
     operation_type: column.text,
     wine_id: column.text,
+    wine_producer: column.text,
+    wine_cuvee: column.text,
+    wine_vintage: column.integer,
     source_location_id: column.text,
     destination_location_id: column.text,
     quantity: column.integer,
@@ -113,4 +116,3 @@ export const AppSchema = new Schema({
 });
 
 export type Database = (typeof AppSchema)['types'];
-

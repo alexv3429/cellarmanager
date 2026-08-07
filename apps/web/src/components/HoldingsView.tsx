@@ -1,5 +1,9 @@
 import { useQuery, useStatus } from "@powersync/react"
-import { useMemo, useState } from "react"
+import {
+  type FormEvent,
+  useMemo,
+  useState,
+} from "react"
 
 import {
   type AuthoritativeHolding,
@@ -8,10 +12,21 @@ import {
   type ProjectedHolding,
   projectHoldings,
 } from "../data/inventoryProjection"
+import {
+  cleanWineText,
+  findExactWine,
+  getCuveeSuggestions,
+  getProducerSuggestions,
+  getVintageSuggestions,
+  parseWineVintage,
+  type WineCatalogEntry,
+} from "../data/wineCatalog"
 import { useRegisteredDevices } from "../devices/useRegisteredDevices"
 import {
+  queueAdd,
   queueMove,
   queueRemove,
+  type QueueAddInput,
   type QueueMoveInput,
   type QueueRemoveInput,
   type RemoveReason,
@@ -67,12 +82,26 @@ const LOCATIONS_QUERY = `
   order by code
 `
 
+const WINE_CATALOG_QUERY = `
+  select
+    id,
+    household_id,
+    producer,
+    cuvee,
+    vintage
+  from wines
+  order by producer, cuvee, vintage
+`
 
 const PENDING_OPERATIONS_QUERY = `
   select
     id,
+    household_id,
     operation_type,
     wine_id,
+    wine_producer,
+    wine_cuvee,
+    wine_vintage,
     source_location_id,
     destination_location_id,
     quantity,
@@ -130,6 +159,12 @@ export function HoldingsView({
   } = useQuery<InventoryLocation>(LOCATIONS_QUERY)
 
   const {
+    data: wines,
+    error: winesError,
+    isLoading: winesLoading,
+  } = useQuery<WineCatalogEntry>(WINE_CATALOG_QUERY)
+
+  const {
     data: pendingOperations,
     error: pendingOperationsError,
     isLoading: pendingOperationsLoading,
@@ -146,19 +181,91 @@ export function HoldingsView({
         holdings: authoritativeHoldings,
         locations,
         operations: pendingOperations,
+        wines,
       }),
-    [authoritativeHoldings, locations, pendingOperations],
+    [
+      authoritativeHoldings,
+      locations,
+      pendingOperations,
+      wines,
+    ],
   )
 
   const error =
     holdingsError ??
     locationsError ??
+    winesError ??
     pendingOperationsError
 
   const isLoading =
     holdingsLoading ||
     locationsLoading ||
+    winesLoading ||
     pendingOperationsLoading
+
+  const [addProducer, setAddProducer] = useState("")
+  const [addCuvee, setAddCuvee] = useState("")
+  const [addVintage, setAddVintage] = useState("")
+  const [addQuantity, setAddQuantity] = useState("1")
+  const [addLocationId, setAddLocationId] = useState("")
+  const [adding, setAdding] = useState(false)
+
+  const selectedAddLocationId =
+    addLocationId || locations[0]?.id || ""
+
+  const selectedAddLocation = locations.find(
+    (location) => location.id === selectedAddLocationId,
+  )
+
+  const selectedAddHouseholdId =
+    selectedAddLocation?.household_id ?? ""
+
+  const cleanedAddProducer = cleanWineText(addProducer)
+  const cleanedAddCuvee = cleanWineText(addCuvee)
+
+  let parsedAddVintage: number | null = null
+  let addVintageError: string | null = null
+
+  try {
+    parsedAddVintage = parseWineVintage(addVintage)
+  } catch (caughtError: unknown) {
+    addVintageError =
+      caughtError instanceof Error
+        ? caughtError.message
+        : "Invalid vintage"
+  }
+
+  const matchingWine =
+    selectedAddLocation &&
+    cleanedAddProducer.length > 0 &&
+    cleanedAddCuvee.length > 0 &&
+    addVintageError === null
+      ? findExactWine(
+          wines,
+          selectedAddHouseholdId,
+          cleanedAddProducer,
+          cleanedAddCuvee,
+          parsedAddVintage,
+        )
+      : undefined
+
+  const producerSuggestions = getProducerSuggestions(
+    wines,
+    selectedAddHouseholdId,
+  )
+
+  const cuveeSuggestions = getCuveeSuggestions(
+    wines,
+    selectedAddHouseholdId,
+    addProducer,
+  )
+
+  const vintageSuggestions = getVintageSuggestions(
+    wines,
+    selectedAddHouseholdId,
+    addProducer,
+    addCuvee,
+  )
 
   const [destinationByHolding, setDestinationByHolding] =
     useState<Record<string, string>>({})
@@ -196,6 +303,110 @@ export function HoldingsView({
           ? caughtError.message
           : "Unable to sign out",
       )
+    }
+  }
+
+  async function handleAdd(
+    event: FormEvent<HTMLFormElement>,
+  ) {
+    event.preventDefault()
+    setOperationMessage(null)
+    setOperationError(null)
+
+    if (!selectedAddLocation) {
+      setOperationError("Select a destination location")
+      return
+    }
+
+    if (
+      cleanedAddProducer.length === 0 ||
+      cleanedAddCuvee.length === 0
+    ) {
+      setOperationError(
+        "Producer and cuvée are required",
+      )
+      return
+    }
+
+    if (addVintageError !== null) {
+      setOperationError(addVintageError)
+      return
+    }
+
+    const quantity = Number(addQuantity)
+
+    if (
+      !Number.isInteger(quantity) ||
+      quantity <= 0
+    ) {
+      setOperationError(
+        "Quantity must be a positive integer",
+      )
+      return
+    }
+
+    const deviceId =
+      deviceRegistration.deviceIdByHousehold[
+        selectedAddLocation.household_id
+      ]
+
+    if (!deviceId) {
+      setOperationError(
+        "This browser is not registered for this household yet",
+      )
+      return
+    }
+
+    const existingWine = findExactWine(
+      wines,
+      selectedAddLocation.household_id,
+      cleanedAddProducer,
+      cleanedAddCuvee,
+      parsedAddVintage,
+    )
+
+    const add: QueueAddInput = existingWine
+      ? {
+          householdId: selectedAddLocation.household_id,
+          deviceId,
+          userId,
+          wineId: existingWine.id,
+          destinationLocationId: selectedAddLocation.id,
+          quantity,
+        }
+      : {
+          householdId: selectedAddLocation.household_id,
+          deviceId,
+          userId,
+          wineId: crypto.randomUUID(),
+          destinationLocationId: selectedAddLocation.id,
+          quantity,
+          wineProducer: cleanedAddProducer,
+          wineCuvee: cleanedAddCuvee,
+          wineVintage: parsedAddVintage,
+        }
+
+    setAdding(true)
+
+    try {
+      const operationId = await queueAdd(add)
+
+      setOperationMessage(
+        `Add ${operationId.slice(0, 8)} queued locally`,
+      )
+
+      setAddProducer("")
+      setAddCuvee("")
+      setAddVintage("")
+      setAddQuantity("1")
+    } catch (caughtError: unknown) {
+      setOperationError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to queue add",
+      )
+    } finally {
+      setAdding(false)
     }
   }
 
@@ -352,7 +563,7 @@ export function HoldingsView({
         </button>
       </header>
 
-      <h2>Holdings</h2>
+      <h2>Add bottles</h2>
 
       {isLoading ? <p>Opening local database…</p> : null}
       {error ? <p role="alert">{String(error)}</p> : null}
@@ -375,6 +586,126 @@ export function HoldingsView({
           </button>
         </div>
       ) : null}
+
+      <form onSubmit={(event) => void handleAdd(event)}>
+        <label>
+          Producer / winery
+          <input
+            list="add-producer-suggestions"
+            onChange={(event) =>
+              setAddProducer(event.target.value)
+            }
+            required
+            value={addProducer}
+          />
+        </label>
+
+        <datalist id="add-producer-suggestions">
+          {producerSuggestions.map((producer) => (
+            <option key={producer} value={producer} />
+          ))}
+        </datalist>
+
+        <label>
+          Cuvée
+          <input
+            list="add-cuvee-suggestions"
+            onChange={(event) =>
+              setAddCuvee(event.target.value)
+            }
+            required
+            value={addCuvee}
+          />
+        </label>
+
+        <datalist id="add-cuvee-suggestions">
+          {cuveeSuggestions.map((cuvee) => (
+            <option key={cuvee} value={cuvee} />
+          ))}
+        </datalist>
+
+        <label>
+          Vintage
+          <input
+            inputMode="numeric"
+            list="add-vintage-suggestions"
+            onChange={(event) =>
+              setAddVintage(event.target.value)
+            }
+            placeholder="NV"
+            value={addVintage}
+          />
+        </label>
+
+        <datalist id="add-vintage-suggestions">
+          {vintageSuggestions.map((vintage) => (
+            <option
+              key={vintage}
+              value={String(vintage)}
+            />
+          ))}
+        </datalist>
+
+        <label>
+          Quantity
+          <input
+            min="1"
+            onChange={(event) =>
+              setAddQuantity(event.target.value)
+            }
+            required
+            step="1"
+            type="number"
+            value={addQuantity}
+          />
+        </label>
+
+        <label>
+          Location
+          <select
+            onChange={(event) =>
+              setAddLocationId(event.target.value)
+            }
+            value={selectedAddLocationId}
+          >
+            {locations.map((location) => (
+              <option key={location.id} value={location.id}>
+                {location.code}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        {addVintageError ? (
+          <p role="alert">{addVintageError}</p>
+        ) : null}
+
+        {cleanedAddProducer.length > 0 &&
+        cleanedAddCuvee.length > 0 &&
+        addVintageError === null ? (
+          <p>
+            {matchingWine
+              ? "Existing wine — stock will be increased."
+              : "New wine — the catalog entry will be created when this operation synchronizes."}
+          </p>
+        ) : null}
+
+        <button
+          disabled={
+            adding ||
+            !selectedAddLocation ||
+            addVintageError !== null ||
+            !deviceRegistration.deviceIdByHousehold[
+              selectedAddHouseholdId
+            ]
+          }
+          type="submit"
+        >
+          {adding ? "Queuing…" : "Add bottles"}
+        </button>
+      </form>
+
+      <h2>Holdings</h2>
 
       {!isLoading && holdings.length === 0 ? (
         <p>No synchronized holdings found.</p>
