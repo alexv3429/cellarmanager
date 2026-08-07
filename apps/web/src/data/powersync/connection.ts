@@ -1,31 +1,103 @@
+import {
+  clearDatabaseOwner,
+  readDatabaseOwner,
+  setDatabaseOwner,
+} from "../../auth/localAccess"
+import {
+  clearDeviceIdentities,
+} from "../../devices/deviceIdentity"
 import { powerSyncDatabase } from "./database"
 import { PowerSyncConnector } from "./PowerSyncConnector"
 
 const connector = new PowerSyncConnector()
 
 let activeUserId: string | null = null
+let connectionRequested = false
 let pendingOperation: Promise<void> = Promise.resolve()
 
-export function setPowerSyncUser(
-  userId: string | null,
+interface PowerSyncAccess {
+  userId: string | null
+  connectToBackend: boolean
+}
+
+function serialize(
+  operation: () => Promise<void>,
 ): Promise<void> {
   pendingOperation = pendingOperation
     .catch(() => undefined)
-    .then(async () => {
-      if (activeUserId === userId) {
-        return
-      }
-
-      if (activeUserId !== null) {
-        await powerSyncDatabase.disconnect()
-        activeUserId = null
-      }
-
-      if (userId !== null) {
-        await powerSyncDatabase.connect(connector)
-        activeUserId = userId
-      }
-    })
+    .then(operation)
 
   return pendingOperation
+}
+
+async function clearForUserChange(): Promise<void> {
+  await powerSyncDatabase.disconnectAndClear()
+
+  clearDatabaseOwner(window.localStorage)
+  clearDeviceIdentities(window.localStorage)
+
+  activeUserId = null
+  connectionRequested = false
+}
+
+export function setPowerSyncAccess({
+  userId,
+  connectToBackend,
+}: PowerSyncAccess): Promise<void> {
+  return serialize(async () => {
+    if (userId === null) {
+      if (connectionRequested) {
+        await powerSyncDatabase.disconnect()
+      }
+
+      activeUserId = null
+      connectionRequested = false
+      return
+    }
+
+    const databaseOwner = readDatabaseOwner(
+      window.localStorage,
+    )
+
+    const userChanged =
+      (databaseOwner !== null &&
+        databaseOwner !== userId) ||
+      (activeUserId !== null &&
+        activeUserId !== userId)
+
+    if (userChanged) {
+      await clearForUserChange()
+    }
+
+    setDatabaseOwner(window.localStorage, userId)
+    activeUserId = userId
+
+    if (!connectToBackend) {
+      if (connectionRequested) {
+        await powerSyncDatabase.disconnect()
+      }
+
+      connectionRequested = false
+      return
+    }
+
+    if (!connectionRequested) {
+      await powerSyncDatabase.connect(connector)
+      connectionRequested = true
+    }
+  })
+}
+
+export function clearPowerSyncForSignOut(): Promise<void> {
+  return serialize(async () => {
+    try {
+      await powerSyncDatabase.disconnectAndClear()
+    } finally {
+      clearDatabaseOwner(window.localStorage)
+      clearDeviceIdentities(window.localStorage)
+
+      activeUserId = null
+      connectionRequested = false
+    }
+  })
 }

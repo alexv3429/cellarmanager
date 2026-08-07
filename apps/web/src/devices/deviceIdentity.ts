@@ -4,6 +4,13 @@ export const DEVICE_IDS_STORAGE_KEY =
 export interface DeviceIdentityStorage {
   getItem(key: string): string | null
   setItem(key: string, value: string): void
+  removeItem(key: string): void
+}
+
+export function clearDeviceIdentities(
+  storage: DeviceIdentityStorage,
+): void {
+  storage.removeItem(DEVICE_IDS_STORAGE_KEY)
 }
 
 export function readStoredDeviceIds(
