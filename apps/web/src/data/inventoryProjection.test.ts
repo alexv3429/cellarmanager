@@ -81,6 +81,32 @@ describe("optimistic inventory projection", () => {
     ])
   })
 
+  it("projects a pending add at a destination", () => {
+    const result = projectHoldings({
+      holdings: [holding("location-a", "A", 3)],
+      locations,
+      operations: [
+        operation({
+          operation_type: "ADD",
+          source_location_id: null,
+          destination_location_id: "location-b",
+          quantity: 2,
+        }),
+      ],
+    })
+
+    expect(result).toContainEqual(
+      expect.objectContaining({
+        id: "optimistic:wine-1:location-b",
+        location_code: "B",
+        authoritative_quantity: 0,
+        pending_delta: 2,
+        quantity: 2,
+        revision: 0,
+      }),
+    )
+  })
+
   it("creates an optimistic destination position", () => {
     const result = projectHoldings({
       holdings: [holding("location-a", "A", 3)],
@@ -100,13 +126,13 @@ describe("optimistic inventory projection", () => {
     )
   })
 
-  it("projects pending consumption", () => {
+  it("projects a pending removal", () => {
     const result = projectHoldings({
       holdings: [holding("location-a", "A", 3)],
       locations,
       operations: [
         operation({
-          operation_type: "CONSUME",
+          operation_type: "REMOVE",
           destination_location_id: null,
         }),
       ],
@@ -125,7 +151,7 @@ describe("optimistic inventory projection", () => {
       locations,
       operations: [
         operation({
-          operation_type: "CONSUME",
+          operation_type: "REMOVE",
           destination_location_id: null,
           quantity: 2,
         }),
@@ -150,7 +176,7 @@ describe("optimistic inventory projection", () => {
         operation({ status: "ACCEPTED" }),
         operation({
           id: "operation-2",
-          operation_type: "CONSUME",
+          operation_type: "REMOVE",
           destination_location_id: null,
           quantity: 99,
           status: "REJECTED",

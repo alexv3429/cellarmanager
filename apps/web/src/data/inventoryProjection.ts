@@ -19,9 +19,9 @@ export interface AuthoritativeHolding {
 
 export interface InventoryOperation {
   id: string
-  operation_type: "MOVE" | "CONSUME"
+  operation_type: "ADD" | "MOVE" | "REMOVE"
   wine_id: string
-  source_location_id: string
+  source_location_id: string | null
   destination_location_id: string | null
   quantity: number
   status: string
@@ -57,7 +57,10 @@ export function projectHoldings({
     locations.map((location) => [location.id, location]),
   )
 
-  const wineTemplates = new Map<string, AuthoritativeHolding>()
+  const wineTemplates = new Map<
+    string,
+    AuthoritativeHolding
+  >()
 
   const projectedByPosition = new Map<
     string,
@@ -70,7 +73,10 @@ export function projectHoldings({
     }
 
     projectedByPosition.set(
-      positionKey(holding.wine_id, holding.location_id),
+      positionKey(
+        holding.wine_id,
+        holding.location_id,
+      ),
       {
         ...holding,
         authoritative_quantity: holding.quantity,
@@ -98,7 +104,8 @@ export function projectHoldings({
     if (
       !wineTemplate ||
       !location ||
-      location.household_id !== wineTemplate.household_id
+      location.household_id !==
+        wineTemplate.household_id
     ) {
       return undefined
     }
@@ -128,7 +135,10 @@ export function projectHoldings({
     locationId: string,
     delta: number,
   ): void {
-    const position = ensurePosition(wineId, locationId)
+    const position = ensurePosition(
+      wineId,
+      locationId,
+    )
 
     if (!position) {
       return
@@ -147,11 +157,25 @@ export function projectHoldings({
       continue
     }
 
-    applyPendingDelta(
-      operation.wine_id,
-      operation.source_location_id,
-      -operation.quantity,
-    )
+    if (operation.operation_type === "ADD") {
+      if (operation.destination_location_id) {
+        applyPendingDelta(
+          operation.wine_id,
+          operation.destination_location_id,
+          operation.quantity,
+        )
+      }
+
+      continue
+    }
+
+    if (operation.source_location_id) {
+      applyPendingDelta(
+        operation.wine_id,
+        operation.source_location_id,
+        -operation.quantity,
+      )
+    }
 
     if (
       operation.operation_type === "MOVE" &&

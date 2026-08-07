@@ -1,5 +1,0 @@
--- Intentionally empty.
---
--- This migration was applied to the development project before the
--- offline-sync spike schema was added. The actual schema starts in the
--- following migration so local and remote migration histories remain aligned.

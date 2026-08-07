@@ -10,10 +10,11 @@ import {
 } from "../data/inventoryProjection"
 import { useRegisteredDevices } from "../devices/useRegisteredDevices"
 import {
-  queueConsume,
   queueMove,
-  type QueueConsumeInput,
+  queueRemove,
   type QueueMoveInput,
+  type QueueRemoveInput,
+  type RemoveReason,
 } from "../data/powersync/inventoryOperations"
 
 interface HoldingsViewProps {
@@ -29,9 +30,10 @@ type HoldingRow = ProjectedHolding
 interface InventoryOperationRow {
   id: string
   operation_type: string
-  source_code: string
+  source_code: string | null
   destination_code: string | null
   quantity: number
+  remove_reason: string | null
   status: string
   error_code: string | null
   created_at_client: string
@@ -77,7 +79,7 @@ const PENDING_OPERATIONS_QUERY = `
     status
   from inventory_operations
   where status = 'PENDING'
-    and operation_type in ('MOVE', 'CONSUME')
+    and operation_type in ('ADD', 'MOVE', 'REMOVE')
 `
 
 const OPERATIONS_QUERY = `
@@ -87,11 +89,12 @@ const OPERATIONS_QUERY = `
     source.code as source_code,
     destination.code as destination_code,
     operation.quantity,
+    operation.remove_reason,
     operation.status,
     operation.error_code,
     operation.created_at_client
   from inventory_operations operation
-  join locations source
+  left join locations source
     on source.id = operation.source_location_id
   left join locations destination
     on destination.id = operation.destination_location_id
@@ -163,8 +166,11 @@ export function HoldingsView({
   const [movingHoldingId, setMovingHoldingId] =
     useState<string | null>(null)
 
-  const [consumingHoldingId, setConsumingHoldingId] =
+  const [removingHoldingId, setRemovingHoldingId] =
     useState<string | null>(null)
+
+  const [removeReasonByHolding, setRemoveReasonByHolding] =
+    useState<Record<string, RemoveReason>>({})
 
   const [operationMessage, setOperationMessage] =
     useState<string | null>(null)
@@ -252,7 +258,7 @@ export function HoldingsView({
     }
   }
 
-  async function handleConsume(holding: HoldingRow) {
+  async function handleRemove(holding: HoldingRow) {
     setOperationMessage(null)
     setOperationError(null)
 
@@ -268,31 +274,35 @@ export function HoldingsView({
       return
     }
 
-    const consume: QueueConsumeInput = {
+    const removeReason =
+      removeReasonByHolding[holding.id] ?? "DRANK"
+
+    const remove: QueueRemoveInput = {
       householdId: holding.household_id,
       deviceId,
       userId,
       wineId: holding.wine_id,
       sourceLocationId: holding.location_id,
       quantity: 1,
+      removeReason,
     }
 
-    setConsumingHoldingId(holding.id)
+    setRemovingHoldingId(holding.id)
 
     try {
-      const operationId = await queueConsume(consume)
+      const operationId = await queueRemove(remove)
 
       setOperationMessage(
-        `Consume ${operationId.slice(0, 8)} queued locally`,
+        `Remove ${operationId.slice(0, 8)} queued locally`,
       )
     } catch (caughtError: unknown) {
       setOperationError(
         caughtError instanceof Error
           ? caughtError.message
-          : "Unable to queue consumption",
+          : "Unable to queue removal",
       )
     } finally {
-      setConsumingHoldingId(null)
+      setRemovingHoldingId(null)
     }
   }
 
@@ -379,7 +389,7 @@ export function HoldingsView({
             <th>Quantity</th>
             <th>Revision</th>
             <th>Move one bottle</th>
-            <th>Consume one bottle</th>
+            <th>Remove one bottle</th>
           </tr>
         </thead>
 
@@ -459,22 +469,45 @@ export function HoldingsView({
                   </button>
                 </td>
                 <td>
+                  <select
+                    aria-label={`Removal reason for ${holding.producer} ${holding.cuvee}`}
+                    onChange={(event) => {
+                      setRemoveReasonByHolding(
+                        (currentReasons) => ({
+                          ...currentReasons,
+                          [holding.id]:
+                            event.target.value as RemoveReason,
+                        }),
+                      )
+                    }}
+                    value={
+                      removeReasonByHolding[holding.id] ??
+                      "DRANK"
+                    }
+                  >
+                    <option value="DRANK">Drank</option>
+                    <option value="GIFTED">Gifted</option>
+                    <option value="BROKEN">Broken</option>
+                    <option value="LOST">Lost</option>
+                    <option value="OTHER">Other</option>
+                  </select>
+
                   <button
                     disabled={
                       holding.quantity < 1 ||
                       !deviceRegistration.deviceIdByHousehold[
                         holding.household_id
                       ] ||
-                      consumingHoldingId === holding.id
+                      removingHoldingId === holding.id
                     }
                     onClick={() =>
-                      void handleConsume(holding)
+                      void handleRemove(holding)
                     }
                     type="button"
                   >
-                    {consumingHoldingId === holding.id
+                    {removingHoldingId === holding.id
                       ? "Queuing…"
-                      : "Consume 1"}
+                      : "Remove 1"}
                   </button>
                 </td>
               </tr>
@@ -494,6 +527,7 @@ export function HoldingsView({
               <th>Operation</th>
               <th>Movement</th>
               <th>Quantity</th>
+              <th>Reason</th>
               <th>Status</th>
             </tr>
           </thead>
@@ -503,11 +537,14 @@ export function HoldingsView({
               <tr key={operation.id}>
                 <td>{operation.operation_type}</td>
                 <td>
-                  {operation.source_code}
+                  {operation.source_code ?? "—"}
                   {" → "}
                   {operation.destination_code ?? "—"}
                 </td>
                 <td>{operation.quantity}</td>
+                <td>
+                  {operation.remove_reason ?? "—"}
+                </td>
                 <td>
                   {operation.status}
                   {operation.error_code
