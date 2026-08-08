@@ -12,6 +12,7 @@ import {
   type ProjectedHolding,
   projectHoldings,
 } from "../data/inventoryProjection"
+import { matchesSearch } from "../data/searchFilters"
 import {
   cleanWineText,
   findExactWine,
@@ -42,11 +43,17 @@ interface HoldingsViewProps {
 
 type HoldingRow = ProjectedHolding
 
+interface InventoryLocationRow extends InventoryLocation {
+  cellar_name: string
+}
+
 interface InventoryOperationRow {
   id: string
   operation_type: string
   source_code: string | null
+  source_cellar_name: string | null
   destination_code: string | null
+  destination_cellar_name: string | null
   quantity: number
   remove_reason: string | null
   status: string
@@ -77,9 +84,14 @@ const HOLDINGS_QUERY = `
 `
 
 const LOCATIONS_QUERY = `
-  select id, household_id, code
-  from locations
-  order by code
+  select
+    l.id,
+    l.household_id,
+    l.code,
+    c.name as cellar_name
+  from locations l
+  join cellars c on c.id = l.cellar_id
+  order by c.name, l.code
 `
 
 const WINE_CATALOG_QUERY = `
@@ -116,7 +128,9 @@ const OPERATIONS_QUERY = `
     operation.id,
     operation.operation_type,
     source.code as source_code,
+    source_cellar.name as source_cellar_name,
     destination.code as destination_code,
+    destination_cellar.name as destination_cellar_name,
     operation.quantity,
     operation.remove_reason,
     operation.status,
@@ -125,11 +139,51 @@ const OPERATIONS_QUERY = `
   from inventory_operations operation
   left join locations source
     on source.id = operation.source_location_id
+  left join cellars source_cellar
+    on source_cellar.id = source.cellar_id
   left join locations destination
     on destination.id = operation.destination_location_id
+  left join cellars destination_cellar
+    on destination_cellar.id = destination.cellar_id
   order by operation.created_at_client desc
   limit 10
 `
+
+function locationLabel(
+  location: InventoryLocationRow,
+): string {
+  return `${location.cellar_name} / ${location.code}`
+}
+
+function operationLocationLabel(
+  cellarName: string | null,
+  code: string | null,
+): string {
+  if (!code) {
+    return "—"
+  }
+
+  return cellarName
+    ? `${cellarName} / ${code}`
+    : code
+}
+
+function parseActionQuantity(
+  value: string,
+  available: number,
+): number | null {
+  const quantity = Number(value)
+
+  if (
+    !Number.isInteger(quantity) ||
+    quantity <= 0 ||
+    quantity > available
+  ) {
+    return null
+  }
+
+  return quantity
+}
 
 export function HoldingsView({
   userId,
@@ -156,7 +210,7 @@ export function HoldingsView({
     data: locations,
     error: locationsError,
     isLoading: locationsLoading,
-  } = useQuery<InventoryLocation>(LOCATIONS_QUERY)
+  } = useQuery<InventoryLocationRow>(LOCATIONS_QUERY)
 
   const {
     data: wines,
@@ -191,6 +245,33 @@ export function HoldingsView({
     ],
   )
 
+  const locationsById = useMemo(
+    () =>
+      new Map(
+        locations.map((location) => [
+          location.id,
+          location,
+        ]),
+      ),
+    [locations],
+  )
+
+  const pendingNewWineIds = useMemo(
+    () =>
+      new Set(
+        pendingOperations
+          .filter(
+            (operation) =>
+              operation.operation_type === "ADD" &&
+              operation.status === "PENDING" &&
+              Boolean(operation.wine_producer) &&
+              Boolean(operation.wine_cuvee),
+          )
+          .map((operation) => operation.wine_id),
+      ),
+    [pendingOperations],
+  )
+
   const error =
     holdingsError ??
     locationsError ??
@@ -202,6 +283,65 @@ export function HoldingsView({
     locationsLoading ||
     winesLoading ||
     pendingOperationsLoading
+
+  const [inventorySearch, setInventorySearch] =
+    useState("")
+  const [locationFilter, setLocationFilter] =
+    useState("ALL")
+
+  const visibleHoldings = useMemo(
+    () =>
+      holdings.filter((holding) => {
+        if (
+          locationFilter !== "ALL" &&
+          holding.location_id !== locationFilter
+        ) {
+          return false
+        }
+
+        const location =
+          locationsById.get(holding.location_id)
+
+        return matchesSearch(
+          [
+            holding.producer,
+            holding.cuvee,
+            holding.vintage ?? "NV",
+            holding.location_code,
+            location?.cellar_name,
+          ],
+          inventorySearch,
+        )
+      }),
+    [
+      holdings,
+      inventorySearch,
+      locationFilter,
+      locationsById,
+    ],
+  )
+
+  const totalBottleCount = holdings.reduce(
+    (sum, holding) => sum + holding.quantity,
+    0,
+  )
+
+  const visibleBottleCount = visibleHoldings.reduce(
+    (sum, holding) => sum + holding.quantity,
+    0,
+  )
+
+  const totalWineCount = new Set(
+    holdings.map((holding) => holding.wine_id),
+  ).size
+
+  const visibleWineCount = new Set(
+    visibleHoldings.map((holding) => holding.wine_id),
+  ).size
+
+  const hasInventoryFilters =
+    inventorySearch.trim().length > 0 ||
+    locationFilter !== "ALL"
 
   const [addProducer, setAddProducer] = useState("")
   const [addCuvee, setAddCuvee] = useState("")
@@ -268,6 +408,12 @@ export function HoldingsView({
   )
 
   const [destinationByHolding, setDestinationByHolding] =
+    useState<Record<string, string>>({})
+
+  const [moveQuantityByHolding, setMoveQuantityByHolding] =
+    useState<Record<string, string>>({})
+
+  const [removeQuantityByHolding, setRemoveQuantityByHolding] =
     useState<Record<string, string>>({})
 
   const [movingHoldingId, setMovingHoldingId] =
@@ -410,7 +556,10 @@ export function HoldingsView({
     }
   }
 
-  async function handleMove(holding: HoldingRow) {
+  async function handleMove(
+    holding: HoldingRow,
+    quantity: number,
+  ) {
     setOperationMessage(null)
     setOperationError(null)
 
@@ -448,7 +597,7 @@ export function HoldingsView({
       wineId: holding.wine_id,
       sourceLocationId: holding.location_id,
       destinationLocationId,
-      quantity: 1,
+      quantity,
     }
 
     setMovingHoldingId(holding.id)
@@ -456,7 +605,13 @@ export function HoldingsView({
     try {
       const operationId = await queueMove(move)
       setOperationMessage(
-        `Move ${operationId.slice(0, 8)} queued locally`,
+        `Move ${quantity} bottle${quantity === 1 ? "" : "s"} (${operationId.slice(0, 8)}) queued locally`,
+      )
+      setMoveQuantityByHolding(
+        (currentQuantities) => ({
+          ...currentQuantities,
+          [holding.id]: "1",
+        }),
       )
     } catch (caughtError: unknown) {
       setOperationError(
@@ -469,7 +624,10 @@ export function HoldingsView({
     }
   }
 
-  async function handleRemove(holding: HoldingRow) {
+  async function handleRemove(
+    holding: HoldingRow,
+    quantity: number,
+  ) {
     setOperationMessage(null)
     setOperationError(null)
 
@@ -494,7 +652,7 @@ export function HoldingsView({
       userId,
       wineId: holding.wine_id,
       sourceLocationId: holding.location_id,
-      quantity: 1,
+      quantity,
       removeReason,
     }
 
@@ -504,7 +662,13 @@ export function HoldingsView({
       const operationId = await queueRemove(remove)
 
       setOperationMessage(
-        `Remove ${operationId.slice(0, 8)} queued locally`,
+        `Remove ${quantity} bottle${quantity === 1 ? "" : "s"} (${operationId.slice(0, 8)}) queued locally`,
+      )
+      setRemoveQuantityByHolding(
+        (currentQuantities) => ({
+          ...currentQuantities,
+          [holding.id]: "1",
+        }),
       )
     } catch (caughtError: unknown) {
       setOperationError(
@@ -670,7 +834,7 @@ export function HoldingsView({
           >
             {locations.map((location) => (
               <option key={location.id} value={location.id}>
-                {location.code}
+                {locationLabel(location)}
               </option>
             ))}
           </select>
@@ -707,8 +871,71 @@ export function HoldingsView({
 
       <h2>Holdings</h2>
 
+      <section aria-labelledby="inventory-filters-heading">
+        <h3 id="inventory-filters-heading">
+          Find bottles
+        </h3>
+
+        <label>
+          Search
+          <input
+            onChange={(event) =>
+              setInventorySearch(event.target.value)
+            }
+            placeholder="Producer, cuvée, vintage, cellar…"
+            type="search"
+            value={inventorySearch}
+          />
+        </label>
+
+        <label>
+          Location
+          <select
+            onChange={(event) =>
+              setLocationFilter(event.target.value)
+            }
+            value={locationFilter}
+          >
+            <option value="ALL">All locations</option>
+            {locations.map((location) => (
+              <option key={location.id} value={location.id}>
+                {locationLabel(location)}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <button
+          disabled={!hasInventoryFilters}
+          onClick={() => {
+            setInventorySearch("")
+            setLocationFilter("ALL")
+          }}
+          type="button"
+        >
+          Clear filters
+        </button>
+      </section>
+
+      <p>
+        Showing {visibleBottleCount} of {totalBottleCount} bottles
+        {" · "}
+        {visibleWineCount} of {totalWineCount} wines
+        {" · "}
+        {visibleHoldings.length} of {holdings.length} positions
+        {" · "}
+        {pendingOperations.length} pending operation
+        {pendingOperations.length === 1 ? "" : "s"}
+      </p>
+
       {!isLoading && holdings.length === 0 ? (
         <p>No synchronized holdings found.</p>
+      ) : null}
+
+      {!isLoading &&
+      holdings.length > 0 &&
+      visibleHoldings.length === 0 ? (
+        <p>No holdings match the current filters.</p>
       ) : null}
 
       <table>
@@ -719,13 +946,13 @@ export function HoldingsView({
             <th>Location</th>
             <th>Quantity</th>
             <th>Revision</th>
-            <th>Move one bottle</th>
-            <th>Remove one bottle</th>
+            <th>Move bottles</th>
+            <th>Remove bottles</th>
           </tr>
         </thead>
 
         <tbody>
-          {holdings.map((holding) => {
+          {visibleHoldings.map((holding) => {
             const possibleDestinations = locations.filter(
               (location) =>
                 location.household_id ===
@@ -738,13 +965,39 @@ export function HoldingsView({
               possibleDestinations[0]?.id ??
               ""
 
+            const moveQuantityValue =
+              moveQuantityByHolding[holding.id] ?? "1"
+
+            const removeQuantityValue =
+              removeQuantityByHolding[holding.id] ?? "1"
+
+            const moveQuantity = parseActionQuantity(
+              moveQuantityValue,
+              holding.quantity,
+            )
+
+            const removeQuantity = parseActionQuantity(
+              removeQuantityValue,
+              holding.quantity,
+            )
+
+            const isPendingNewWine =
+              pendingNewWineIds.has(holding.wine_id)
+
+            const currentLocation =
+              locationsById.get(holding.location_id)
+
             return (
               <tr key={holding.id}>
                 <td>
                   {holding.producer} — {holding.cuvee}
                 </td>
                 <td>{holding.vintage ?? "NV"}</td>
-                <td>{holding.location_code}</td>
+                <td>
+                  {currentLocation
+                    ? locationLabel(currentLocation)
+                    : holding.location_code}
+                </td>
                 <td>
                   {holding.quantity}
                   {holding.pending_delta !== 0 ? (
@@ -757,10 +1010,32 @@ export function HoldingsView({
                 </td>
                 <td>{holding.revision}</td>
                 <td>
+                  <input
+                    aria-label={`Move quantity for ${holding.producer} ${holding.cuvee}`}
+                    disabled={
+                      holding.quantity < 1 ||
+                      isPendingNewWine
+                    }
+                    max={holding.quantity}
+                    min="1"
+                    onChange={(event) => {
+                      setMoveQuantityByHolding(
+                        (currentQuantities) => ({
+                          ...currentQuantities,
+                          [holding.id]: event.target.value,
+                        }),
+                      )
+                    }}
+                    step="1"
+                    type="number"
+                    value={moveQuantityValue}
+                  />
+
                   <select
                     aria-label={`Destination for ${holding.location_code}`}
                     disabled={
-                      possibleDestinations.length === 0
+                      possibleDestinations.length === 0 ||
+                      isPendingNewWine
                     }
                     onChange={(event) => {
                       setDestinationByHolding(
@@ -777,31 +1052,66 @@ export function HoldingsView({
                         key={location.id}
                         value={location.id}
                       >
-                        {location.code}
+                        {locationLabel(location)}
                       </option>
                     ))}
                   </select>
 
                   <button
                     disabled={
-                      holding.quantity < 1 ||
+                      moveQuantity === null ||
                       destinationLocationId.length === 0 ||
+                      isPendingNewWine ||
                       !deviceRegistration.deviceIdByHousehold[
                         holding.household_id
                       ] ||
                       movingHoldingId === holding.id
                     }
-                    onClick={() => void handleMove(holding)}
+                    onClick={() => {
+                      if (moveQuantity !== null) {
+                        void handleMove(
+                          holding,
+                          moveQuantity,
+                        )
+                      }
+                    }}
+                    title={
+                      isPendingNewWine
+                        ? "Wait for this new wine ADD to synchronize before moving it"
+                        : undefined
+                    }
                     type="button"
                   >
                     {movingHoldingId === holding.id
                       ? "Queuing…"
-                      : "Move 1"}
+                      : "Move"}
                   </button>
                 </td>
                 <td>
+                  <input
+                    aria-label={`Remove quantity for ${holding.producer} ${holding.cuvee}`}
+                    disabled={
+                      holding.quantity < 1 ||
+                      isPendingNewWine
+                    }
+                    max={holding.quantity}
+                    min="1"
+                    onChange={(event) => {
+                      setRemoveQuantityByHolding(
+                        (currentQuantities) => ({
+                          ...currentQuantities,
+                          [holding.id]: event.target.value,
+                        }),
+                      )
+                    }}
+                    step="1"
+                    type="number"
+                    value={removeQuantityValue}
+                  />
+
                   <select
                     aria-label={`Removal reason for ${holding.producer} ${holding.cuvee}`}
+                    disabled={isPendingNewWine}
                     onChange={(event) => {
                       setRemoveReasonByHolding(
                         (currentReasons) => ({
@@ -825,20 +1135,31 @@ export function HoldingsView({
 
                   <button
                     disabled={
-                      holding.quantity < 1 ||
+                      removeQuantity === null ||
+                      isPendingNewWine ||
                       !deviceRegistration.deviceIdByHousehold[
                         holding.household_id
                       ] ||
                       removingHoldingId === holding.id
                     }
-                    onClick={() =>
-                      void handleRemove(holding)
+                    onClick={() => {
+                      if (removeQuantity !== null) {
+                        void handleRemove(
+                          holding,
+                          removeQuantity,
+                        )
+                      }
+                    }}
+                    title={
+                      isPendingNewWine
+                        ? "Wait for this new wine ADD to synchronize before removing it"
+                        : undefined
                     }
                     type="button"
                   >
                     {removingHoldingId === holding.id
                       ? "Queuing…"
-                      : "Remove 1"}
+                      : "Remove"}
                   </button>
                 </td>
               </tr>
@@ -868,9 +1189,15 @@ export function HoldingsView({
               <tr key={operation.id}>
                 <td>{operation.operation_type}</td>
                 <td>
-                  {operation.source_code ?? "—"}
+                  {operationLocationLabel(
+                    operation.source_cellar_name,
+                    operation.source_code,
+                  )}
                   {" → "}
-                  {operation.destination_code ?? "—"}
+                  {operationLocationLabel(
+                    operation.destination_cellar_name,
+                    operation.destination_code,
+                  )}
                 </td>
                 <td>{operation.quantity}</td>
                 <td>
