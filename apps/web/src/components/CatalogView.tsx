@@ -2,13 +2,17 @@ import { useQuery } from "@powersync/react"
 import { useMemo, useState } from "react"
 
 import { matchesSearch } from "../data/searchFilters"
+import { formatWineVolume } from "../data/wineCatalog"
 
 interface CatalogWineRow {
   id: string
   producer: string
   cuvee: string
   vintage: number | null
-  color: string | null
+  color: string
+  appellation: string | null
+  area: string | null
+  format_ml: number
   quantity: number
 }
 
@@ -24,6 +28,9 @@ const CATALOG_QUERY = `
     w.cuvee,
     w.vintage,
     w.color,
+    w.appellation,
+    w.area,
+    w.format_ml,
     coalesce(sum(h.quantity), 0) as quantity
   from wines w
   left join holdings h
@@ -33,11 +40,16 @@ const CATALOG_QUERY = `
     w.producer,
     w.cuvee,
     w.vintage,
-    w.color
+    w.color,
+    w.appellation,
+    w.area,
+    w.format_ml
   order by
     w.producer,
     w.cuvee,
-    w.vintage
+    w.vintage,
+    w.color,
+    w.format_ml
 `
 
 export function CatalogView() {
@@ -100,6 +112,10 @@ export function CatalogView() {
             wine.cuvee,
             wine.vintage ?? "NV",
             wine.color,
+            wine.appellation,
+            wine.area,
+            formatWineVolume(wine.format_ml),
+            wine.format_ml,
           ],
           search,
         )
@@ -148,7 +164,7 @@ export function CatalogView() {
             onChange={(event) =>
               setSearch(event.target.value)
             }
-            placeholder="Producer, cuvée, vintage, color…"
+            placeholder="Producer, cuvée, appellation, area, vintage…"
             type="search"
             value={search}
           />
@@ -225,6 +241,9 @@ export function CatalogView() {
             <th>Cuvée</th>
             <th>Vintage</th>
             <th>Color</th>
+            <th>Appellation</th>
+            <th>Area</th>
+            <th>Format</th>
             <th>Current bottles</th>
           </tr>
         </thead>
@@ -235,7 +254,10 @@ export function CatalogView() {
               <td>{wine.producer}</td>
               <td>{wine.cuvee}</td>
               <td>{wine.vintage ?? "NV"}</td>
-              <td>{wine.color ?? "—"}</td>
+              <td>{wine.color}</td>
+              <td>{wine.appellation ?? "—"}</td>
+              <td>{wine.area ?? "—"}</td>
+              <td>{formatWineVolume(wine.format_ml)}</td>
               <td>{wine.quantity}</td>
             </tr>
           ))}

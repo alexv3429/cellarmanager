@@ -173,6 +173,16 @@ export class PowerSyncConnector implements PowerSyncBackendConnector {
           )
         }
 
+        const wineColor = requireString(
+          data,
+          "wine_color",
+        )
+
+        const wineFormatMl = requirePositiveInteger(
+          data,
+          "wine_format_ml",
+        )
+
         const { error } = await supabase.rpc(
           "apply_add_inventory_operation",
           {
@@ -186,6 +196,16 @@ export class PowerSyncConnector implements PowerSyncBackendConnector {
               data,
               "wine_vintage",
             ),
+            p_wine_color: wineColor,
+            p_wine_appellation: optionalString(
+              data,
+              "wine_appellation",
+            ),
+            p_wine_area: optionalString(
+              data,
+              "wine_area",
+            ),
+            p_wine_format_ml: wineFormatMl,
             p_destination_location_id: requireString(
               data,
               "destination_location_id",

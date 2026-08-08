@@ -29,6 +29,9 @@ const wines = new Table(
     cuvee: column.text,
     vintage: column.integer,
     color: column.text,
+    appellation: column.text,
+    area: column.text,
+    format_ml: column.integer,
     created_at: column.text
   },
   { indexes: {} }
@@ -79,6 +82,10 @@ const inventory_operations = new Table(
     wine_producer: column.text,
     wine_cuvee: column.text,
     wine_vintage: column.integer,
+    wine_color: column.text,
+    wine_appellation: column.text,
+    wine_area: column.text,
+    wine_format_ml: column.integer,
     source_location_id: column.text,
     destination_location_id: column.text,
     quantity: column.integer,

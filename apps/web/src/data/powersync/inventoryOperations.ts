@@ -15,6 +15,10 @@ export interface QueueAddInput
   wineProducer?: string
   wineCuvee?: string
   wineVintage?: number | null
+  wineColor?: string
+  wineAppellation?: string | null
+  wineArea?: string | null
+  wineFormatMl?: number
 }
 
 export interface QueueMoveInput
@@ -45,6 +49,10 @@ interface QueueOperationInput
   wineProducer: string | null
   wineCuvee: string | null
   wineVintage: number | null
+  wineColor: string | null
+  wineAppellation: string | null
+  wineArea: string | null
+  wineFormatMl: number | null
 }
 
 type SqlParameter = string | number | null
@@ -58,6 +66,17 @@ interface QueueDependencies {
   execute: ExecuteSql
   createOperationId: () => string
   now: () => Date
+}
+
+function cleanOptionalWineText(
+  value: string | null | undefined,
+): string | null {
+  if (value === null || value === undefined) {
+    return null
+  }
+
+  const cleaned = cleanWineText(value)
+  return cleaned.length > 0 ? cleaned : null
 }
 
 function validatePositiveQuantity(
@@ -90,6 +109,20 @@ function validateWineVintage(
   }
 }
 
+function validateWineFormatMl(
+  formatMl: number | null,
+): void {
+  if (
+    formatMl === null ||
+    !Number.isInteger(formatMl) ||
+    formatMl <= 0
+  ) {
+    throw new Error(
+      "Wine format must be a positive whole number of millilitres",
+    )
+  }
+}
+
 function validateOperationShape(
   input: QueueOperationInput,
 ): void {
@@ -114,7 +147,11 @@ function validateOperationShape(
 
     const hasWineIdentity =
       input.wineProducer !== null ||
-      input.wineCuvee !== null
+      input.wineCuvee !== null ||
+      input.wineColor !== null ||
+      input.wineFormatMl !== null ||
+      input.wineAppellation !== null ||
+      input.wineArea !== null
 
     if (hasWineIdentity) {
       if (
@@ -135,7 +172,17 @@ function validateOperationShape(
         )
       }
 
+      if (
+        input.wineColor === null ||
+        cleanWineText(input.wineColor).length === 0
+      ) {
+        throw new Error(
+          "A new-wine ADD requires a color",
+        )
+      }
+
       validateWineVintage(input.wineVintage)
+      validateWineFormatMl(input.wineFormatMl)
     }
 
     return
@@ -144,7 +191,11 @@ function validateOperationShape(
   if (
     input.wineProducer !== null ||
     input.wineCuvee !== null ||
-    input.wineVintage !== null
+    input.wineVintage !== null ||
+    input.wineColor !== null ||
+    input.wineAppellation !== null ||
+    input.wineArea !== null ||
+    input.wineFormatMl !== null
   ) {
     throw new Error(
       `${input.operationType} must not define wine creation details`,
@@ -237,10 +288,14 @@ export function createInventoryOperationQueue(
             wine_producer,
             wine_cuvee,
             wine_vintage,
+            wine_color,
+            wine_appellation,
+            wine_area,
+            wine_format_ml,
             status,
             created_at_client
           )
-          values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?)
+          values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?)
         `,
         [
           operationId,
@@ -256,6 +311,10 @@ export function createInventoryOperationQueue(
           input.wineProducer,
           input.wineCuvee,
           input.wineVintage,
+          input.wineColor,
+          input.wineAppellation,
+          input.wineArea,
+          input.wineFormatMl,
           createdAtClient,
         ],
       )
@@ -307,14 +366,34 @@ export function createInventoryOperationQueue(
         input.wineCuvee !== undefined
       const hasVintage =
         input.wineVintage !== undefined
+      const hasColor =
+        input.wineColor !== undefined
+      const hasFormat =
+        input.wineFormatMl !== undefined
+      const hasOptionalMetadata =
+        input.wineAppellation !== undefined ||
+        input.wineArea !== undefined
+
+      const hasAnyIdentity =
+        hasProducer ||
+        hasCuvee ||
+        hasVintage ||
+        hasColor ||
+        hasFormat ||
+        hasOptionalMetadata
 
       if (
-        hasProducer !== hasCuvee ||
-        (hasProducer && !hasVintage) ||
-        (!hasProducer && hasVintage)
+        hasAnyIdentity &&
+        !(
+          hasProducer &&
+          hasCuvee &&
+          hasVintage &&
+          hasColor &&
+          hasFormat
+        )
       ) {
         throw new Error(
-          "New-wine ADD details must include producer, cuvée, and vintage/NV together",
+          "New-wine ADD details must include producer, cuvée, vintage/NV, color, and format together",
         )
       }
 
@@ -332,6 +411,22 @@ export function createInventoryOperationQueue(
         wineVintage: hasVintage
           ? input.wineVintage ?? null
           : null,
+        wineColor: hasColor
+          ? cleanWineText(
+              input.wineColor ?? "",
+            ).toLowerCase()
+          : null,
+        wineAppellation: hasAnyIdentity
+          ? cleanOptionalWineText(
+              input.wineAppellation,
+            )
+          : null,
+        wineArea: hasAnyIdentity
+          ? cleanOptionalWineText(input.wineArea)
+          : null,
+        wineFormatMl: hasFormat
+          ? input.wineFormatMl ?? null
+          : null,
       })
     },
 
@@ -343,6 +438,10 @@ export function createInventoryOperationQueue(
         wineProducer: null,
         wineCuvee: null,
         wineVintage: null,
+        wineColor: null,
+        wineAppellation: null,
+        wineArea: null,
+        wineFormatMl: null,
       })
     },
 
@@ -356,6 +455,10 @@ export function createInventoryOperationQueue(
         wineProducer: null,
         wineCuvee: null,
         wineVintage: null,
+        wineColor: null,
+        wineAppellation: null,
+        wineArea: null,
+        wineFormatMl: null,
       })
     },
   }
