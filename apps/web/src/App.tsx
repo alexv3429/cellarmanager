@@ -10,6 +10,7 @@ import { LoginForm } from "./components/LoginForm"
 import {
   setPowerSyncAccess,
 } from "./data/powersync/connection"
+import { useActiveHousehold } from "./households/useActiveHousehold"
 
 type AppView = "inventory" | "catalog" | "setup"
 
@@ -29,6 +30,14 @@ export default function App() {
   const [view, setView] =
     useState<AppView>("inventory")
 
+  const {
+    activeHouseholdId,
+    households,
+    error: householdError,
+    isLoading: householdsLoading,
+    selectHousehold,
+  } = useActiveHousehold(userId ?? "")
+
   useEffect(() => {
     setSyncError(null)
 
@@ -46,45 +55,85 @@ export default function App() {
   }, [isOnline, session, userId])
 
   if (isLoading) {
-    return <main>Loading session…</main>
+    return <p>Loading session…</p>
   }
 
   if (sessionError && !userId) {
-    return <main role="alert">{sessionError}</main>
+    return <p role="alert">{sessionError}</p>
   }
 
   if (!userId) {
     return <LoginForm />
   }
 
+  if (householdsLoading) {
+    return <p>Loading households…</p>
+  }
+
+  if (!activeHouseholdId) {
+    return (
+      <main>
+        <h1>CellarManager</h1>
+        <p role="alert">
+          {householdError ??
+            "No household membership is available for this user"}
+        </p>
+      </main>
+    )
+  }
+
   return (
     <>
-      <nav aria-label="Main navigation">
-        <button
-          aria-pressed={view === "inventory"}
-          onClick={() => setView("inventory")}
-          type="button"
+      <label>
+        Household
+        <select
+          onChange={(event) =>
+            selectHousehold(event.target.value)
+          }
+          value={activeHouseholdId}
         >
-          Inventory
-        </button>
-        <button
-          aria-pressed={view === "catalog"}
-          onClick={() => setView("catalog")}
-          type="button"
-        >
-          Catalog
-        </button>
-        <button
-          aria-pressed={view === "setup"}
-          onClick={() => setView("setup")}
-          type="button"
-        >
-          Cellar setup
-        </button>
-      </nav>
+          {households.map((household) => (
+            <option
+              key={household.id}
+              value={household.id}
+            >
+              {household.name}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      {householdError ? (
+        <p role="alert">{householdError}</p>
+      ) : null}
+
+      <button
+        aria-pressed={view === "inventory"}
+        onClick={() => setView("inventory")}
+        type="button"
+      >
+        Inventory
+      </button>
+
+      <button
+        aria-pressed={view === "catalog"}
+        onClick={() => setView("catalog")}
+        type="button"
+      >
+        Catalog
+      </button>
+
+      <button
+        aria-pressed={view === "setup"}
+        onClick={() => setView("setup")}
+        type="button"
+      >
+        Cellar setup
+      </button>
 
       {view === "inventory" ? (
         <HoldingsView
+          householdId={activeHouseholdId}
           isOfflineAccess={isOfflineAccess}
           isOnline={isOnline}
           onSignOut={signOutAndClearLocalData}
@@ -93,10 +142,17 @@ export default function App() {
         />
       ) : null}
 
-      {view === "catalog" ? <CatalogView /> : null}
+      {view === "catalog" ? (
+        <CatalogView
+          householdId={activeHouseholdId}
+        />
+      ) : null}
 
       {view === "setup" ? (
-        <CellarSetupView isOnline={isOnline} />
+        <CellarSetupView
+          householdId={activeHouseholdId}
+          isOnline={isOnline}
+        />
       ) : null}
     </>
   )

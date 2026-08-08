@@ -40,6 +40,7 @@ import {
 
 interface HoldingsViewProps {
   userId: string
+  householdId: string
   isOnline: boolean
   isOfflineAccess: boolean
   syncError: string | null
@@ -85,6 +86,7 @@ const HOLDINGS_QUERY = `
   from holdings h
   join wines w on w.id = h.wine_id
   join locations l on l.id = h.location_id
+  where h.household_id = ?
   order by
     w.producer,
     w.cuvee,
@@ -100,6 +102,7 @@ const LOCATIONS_QUERY = `
     c.name as cellar_name
   from locations l
   join cellars c on c.id = l.cellar_id
+  where l.household_id = ?
   order by c.name, l.code
 `
 
@@ -115,6 +118,7 @@ const WINE_CATALOG_QUERY = `
     area,
     format_ml
   from wines
+  where household_id = ?
   order by producer, cuvee, vintage
 `
 
@@ -136,7 +140,8 @@ const PENDING_OPERATIONS_QUERY = `
     quantity,
     status
   from inventory_operations
-  where status = 'PENDING'
+  where household_id = ?
+    and status = 'PENDING'
     and operation_type in ('ADD', 'MOVE', 'REMOVE')
 `
 
@@ -162,6 +167,7 @@ const OPERATIONS_QUERY = `
     on destination.id = operation.destination_location_id
   left join cellars destination_cellar
     on destination_cellar.id = destination.cellar_id
+  where operation.household_id = ?
   order by operation.created_at_client desc
   limit 10
 `
@@ -204,6 +210,7 @@ function parseActionQuantity(
 
 export function HoldingsView({
   userId,
+  householdId,
   isOnline,
   isOfflineAccess,
   syncError,
@@ -221,19 +228,28 @@ export function HoldingsView({
     error: holdingsError,
     isLoading: holdingsLoading,
     isFetching,
-  } = useQuery<AuthoritativeHolding>(HOLDINGS_QUERY)
+  } = useQuery<AuthoritativeHolding>(
+    HOLDINGS_QUERY,
+    [householdId],
+  )
 
   const {
     data: locations,
     error: locationsError,
     isLoading: locationsLoading,
-  } = useQuery<InventoryLocationRow>(LOCATIONS_QUERY)
+  } = useQuery<InventoryLocationRow>(
+    LOCATIONS_QUERY,
+    [householdId],
+  )
 
   const {
     data: wines,
     error: winesError,
     isLoading: winesLoading,
-  } = useQuery<WineCatalogEntry>(WINE_CATALOG_QUERY)
+  } = useQuery<WineCatalogEntry>(
+    WINE_CATALOG_QUERY,
+    [householdId],
+  )
 
   const {
     data: pendingOperations,
@@ -241,10 +257,14 @@ export function HoldingsView({
     isLoading: pendingOperationsLoading,
   } = useQuery<InventoryOperation>(
     PENDING_OPERATIONS_QUERY,
+    [householdId],
   )
 
   const { data: operations } =
-    useQuery<InventoryOperationRow>(OPERATIONS_QUERY)
+    useQuery<InventoryOperationRow>(
+      OPERATIONS_QUERY,
+      [householdId],
+    )
 
   const holdings = useMemo(
     () =>

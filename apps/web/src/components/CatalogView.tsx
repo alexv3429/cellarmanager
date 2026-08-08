@@ -35,6 +35,7 @@ const CATALOG_QUERY = `
   from wines w
   left join holdings h
     on h.wine_id = w.id
+  where w.household_id = ?
   group by
     w.id,
     w.producer,
@@ -52,12 +53,21 @@ const CATALOG_QUERY = `
     w.format_ml
 `
 
-export function CatalogView() {
+interface CatalogViewProps {
+  householdId: string
+}
+
+export function CatalogView({
+  householdId,
+}: CatalogViewProps) {
   const {
     data: wines,
     error,
     isLoading,
-  } = useQuery<CatalogWineRow>(CATALOG_QUERY)
+  } = useQuery<CatalogWineRow>(
+    CATALOG_QUERY,
+    [householdId],
+  )
 
   const [search, setSearch] = useState("")
   const [stockFilter, setStockFilter] =
