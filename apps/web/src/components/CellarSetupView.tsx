@@ -12,12 +12,8 @@ import {
 } from "../data/cellarSetup"
 
 interface CellarSetupViewProps {
+  householdId: string
   isOnline: boolean
-}
-
-interface HouseholdRow {
-  id: string
-  name: string
 }
 
 interface CellarRow {
@@ -33,21 +29,17 @@ interface LocationRow {
   code: string
 }
 
-const HOUSEHOLDS_QUERY = `
-  select id, name
-  from households
-  order by name
-`
-
 const CELLARS_QUERY = `
   select id, household_id, name
   from cellars
+  where household_id = ?
   order by name
 `
 
 const LOCATIONS_QUERY = `
   select id, household_id, cellar_id, code
   from locations
+  where household_id = ?
   order by code
 `
 
@@ -59,16 +51,20 @@ function formValue(
 }
 
 export function CellarSetupView({
+  householdId,
   isOnline,
 }: CellarSetupViewProps) {
-  const { data: households, error: householdsError } =
-    useQuery<HouseholdRow>(HOUSEHOLDS_QUERY)
-
   const { data: cellars, error: cellarsError } =
-    useQuery<CellarRow>(CELLARS_QUERY)
+    useQuery<CellarRow>(
+      CELLARS_QUERY,
+      [householdId],
+    )
 
   const { data: locations, error: locationsError } =
-    useQuery<LocationRow>(LOCATIONS_QUERY)
+    useQuery<LocationRow>(
+      LOCATIONS_QUERY,
+      [householdId],
+    )
 
   const [busyAction, setBusyAction] =
     useState<string | null>(null)
@@ -80,7 +76,7 @@ export function CellarSetupView({
     useState<string | null>(null)
 
   const error =
-    householdsError ?? cellarsError ?? locationsError
+    cellarsError ?? locationsError
 
   async function runMutation(
     action: string,
@@ -121,7 +117,6 @@ export function CellarSetupView({
     event.preventDefault()
     const form = event.currentTarget
 
-    const householdId = formValue(form, "householdId")
     const name = formValue(form, "name")
 
     const saved = await runMutation(
@@ -192,21 +187,6 @@ export function CellarSetupView({
 
       <form onSubmit={(event) => void handleCreateCellar(event)}>
         <label>
-          Household
-          <select
-            defaultValue={households[0]?.id ?? ""}
-            name="householdId"
-            required
-          >
-            {households.map((household) => (
-              <option key={household.id} value={household.id}>
-                {household.name}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label>
           Cellar name
           <input name="name" required />
         </label>
@@ -214,7 +194,6 @@ export function CellarSetupView({
         <button
           disabled={
             !isOnline ||
-            households.length === 0 ||
             busyAction !== null
           }
           type="submit"
