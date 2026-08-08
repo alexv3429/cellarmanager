@@ -12,24 +12,29 @@ import { OnboardingView } from "./components/OnboardingView"
 import {
   setPowerSyncAccess,
 } from "./data/powersync/connection"
+import {
+  resolveHouseholdGate,
+} from "./households/householdGate"
 import { useActiveHousehold } from "./households/useActiveHousehold"
 
 type AppView = "inventory" | "catalog" | "setup"
 
-export default function App() {
-  const {
-    session,
-    userId,
-    isLoading,
-    isOnline,
-    isOfflineAccess,
-    error: sessionError,
-  } = useSession()
+interface AuthenticatedAppProps {
+  currentSyncError: string | null
+  hasAuthenticatedSession: boolean
+  isOfflineAccess: boolean
+  isOnline: boolean
+  userId: string
+}
 
+function AuthenticatedApp({
+  currentSyncError,
+  hasAuthenticatedSession,
+  isOfflineAccess,
+  isOnline,
+  userId,
+}: AuthenticatedAppProps) {
   const powerSyncStatus = useStatus()
-
-  const [syncError, setSyncError] =
-    useState<string | null>(null)
 
   const [view, setView] =
     useState<AppView>("inventory")
@@ -40,80 +45,66 @@ export default function App() {
     error: householdError,
     isLoading: householdsLoading,
     selectHousehold,
-  } = useActiveHousehold(userId ?? "")
+  } = useActiveHousehold(userId)
 
-  useEffect(() => {
-    setSyncError(null)
+  const householdGate = resolveHouseholdGate({
+    activeHouseholdId,
+    hasAuthenticatedSession,
+    householdCount: households.length,
+    householdError,
+    householdsLoading,
+    initialSyncComplete:
+      powerSyncStatus.hasSynced === true,
+    isOnline,
+    syncError: currentSyncError,
+  })
 
-    void setPowerSyncAccess({
-      userId,
-      connectToBackend:
-        session !== null && isOnline,
-    }).catch((error: unknown) => {
-      setSyncError(
-        error instanceof Error
-          ? error.message
-          : "Unable to connect PowerSync",
-      )
-    })
-  }, [isOnline, session, userId])
-
-  if (isLoading) {
-    return <p>Loading session…</p>
-  }
-
-  if (sessionError && !userId) {
-    return <p role="alert">{sessionError}</p>
-  }
-
-  if (!userId) {
-    return <LoginForm />
-  }
-
-  const waitingForInitialHouseholdSync =
-    session !== null &&
-    isOnline &&
-    powerSyncStatus.hasSynced !== true &&
-    households.length === 0
-
-  const currentSyncError =
-    syncError ?? sessionError
-
-  if (
-    householdsLoading ||
-    (waitingForInitialHouseholdSync &&
-      !currentSyncError)
-  ) {
+  if (householdGate === "loading") {
     return <p>Loading household data…</p>
   }
 
-  if (
-    waitingForInitialHouseholdSync &&
-    currentSyncError
-  ) {
+  if (householdGate === "error") {
     return (
       <main>
         <h1>CellarManager</h1>
-        <p role="alert">{currentSyncError}</p>
+        <p role="alert">
+          {currentSyncError ??
+            householdError ??
+            "Unable to load household data"}
+        </p>
       </main>
     )
   }
 
-  if (!activeHouseholdId) {
-    if (householdError) {
-      return (
-        <main>
-          <h1>CellarManager</h1>
-          <p role="alert">{householdError}</p>
-        </main>
-      )
-    }
+  if (householdGate === "offline-unavailable") {
+    return (
+      <main>
+        <h1>CellarManager</h1>
+        <p role="alert">
+          Household data is not available offline on this
+          device. Reconnect to finish loading your account.
+        </p>
+      </main>
+    )
+  }
 
+  if (householdGate === "onboarding") {
     return (
       <OnboardingView
         isOnline={isOnline}
         onSignOut={signOutAndClearLocalData}
       />
+    )
+  }
+
+  if (!activeHouseholdId) {
+    return (
+      <main>
+        <h1>CellarManager</h1>
+        <p role="alert">
+          Unable to resolve the active household.
+        </p>
+      </main>
     )
   }
 
@@ -190,5 +181,58 @@ export default function App() {
         />
       ) : null}
     </>
+  )
+}
+
+export default function App() {
+  const {
+    session,
+    userId,
+    isLoading,
+    isOnline,
+    isOfflineAccess,
+    error: sessionError,
+  } = useSession()
+
+  const [syncError, setSyncError] =
+    useState<string | null>(null)
+
+  useEffect(() => {
+    setSyncError(null)
+
+    void setPowerSyncAccess({
+      userId,
+      connectToBackend:
+        session !== null && isOnline,
+    }).catch((error: unknown) => {
+      setSyncError(
+        error instanceof Error
+          ? error.message
+          : "Unable to connect PowerSync",
+      )
+    })
+  }, [isOnline, session, userId])
+
+  if (isLoading) {
+    return <p>Loading session…</p>
+  }
+
+  if (sessionError && !userId) {
+    return <p role="alert">{sessionError}</p>
+  }
+
+  if (!userId) {
+    return <LoginForm />
+  }
+
+  return (
+    <AuthenticatedApp
+      currentSyncError={syncError ?? sessionError}
+      hasAuthenticatedSession={session !== null}
+      isOfflineAccess={isOfflineAccess}
+      isOnline={isOnline}
+      key={userId}
+      userId={userId}
+    />
   )
 }

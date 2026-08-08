@@ -50,6 +50,20 @@ describe("active household selection", () => {
     ).toBe("household-2")
   })
 
+  it("does not reuse another user's household selection", () => {
+    const storage = new MemoryStorage()
+
+    saveActiveHouseholdId(
+      storage,
+      "user-1",
+      "household-1",
+    )
+
+    expect(
+      readActiveHouseholdId(storage, "user-2"),
+    ).toBeNull()
+  })
+
   it("returns null when the user has no selection", () => {
     const storage = new MemoryStorage()
 
@@ -72,7 +86,6 @@ describe("active household selection", () => {
       "Stored active household selection is invalid",
     )
   })
-
 
   it("keeps a valid stored household selection", () => {
     expect(
