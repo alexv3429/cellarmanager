@@ -1,3 +1,4 @@
+import { useStatus } from "@powersync/react"
 import { useEffect, useState } from "react"
 
 import "./App.css"
@@ -7,6 +8,7 @@ import { CatalogView } from "./components/CatalogView"
 import { CellarSetupView } from "./components/CellarSetupView"
 import { HoldingsView } from "./components/HoldingsView"
 import { LoginForm } from "./components/LoginForm"
+import { OnboardingView } from "./components/OnboardingView"
 import {
   setPowerSyncAccess,
 } from "./data/powersync/connection"
@@ -23,6 +25,8 @@ export default function App() {
     isOfflineAccess,
     error: sessionError,
   } = useSession()
+
+  const powerSyncStatus = useStatus()
 
   const [syncError, setSyncError] =
     useState<string | null>(null)
@@ -66,19 +70,50 @@ export default function App() {
     return <LoginForm />
   }
 
-  if (householdsLoading) {
-    return <p>Loading households…</p>
+  const waitingForInitialHouseholdSync =
+    session !== null &&
+    isOnline &&
+    powerSyncStatus.hasSynced !== true &&
+    households.length === 0
+
+  const currentSyncError =
+    syncError ?? sessionError
+
+  if (
+    householdsLoading ||
+    (waitingForInitialHouseholdSync &&
+      !currentSyncError)
+  ) {
+    return <p>Loading household data…</p>
   }
 
-  if (!activeHouseholdId) {
+  if (
+    waitingForInitialHouseholdSync &&
+    currentSyncError
+  ) {
     return (
       <main>
         <h1>CellarManager</h1>
-        <p role="alert">
-          {householdError ??
-            "No household membership is available for this user"}
-        </p>
+        <p role="alert">{currentSyncError}</p>
       </main>
+    )
+  }
+
+  if (!activeHouseholdId) {
+    if (householdError) {
+      return (
+        <main>
+          <h1>CellarManager</h1>
+          <p role="alert">{householdError}</p>
+        </main>
+      )
+    }
+
+    return (
+      <OnboardingView
+        isOnline={isOnline}
+        onSignOut={signOutAndClearLocalData}
+      />
     )
   }
 
@@ -137,7 +172,7 @@ export default function App() {
           isOfflineAccess={isOfflineAccess}
           isOnline={isOnline}
           onSignOut={signOutAndClearLocalData}
-          syncError={syncError ?? sessionError}
+          syncError={currentSyncError}
           userId={userId}
         />
       ) : null}
