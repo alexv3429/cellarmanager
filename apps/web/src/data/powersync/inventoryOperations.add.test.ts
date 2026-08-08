@@ -29,6 +29,10 @@ describe("new-wine ADD queue", () => {
       wineProducer: "  New   Domaine ",
       wineCuvee: " Offline  Cuvée ",
       wineVintage: 2022,
+      wineColor: " Red ",
+      wineAppellation: "  Morgon ",
+      wineArea: " Beaujolais ",
+      wineFormatMl: 1500,
     })
 
     expect(execute.mock.calls[0]?.[1]).toEqual([
@@ -45,11 +49,15 @@ describe("new-wine ADD queue", () => {
       "New Domaine",
       "Offline Cuvée",
       2022,
+      "red",
+      "Morgon",
+      "Beaujolais",
+      1500,
       "2026-08-07T14:30:00.000Z",
     ])
   })
 
-  it("requires all new-wine identity fields together", async () => {
+  it("requires the full core identity for a new wine", async () => {
     const execute = vi.fn(
       async (
         _sql: string,
@@ -73,9 +81,10 @@ describe("new-wine ADD queue", () => {
         quantity: 1,
         wineProducer: "New Domaine",
         wineCuvee: "Offline Cuvée",
+        wineVintage: 2022,
       }),
     ).rejects.toThrow(
-      "New-wine ADD details must include producer, cuvée, and vintage/NV together",
+      "New-wine ADD details must include producer, cuvée, vintage/NV, color, and format together",
     )
 
     expect(execute).not.toHaveBeenCalled()

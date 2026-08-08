@@ -3,9 +3,14 @@ import { describe, expect, it } from "vitest"
 import {
   cleanWineText,
   findExactWine,
+  findMatchingWines,
+  formatWineVolume,
+  getAppellationSuggestions,
+  getAreaSuggestions,
   getCuveeSuggestions,
   getProducerSuggestions,
   getVintageSuggestions,
+  parseWineFormatMl,
   parseWineVintage,
   type WineCatalogEntry,
 } from "./wineCatalog"
@@ -17,6 +22,10 @@ const wines: WineCatalogEntry[] = [
     producer: "Domaine Test",
     cuvee: "Cuvée A",
     vintage: 2020,
+    color: "red",
+    appellation: "Morgon",
+    area: "Beaujolais",
+    format_ml: 750,
   },
   {
     id: "wine-2",
@@ -24,6 +33,10 @@ const wines: WineCatalogEntry[] = [
     producer: "Domaine Test",
     cuvee: "Cuvée A",
     vintage: 2021,
+    color: "red",
+    appellation: "Morgon",
+    area: "Beaujolais",
+    format_ml: 750,
   },
   {
     id: "wine-3",
@@ -31,6 +44,10 @@ const wines: WineCatalogEntry[] = [
     producer: "Domaine Test",
     cuvee: "Cuvée B",
     vintage: null,
+    color: "white",
+    appellation: null,
+    area: null,
+    format_ml: 750,
   },
   {
     id: "wine-4",
@@ -38,6 +55,32 @@ const wines: WineCatalogEntry[] = [
     producer: "Private Domaine",
     cuvee: "Private",
     vintage: 2022,
+    color: "red",
+    appellation: null,
+    area: null,
+    format_ml: 750,
+  },
+  {
+    id: "wine-5",
+    household_id: "household-1",
+    producer: "Domaine Test",
+    cuvee: "Cuvée A",
+    vintage: 2020,
+    color: "white",
+    appellation: "Morgon",
+    area: "Beaujolais",
+    format_ml: 750,
+  },
+  {
+    id: "wine-6",
+    household_id: "household-1",
+    producer: "Domaine Test",
+    cuvee: "Cuvée A",
+    vintage: 2020,
+    color: "red",
+    appellation: "Morgon",
+    area: "Beaujolais",
+    format_ml: 1500,
   },
 ]
 
@@ -56,7 +99,16 @@ describe("wine catalog entry helpers", () => {
     )
   })
 
-  it("matches existing wines case-insensitively", () => {
+  it("parses and formats physical bottle volume", () => {
+    expect(parseWineFormatMl("750")).toBe(750)
+    expect(formatWineVolume(750)).toBe("75 cl")
+    expect(formatWineVolume(187)).toBe("187 ml")
+    expect(() => parseWineFormatMl("0")).toThrow(
+      "Bottle format must be a positive whole number of millilitres",
+    )
+  })
+
+  it("matches existing wines using color and format", () => {
     expect(
       findExactWine(
         wines,
@@ -64,14 +116,96 @@ describe("wine catalog entry helpers", () => {
         " domaine   test ",
         "cuvée a",
         2020,
+        "RED",
+        750,
       )?.id,
     ).toBe("wine-1")
+
+    expect(
+      findExactWine(
+        wines,
+        "household-1",
+        "Domaine Test",
+        "Cuvée A",
+        2020,
+        "white",
+        750,
+      )?.id,
+    ).toBe("wine-5")
+
+    expect(
+      findExactWine(
+        wines,
+        "household-1",
+        "Domaine Test",
+        "Cuvée A",
+        2020,
+        "red",
+        1500,
+      )?.id,
+    ).toBe("wine-6")
+  })
+
+  it("does not silently choose between ambiguous catalog rows", () => {
+    const base = wines[0] as WineCatalogEntry
+    const ambiguous: WineCatalogEntry[] = [
+      base,
+      {
+        ...base,
+        id: "wine-ambiguous",
+        appellation: "Beaujolais",
+      },
+    ]
+
+    expect(
+      findMatchingWines(
+        ambiguous,
+        "household-1",
+        "Domaine Test",
+        "Cuvée A",
+        2020,
+        "red",
+        750,
+      ),
+    ).toHaveLength(2)
+
+    expect(
+      findExactWine(
+        ambiguous,
+        "household-1",
+        "Domaine Test",
+        "Cuvée A",
+        2020,
+        "red",
+        750,
+      ),
+    ).toBeUndefined()
   })
 
   it("keeps producer suggestions inside the selected household", () => {
     expect(
       getProducerSuggestions(wines, "household-1"),
     ).toEqual(["Domaine Test"])
+  })
+
+  it("provides contextual appellation and area suggestions", () => {
+    expect(
+      getAppellationSuggestions(
+        wines,
+        "household-1",
+        "Domaine Test",
+        "Cuvée A",
+      ),
+    ).toEqual(["Morgon"])
+
+    expect(
+      getAreaSuggestions(
+        wines,
+        "household-1",
+        "Domaine Test",
+        "Cuvée A",
+      ),
+    ).toEqual(["Beaujolais"])
   })
 
   it("provides contextual cuvée and vintage suggestions", () => {

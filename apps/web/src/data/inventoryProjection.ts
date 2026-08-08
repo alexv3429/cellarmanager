@@ -14,6 +14,10 @@ export interface AuthoritativeHolding {
   producer: string
   cuvee: string
   vintage: number | null
+  color: string
+  appellation: string | null
+  area: string | null
+  format_ml: number
   location_code: string
   quantity: number
   revision: number
@@ -27,6 +31,10 @@ export interface InventoryOperation {
   wine_producer?: string | null
   wine_cuvee?: string | null
   wine_vintage?: number | null
+  wine_color?: string | null
+  wine_appellation?: string | null
+  wine_area?: string | null
+  wine_format_ml?: number | null
   source_location_id: string | null
   destination_location_id: string | null
   quantity: number
@@ -53,6 +61,10 @@ interface WineTemplate {
   producer: string
   cuvee: string
   vintage: number | null
+  color: string
+  appellation: string | null
+  area: string | null
+  format_ml: number
 }
 
 function positionKey(
@@ -83,6 +95,10 @@ export function projectHoldings({
       producer: wine.producer,
       cuvee: wine.cuvee,
       vintage: wine.vintage,
+      color: wine.color,
+      appellation: wine.appellation,
+      area: wine.area,
+      format_ml: wine.format_ml,
     })
   }
 
@@ -97,6 +113,10 @@ export function projectHoldings({
       producer: holding.producer,
       cuvee: holding.cuvee,
       vintage: holding.vintage,
+      color: holding.color,
+      appellation: holding.appellation,
+      area: holding.area,
+      format_ml: holding.format_ml,
     })
 
     projectedByPosition.set(
@@ -145,6 +165,10 @@ export function projectHoldings({
       producer: operation.wine_producer,
       cuvee: operation.wine_cuvee,
       vintage: operation.wine_vintage ?? null,
+      color: operation.wine_color ?? "other",
+      appellation: operation.wine_appellation ?? null,
+      area: operation.wine_area ?? null,
+      format_ml: operation.wine_format_ml ?? 750,
     })
   }
 
@@ -179,6 +203,10 @@ export function projectHoldings({
       producer: wineTemplate.producer,
       cuvee: wineTemplate.cuvee,
       vintage: wineTemplate.vintage,
+      color: wineTemplate.color,
+      appellation: wineTemplate.appellation,
+      area: wineTemplate.area,
+      format_ml: wineTemplate.format_ml,
       location_code: location.code,
       authoritative_quantity: 0,
       pending_delta: 0,

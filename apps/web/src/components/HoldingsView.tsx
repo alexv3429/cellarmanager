@@ -16,9 +16,14 @@ import { matchesSearch } from "../data/searchFilters"
 import {
   cleanWineText,
   findExactWine,
+  findMatchingWines,
+  formatWineVolume,
+  getAppellationSuggestions,
+  getAreaSuggestions,
   getCuveeSuggestions,
   getProducerSuggestions,
   getVintageSuggestions,
+  parseWineFormatMl,
   parseWineVintage,
   type WineCatalogEntry,
 } from "../data/wineCatalog"
@@ -70,6 +75,10 @@ const HOLDINGS_QUERY = `
     w.producer,
     w.cuvee,
     w.vintage,
+    w.color,
+    w.appellation,
+    w.area,
+    w.format_ml,
     l.code as location_code,
     h.quantity,
     h.revision
@@ -100,7 +109,11 @@ const WINE_CATALOG_QUERY = `
     household_id,
     producer,
     cuvee,
-    vintage
+    vintage,
+    color,
+    appellation,
+    area,
+    format_ml
   from wines
   order by producer, cuvee, vintage
 `
@@ -114,6 +127,10 @@ const PENDING_OPERATIONS_QUERY = `
     wine_producer,
     wine_cuvee,
     wine_vintage,
+    wine_color,
+    wine_appellation,
+    wine_area,
+    wine_format_ml,
     source_location_id,
     destination_location_id,
     quantity,
@@ -307,6 +324,11 @@ export function HoldingsView({
             holding.producer,
             holding.cuvee,
             holding.vintage ?? "NV",
+            holding.color,
+            holding.appellation,
+            holding.area,
+            formatWineVolume(holding.format_ml),
+            holding.format_ml,
             holding.location_code,
             location?.cellar_name,
           ],
@@ -346,6 +368,10 @@ export function HoldingsView({
   const [addProducer, setAddProducer] = useState("")
   const [addCuvee, setAddCuvee] = useState("")
   const [addVintage, setAddVintage] = useState("")
+  const [addColor, setAddColor] = useState("")
+  const [addAppellation, setAddAppellation] = useState("")
+  const [addArea, setAddArea] = useState("")
+  const [addFormatMl, setAddFormatMl] = useState("750")
   const [addQuantity, setAddQuantity] = useState("1")
   const [addLocationId, setAddLocationId] = useState("")
   const [adding, setAdding] = useState(false)
@@ -375,19 +401,51 @@ export function HoldingsView({
         : "Invalid vintage"
   }
 
-  const matchingWine =
+  let parsedAddFormatMl = 750
+  let addFormatError: string | null = null
+
+  try {
+    parsedAddFormatMl = parseWineFormatMl(addFormatMl)
+  } catch (caughtError: unknown) {
+    addFormatError =
+      caughtError instanceof Error
+        ? caughtError.message
+        : "Invalid bottle format"
+  }
+
+  const matchingWineCandidates =
     selectedAddLocation &&
     cleanedAddProducer.length > 0 &&
     cleanedAddCuvee.length > 0 &&
-    addVintageError === null
+    addColor.length > 0 &&
+    addVintageError === null &&
+    addFormatError === null
+      ? findMatchingWines(
+          wines,
+          selectedAddHouseholdId,
+          cleanedAddProducer,
+          cleanedAddCuvee,
+          parsedAddVintage,
+          addColor,
+          parsedAddFormatMl,
+        )
+      : []
+
+  const matchingWine =
+    matchingWineCandidates.length === 1
       ? findExactWine(
           wines,
           selectedAddHouseholdId,
           cleanedAddProducer,
           cleanedAddCuvee,
           parsedAddVintage,
+          addColor,
+          parsedAddFormatMl,
         )
       : undefined
+
+  const ambiguousWineIdentity =
+    matchingWineCandidates.length > 1
 
   const producerSuggestions = getProducerSuggestions(
     wines,
@@ -401,6 +459,20 @@ export function HoldingsView({
   )
 
   const vintageSuggestions = getVintageSuggestions(
+    wines,
+    selectedAddHouseholdId,
+    addProducer,
+    addCuvee,
+  )
+
+  const appellationSuggestions = getAppellationSuggestions(
+    wines,
+    selectedAddHouseholdId,
+    addProducer,
+    addCuvee,
+  )
+
+  const areaSuggestions = getAreaSuggestions(
     wines,
     selectedAddHouseholdId,
     addProducer,
@@ -479,6 +551,23 @@ export function HoldingsView({
       return
     }
 
+    if (addColor.length === 0) {
+      setOperationError("Select a wine color")
+      return
+    }
+
+    if (addFormatError !== null) {
+      setOperationError(addFormatError)
+      return
+    }
+
+    if (ambiguousWineIdentity) {
+      setOperationError(
+        "Multiple catalog wines share this identity. Select the existing reference explicitly before adding stock.",
+      )
+      return
+    }
+
     const quantity = Number(addQuantity)
 
     if (
@@ -509,6 +598,8 @@ export function HoldingsView({
       cleanedAddProducer,
       cleanedAddCuvee,
       parsedAddVintage,
+      addColor,
+      parsedAddFormatMl,
     )
 
     const add: QueueAddInput = existingWine
@@ -530,6 +621,11 @@ export function HoldingsView({
           wineProducer: cleanedAddProducer,
           wineCuvee: cleanedAddCuvee,
           wineVintage: parsedAddVintage,
+          wineColor: addColor,
+          wineAppellation:
+            cleanWineText(addAppellation) || null,
+          wineArea: cleanWineText(addArea) || null,
+          wineFormatMl: parsedAddFormatMl,
         }
 
     setAdding(true)
@@ -544,6 +640,10 @@ export function HoldingsView({
       setAddProducer("")
       setAddCuvee("")
       setAddVintage("")
+      setAddColor("")
+      setAddAppellation("")
+      setAddArea("")
+      setAddFormatMl("750")
       setAddQuantity("1")
     } catch (caughtError: unknown) {
       setOperationError(
@@ -811,6 +911,85 @@ export function HoldingsView({
         </datalist>
 
         <label>
+          Color
+          <select
+            onChange={(event) =>
+              setAddColor(event.target.value)
+            }
+            required
+            value={addColor}
+          >
+            <option value="">Select color…</option>
+            <option value="red">Red</option>
+            <option value="white">White</option>
+            <option value="rose">Rosé</option>
+            <option value="sparkling">Sparkling</option>
+            <option value="other">Other</option>
+          </select>
+        </label>
+
+        <label>
+          Appellation
+          <input
+            list="add-appellation-suggestions"
+            onChange={(event) =>
+              setAddAppellation(event.target.value)
+            }
+            placeholder="Optional"
+            value={addAppellation}
+          />
+        </label>
+
+        <datalist id="add-appellation-suggestions">
+          {appellationSuggestions.map((appellation) => (
+            <option
+              key={appellation}
+              value={appellation}
+            />
+          ))}
+        </datalist>
+
+        <label>
+          Area / region
+          <input
+            list="add-area-suggestions"
+            onChange={(event) =>
+              setAddArea(event.target.value)
+            }
+            placeholder="Optional"
+            value={addArea}
+          />
+        </label>
+
+        <datalist id="add-area-suggestions">
+          {areaSuggestions.map((area) => (
+            <option key={area} value={area} />
+          ))}
+        </datalist>
+
+        <label>
+          Bottle format (ml)
+          <input
+            inputMode="numeric"
+            list="add-format-suggestions"
+            min="1"
+            onChange={(event) =>
+              setAddFormatMl(event.target.value)
+            }
+            required
+            step="1"
+            type="number"
+            value={addFormatMl}
+          />
+        </label>
+
+        <datalist id="add-format-suggestions">
+          <option value="500">50 cl</option>
+          <option value="750">75 cl</option>
+          <option value="1500">150 cl / magnum</option>
+        </datalist>
+
+        <label>
           Quantity
           <input
             min="1"
@@ -844,13 +1023,21 @@ export function HoldingsView({
           <p role="alert">{addVintageError}</p>
         ) : null}
 
+        {addFormatError ? (
+          <p role="alert">{addFormatError}</p>
+        ) : null}
+
         {cleanedAddProducer.length > 0 &&
         cleanedAddCuvee.length > 0 &&
-        addVintageError === null ? (
+        addColor.length > 0 &&
+        addVintageError === null &&
+        addFormatError === null ? (
           <p>
-            {matchingWine
-              ? "Existing wine — stock will be increased."
-              : "New wine — the catalog entry will be created when this operation synchronizes."}
+            {ambiguousWineIdentity
+              ? "Multiple catalog wines share this producer, cuvée, vintage, color, and format. Stock will not be added until the reference is selected explicitly."
+              : matchingWine
+                ? "Existing wine — stock will be increased."
+                : "New wine — the catalog entry will be created when this operation synchronizes."}
           </p>
         ) : null}
 
@@ -859,6 +1046,9 @@ export function HoldingsView({
             adding ||
             !selectedAddLocation ||
             addVintageError !== null ||
+            addFormatError !== null ||
+            addColor.length === 0 ||
+            ambiguousWineIdentity ||
             !deviceRegistration.deviceIdByHousehold[
               selectedAddHouseholdId
             ]
@@ -882,7 +1072,7 @@ export function HoldingsView({
             onChange={(event) =>
               setInventorySearch(event.target.value)
             }
-            placeholder="Producer, cuvée, vintage, cellar…"
+            placeholder="Producer, cuvée, appellation, area, vintage, cellar…"
             type="search"
             value={inventorySearch}
           />
@@ -990,7 +1180,19 @@ export function HoldingsView({
             return (
               <tr key={holding.id}>
                 <td>
-                  {holding.producer} — {holding.cuvee}
+                  <div>
+                    {holding.producer} — {holding.cuvee}
+                  </div>
+                  <small>
+                    {[
+                      holding.appellation,
+                      holding.area,
+                      holding.color,
+                      formatWineVolume(holding.format_ml),
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </small>
                 </td>
                 <td>{holding.vintage ?? "NV"}</td>
                 <td>
