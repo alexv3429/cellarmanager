@@ -1,8 +1,20 @@
 import { useQuery } from "@powersync/react"
-import { useMemo, useState } from "react"
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react"
 
 import { matchesSearch } from "../data/searchFilters"
-import { formatWineVolume } from "../data/wineCatalog"
+import {
+  formatWineVolume,
+} from "../data/wineCatalog"
+import {
+  prepareWineIdentityEdit,
+} from "../data/wineCatalogEdit"
+import {
+  updateWineIdentity,
+} from "../data/wineCatalogMutations"
 
 interface CatalogWineRow {
   id: string
@@ -55,10 +67,12 @@ const CATALOG_QUERY = `
 
 interface CatalogViewProps {
   householdId: string
+  isOnline: boolean
 }
 
 export function CatalogView({
   householdId,
+  isOnline,
 }: CatalogViewProps) {
   const {
     data: wines,
@@ -75,6 +89,30 @@ export function CatalogView({
   const [vintageFilter, setVintageFilter] =
     useState("ALL")
 
+  const [editingWineId, setEditingWineId] =
+    useState<string | null>(null)
+
+  const [editProducer, setEditProducer] = useState("")
+  const [editCuvee, setEditCuvee] = useState("")
+  const [editVintage, setEditVintage] = useState("")
+  const [editColor, setEditColor] = useState("")
+
+  const [savingWineId, setSavingWineId] =
+    useState<string | null>(null)
+
+  const [mutationMessage, setMutationMessage] =
+    useState<string | null>(null)
+
+  const [mutationError, setMutationError] =
+    useState<string | null>(null)
+
+  useEffect(() => {
+    setEditingWineId(null)
+    setSavingWineId(null)
+    setMutationMessage(null)
+    setMutationError(null)
+  }, [householdId])
+
   const vintageOptions = useMemo(() => {
     const vintages = [
       ...new Set(
@@ -89,6 +127,15 @@ export function CatalogView({
       hasNv: wines.some((wine) => wine.vintage === null),
     }
   }, [wines])
+
+  const colorSuggestions = useMemo(
+    () =>
+      [...new Set(wines.map((wine) => wine.color))]
+        .sort((left, right) =>
+          left.localeCompare(right),
+        ),
+    [wines],
+  )
 
   const visibleWines = useMemo(
     () =>
@@ -154,6 +201,64 @@ export function CatalogView({
     setVintageFilter("ALL")
   }
 
+  function startEditing(wine: CatalogWineRow) {
+    setMutationMessage(null)
+    setMutationError(null)
+
+    setEditingWineId(wine.id)
+    setEditProducer(wine.producer)
+    setEditCuvee(wine.cuvee)
+    setEditVintage(
+      wine.vintage === null
+        ? ""
+        : String(wine.vintage),
+    )
+    setEditColor(wine.color)
+  }
+
+  function cancelEditing() {
+    setEditingWineId(null)
+    setMutationError(null)
+  }
+
+  async function saveWine(wineId: string) {
+    setMutationMessage(null)
+    setMutationError(null)
+
+    if (!isOnline) {
+      setMutationError(
+        "Reconnect before editing a catalog wine.",
+      )
+      return
+    }
+
+    setSavingWineId(wineId)
+
+    try {
+      const identity = prepareWineIdentityEdit(
+        editProducer,
+        editCuvee,
+        editVintage,
+        editColor,
+      )
+
+      await updateWineIdentity(wineId, identity)
+
+      setEditingWineId(null)
+      setMutationMessage(
+        "Wine saved. Waiting for synchronization.",
+      )
+    } catch (caughtError: unknown) {
+      setMutationError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to save wine",
+      )
+    } finally {
+      setSavingWineId(null)
+    }
+  }
+
   return (
     <main>
       <h1>Wine catalog</h1>
@@ -162,8 +267,20 @@ export function CatalogView({
         with no bottles currently in stock.
       </p>
 
+      {!isOnline ? (
+        <p>Offline · catalog edits are disabled.</p>
+      ) : null}
+
       {isLoading ? <p>Opening local catalog…</p> : null}
       {error ? <p role="alert">{String(error)}</p> : null}
+
+      {mutationMessage ? (
+        <p>{mutationMessage}</p>
+      ) : null}
+
+      {mutationError ? (
+        <p role="alert">{mutationError}</p>
+      ) : null}
 
       <section aria-labelledby="catalog-filters-heading">
         <h2 id="catalog-filters-heading">Find wines</h2>
@@ -208,6 +325,7 @@ export function CatalogView({
             {vintageOptions.hasNv ? (
               <option value="NV">NV</option>
             ) : null}
+
             {vintageOptions.vintages.map((vintage) => (
               <option
                 key={vintage}
@@ -227,6 +345,12 @@ export function CatalogView({
           Clear filters
         </button>
       </section>
+
+      <datalist id="catalog-color-suggestions">
+        {colorSuggestions.map((color) => (
+          <option key={color} value={color} />
+        ))}
+      </datalist>
 
       <p>
         Showing {visibleWines.length} of {wines.length} wines
@@ -255,22 +379,147 @@ export function CatalogView({
             <th>Area</th>
             <th>Format</th>
             <th>Current bottles</th>
+            <th>Actions</th>
           </tr>
         </thead>
 
         <tbody>
-          {visibleWines.map((wine) => (
-            <tr key={wine.id}>
-              <td>{wine.producer}</td>
-              <td>{wine.cuvee}</td>
-              <td>{wine.vintage ?? "NV"}</td>
-              <td>{wine.color}</td>
-              <td>{wine.appellation ?? "—"}</td>
-              <td>{wine.area ?? "—"}</td>
-              <td>{formatWineVolume(wine.format_ml)}</td>
-              <td>{wine.quantity}</td>
-            </tr>
-          ))}
+          {visibleWines.map((wine) => {
+            const isEditing =
+              editingWineId === wine.id
+
+            const isSaving =
+              savingWineId === wine.id
+
+            return (
+              <tr key={wine.id}>
+                <td>
+                  {isEditing ? (
+                    <input
+                      aria-label={`Producer for ${wine.producer} ${wine.cuvee}`}
+                      disabled={isSaving}
+                      onChange={(event) =>
+                        setEditProducer(
+                          event.target.value,
+                        )
+                      }
+                      required
+                      value={editProducer}
+                    />
+                  ) : (
+                    wine.producer
+                  )}
+                </td>
+
+                <td>
+                  {isEditing ? (
+                    <input
+                      aria-label={`Cuvée for ${wine.producer} ${wine.cuvee}`}
+                      disabled={isSaving}
+                      onChange={(event) =>
+                        setEditCuvee(
+                          event.target.value,
+                        )
+                      }
+                      required
+                      value={editCuvee}
+                    />
+                  ) : (
+                    wine.cuvee
+                  )}
+                </td>
+
+                <td>
+                  {isEditing ? (
+                    <input
+                      aria-label={`Vintage for ${wine.producer} ${wine.cuvee}`}
+                      disabled={isSaving}
+                      inputMode="numeric"
+                      onChange={(event) =>
+                        setEditVintage(
+                          event.target.value,
+                        )
+                      }
+                      placeholder="NV"
+                      value={editVintage}
+                    />
+                  ) : (
+                    wine.vintage ?? "NV"
+                  )}
+                </td>
+
+                <td>
+                  {isEditing ? (
+                    <input
+                      aria-label={`Color for ${wine.producer} ${wine.cuvee}`}
+                      disabled={isSaving}
+                      list="catalog-color-suggestions"
+                      onChange={(event) =>
+                        setEditColor(
+                          event.target.value,
+                        )
+                      }
+                      required
+                      value={editColor}
+                    />
+                  ) : (
+                    wine.color
+                  )}
+                </td>
+
+                <td>{wine.appellation ?? "—"}</td>
+                <td>{wine.area ?? "—"}</td>
+
+                <td>
+                  {formatWineVolume(wine.format_ml)}
+                </td>
+
+                <td>{wine.quantity}</td>
+
+                <td>
+                  {isEditing ? (
+                    <>
+                      <button
+                        disabled={!isOnline || isSaving}
+                        onClick={() =>
+                          void saveWine(wine.id)
+                        }
+                        type="button"
+                      >
+                        {isSaving ? "Saving…" : "Save"}
+                      </button>
+
+                      <button
+                        disabled={isSaving}
+                        onClick={cancelEditing}
+                        type="button"
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      disabled={
+                        !isOnline ||
+                        savingWineId !== null
+                      }
+                      onClick={() =>
+                        startEditing(wine)
+                      }
+                      title={
+                        isOnline
+                          ? undefined
+                          : "Reconnect before editing"
+                      }
+                      type="button"
+                    >
+                      Edit
+                    </button>
+                  )}
+                </td>
+              </tr>
+            )
+          })}
         </tbody>
       </table>
     </main>
