@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(18);
+select plan(28);
 
 select ok(
     has_table_privilege(
@@ -25,10 +25,28 @@ select ok(
 select ok(
     has_function_privilege(
         'authenticated',
+        'public.update_wine_catalog(uuid,text,text,integer,text,text,text)',
+        'EXECUTE'
+    ),
+    'Authenticated users may execute full catalog editing'
+);
+
+select ok(
+    not has_function_privilege(
+        'anon',
+        'public.update_wine_catalog(uuid,text,text,integer,text,text,text)',
+        'EXECUTE'
+    ),
+    'Anonymous users cannot execute full catalog editing'
+);
+
+select ok(
+    has_function_privilege(
+        'authenticated',
         'public.update_wine_identity(uuid,text,text,integer,text)',
         'EXECUTE'
     ),
-    'Authenticated users may execute wine editing'
+    'Authenticated users retain legacy identity editing'
 );
 
 select ok(
@@ -37,12 +55,9 @@ select ok(
         'public.update_wine_identity(uuid,text,text,integer,text)',
         'EXECUTE'
     ),
-    'Anonymous users cannot execute wine editing'
+    'Anonymous users cannot execute legacy identity editing'
 );
 
--- Explicit collision fixture. The schema intentionally permits
--- pre-existing ambiguous references, but an edit must not create
--- a new ambiguity.
 insert into public.wines (
     id,
     household_id,
@@ -67,15 +82,17 @@ set local request.jwt.claim.sub =
     '00000000-0000-4000-8000-000000000001';
 
 select is(
-    public.update_wine_identity(
+    public.update_wine_catalog(
         '00000000-0000-4000-8000-000000000110',
         '  Edited   Domaine  ',
         '  Edited   Cuvée  ',
         2024,
-        '  RED  '
+        '  RED  ',
+        '  Côte   de   Nuits  ',
+        '  Burgundy   North  '
     ),
     '00000000-0000-4000-8000-000000000110'::uuid,
-    'Owner can edit a catalog wine'
+    'Owner can edit a full catalog wine'
 );
 
 select is(
@@ -122,6 +139,76 @@ select is(
     'Color is normalized to lowercase'
 );
 
+select is(
+    (
+        select appellation
+        from public.wines
+        where id =
+            '00000000-0000-4000-8000-000000000110'
+    ),
+    'Côte de Nuits',
+    'Appellation whitespace is normalized'
+);
+
+select is(
+    (
+        select area
+        from public.wines
+        where id =
+            '00000000-0000-4000-8000-000000000110'
+    ),
+    'Burgundy North',
+    'Area whitespace is normalized'
+);
+
+select is(
+    public.update_wine_catalog(
+        '00000000-0000-4000-8000-000000000110',
+        'Edited Domaine',
+        'Edited Cuvée',
+        2024,
+        'red',
+        ' ',
+        ''
+    ),
+    '00000000-0000-4000-8000-000000000110'::uuid,
+    'Owner can clear optional metadata'
+);
+
+select ok(
+    (
+        select appellation is null
+        from public.wines
+        where id =
+            '00000000-0000-4000-8000-000000000110'
+    ),
+    'Blank appellation is stored as null'
+);
+
+select ok(
+    (
+        select area is null
+        from public.wines
+        where id =
+            '00000000-0000-4000-8000-000000000110'
+    ),
+    'Blank area is stored as null'
+);
+
+select is(
+    public.update_wine_catalog(
+        '00000000-0000-4000-8000-000000000110',
+        'Edited Domaine',
+        'Edited Cuvée',
+        2024,
+        'red',
+        'Morgon',
+        'Beaujolais'
+    ),
+    '00000000-0000-4000-8000-000000000110'::uuid,
+    'Metadata can be restored before compatibility testing'
+);
+
 select lives_ok(
     $test$
         select public.update_wine_identity(
@@ -132,17 +219,41 @@ select lives_ok(
             ' Red '
         )
     $test$,
-    'Case and whitespace-only identity changes remain valid'
+    'Legacy identity editing remains compatible'
+);
+
+select is(
+    (
+        select appellation
+        from public.wines
+        where id =
+            '00000000-0000-4000-8000-000000000110'
+    ),
+    'Morgon',
+    'Legacy identity editing preserves appellation'
+);
+
+select is(
+    (
+        select area
+        from public.wines
+        where id =
+            '00000000-0000-4000-8000-000000000110'
+    ),
+    'Beaujolais',
+    'Legacy identity editing preserves area'
 );
 
 select throws_ok(
     $test$
-        select public.update_wine_identity(
+        select public.update_wine_catalog(
             '00000000-0000-4000-8000-000000000110',
             '   ',
             'Cuvée',
             2024,
-            'red'
+            'red',
+            null,
+            null
         )
     $test$,
     '22023',
@@ -152,12 +263,14 @@ select throws_ok(
 
 select throws_ok(
     $test$
-        select public.update_wine_identity(
+        select public.update_wine_catalog(
             '00000000-0000-4000-8000-000000000110',
             'Domaine',
             'Cuvée',
             1700,
-            'red'
+            'red',
+            null,
+            null
         )
     $test$,
     '22023',
@@ -167,12 +280,14 @@ select throws_ok(
 
 select throws_ok(
     $test$
-        select public.update_wine_identity(
+        select public.update_wine_catalog(
             '00000000-0000-4000-8000-000000000110',
             'Domaine',
             'Cuvée',
             2024,
-            '   '
+            '   ',
+            null,
+            null
         )
     $test$,
     '22023',
@@ -182,12 +297,14 @@ select throws_ok(
 
 select throws_ok(
     $test$
-        select public.update_wine_identity(
+        select public.update_wine_catalog(
             '00000000-0000-4000-8000-000000000210',
             'Unauthorized Domaine',
             'Private Cuvée',
             2022,
-            'red'
+            'red',
+            'Private Appellation',
+            'Private Area'
         )
     $test$,
     '42501',
@@ -197,12 +314,14 @@ select throws_ok(
 
 select throws_ok(
     $test$
-        select public.update_wine_identity(
+        select public.update_wine_catalog(
             'ffffffff-ffff-4fff-8fff-ffffffffffff',
             'Missing Domaine',
             'Missing Cuvée',
             2022,
-            'red'
+            'red',
+            null,
+            null
         )
     $test$,
     '22023',
@@ -212,17 +331,19 @@ select throws_ok(
 
 select throws_ok(
     $test$
-        select public.update_wine_identity(
+        select public.update_wine_catalog(
             '00000000-0000-4000-8000-000000000110',
             ' collision   domaine ',
             ' COLLISION   CUVÉE ',
             2020,
-            'RED'
+            'RED',
+            'Different Appellation',
+            'Different Area'
         )
     $test$,
     '22023',
     'Another catalog wine already has this identity',
-    'Editing cannot create a new ambiguous semantic identity'
+    'Metadata cannot bypass semantic identity collision protection'
 );
 
 select is(
@@ -233,7 +354,7 @@ select is(
             '00000000-0000-4000-8000-000000000110'
     ),
     750,
-    'Editing identity preserves physical bottle format'
+    'Catalog editing preserves physical bottle format'
 );
 
 select is(
