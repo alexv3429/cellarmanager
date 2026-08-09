@@ -171,6 +171,7 @@ function AuthenticatedApp({
       {view === "catalog" ? (
         <CatalogView
           householdId={activeHouseholdId}
+          isOnline={isOnline}
         />
       ) : null}
 
