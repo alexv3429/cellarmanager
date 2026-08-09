@@ -14,7 +14,12 @@ export async function signOutAndClearLocalData(): Promise<void> {
     throw new Error(`Unable to sign out: ${error.message}`)
   }
 
+  // Remove offline authorization immediately after the
+  // authenticated sign-out succeeds. Even if clearing the local
+  // database later fails, the previous account cannot be restored
+  // through the offline-access path.
   clearLocalAccess(window.localStorage)
-clearActiveHouseholds(window.localStorage)
+  clearActiveHouseholds(window.localStorage)
+
   await clearPowerSyncForSignOut()
 }
