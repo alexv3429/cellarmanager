@@ -1,5 +1,6 @@
 import {
   cleanWineText,
+  parseWineFormatMl,
   parseWineVintage,
 } from "./wineCatalog"
 
@@ -10,6 +11,7 @@ export interface WineCatalogEdit {
   color: string
   appellation: string | null
   area: string | null
+  formatMl: number
 }
 
 function cleanOptionalWineText(
@@ -26,6 +28,7 @@ export function prepareWineCatalogEdit(
   color: string,
   appellation: string,
   area: string,
+  formatMl: string,
 ): WineCatalogEdit {
   const cleanedProducer = cleanWineText(producer)
   const cleanedCuvee = cleanWineText(cuvee)
@@ -50,5 +53,6 @@ export function prepareWineCatalogEdit(
     color: cleanedColor,
     appellation: cleanOptionalWineText(appellation),
     area: cleanOptionalWineText(area),
+    formatMl: parseWineFormatMl(formatMl),
   }
 }

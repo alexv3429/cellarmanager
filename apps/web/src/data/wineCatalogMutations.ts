@@ -15,6 +15,7 @@ export async function updateWineCatalog(
       p_color: edit.color,
       p_appellation: edit.appellation,
       p_area: edit.area,
+      p_format_ml: edit.formatMl,
     },
   )
 
