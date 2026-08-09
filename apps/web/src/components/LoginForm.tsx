@@ -1,8 +1,15 @@
 import { type FormEvent, useState } from "react"
 
+import { resolveSignUpSuccess } from "../auth/signUpFlow"
 import { supabase } from "../data/supabase"
 
 type AuthMode = "sign-in" | "sign-up"
+
+function getAuthErrorMessage(error: unknown): string {
+  return error instanceof Error
+    ? error.message
+    : "Unable to complete authentication"
+}
 
 export function LoginForm() {
   const [mode, setMode] =
@@ -38,7 +45,7 @@ export function LoginForm() {
       if (mode === "sign-in") {
         const { error: signInError } =
           await supabase.auth.signInWithPassword({
-            email,
+            email: email.trim(),
             password,
           })
 
@@ -53,7 +60,7 @@ export function LoginForm() {
         data,
         error: signUpError,
       } = await supabase.auth.signUp({
-        email,
+        email: email.trim(),
         password,
       })
 
@@ -62,11 +69,19 @@ export function LoginForm() {
         return
       }
 
-      if (!data.session) {
-        setMessage(
-          "Account created. Check your email to confirm your address, then sign in.",
-        )
+      const success = resolveSignUpSuccess(
+        data.session !== null,
+      )
+
+      setMode(success.nextMode)
+
+      if (success.clearPassword) {
+        setPassword("")
       }
+
+      setMessage(success.message)
+    } catch (caughtError: unknown) {
+      setError(getAuthErrorMessage(caughtError))
     } finally {
       setIsSubmitting(false)
     }
@@ -79,6 +94,7 @@ export function LoginForm() {
 
       <button
         aria-pressed={mode === "sign-in"}
+        disabled={isSubmitting}
         onClick={() => changeMode("sign-in")}
         type="button"
       >
@@ -87,6 +103,7 @@ export function LoginForm() {
 
       <button
         aria-pressed={mode === "sign-up"}
+        disabled={isSubmitting}
         onClick={() => changeMode("sign-up")}
         type="button"
       >
@@ -98,6 +115,7 @@ export function LoginForm() {
           Email
           <input
             autoComplete="email"
+            disabled={isSubmitting}
             onChange={(event) =>
               setEmail(event.target.value)
             }
@@ -115,6 +133,7 @@ export function LoginForm() {
                 ? "new-password"
                 : "current-password"
             }
+            disabled={isSubmitting}
             onChange={(event) =>
               setPassword(event.target.value)
             }
@@ -137,7 +156,10 @@ export function LoginForm() {
               : "Sign in"}
         </button>
 
-        {message ? <p>{message}</p> : null}
+        {message ? (
+          <p role="status">{message}</p>
+        ) : null}
+
         {error ? <p role="alert">{error}</p> : null}
       </form>
     </main>

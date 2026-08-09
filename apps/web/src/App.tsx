@@ -197,20 +197,43 @@ export default function App() {
   const [syncError, setSyncError] =
     useState<string | null>(null)
 
+  // The ID whose local PowerSync database has actually finished
+  // being prepared. This deliberately trails userId during an
+  // account switch, preventing the next account from rendering
+  // against the previous account's local database.
+  const [preparedUserId, setPreparedUserId] =
+    useState<string | null>(null)
+
   useEffect(() => {
+    let active = true
+
     setSyncError(null)
 
     void setPowerSyncAccess({
       userId,
       connectToBackend:
         session !== null && isOnline,
-    }).catch((error: unknown) => {
-      setSyncError(
-        error instanceof Error
-          ? error.message
-          : "Unable to connect PowerSync",
-      )
     })
+      .then(() => {
+        if (active) {
+          setPreparedUserId(userId)
+        }
+      })
+      .catch((error: unknown) => {
+        if (!active) {
+          return
+        }
+
+        setSyncError(
+          error instanceof Error
+            ? error.message
+            : "Unable to prepare local cellar data",
+        )
+      })
+
+    return () => {
+      active = false
+    }
   }, [isOnline, session, userId])
 
   if (isLoading) {
@@ -223,6 +246,19 @@ export default function App() {
 
   if (!userId) {
     return <LoginForm />
+  }
+
+  if (preparedUserId !== userId) {
+    if (syncError) {
+      return (
+        <main>
+          <h1>CellarManager</h1>
+          <p role="alert">{syncError}</p>
+        </main>
+      )
+    }
+
+    return <p>Preparing local cellar data…</p>
   }
 
   return (

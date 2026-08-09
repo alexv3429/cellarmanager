@@ -90,14 +90,15 @@ export function setPowerSyncAccess({
 
 export function clearPowerSyncForSignOut(): Promise<void> {
   return serialize(async () => {
-    try {
-      await powerSyncDatabase.disconnectAndClear()
-    } finally {
-      clearDatabaseOwner(window.localStorage)
-      clearDeviceIdentities(window.localStorage)
+    // Keep ownership markers intact if clearing fails. A later
+    // sign-in by another user will then detect the old owner and
+    // retry disconnectAndClear before exposing local data.
+    await powerSyncDatabase.disconnectAndClear()
 
-      activeUserId = null
-      connectionRequested = false
-    }
+    clearDatabaseOwner(window.localStorage)
+    clearDeviceIdentities(window.localStorage)
+
+    activeUserId = null
+    connectionRequested = false
   })
 }
