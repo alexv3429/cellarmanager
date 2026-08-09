@@ -1,18 +1,20 @@
 import { supabase } from "./supabase"
-import type { WineIdentityEdit } from "./wineCatalogEdit"
+import type { WineCatalogEdit } from "./wineCatalogEdit"
 
-export async function updateWineIdentity(
+export async function updateWineCatalog(
   wineId: string,
-  identity: WineIdentityEdit,
+  edit: WineCatalogEdit,
 ): Promise<void> {
   const { error } = await supabase.rpc(
-    "update_wine_identity",
+    "update_wine_catalog",
     {
       p_wine_id: wineId,
-      p_producer: identity.producer,
-      p_cuvee: identity.cuvee,
-      p_vintage: identity.vintage,
-      p_color: identity.color,
+      p_producer: edit.producer,
+      p_cuvee: edit.cuvee,
+      p_vintage: edit.vintage,
+      p_color: edit.color,
+      p_appellation: edit.appellation,
+      p_area: edit.area,
     },
   )
 

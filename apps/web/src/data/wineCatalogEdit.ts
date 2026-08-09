@@ -3,19 +3,30 @@ import {
   parseWineVintage,
 } from "./wineCatalog"
 
-export interface WineIdentityEdit {
+export interface WineCatalogEdit {
   producer: string
   cuvee: string
   vintage: number | null
   color: string
+  appellation: string | null
+  area: string | null
 }
 
-export function prepareWineIdentityEdit(
+function cleanOptionalWineText(
+  value: string,
+): string | null {
+  const cleaned = cleanWineText(value)
+  return cleaned.length > 0 ? cleaned : null
+}
+
+export function prepareWineCatalogEdit(
   producer: string,
   cuvee: string,
   vintage: string,
   color: string,
-): WineIdentityEdit {
+  appellation: string,
+  area: string,
+): WineCatalogEdit {
   const cleanedProducer = cleanWineText(producer)
   const cleanedCuvee = cleanWineText(cuvee)
   const cleanedColor = cleanWineText(color).toLowerCase()
@@ -37,5 +48,7 @@ export function prepareWineIdentityEdit(
     cuvee: cleanedCuvee,
     vintage: parseWineVintage(vintage),
     color: cleanedColor,
+    appellation: cleanOptionalWineText(appellation),
+    area: cleanOptionalWineText(area),
   }
 }

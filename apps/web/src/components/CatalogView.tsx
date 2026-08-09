@@ -10,10 +10,10 @@ import {
   formatWineVolume,
 } from "../data/wineCatalog"
 import {
-  prepareWineIdentityEdit,
+  prepareWineCatalogEdit,
 } from "../data/wineCatalogEdit"
 import {
-  updateWineIdentity,
+  updateWineCatalog,
 } from "../data/wineCatalogMutations"
 
 interface CatalogWineRow {
@@ -96,6 +96,9 @@ export function CatalogView({
   const [editCuvee, setEditCuvee] = useState("")
   const [editVintage, setEditVintage] = useState("")
   const [editColor, setEditColor] = useState("")
+  const [editAppellation, setEditAppellation] =
+    useState("")
+  const [editArea, setEditArea] = useState("")
 
   const [savingWineId, setSavingWineId] =
     useState<string | null>(null)
@@ -134,6 +137,40 @@ export function CatalogView({
         .sort((left, right) =>
           left.localeCompare(right),
         ),
+    [wines],
+  )
+
+  const appellationSuggestions = useMemo(
+    () =>
+      [
+        ...new Set(
+          wines
+            .map((wine) => wine.appellation)
+            .filter(
+              (value): value is string =>
+                value !== null,
+            ),
+        ),
+      ].sort((left, right) =>
+        left.localeCompare(right),
+      ),
+    [wines],
+  )
+
+  const areaSuggestions = useMemo(
+    () =>
+      [
+        ...new Set(
+          wines
+            .map((wine) => wine.area)
+            .filter(
+              (value): value is string =>
+                value !== null,
+            ),
+        ),
+      ].sort((left, right) =>
+        left.localeCompare(right),
+      ),
     [wines],
   )
 
@@ -214,6 +251,8 @@ export function CatalogView({
         : String(wine.vintage),
     )
     setEditColor(wine.color)
+    setEditAppellation(wine.appellation ?? "")
+    setEditArea(wine.area ?? "")
   }
 
   function cancelEditing() {
@@ -235,14 +274,16 @@ export function CatalogView({
     setSavingWineId(wineId)
 
     try {
-      const identity = prepareWineIdentityEdit(
+      const edit = prepareWineCatalogEdit(
         editProducer,
         editCuvee,
         editVintage,
         editColor,
+        editAppellation,
+        editArea,
       )
 
-      await updateWineIdentity(wineId, identity)
+      await updateWineCatalog(wineId, edit)
 
       setEditingWineId(null)
       setMutationMessage(
@@ -349,6 +390,21 @@ export function CatalogView({
       <datalist id="catalog-color-suggestions">
         {colorSuggestions.map((color) => (
           <option key={color} value={color} />
+        ))}
+      </datalist>
+
+      <datalist id="catalog-appellation-suggestions">
+        {appellationSuggestions.map((appellation) => (
+          <option
+            key={appellation}
+            value={appellation}
+          />
+        ))}
+      </datalist>
+
+      <datalist id="catalog-area-suggestions">
+        {areaSuggestions.map((area) => (
+          <option key={area} value={area} />
         ))}
       </datalist>
 
@@ -467,8 +523,43 @@ export function CatalogView({
                   )}
                 </td>
 
-                <td>{wine.appellation ?? "—"}</td>
-                <td>{wine.area ?? "—"}</td>
+                <td>
+                  {isEditing ? (
+                    <input
+                      aria-label={`Appellation for ${wine.producer} ${wine.cuvee}`}
+                      disabled={isSaving}
+                      list="catalog-appellation-suggestions"
+                      onChange={(event) =>
+                        setEditAppellation(
+                          event.target.value,
+                        )
+                      }
+                      placeholder="Optional"
+                      value={editAppellation}
+                    />
+                  ) : (
+                    wine.appellation ?? "—"
+                  )}
+                </td>
+
+                <td>
+                  {isEditing ? (
+                    <input
+                      aria-label={`Area for ${wine.producer} ${wine.cuvee}`}
+                      disabled={isSaving}
+                      list="catalog-area-suggestions"
+                      onChange={(event) =>
+                        setEditArea(
+                          event.target.value,
+                        )
+                      }
+                      placeholder="Optional"
+                      value={editArea}
+                    />
+                  ) : (
+                    wine.area ?? "—"
+                  )}
+                </td>
 
                 <td>
                   {formatWineVolume(wine.format_ml)}
