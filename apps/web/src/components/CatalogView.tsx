@@ -99,6 +99,7 @@ export function CatalogView({
   const [editAppellation, setEditAppellation] =
     useState("")
   const [editArea, setEditArea] = useState("")
+  const [editFormatMl, setEditFormatMl] = useState("")
 
   const [savingWineId, setSavingWineId] =
     useState<string | null>(null)
@@ -253,6 +254,7 @@ export function CatalogView({
     setEditColor(wine.color)
     setEditAppellation(wine.appellation ?? "")
     setEditArea(wine.area ?? "")
+    setEditFormatMl(String(wine.format_ml))
   }
 
   function cancelEditing() {
@@ -281,6 +283,7 @@ export function CatalogView({
         editColor,
         editAppellation,
         editArea,
+        editFormatMl,
       )
 
       await updateWineCatalog(wineId, edit)
@@ -562,7 +565,25 @@ export function CatalogView({
                 </td>
 
                 <td>
-                  {formatWineVolume(wine.format_ml)}
+                  {isEditing ? (
+                    <input
+                      aria-label={`Format in millilitres for ${wine.producer} ${wine.cuvee}`}
+                      disabled={isSaving}
+                      inputMode="numeric"
+                      min="1"
+                      onChange={(event) =>
+                        setEditFormatMl(
+                          event.target.value,
+                        )
+                      }
+                      required
+                      step="1"
+                      type="number"
+                      value={editFormatMl}
+                    />
+                  ) : (
+                    formatWineVolume(wine.format_ml)
+                  )}
                 </td>
 
                 <td>{wine.quantity}</td>

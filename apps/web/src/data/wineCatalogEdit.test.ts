@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 import { prepareWineCatalogEdit } from "./wineCatalogEdit"
 
 describe("wine catalog editing", () => {
-  it("normalizes identity and metadata fields", () => {
+  it("normalizes all editable catalog fields", () => {
     expect(
       prepareWineCatalogEdit(
         "  Domaine   Test ",
@@ -12,6 +12,7 @@ describe("wine catalog editing", () => {
         " RED ",
         "  Côte   de   Nuits ",
         " Burgundy   North ",
+        " 1500 ",
       ),
     ).toEqual({
       producer: "Domaine Test",
@@ -20,6 +21,7 @@ describe("wine catalog editing", () => {
       color: "red",
       appellation: "Côte de Nuits",
       area: "Burgundy North",
+      formatMl: 1500,
     })
   })
 
@@ -32,6 +34,7 @@ describe("wine catalog editing", () => {
         "white",
         " ",
         "",
+        "750",
       ),
     ).toEqual({
       producer: "Domaine Test",
@@ -40,6 +43,7 @@ describe("wine catalog editing", () => {
       color: "white",
       appellation: null,
       area: null,
+      formatMl: 750,
     })
   })
 
@@ -52,6 +56,7 @@ describe("wine catalog editing", () => {
         "red",
         "",
         "",
+        "750",
       ),
     ).toThrow("Wine producer is required")
 
@@ -63,6 +68,7 @@ describe("wine catalog editing", () => {
         "red",
         "",
         "",
+        "750",
       ),
     ).toThrow("Wine cuvée is required")
 
@@ -74,6 +80,7 @@ describe("wine catalog editing", () => {
         " ",
         "",
         "",
+        "750",
       ),
     ).toThrow("Wine color is required")
   })
@@ -87,9 +94,40 @@ describe("wine catalog editing", () => {
         "red",
         "",
         "",
+        "750",
       ),
     ).toThrow(
       "Vintage must be a four-digit year or blank for NV",
+    )
+  })
+
+  it("requires a positive whole-number bottle format", () => {
+    expect(() =>
+      prepareWineCatalogEdit(
+        "Domaine",
+        "Cuvée",
+        "2020",
+        "red",
+        "",
+        "",
+        "0",
+      ),
+    ).toThrow(
+      "Bottle format must be a positive whole number of millilitres",
+    )
+
+    expect(() =>
+      prepareWineCatalogEdit(
+        "Domaine",
+        "Cuvée",
+        "2020",
+        "red",
+        "",
+        "",
+        "750.5",
+      ),
+    ).toThrow(
+      "Bottle format must be a positive whole number of millilitres",
     )
   })
 })
