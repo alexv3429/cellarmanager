@@ -118,6 +118,31 @@ jobs:
       - name: Check v0.2 frontend
         run: npm run web:ci
 
+  database-tests:
+    name: Supabase database tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Install Node.js
+        uses: actions/setup-node@v7.0.0
+        with:
+          node-version-file: ".node-version"
+
+      - name: Install v0.2 dependencies
+        run: npm ci
+
+      - name: Start local Supabase
+        run: npm run supabase -- start
+
+      - name: Run Supabase database tests
+        run: npm run supabase -- test db
+
   dependency-review:
       name: Dependency audit
       if: github.event_name == 'pull_request'
@@ -153,6 +178,7 @@ jobs:
       - quality
       - backend-tests
       - frontend-tests
+      - database-tests
       - dependency-review
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -162,6 +188,7 @@ jobs:
           QUALITY: ${{ needs.quality.result }}
           BACKEND: ${{ needs.backend-tests.result }}
           FRONTEND: ${{ needs.frontend-tests.result }}
+          DATABASE: ${{ needs.database-tests.result }}
           DEPENDENCIES: ${{ needs.dependency-review.result }}
           EVENT_NAME: ${{ github.event_name }}
         shell: bash
@@ -170,6 +197,7 @@ jobs:
           test "$QUALITY" = "success"
           test "$BACKEND" = "success"
           test "$FRONTEND" = "success"
+          test "$DATABASE" = "success"
           if [ "$EVENT_NAME" = "pull_request" ]; then
             test "$DEPENDENCIES" = "success"
           else
