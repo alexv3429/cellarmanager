@@ -15,6 +15,7 @@ import {
 import {
   updateWineCatalog,
 } from "../data/wineCatalogMutations"
+import { Notice } from "./Notice"
 
 interface CatalogWineRow {
   id: string
@@ -312,18 +313,31 @@ export function CatalogView({
       </p>
 
       {!isOnline ? (
-        <p>Offline · catalog edits are disabled.</p>
+        <Notice tone="warning">
+          Offline · catalog edits are disabled.
+        </Notice>
       ) : null}
 
-      {isLoading ? <p>Opening local catalog…</p> : null}
-      {error ? <p role="alert">{String(error)}</p> : null}
+      {isLoading ? (
+        <Notice>Opening local catalog…</Notice>
+      ) : null}
+
+      {error ? (
+        <Notice role="alert" tone="error">
+          {String(error)}
+        </Notice>
+      ) : null}
 
       {mutationMessage ? (
-        <p>{mutationMessage}</p>
+        <Notice role="status" tone="success">
+          {mutationMessage}
+        </Notice>
       ) : null}
 
       {mutationError ? (
-        <p role="alert">{mutationError}</p>
+        <Notice role="alert" tone="error">
+          {mutationError}
+        </Notice>
       ) : null}
 
       <section aria-labelledby="catalog-filters-heading">

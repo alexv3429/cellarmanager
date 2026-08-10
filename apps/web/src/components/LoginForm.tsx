@@ -2,6 +2,7 @@ import { type FormEvent, useState } from "react"
 
 import { resolveSignUpSuccess } from "../auth/signUpFlow"
 import { supabase } from "../data/supabase"
+import { Notice } from "./Notice"
 
 type AuthMode = "sign-in" | "sign-up"
 
@@ -143,10 +144,16 @@ export function LoginForm() {
         </button>
 
         {message ? (
-          <p role="status">{message}</p>
+          <Notice role="status" tone="success">
+            {message}
+          </Notice>
         ) : null}
 
-        {error ? <p role="alert">{error}</p> : null}
+        {error ? (
+          <Notice role="alert" tone="error">
+            {error}
+          </Notice>
+        ) : null}
       </form>
 
       <p className="standalone-page__mode-switch">

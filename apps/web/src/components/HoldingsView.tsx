@@ -39,6 +39,7 @@ import {
   type QueueRemoveInput,
   type RemoveReason,
 } from "../data/powersync/inventoryOperations"
+import { Notice } from "./Notice"
 
 interface HoldingsViewProps {
   userId: string
@@ -776,13 +777,31 @@ export function HoldingsView({
 
       <h2>Add bottles</h2>
 
-      {isLoading ? <p>Opening local database…</p> : null}
-      {isFetching && !isLoading ? (
-        <p>Refreshing holdings…</p>
+      {isLoading ? (
+        <Notice>Opening local database…</Notice>
       ) : null}
-      {error ? <p role="alert">{String(error)}</p> : null}
-      {operationMessage ? <p>{operationMessage}</p> : null}
-      {operationError ? <p role="alert">{operationError}</p> : null}
+
+      {isFetching && !isLoading ? (
+        <Notice>Refreshing holdings…</Notice>
+      ) : null}
+
+      {error ? (
+        <Notice role="alert" tone="error">
+          {String(error)}
+        </Notice>
+      ) : null}
+
+      {operationMessage ? (
+        <Notice role="status" tone="success">
+          {operationMessage}
+        </Notice>
+      ) : null}
+
+      {operationError ? (
+        <Notice role="alert" tone="error">
+          {operationError}
+        </Notice>
+      ) : null}
 
       <form className="add-bottles-form" onSubmit={(event) => void handleAdd(event)}>
         <label>

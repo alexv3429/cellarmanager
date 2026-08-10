@@ -1,6 +1,7 @@
 import { type FormEvent, useState } from "react"
 
 import { createFirstHousehold } from "../data/onboarding"
+import { Notice } from "./Notice"
 
 interface OnboardingViewProps {
   isOnline: boolean
@@ -96,9 +97,9 @@ export function OnboardingView({
       </p>
 
       {!isOnline ? (
-        <p role="alert">
+        <Notice role="alert" tone="warning">
           You must be online to complete initial setup.
-        </p>
+        </Notice>
       ) : null}
 
       <form onSubmit={handleSubmit}>
@@ -155,8 +156,17 @@ export function OnboardingView({
         </button>
       </form>
 
-      {message ? <p>{message}</p> : null}
-      {error ? <p role="alert">{error}</p> : null}
+      {message ? (
+        <Notice role="status" tone="info">
+          {message}
+        </Notice>
+      ) : null}
+
+      {error ? (
+        <Notice role="alert" tone="error">
+          {error}
+        </Notice>
+      ) : null}
 
       <button
         disabled={!isOnline || isSubmitting}
