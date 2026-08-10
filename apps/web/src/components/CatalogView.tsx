@@ -427,7 +427,7 @@ export function CatalogView({
         <p>No wines match the current filters.</p>
       ) : null}
 
-      <table>
+      <table className="catalog-table">
         <thead>
           <tr>
             <th>Producer</th>
@@ -452,7 +452,7 @@ export function CatalogView({
 
             return (
               <tr key={wine.id}>
-                <td>
+                <td data-label="Producer">
                   {isEditing ? (
                     <input
                       aria-label={`Producer for ${wine.producer} ${wine.cuvee}`}
@@ -470,7 +470,7 @@ export function CatalogView({
                   )}
                 </td>
 
-                <td>
+                <td data-label="Cuvée">
                   {isEditing ? (
                     <input
                       aria-label={`Cuvée for ${wine.producer} ${wine.cuvee}`}
@@ -488,7 +488,7 @@ export function CatalogView({
                   )}
                 </td>
 
-                <td>
+                <td data-label="Vintage">
                   {isEditing ? (
                     <input
                       aria-label={`Vintage for ${wine.producer} ${wine.cuvee}`}
@@ -507,7 +507,7 @@ export function CatalogView({
                   )}
                 </td>
 
-                <td>
+                <td data-label="Color">
                   {isEditing ? (
                     <input
                       aria-label={`Color for ${wine.producer} ${wine.cuvee}`}
@@ -526,7 +526,7 @@ export function CatalogView({
                   )}
                 </td>
 
-                <td>
+                <td data-label="Appellation">
                   {isEditing ? (
                     <input
                       aria-label={`Appellation for ${wine.producer} ${wine.cuvee}`}
@@ -545,7 +545,7 @@ export function CatalogView({
                   )}
                 </td>
 
-                <td>
+                <td data-label="Area">
                   {isEditing ? (
                     <input
                       aria-label={`Area for ${wine.producer} ${wine.cuvee}`}
@@ -564,7 +564,7 @@ export function CatalogView({
                   )}
                 </td>
 
-                <td>
+                <td data-label="Format">
                   {isEditing ? (
                     <input
                       aria-label={`Format in millilitres for ${wine.producer} ${wine.cuvee}`}
@@ -586,9 +586,9 @@ export function CatalogView({
                   )}
                 </td>
 
-                <td>{wine.quantity}</td>
+                <td data-label="Current bottles">{wine.quantity}</td>
 
-                <td>
+                <td data-label="Actions">
                   {isEditing ? (
                     <>
                       <button
