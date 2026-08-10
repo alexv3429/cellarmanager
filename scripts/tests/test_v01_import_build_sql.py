@@ -81,6 +81,14 @@ class V01ImportBuildSqlTests(unittest.TestCase):
         self.assertIn("Post-import reconciliation failed", sql)
         self.assertIn("inventory_operations", sql)
         self.assertIn("Domaine O''Brien", sql)
+        self.assertIn("color", sql)
+        self.assertIn("appellation", sql)
+        self.assertIn("area", sql)
+        self.assertIn("format_ml", sql)
+        self.assertIn("'red'", sql)
+        self.assertIn("'Morgon'", sql)
+        self.assertIn("'Beaujolais'", sql)
+        self.assertIn("750", sql)
         self.assertIn("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", sql)
 
     def test_household_binding_replaces_null_plan_value(self):
