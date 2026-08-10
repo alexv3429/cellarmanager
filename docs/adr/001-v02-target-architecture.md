@@ -10,7 +10,7 @@
 React + TypeScript + Vite
 Supabase PostgreSQL and Auth
 PowerSync local database and synchronization
-Cloudflare Pages static hosting
+Cloudflare Workers Static Assets hosting
 No server-side rendering
 
 ## Alternatives considered
