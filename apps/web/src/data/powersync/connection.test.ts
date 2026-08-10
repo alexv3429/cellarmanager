@@ -194,4 +194,36 @@ describe("PowerSync account isolation", () => {
       readDatabaseOwner(window.localStorage),
     ).toBe("user-2")
   })
+
+  it("disconnects offline and reconnects the same user without clearing local data", async () => {
+    const { setPowerSyncAccess } =
+      await loadConnection()
+
+    await setPowerSyncAccess({
+      userId: "user-1",
+      connectToBackend: true,
+    })
+
+    await setPowerSyncAccess({
+      userId: "user-1",
+      connectToBackend: false,
+    })
+
+    await setPowerSyncAccess({
+      userId: "user-1",
+      connectToBackend: true,
+    })
+
+    expect(databaseMocks.connect).toHaveBeenCalledTimes(2)
+    expect(databaseMocks.disconnect).toHaveBeenCalledTimes(1)
+
+    expect(
+      databaseMocks.disconnectAndClear,
+    ).not.toHaveBeenCalled()
+
+    expect(
+      readDatabaseOwner(window.localStorage),
+    ).toBe("user-1")
+  })
+
 })
