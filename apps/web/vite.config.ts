@@ -3,6 +3,23 @@ import { defineConfig } from "vite"
 import { VitePWA } from "vite-plugin-pwa"
 
 export default defineConfig({
+  build: {
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [
+            {
+              name: "vendor",
+              test: /node_modules/,
+              maxSize: 400_000,
+            },
+          ],
+        },
+        strictExecutionOrder: true,
+      },
+    },
+  },
+
   plugins: [
     react(),
     VitePWA({

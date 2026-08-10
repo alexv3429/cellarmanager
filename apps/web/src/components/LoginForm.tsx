@@ -90,7 +90,7 @@ export function LoginForm() {
   return (
     <main>
       <h1>CellarManager</h1>
-      <p>v0.2 offline-sync spike</p>
+      <p>Local-first wine cellar inventory.</p>
 
       <button
         aria-pressed={mode === "sign-in"}
