@@ -134,8 +134,21 @@ class DryRunTests(unittest.TestCase):
                 plan["target"]["holdings"][0]["source_mapping"]["target_location_code"],
                 "STC",
             )
-            self.assertEqual(plan["target"]["wines"][0]["producer"], "Domaine Test")
-            self.assertEqual(plan["target"]["wines"][0]["color"], "red")
+            wine = plan["target"]["wines"][0]
+            self.assertEqual(wine["producer"], "Domaine Test")
+            self.assertEqual(wine["cuvee"], "Cuvée")
+            self.assertEqual(wine["vintage"], 2020)
+            self.assertEqual(wine["color"], "red")
+            self.assertEqual(wine["appellation"], "Morgon")
+            self.assertEqual(wine["area"], "Beaujolais")
+            self.assertEqual(wine["format_ml"], 750)
+
+            deferred_wine_fields = plan["report"]["deferred_fields_preserved_in_source_export"][
+                "wines"
+            ]
+            for modeled_field in ("color", "appellation", "area", "format_ml"):
+                self.assertNotIn(modeled_field, deferred_wine_fields)
+
             self.assertEqual(manifest["movements"]["rows"], 1)
             self.assertEqual(
                 plan["report"]["deferred_fields_preserved_in_source_export"]["wines"]["notes"],
