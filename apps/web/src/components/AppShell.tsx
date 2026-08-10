@@ -7,6 +7,7 @@ import {
 import type {
   RegisteredDevicesState,
 } from "../devices/useRegisteredDevices"
+import { Notice } from "./Notice"
 
 export type AppView =
   | "inventory"
@@ -180,21 +181,25 @@ export function AppShell({
       deviceRegistration.error ? (
         <div className="app-shell__alerts">
           {householdError ? (
-            <p role="alert">{householdError}</p>
+            <Notice role="alert" tone="error">
+              {householdError}
+            </Notice>
           ) : null}
 
           {syncError ? (
-            <p role="alert">
+            <Notice role="alert" tone="error">
               Synchronization paused: {syncError}
-            </p>
+            </Notice>
           ) : null}
 
           {signOutError ? (
-            <p role="alert">{signOutError}</p>
+            <Notice role="alert" tone="error">
+              {signOutError}
+            </Notice>
           ) : null}
 
           {deviceRegistration.error ? (
-            <div role="alert">
+            <Notice role="alert" tone="error">
               <p>{deviceRegistration.error}</p>
               <button
                 onClick={
@@ -204,7 +209,7 @@ export function AppShell({
               >
                 Retry device registration
               </button>
-            </div>
+            </Notice>
           ) : null}
         </div>
       ) : null}

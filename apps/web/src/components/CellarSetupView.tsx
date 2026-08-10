@@ -10,6 +10,7 @@ import {
   renameCellar,
   renameLocation,
 } from "../data/cellarSetup"
+import { Notice } from "./Notice"
 
 interface CellarSetupViewProps {
   householdId: string
@@ -174,13 +175,27 @@ export function CellarSetupView({
       </p>
 
       {!isOnline ? (
-        <p>Offline · setup changes are disabled.</p>
+        <Notice tone="warning">
+          Offline · setup changes are disabled.
+        </Notice>
       ) : null}
 
-      {error ? <p role="alert">{String(error)}</p> : null}
-      {message ? <p>{message}</p> : null}
+      {error ? (
+        <Notice role="alert" tone="error">
+          {String(error)}
+        </Notice>
+      ) : null}
+
+      {message ? (
+        <Notice role="status" tone="success">
+          {message}
+        </Notice>
+      ) : null}
+
       {mutationError ? (
-        <p role="alert">{mutationError}</p>
+        <Notice role="alert" tone="error">
+          {mutationError}
+        </Notice>
       ) : null}
 
       <h2>Create cellar</h2>

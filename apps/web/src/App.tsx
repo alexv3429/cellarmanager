@@ -13,6 +13,7 @@ import { CellarSetupView } from "./components/CellarSetupView"
 import { HoldingsView } from "./components/HoldingsView"
 import { LoginForm } from "./components/LoginForm"
 import { OnboardingView } from "./components/OnboardingView"
+import { Notice } from "./components/Notice"
 import {
   setPowerSyncAccess,
 } from "./data/powersync/connection"
@@ -135,30 +136,37 @@ function AuthenticatedApp({
   })
 
   if (householdGate === "loading") {
-    return <p>Loading household data…</p>
+    return (
+      <main className="standalone-page">
+        <h1>CellarManager</h1>
+        <Notice role="status">
+          Loading household data…
+        </Notice>
+      </main>
+    )
   }
 
   if (householdGate === "error") {
     return (
-      <main>
+      <main className="standalone-page">
         <h1>CellarManager</h1>
-        <p role="alert">
+        <Notice role="alert" tone="error">
           {currentSyncError ??
             householdError ??
             "Unable to load household data"}
-        </p>
+        </Notice>
       </main>
     )
   }
 
   if (householdGate === "offline-unavailable") {
     return (
-      <main>
+      <main className="standalone-page">
         <h1>CellarManager</h1>
-        <p role="alert">
+        <Notice role="alert" tone="warning">
           Household data is not available offline on this
           device. Reconnect to finish loading your account.
-        </p>
+        </Notice>
       </main>
     )
   }
@@ -174,11 +182,11 @@ function AuthenticatedApp({
 
   if (!activeHouseholdId) {
     return (
-      <main>
+      <main className="standalone-page">
         <h1>CellarManager</h1>
-        <p role="alert">
+        <Notice role="alert" tone="error">
           Unable to resolve the active household.
-        </p>
+        </Notice>
       </main>
     )
   }
@@ -253,11 +261,23 @@ export default function App() {
   }, [isOnline, session, userId])
 
   if (isLoading) {
-    return <p>Loading session…</p>
+    return (
+      <main className="standalone-page">
+        <h1>CellarManager</h1>
+        <Notice role="status">Loading session…</Notice>
+      </main>
+    )
   }
 
   if (sessionError && !userId) {
-    return <p role="alert">{sessionError}</p>
+    return (
+      <main className="standalone-page">
+        <h1>CellarManager</h1>
+        <Notice role="alert" tone="error">
+          {sessionError}
+        </Notice>
+      </main>
+    )
   }
 
   if (!userId) {
@@ -267,14 +287,23 @@ export default function App() {
   if (preparedUserId !== userId) {
     if (syncError) {
       return (
-        <main>
+        <main className="standalone-page">
           <h1>CellarManager</h1>
-          <p role="alert">{syncError}</p>
+          <Notice role="alert" tone="error">
+            {syncError}
+          </Notice>
         </main>
       )
     }
 
-    return <p>Preparing local cellar data…</p>
+    return (
+      <main className="standalone-page">
+        <h1>CellarManager</h1>
+        <Notice role="status">
+          Preparing local cellar data…
+        </Notice>
+      </main>
+    )
   }
 
   return (
