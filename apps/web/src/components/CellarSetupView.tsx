@@ -291,7 +291,7 @@ export function CellarSetupView({
             {cellarLocations.length === 0 ? (
               <p>No locations in this cellar.</p>
             ) : (
-              <table>
+              <table className="location-table">
                 <thead>
                   <tr>
                     <th>Location</th>
@@ -302,8 +302,8 @@ export function CellarSetupView({
                 <tbody>
                   {cellarLocations.map((location) => (
                     <tr key={location.id}>
-                      <td>{location.code}</td>
-                      <td>
+                      <td data-label="Location">{location.code}</td>
+                      <td data-label="Rename">
                         <form
                           onSubmit={(event) => {
                             event.preventDefault()

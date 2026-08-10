@@ -87,7 +87,7 @@ export function OnboardingView({
   }
 
   return (
-    <main>
+    <main className="standalone-page">
       <h1>Set up your cellar</h1>
 
       <p>

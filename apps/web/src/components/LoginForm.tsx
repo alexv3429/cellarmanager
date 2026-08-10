@@ -88,29 +88,15 @@ export function LoginForm() {
   }
 
   return (
-    <main>
+    <main className="standalone-page">
       <h1>CellarManager</h1>
       <p>Local-first wine cellar inventory.</p>
 
-      <button
-        aria-pressed={mode === "sign-in"}
-        disabled={isSubmitting}
-        onClick={() => changeMode("sign-in")}
-        type="button"
-      >
-        Sign in
-      </button>
-
-      <button
-        aria-pressed={mode === "sign-up"}
-        disabled={isSubmitting}
-        onClick={() => changeMode("sign-up")}
-        type="button"
-      >
-        Create account
-      </button>
-
       <form onSubmit={handleSubmit}>
+        <h2>
+          {mode === "sign-in" ? "Sign in" : "Create account"}
+        </h2>
+
         <label>
           Email
           <input
@@ -162,6 +148,24 @@ export function LoginForm() {
 
         {error ? <p role="alert">{error}</p> : null}
       </form>
+
+      <p className="standalone-page__mode-switch">
+        {mode === "sign-in"
+          ? "New to CellarManager?"
+          : "Already have an account?"}
+        {" "}
+        <button
+          disabled={isSubmitting}
+          onClick={() =>
+            changeMode(
+              mode === "sign-in" ? "sign-up" : "sign-in",
+            )
+          }
+          type="button"
+        >
+          {mode === "sign-in" ? "Create account" : "Sign in"}
+        </button>
+      </p>
     </main>
   )
 }

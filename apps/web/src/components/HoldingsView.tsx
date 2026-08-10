@@ -784,7 +784,7 @@ export function HoldingsView({
       {operationMessage ? <p>{operationMessage}</p> : null}
       {operationError ? <p role="alert">{operationError}</p> : null}
 
-      <form onSubmit={(event) => void handleAdd(event)}>
+      <form className="add-bottles-form" onSubmit={(event) => void handleAdd(event)}>
         <label>
           Producer / winery
           <input
@@ -1061,14 +1061,11 @@ export function HoldingsView({
         <p>No holdings match the current filters.</p>
       ) : null}
 
-      <table>
+      <table className="inventory-table">
         <thead>
           <tr>
             <th>Wine</th>
-            <th>Vintage</th>
-            <th>Location</th>
-            <th>Quantity</th>
-            <th>Revision</th>
+            <th>Holding</th>
             <th>Move bottles</th>
             <th>Remove bottles</th>
           </tr>
@@ -1112,7 +1109,7 @@ export function HoldingsView({
 
             return (
               <tr key={holding.id}>
-                <td>
+                <td data-label="Wine">
                   <div>
                     {holding.producer} — {holding.cuvee}
                   </div>
@@ -1127,24 +1124,30 @@ export function HoldingsView({
                       .join(" · ")}
                   </small>
                 </td>
-                <td>{holding.vintage ?? "NV"}</td>
-                <td>
-                  {currentLocation
-                    ? locationLabel(currentLocation)
-                    : holding.location_code}
+                <td className="inventory-holding" data-label="Holding">
+                  <div>
+                    <strong>{holding.vintage ?? "NV"}</strong>
+                    {" · "}
+                    {currentLocation
+                      ? locationLabel(currentLocation)
+                      : holding.location_code}
+                  </div>
+                  <small>
+                    {holding.quantity} bottle
+                    {holding.quantity === 1 ? "" : "s"}
+                    {holding.pending_delta !== 0 ? (
+                      <span>
+                        {" · "}
+                        {holding.pending_delta > 0 ? "+" : ""}
+                        {holding.pending_delta} pending
+                      </span>
+                    ) : null}
+                    {" · "}
+                    Rev {holding.revision}
+                  </small>
                 </td>
-                <td>
-                  {holding.quantity}
-                  {holding.pending_delta !== 0 ? (
-                    <span>
-                      {" "}
-                      ({holding.pending_delta > 0 ? "+" : ""}
-                      {holding.pending_delta} pending)
-                    </span>
-                  ) : null}
-                </td>
-                <td>{holding.revision}</td>
-                <td>
+                <td className="inventory-actions" data-label="Move bottles">
+                  <div className="inventory-action-controls">
                   <input
                     aria-label={`Move quantity for ${holding.producer} ${holding.cuvee}`}
                     disabled={
@@ -1221,8 +1224,10 @@ export function HoldingsView({
                       ? "Queuing…"
                       : "Move"}
                   </button>
+                  </div>
                 </td>
-                <td>
+                <td className="inventory-actions" data-label="Remove bottles">
+                  <div className="inventory-action-controls">
                   <input
                     aria-label={`Remove quantity for ${holding.producer} ${holding.cuvee}`}
                     disabled={
@@ -1296,6 +1301,7 @@ export function HoldingsView({
                       ? "Queuing…"
                       : "Remove"}
                   </button>
+                  </div>
                 </td>
               </tr>
             )
