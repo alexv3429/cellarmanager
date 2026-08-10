@@ -4,6 +4,10 @@ import { useEffect, useState } from "react"
 import "./App.css"
 import { signOutAndClearLocalData } from "./auth/signOut"
 import { useSession } from "./auth/useSession"
+import {
+  AppShell,
+  type AppView,
+} from "./components/AppShell"
 import { CatalogView } from "./components/CatalogView"
 import { CellarSetupView } from "./components/CellarSetupView"
 import { HoldingsView } from "./components/HoldingsView"
@@ -12,12 +16,16 @@ import { OnboardingView } from "./components/OnboardingView"
 import {
   setPowerSyncAccess,
 } from "./data/powersync/connection"
+import { useRegisteredDevices } from "./devices/useRegisteredDevices"
 import {
   resolveHouseholdGate,
 } from "./households/householdGate"
 import { useActiveHousehold } from "./households/useActiveHousehold"
 
-type AppView = "inventory" | "catalog" | "setup"
+type HouseholdOption = {
+  id: string
+  name: string
+}
 
 interface AuthenticatedAppProps {
   currentSyncError: string | null
@@ -25,6 +33,76 @@ interface AuthenticatedAppProps {
   isOfflineAccess: boolean
   isOnline: boolean
   userId: string
+}
+
+interface ReadyAuthenticatedAppProps {
+  activeHouseholdId: string
+  currentSyncError: string | null
+  householdError: string | null
+  households: HouseholdOption[]
+  initialSyncComplete: boolean
+  isOfflineAccess: boolean
+  isOnline: boolean
+  selectHousehold: (householdId: string) => void
+  userId: string
+}
+
+function ReadyAuthenticatedApp({
+  activeHouseholdId,
+  currentSyncError,
+  householdError,
+  households,
+  initialSyncComplete,
+  isOfflineAccess,
+  isOnline,
+  selectHousehold,
+  userId,
+}: ReadyAuthenticatedAppProps) {
+  const [view, setView] =
+    useState<AppView>("inventory")
+
+  const deviceRegistration = useRegisteredDevices(
+    userId,
+    initialSyncComplete,
+  )
+
+  return (
+    <AppShell
+      activeHouseholdId={activeHouseholdId}
+      deviceRegistration={deviceRegistration}
+      householdError={householdError}
+      households={households}
+      isOfflineAccess={isOfflineAccess}
+      isOnline={isOnline}
+      onSelectHousehold={selectHousehold}
+      onSignOut={signOutAndClearLocalData}
+      onViewChange={setView}
+      syncError={currentSyncError}
+      view={view}
+    >
+      {view === "inventory" ? (
+        <HoldingsView
+          deviceRegistration={deviceRegistration}
+          householdId={activeHouseholdId}
+          userId={userId}
+        />
+      ) : null}
+
+      {view === "catalog" ? (
+        <CatalogView
+          householdId={activeHouseholdId}
+          isOnline={isOnline}
+        />
+      ) : null}
+
+      {view === "setup" ? (
+        <CellarSetupView
+          householdId={activeHouseholdId}
+          isOnline={isOnline}
+        />
+      ) : null}
+    </AppShell>
+  )
 }
 
 function AuthenticatedApp({
@@ -35,9 +113,6 @@ function AuthenticatedApp({
   userId,
 }: AuthenticatedAppProps) {
   const powerSyncStatus = useStatus()
-
-  const [view, setView] =
-    useState<AppView>("inventory")
 
   const {
     activeHouseholdId,
@@ -109,79 +184,19 @@ function AuthenticatedApp({
   }
 
   return (
-    <>
-      <label>
-        Household
-        <select
-          onChange={(event) =>
-            selectHousehold(event.target.value)
-          }
-          value={activeHouseholdId}
-        >
-          {households.map((household) => (
-            <option
-              key={household.id}
-              value={household.id}
-            >
-              {household.name}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      {householdError ? (
-        <p role="alert">{householdError}</p>
-      ) : null}
-
-      <button
-        aria-pressed={view === "inventory"}
-        onClick={() => setView("inventory")}
-        type="button"
-      >
-        Inventory
-      </button>
-
-      <button
-        aria-pressed={view === "catalog"}
-        onClick={() => setView("catalog")}
-        type="button"
-      >
-        Catalog
-      </button>
-
-      <button
-        aria-pressed={view === "setup"}
-        onClick={() => setView("setup")}
-        type="button"
-      >
-        Cellar setup
-      </button>
-
-      {view === "inventory" ? (
-        <HoldingsView
-          householdId={activeHouseholdId}
-          isOfflineAccess={isOfflineAccess}
-          isOnline={isOnline}
-          onSignOut={signOutAndClearLocalData}
-          syncError={currentSyncError}
-          userId={userId}
-        />
-      ) : null}
-
-      {view === "catalog" ? (
-        <CatalogView
-          householdId={activeHouseholdId}
-          isOnline={isOnline}
-        />
-      ) : null}
-
-      {view === "setup" ? (
-        <CellarSetupView
-          householdId={activeHouseholdId}
-          isOnline={isOnline}
-        />
-      ) : null}
-    </>
+    <ReadyAuthenticatedApp
+      activeHouseholdId={activeHouseholdId}
+      currentSyncError={currentSyncError}
+      householdError={householdError}
+      households={households}
+      initialSyncComplete={
+        powerSyncStatus.hasSynced === true
+      }
+      isOfflineAccess={isOfflineAccess}
+      isOnline={isOnline}
+      selectHousehold={selectHousehold}
+      userId={userId}
+    />
   )
 }
 

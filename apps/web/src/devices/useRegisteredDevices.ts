@@ -267,3 +267,5 @@ export function useRegisteredDevices(
     retryRegistration,
   }
 }
+
+export type RegisteredDevicesState = ReturnType<typeof useRegisteredDevices>

@@ -1,4 +1,4 @@
-import { useQuery, useStatus } from "@powersync/react"
+import { useQuery } from "@powersync/react"
 import {
   type FormEvent,
   useMemo,
@@ -27,7 +27,9 @@ import {
   parseWineVintage,
   type WineCatalogEntry,
 } from "../data/wineCatalog"
-import { useRegisteredDevices } from "../devices/useRegisteredDevices"
+import type {
+  RegisteredDevicesState,
+} from "../devices/useRegisteredDevices"
 import {
   queueAdd,
   queueMove,
@@ -41,10 +43,7 @@ import {
 interface HoldingsViewProps {
   userId: string
   householdId: string
-  isOnline: boolean
-  isOfflineAccess: boolean
-  syncError: string | null
-  onSignOut: () => Promise<void>
+  deviceRegistration: RegisteredDevicesState
 }
 
 type HoldingRow = ProjectedHolding
@@ -211,17 +210,8 @@ function parseActionQuantity(
 export function HoldingsView({
   userId,
   householdId,
-  isOnline,
-  isOfflineAccess,
-  syncError,
-  onSignOut,
+  deviceRegistration,
 }: HoldingsViewProps) {
-  const status = useStatus()
-
-  const deviceRegistration = useRegisteredDevices(
-    userId,
-    status.hasSynced === true,
-  )
 
   const {
     data: authoritativeHoldings,
@@ -523,27 +513,6 @@ export function HoldingsView({
   const [operationError, setOperationError] =
     useState<string | null>(null)
 
-  async function signOut() {
-    setOperationError(null)
-
-    if (!isOnline) {
-      setOperationError(
-        "Reconnect before signing out. Signing out offline would prevent access until the next online login.",
-      )
-      return
-    }
-
-    try {
-      await onSignOut()
-    } catch (caughtError: unknown) {
-      setOperationError(
-        caughtError instanceof Error
-          ? caughtError.message
-          : "Unable to sign out",
-      )
-    }
-  }
-
   async function handleAdd(
     event: FormEvent<HTMLFormElement>,
   ) {
@@ -803,73 +772,17 @@ export function HoldingsView({
 
   return (
     <main>
-      <header>
-        <div>
-          <h1>CellarManager</h1>
-          <p>
-            {status.connected ? "Connected" : "Offline"}
-            {" · "}
-            {status.hasSynced
-              ? "Local data ready"
-              : "Initial synchronization pending"}
-            {isFetching ? " · Refreshing" : ""}
-          </p>
-
-          <p>
-            Device:{" "}
-            {deviceRegistration.isReady
-              ? "Ready"
-              : deviceRegistration.isRegistering
-                ? "Registering…"
-                : deviceRegistration.isLoading
-                  ? "Waiting for synchronized data…"
-                  : "Not ready"}
-          </p>
-
-          {isOfflineAccess ? (
-            <p>
-              Local access only · authentication will refresh
-              after reconnection
-            </p>
-          ) : null}
-        </div>
-
-        <button
-          onClick={() => void signOut()}
-          title={
-            isOnline
-              ? undefined
-              : "Reconnect before signing out"
-          }
-          type="button"
-        >
-          Sign out
-        </button>
-      </header>
+      <h1>Inventory</h1>
 
       <h2>Add bottles</h2>
 
       {isLoading ? <p>Opening local database…</p> : null}
+      {isFetching && !isLoading ? (
+        <p>Refreshing holdings…</p>
+      ) : null}
       {error ? <p role="alert">{String(error)}</p> : null}
       {operationMessage ? <p>{operationMessage}</p> : null}
       {operationError ? <p role="alert">{operationError}</p> : null}
-      {syncError ? (
-        <p role="alert">
-          Synchronization paused: {syncError}
-        </p>
-      ) : null}
-
-      {deviceRegistration.error ? (
-        <div role="alert">
-          <p>{deviceRegistration.error}</p>
-          <button
-            onClick={deviceRegistration.retryRegistration}
-            type="button"
-          >
-            Retry device registration
-          </button>
-        </div>
-      ) : null}
 
       <form onSubmit={(event) => void handleAdd(event)}>
         <label>
