@@ -47,6 +47,12 @@ automatically, validated by a user against an explicit acceptance checklist,
 then opened as a ready-for-review PR. The next step starts only after that PR is
 merged.
 
+After 0.3.4, the already-accepted v0.1 FastAPI/SQLite runtime and its one-off
+migration tooling were retired from the active tree and CI. The `v0.1.0` and
+`v0.2.0` tags preserve that history; the acceptance evidence below remains in
+the repository. This maintenance cleanup does not change the product delivery
+sequence.
+
 ## CSV import safety contract
 
 The permanent product importer is separate from the one-off v0.1 migration.

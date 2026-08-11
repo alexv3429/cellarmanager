@@ -15,84 +15,10 @@ permissions:
   contents: read
 
 jobs:
-  quality:
-    name: Quality
+  web-tests:
+    name: Web application
     runs-on: ubuntu-latest
-    env:
-      UV_PYTHON: "3.12"
-      UV_DEFAULT_INDEX: "https://pypi.org/simple"
-    timeout-minutes: 10
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-
-      - name: Install uv and Python
-        uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
-        with:
-          python-version: "3.12"
-          enable-cache: true
-
-      - name: Install locked development environment
-        run: uv sync --frozen --group dev
-
-      - name: Verify lock file
-        run: uv lock --check
-
-      - name: Ruff format check
-        run: uv run --frozen ruff format --check backend scripts
-
-      - name: Ruff lint
-        run: uv run --frozen ruff check backend scripts
-
-      - name: Repository policy checks
-        run: uv run --frozen python scripts/check_repository.py
-
-  backend-tests:
-    name: Backend tests (Python ${{ matrix.python-version }})
-    runs-on: ubuntu-latest
-    env:
-      UV_PYTHON: ${{ matrix.python-version }}
-      UV_DEFAULT_INDEX: "https://pypi.org/simple"
-      WINECELLAR_SECRET_KEY: ci-only-secret-change-me
-      WINECELLAR_DB_PATH: /tmp/winecellar-ci-${{ matrix.python-version }}.db
-      WINECELLAR_SETUP_TOKEN: ci-setup-token
     timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.11", "3.12", "3.13"]
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-
-      - name: Install uv and Python
-        uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
-        with:
-          python-version: ${{ matrix.python-version }}
-          enable-cache: true
-
-      - name: Install locked development environment
-        run: uv sync --frozen --group dev
-
-      - name: Compile Python sources
-        run: uv run --frozen python -m compileall -q backend/app backend/tests
-
-      - name: Run backend test suite
-        run: >-
-          uv run --frozen pytest -c pyproject.toml
-          --cov=backend/app
-          --cov-report=term-missing
-          --cov-report=xml:coverage.xml
-          backend/tests
-
-  frontend-tests:
-    name: Frontend tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
@@ -103,26 +29,21 @@ jobs:
         uses: actions/setup-node@v7.0.0
         with:
           node-version-file: ".node-version"
+          cache: npm
 
-      - name: Install v0.2 frontend dependencies
+      - name: Install dependencies
         run: npm ci
 
-      - name: JavaScript syntax
-        shell: bash
-        run: |
-          ./scripts/check_javascript.sh
+      - name: Check repository policy
+        run: npm run repository:check
 
-      - name: Frontend unit tests
-        run: node --test frontend/tests/*.test.js
-
-      - name: Check v0.2 frontend
+      - name: Lint, test, and build the web application
         run: npm run web:ci
 
   database-tests:
     name: Supabase database tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
-
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
@@ -133,8 +54,9 @@ jobs:
         uses: actions/setup-node@v7.0.0
         with:
           node-version-file: ".node-version"
+          cache: npm
 
-      - name: Install v0.2 dependencies
+      - name: Install dependencies
         run: npm ci
 
       - name: Start local Supabase
@@ -143,63 +65,43 @@ jobs:
       - name: Run Supabase database tests
         run: npm run supabase -- test db
 
-  dependency-review:
-      name: Dependency audit
-      if: github.event_name == 'pull_request'
-      runs-on: ubuntu-latest
-      timeout-minutes: 10
+  dependency-audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
-      env:
-        UV_PYTHON: "3.12"
-        UV_DEFAULT_INDEX: "https://pypi.org/simple"
+      - name: Install Node.js
+        uses: actions/setup-node@v7.0.0
+        with:
+          node-version-file: ".node-version"
+          cache: npm
 
-      steps:
-        - name: Check out repository
-          uses: actions/checkout@v7
-          with:
-            persist-credentials: false
-
-        - name: Install uv and Python
-          uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
-          with:
-            python-version: "3.12"
-            enable-cache: true
-
-        - name: Verify lock file
-          run: uv lock --check
-
-        - name: Audit locked dependencies
-          run: uv audit --frozen
+      - name: Audit locked dependencies
+        run: npm run audit
 
   ci-gate:
     name: CI Gate
     if: always()
     needs:
-      - quality
-      - backend-tests
-      - frontend-tests
+      - web-tests
       - database-tests
-      - dependency-review
+      - dependency-audit
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Require every applicable check
+      - name: Require every check
         env:
-          QUALITY: ${{ needs.quality.result }}
-          BACKEND: ${{ needs.backend-tests.result }}
-          FRONTEND: ${{ needs.frontend-tests.result }}
+          WEB: ${{ needs.web-tests.result }}
           DATABASE: ${{ needs.database-tests.result }}
-          DEPENDENCIES: ${{ needs.dependency-review.result }}
-          EVENT_NAME: ${{ github.event_name }}
+          DEPENDENCIES: ${{ needs.dependency-audit.result }}
         shell: bash
         run: |
           set -euo pipefail
-          test "$QUALITY" = "success"
-          test "$BACKEND" = "success"
-          test "$FRONTEND" = "success"
+          test "$WEB" = "success"
           test "$DATABASE" = "success"
-          if [ "$EVENT_NAME" = "pull_request" ]; then
-            test "$DEPENDENCIES" = "success"
-          else
-            test "$DEPENDENCIES" = "skipped"
-          fi
+          test "$DEPENDENCIES" = "success"

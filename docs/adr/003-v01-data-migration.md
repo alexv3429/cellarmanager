@@ -1,6 +1,6 @@
 # ADR 003: v0.1 data migration
 
-- Status: Proposed
+- Status: Accepted (historical)
 - Date: 2026-08-03
 
 ## Context
@@ -16,4 +16,15 @@ The original database is never modified.
 
 ## Consequences
 
+The real production cellar was migrated and reconciled before v0.2.0. The
+original private source archive and its recorded hash remain the recovery
+evidence for deliberately deferred metadata and history.
+
+After acceptance, the v0.1 runtime and one-off migration implementation were
+removed from the active development tree. They remain recoverable from the
+`v0.2.0` Git tag and are not a supported onboarding path. New cellars start
+manually or use the permanent product CSV importer.
+
 ## Validation required
+
+See `../v01-final-rebaseline.md` and `../v01-production-acceptance.md`.

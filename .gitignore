@@ -25,6 +25,8 @@ __pycache__/
 
 target/
 .patch-backups/
-backend/data/*.db
-backend/data/*.db-*
-backend/data/backups/
+
+*.db
+*.db-*
+*.sqlite
+*.sqlite3

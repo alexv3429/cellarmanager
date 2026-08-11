@@ -55,6 +55,7 @@ Manage local Supabase from the repository root:
 
 ## Validation
 
+    npm run repository:check
     npm run supabase -- test db
     npm run web:ci
     git diff --check
@@ -74,8 +75,8 @@ Production is smoke-tested before the `v0.2.0` tag is created.
 
 ## Documentation
 
-See `docs/README.md` for the distinction between current v0.2 documentation
-and retained v0.1 historical material.
+See `docs/README.md` for current architecture, roadmap, release, and historical
+migration evidence.
 
 Release notes: `docs/releases/v0.2.0.md`.
 
