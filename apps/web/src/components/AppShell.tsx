@@ -7,12 +7,8 @@ import {
 import type {
   RegisteredDevicesState,
 } from "../devices/useRegisteredDevices"
+import type { AppView } from "../navigation/appNavigation"
 import { Notice } from "./Notice"
-
-export type AppView =
-  | "inventory"
-  | "catalog"
-  | "setup"
 
 interface HouseholdOption {
   id: string
