@@ -11,6 +11,7 @@ import { HoldingsView } from "./components/HoldingsView"
 import { LoginForm } from "./components/LoginForm"
 import { OnboardingView } from "./components/OnboardingView"
 import { Notice } from "./components/Notice"
+import { WineDetailView } from "./components/WineDetailView"
 import {
   setPowerSyncAccess,
 } from "./data/powersync/connection"
@@ -20,9 +21,13 @@ import {
 } from "./households/householdGate"
 import { useActiveHousehold } from "./households/useActiveHousehold"
 import {
-  getAppViewFromPathname,
+  getAppRouteFromPathname,
   getAppViewPath,
+  getWineDetailPath,
+  getWineDetailReturnView,
+  type AppRoute,
   type AppView,
+  type WineDetailHistoryState,
 } from "./navigation/appNavigation"
 
 type HouseholdOption = {
@@ -61,15 +66,25 @@ function ReadyAuthenticatedApp({
   selectHousehold,
   userId,
 }: ReadyAuthenticatedAppProps) {
-  const [view, setView] =
+  const [route, setRoute] =
+    useState<AppRoute>(() =>
+      getAppRouteFromPathname(window.location.pathname),
+    )
+
+  const [wineDetailReturnView, setWineDetailReturnView] =
     useState<AppView>(() =>
-      getAppViewFromPathname(window.location.pathname),
+      getWineDetailReturnView(window.history.state) ??
+      "catalog",
     )
 
   useEffect(() => {
     function handlePopState() {
-      setView(
-        getAppViewFromPathname(window.location.pathname),
+      setRoute(
+        getAppRouteFromPathname(window.location.pathname),
+      )
+      setWineDetailReturnView(
+        getWineDetailReturnView(window.history.state) ??
+          "catalog",
       )
     }
 
@@ -90,7 +105,34 @@ function ReadyAuthenticatedApp({
       window.history.pushState(null, "", nextPath)
     }
 
-    setView(nextView)
+    setRoute({ view: nextView, wineId: null })
+  }
+
+  function openWineDetail(
+    wineId: string,
+    returnView: AppView,
+  ) {
+    const historyState: WineDetailHistoryState = {
+      wineDetailReturnView: returnView,
+    }
+
+    window.history.pushState(
+      historyState,
+      "",
+      getWineDetailPath(wineId),
+    )
+
+    setWineDetailReturnView(returnView)
+    setRoute({ view: "wine", wineId })
+  }
+
+  function leaveWineDetail() {
+    if (getWineDetailReturnView(window.history.state)) {
+      window.history.back()
+      return
+    }
+
+    changeView("catalog")
   }
 
   const deviceRegistration = useRegisteredDevices(
@@ -110,27 +152,49 @@ function ReadyAuthenticatedApp({
       onSignOut={signOutAndClearLocalData}
       onViewChange={changeView}
       syncError={currentSyncError}
-      view={view}
+      view={
+        route.view === "wine"
+          ? wineDetailReturnView
+          : route.view
+      }
     >
-      {view === "inventory" ? (
+      {route.view === "inventory" ? (
         <HoldingsView
           deviceRegistration={deviceRegistration}
           householdId={activeHouseholdId}
+          onOpenWine={(wineId) =>
+            openWineDetail(wineId, "inventory")
+          }
           userId={userId}
         />
       ) : null}
 
-      {view === "catalog" ? (
+      {route.view === "catalog" ? (
         <CatalogView
+          householdId={activeHouseholdId}
+          isOnline={isOnline}
+          onOpenWine={(wineId) =>
+            openWineDetail(wineId, "catalog")
+          }
+        />
+      ) : null}
+
+      {route.view === "setup" ? (
+        <CellarSetupView
           householdId={activeHouseholdId}
           isOnline={isOnline}
         />
       ) : null}
 
-      {view === "setup" ? (
-        <CellarSetupView
+      {route.view === "wine" ? (
+        <WineDetailView
+          deviceRegistration={deviceRegistration}
           householdId={activeHouseholdId}
           isOnline={isOnline}
+          onBack={leaveWineDetail}
+          returnView={wineDetailReturnView}
+          userId={userId}
+          wineId={route.wineId}
         />
       ) : null}
     </AppShell>

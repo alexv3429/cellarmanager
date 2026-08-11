@@ -400,6 +400,61 @@
   white-space: normal;
 }
 
+.app-shell__content .catalog-table {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+  overflow: visible;
+  white-space: normal;
+}
+
+.catalog-table th:nth-child(1),
+.catalog-table th:nth-child(2) {
+  width: 14%;
+}
+
+.catalog-table th:nth-child(3) {
+  width: 7%;
+}
+
+.catalog-table th:nth-child(4) {
+  width: 9%;
+}
+
+.catalog-table th:nth-child(5) {
+  width: 13%;
+}
+
+.catalog-table th:nth-child(6) {
+  width: 12%;
+}
+
+.catalog-table th:nth-child(7) {
+  width: 8%;
+}
+
+.catalog-table th:nth-child(8) {
+  width: 9%;
+}
+
+.catalog-table th:nth-child(9) {
+  width: 14%;
+}
+
+.catalog-table td {
+  overflow-wrap: anywhere;
+}
+
+.catalog-table td input {
+  width: 100%;
+  min-width: 0;
+}
+
+.catalog-table td[data-label="Actions"] button {
+  margin-right: 6px;
+  margin-bottom: 6px;
+}
+
 .inventory-add-panel {
   overflow: hidden;
   border: 1px solid var(--border);
@@ -488,6 +543,11 @@
   margin-top: 3px;
 }
 
+.inventory-table td[data-label="Wine"] > small {
+  display: block;
+  margin-top: 3px;
+}
+
 .inventory-action-cell-content,
 .inventory-action-panel {
   display: grid;
@@ -555,6 +615,257 @@
 .inventory-action-feedback--error {
   border: 1px solid #a63d45;
   background: color-mix(in srgb, var(--surface) 88%, #a63d45);
+}
+
+.app-shell .wine-detail-link {
+  min-height: auto;
+  padding: 0;
+  border: 0;
+  color: var(--accent);
+  background: transparent;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.app-shell .wine-detail-link:hover:not(:disabled) {
+  border-color: transparent;
+}
+
+.wine-detail-view__back {
+  justify-self: start;
+  margin-top: 24px;
+}
+
+.wine-detail-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 24px;
+  align-items: center;
+  padding: 20px;
+  border: 1px solid var(--accent-border);
+  border-radius: 14px;
+  background: var(--accent-bg);
+}
+
+.app-shell__content .wine-detail-hero h1 {
+  margin: 4px 0 0;
+}
+
+.wine-detail-hero__eyebrow,
+.wine-detail-hero__cuvee {
+  margin: 0;
+}
+
+.wine-detail-hero__eyebrow {
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.wine-detail-hero__cuvee {
+  margin-top: 6px;
+  color: var(--text-h);
+  font-family: var(--heading);
+  font-size: 22px;
+}
+
+.wine-detail-total {
+  display: grid;
+  min-width: 10rem;
+  padding: 14px 16px;
+  border: 1px solid var(--accent-border);
+  border-radius: 12px;
+  background: var(--surface);
+  text-align: right;
+}
+
+.wine-detail-total strong {
+  color: var(--text-h);
+  font-family: var(--heading);
+  font-size: 34px;
+  line-height: 1;
+}
+
+.wine-detail-total small {
+  margin-top: 5px;
+}
+
+.app-shell__content section.wine-detail-reference,
+.app-shell__content section.wine-detail-stock {
+  display: grid;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.wine-detail-section-heading {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.wine-detail-section-heading h2,
+.wine-detail-section-heading p {
+  margin: 0;
+}
+
+.wine-detail-section-heading p {
+  margin-top: 4px;
+}
+
+.wine-detail-metadata {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.wine-detail-metadata > div {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-muted);
+  overflow-wrap: anywhere;
+}
+
+.wine-detail-metadata dt {
+  color: var(--text);
+  font-size: 13px;
+}
+
+.wine-detail-metadata dd {
+  margin: 4px 0 0;
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+.app-shell__content .wine-detail-edit-form {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+.app-shell__content .wine-detail-edit-form label {
+  display: grid;
+  gap: 5px;
+}
+
+.wine-detail-edit-form input {
+  width: 100%;
+  min-width: 0;
+}
+
+.wine-detail-edit-form__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.wine-detail-positions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.wine-detail-position {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-muted);
+}
+
+.wine-detail-position__summary {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.wine-detail-position__summary h3 {
+  overflow-wrap: anywhere;
+}
+
+.wine-detail-position__quantity {
+  display: grid;
+  flex: 0 0 auto;
+  text-align: right;
+}
+
+.wine-detail-position__quantity strong {
+  color: var(--text-h);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.wine-detail-stock
+  > .wine-detail-section-heading
+  > button[aria-expanded="true"] {
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
+}
+
+@media (max-width: 900px) {
+  .wine-detail-metadata,
+  .app-shell__content .wine-detail-edit-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .wine-detail-positions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .wine-detail-hero {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 16px;
+  }
+
+  .wine-detail-total {
+    min-width: 0;
+    text-align: left;
+  }
+
+  .wine-detail-section-heading {
+    display: grid;
+  }
+
+  .wine-detail-section-heading > button {
+    width: 100%;
+  }
+
+  .wine-detail-metadata,
+  .app-shell__content .wine-detail-edit-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wine-detail-edit-form__buttons,
+  .wine-detail-edit-form__buttons button {
+    width: 100%;
+  }
+
+  .wine-detail-position .inventory-action-picker {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .wine-detail-position .inventory-action-picker button {
+    width: 100%;
+  }
+
+  .wine-detail-position .inventory-action-picker button:last-child {
+    grid-column: 1 / -1;
+  }
 }
 
 .app-shell__content .add-bottles-form {
