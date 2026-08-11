@@ -2,6 +2,8 @@
   --text: #655e63;
   --text-h: #211a1d;
   --bg: #f7f4ef;
+  --surface: #fffdf9;
+  --surface-muted: #f1ebe5;
   --border: #ded6d1;
   --code-bg: #f4f3ec;
   --accent: #7a2339;
@@ -35,6 +37,8 @@
     --text: #b9afb3;
     --text-h: #f7f1f2;
     --bg: #181315;
+    --surface: #21191c;
+    --surface-muted: #281f22;
     --border: #3b3034;
     --code-bg: #1f2028;
     --accent: #d88b9e;

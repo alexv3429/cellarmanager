@@ -42,6 +42,7 @@ const cellars = new Table(
     // id column (text) is automatically included
     household_id: column.text,
     name: column.text,
+    is_active: column.integer,
     created_at: column.text
   },
   { indexes: {} }
@@ -53,6 +54,9 @@ const locations = new Table(
     household_id: column.text,
     cellar_id: column.text,
     code: column.text,
+    is_active: column.integer,
+    display_order: column.integer,
+    capacity: column.integer,
     created_at: column.text
   },
   { indexes: {} }
