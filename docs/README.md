@@ -1,24 +1,24 @@
 # CellarManager documentation
 
-This repository contains current local-first application documentation and
-retained v0.1 material.
+The repository documentation describes the current local-first application and
+retains only the evidence needed to understand its released migration history.
 
-## Current documentation
+## Current product
 
-- `../README.md` - current application, development and release overview
-- `adr/001-v02-target-architecture.md` - v0.2 architecture
-- `adr/002-inventory-operation-model.md` - inventory-operation contract
-- `adr/003-v01-data-migration.md` - v0.1 -> v0.2 migration decision
-- `v01-final-rebaseline.md` - migration normalization baseline
+- `../README.md` - application, development, validation, and deployment overview
+- `adr/001-v02-target-architecture.md` - React, Supabase, PowerSync, and Cloudflare architecture
+- `adr/002-inventory-operation-model.md` - local-first inventory-operation contract
+- `v03-roadmap.md` - personal-production milestone and delivery sequence
+- `github-protection.md` - required `CI Gate` and branch protection
+
+## Released history and migration evidence
+
+- `releases/v0.2.0.md` - first local-first release
+- `adr/003-v01-data-migration.md` - historical one-off migration decision
+- `v01-final-rebaseline.md` - normalized migration baseline
 - `v01-production-acceptance.md` - production migration acceptance
-- `releases/v0.2.0.md` - v0.2.0 release notes
-- `v03-roadmap.md` - personal production milestone and delivery sequence
 
-## Legacy v0.1 documentation
-
-Other documents may describe the retired Python/FastAPI/SQLite and
-dependency-free JavaScript implementation. They remain for historical or
-product-design reference and are not authoritative setup, architecture, or
-runtime documentation for v0.2.
-
-For current work, start with the root `README.md` and the v0.2 ADRs above.
+The accepted v0.1 FastAPI/SQLite runtime and migration implementation are not
+part of active development or CI. The `v0.1.0` and `v0.2.0` Git tags preserve
+them if historical inspection is ever required. New product development belongs
+in `apps/web/` and `supabase/`.
