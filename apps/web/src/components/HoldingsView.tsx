@@ -1,10 +1,14 @@
 import { useQuery } from "@powersync/react"
 import {
   type FormEvent,
+  useEffect,
   useMemo,
   useState,
 } from "react"
 
+import {
+  matchesInventoryBrowseFilters,
+} from "../data/inventoryBrowsing"
 import {
   type AuthoritativeHolding,
   type InventoryLocation,
@@ -12,7 +16,6 @@ import {
   type ProjectedHolding,
   projectHoldings,
 } from "../data/inventoryProjection"
-import { matchesSearch } from "../data/searchFilters"
 import {
   cleanWineText,
   findExactWine,
@@ -50,6 +53,7 @@ interface HoldingsViewProps {
 type HoldingRow = ProjectedHolding
 
 interface InventoryLocationRow extends InventoryLocation {
+  cellar_id: string
   cellar_name: string
 }
 
@@ -98,6 +102,7 @@ const LOCATIONS_QUERY = `
   select
     l.id,
     l.household_id,
+    l.cellar_id,
     l.code,
     c.name as cellar_name
   from locations l
@@ -314,39 +319,70 @@ export function HoldingsView({
 
   const [inventorySearch, setInventorySearch] =
     useState("")
+  const [cellarFilter, setCellarFilter] =
+    useState("ALL")
   const [locationFilter, setLocationFilter] =
     useState("ALL")
+
+  useEffect(() => {
+    setInventorySearch("")
+    setCellarFilter("ALL")
+    setLocationFilter("ALL")
+  }, [householdId])
+
+  const cellars = useMemo(() => {
+    const cellarNamesById = new Map<string, string>()
+
+    for (const location of locations) {
+      cellarNamesById.set(
+        location.cellar_id,
+        location.cellar_name,
+      )
+    }
+
+    return Array.from(cellarNamesById, ([id, name]) => ({
+      id,
+      name,
+    })).sort((left, right) =>
+      left.name.localeCompare(right.name),
+    )
+  }, [locations])
+
+  const availableLocationFilters = useMemo(
+    () =>
+      cellarFilter === "ALL"
+        ? locations
+        : locations.filter(
+            (location) =>
+              location.cellar_id === cellarFilter,
+          ),
+    [cellarFilter, locations],
+  )
 
   const visibleHoldings = useMemo(
     () =>
       holdings.filter((holding) => {
-        if (
-          locationFilter !== "ALL" &&
-          holding.location_id !== locationFilter
-        ) {
-          return false
-        }
-
         const location =
           locationsById.get(holding.location_id)
 
-        return matchesSearch(
-          [
-            holding.producer,
-            holding.cuvee,
-            holding.vintage ?? "NV",
-            holding.color,
-            holding.appellation,
-            holding.area,
-            formatWineVolume(holding.format_ml),
-            holding.format_ml,
-            holding.location_code,
-            location?.cellar_name,
-          ],
-          inventorySearch,
+        return matchesInventoryBrowseFilters(
+          holding,
+          location,
+          {
+            cellarId:
+              cellarFilter === "ALL"
+                ? null
+                : cellarFilter,
+            locationId:
+              locationFilter === "ALL"
+                ? null
+                : locationFilter,
+            search: inventorySearch,
+          },
         )
       }),
     [
+      cellarFilter,
       holdings,
       inventorySearch,
       locationFilter,
@@ -374,6 +410,7 @@ export function HoldingsView({
 
   const hasInventoryFilters =
     inventorySearch.trim().length > 0 ||
+    cellarFilter !== "ALL" ||
     locationFilter !== "ALL"
 
   const [addProducer, setAddProducer] = useState("")
@@ -772,10 +809,8 @@ export function HoldingsView({
   }
 
   return (
-    <main>
+    <main className="inventory-view">
       <h1>Inventory</h1>
-
-      <h2>Add bottles</h2>
 
       {isLoading ? (
         <Notice>Opening local database…</Notice>
@@ -802,6 +837,16 @@ export function HoldingsView({
           {operationError}
         </Notice>
       ) : null}
+
+      <details className="inventory-add-panel">
+        <summary>
+          <span className="inventory-add-panel__summary">
+            <strong>Add bottles</strong>
+            <small>
+              Queue stock for an existing or new wine
+            </small>
+          </span>
+        </summary>
 
       <form className="add-bottles-form" onSubmit={(event) => void handleAdd(event)}>
         <label>
@@ -1010,10 +1055,14 @@ export function HoldingsView({
           {adding ? "Queuing…" : "Add bottles"}
         </button>
       </form>
+      </details>
 
       <h2>Holdings</h2>
 
-      <section aria-labelledby="inventory-filters-heading">
+      <section
+        aria-labelledby="inventory-filters-heading"
+        className="inventory-filters"
+      >
         <h3 id="inventory-filters-heading">
           Find bottles
         </h3>
@@ -1031,6 +1080,34 @@ export function HoldingsView({
         </label>
 
         <label>
+          Cellar
+          <select
+            onChange={(event) => {
+              const nextCellarFilter = event.target.value
+
+              setCellarFilter(nextCellarFilter)
+
+              if (
+                locationFilter !== "ALL" &&
+                nextCellarFilter !== "ALL" &&
+                locationsById.get(locationFilter)
+                  ?.cellar_id !== nextCellarFilter
+              ) {
+                setLocationFilter("ALL")
+              }
+            }}
+            value={cellarFilter}
+          >
+            <option value="ALL">All cellars</option>
+            {cellars.map((cellar) => (
+              <option key={cellar.id} value={cellar.id}>
+                {cellar.name}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label>
           Location
           <select
             onChange={(event) =>
@@ -1038,8 +1115,12 @@ export function HoldingsView({
             }
             value={locationFilter}
           >
-            <option value="ALL">All locations</option>
-            {locations.map((location) => (
+            <option value="ALL">
+              {cellarFilter === "ALL"
+                ? "All locations"
+                : "All locations in cellar"}
+            </option>
+            {availableLocationFilters.map((location) => (
               <option key={location.id} value={location.id}>
                 {locationLabel(location)}
               </option>
@@ -1051,6 +1132,7 @@ export function HoldingsView({
           disabled={!hasInventoryFilters}
           onClick={() => {
             setInventorySearch("")
+            setCellarFilter("ALL")
             setLocationFilter("ALL")
           }}
           type="button"
@@ -1059,7 +1141,10 @@ export function HoldingsView({
         </button>
       </section>
 
-      <p>
+      <p
+        aria-live="polite"
+        className="inventory-results-summary"
+      >
         Showing {visibleBottleCount} of {totalBottleCount} bottles
         {" · "}
         {visibleWineCount} of {totalWineCount} wines

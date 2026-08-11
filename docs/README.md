@@ -1,9 +1,9 @@
 # CellarManager documentation
 
-This repository contains both current v0.2 documentation and retained v0.1
-material.
+This repository contains current local-first application documentation and
+retained v0.1 material.
 
-## Current v0.2 documentation
+## Current documentation
 
 - `../README.md` - current application, development and release overview
 - `adr/001-v02-target-architecture.md` - v0.2 architecture
@@ -12,6 +12,7 @@ material.
 - `v01-final-rebaseline.md` - migration normalization baseline
 - `v01-production-acceptance.md` - production migration acceptance
 - `releases/v0.2.0.md` - v0.2.0 release notes
+- `v03-roadmap.md` - personal production milestone and delivery sequence
 
 ## Legacy v0.1 documentation
 
