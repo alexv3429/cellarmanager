@@ -10,6 +10,12 @@ import {
   matchesInventoryBrowseFilters,
 } from "../data/inventoryBrowsing"
 import {
+  parseInventoryActionQuantity,
+  toggleInventoryHoldingAction,
+  type ActiveInventoryHoldingAction,
+  type InventoryHoldingAction,
+} from "../data/inventoryActionForms"
+import {
   type AuthoritativeHolding,
   type InventoryLocation,
   type InventoryOperation,
@@ -194,23 +200,6 @@ function operationLocationLabel(
   return cellarName
     ? `${cellarName} / ${code}`
     : code
-}
-
-function parseActionQuantity(
-  value: string,
-  available: number,
-): number | null {
-  const quantity = Number(value)
-
-  if (
-    !Number.isInteger(quantity) ||
-    quantity <= 0 ||
-    quantity > available
-  ) {
-    return null
-  }
-
-  return quantity
 }
 
 export function HoldingsView({
@@ -527,29 +516,56 @@ export function HoldingsView({
     addCuvee,
   )
 
-  const [destinationByHolding, setDestinationByHolding] =
-    useState<Record<string, string>>({})
+  const [activeHoldingAction, setActiveHoldingAction] =
+    useState<ActiveInventoryHoldingAction | null>(null)
 
-  const [moveQuantityByHolding, setMoveQuantityByHolding] =
-    useState<Record<string, string>>({})
+  const [holdingActionQuantity, setHoldingActionQuantity] =
+    useState("1")
 
-  const [removeQuantityByHolding, setRemoveQuantityByHolding] =
-    useState<Record<string, string>>({})
+  const [moveDestinationId, setMoveDestinationId] =
+    useState("")
 
-  const [movingHoldingId, setMovingHoldingId] =
-    useState<string | null>(null)
+  const [holdingRemoveReason, setHoldingRemoveReason] =
+    useState<RemoveReason>("DRANK")
 
-  const [removingHoldingId, setRemovingHoldingId] =
-    useState<string | null>(null)
-
-  const [removeReasonByHolding, setRemoveReasonByHolding] =
-    useState<Record<string, RemoveReason>>({})
+  const [submittingHoldingAction, setSubmittingHoldingAction] =
+    useState<InventoryHoldingAction | null>(null)
 
   const [operationMessage, setOperationMessage] =
     useState<string | null>(null)
 
   const [operationError, setOperationError] =
     useState<string | null>(null)
+
+  useEffect(() => {
+    setActiveHoldingAction(null)
+    setHoldingActionQuantity("1")
+    setMoveDestinationId("")
+    setHoldingRemoveReason("DRANK")
+    setSubmittingHoldingAction(null)
+  }, [householdId])
+
+  function selectHoldingAction(
+    holdingId: string,
+    action: InventoryHoldingAction,
+    defaultDestinationId = "",
+  ) {
+    const nextAction = toggleInventoryHoldingAction(
+      activeHoldingAction,
+      holdingId,
+      action,
+    )
+
+    setActiveHoldingAction(nextAction)
+
+    if (nextAction) {
+      setOperationMessage(null)
+      setOperationError(null)
+      setHoldingActionQuantity("1")
+      setMoveDestinationId(defaultDestinationId)
+      setHoldingRemoveReason("DRANK")
+    }
+  }
 
   async function handleAdd(
     event: FormEvent<HTMLFormElement>,
@@ -683,30 +699,76 @@ export function HoldingsView({
     }
   }
 
-  async function handleMove(
+  async function handleAddMore(
     holding: HoldingRow,
     quantity: number,
   ) {
     setOperationMessage(null)
     setOperationError(null)
 
-    const possibleDestinations = locations.filter(
+    const deviceId =
+      deviceRegistration.deviceIdByHousehold[
+        holding.household_id
+      ]
+
+    if (!deviceId) {
+      setOperationError(
+        "This browser is not registered for this household yet",
+      )
+      return
+    }
+
+    const add: QueueAddInput = {
+      householdId: holding.household_id,
+      deviceId,
+      userId,
+      wineId: holding.wine_id,
+      destinationLocationId: holding.location_id,
+      quantity,
+    }
+
+    setSubmittingHoldingAction("add")
+
+    try {
+      const operationId = await queueAdd(add)
+
+      setOperationMessage(
+        `Add ${quantity} bottle${quantity === 1 ? "" : "s"} (${operationId.slice(0, 8)}) queued locally`,
+      )
+      setHoldingActionQuantity("1")
+    } catch (caughtError: unknown) {
+      setOperationError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to queue add",
+      )
+    } finally {
+      setSubmittingHoldingAction(null)
+    }
+  }
+
+  async function handleMove(
+    holding: HoldingRow,
+    quantity: number,
+    destinationLocationId: string,
+  ) {
+    setOperationMessage(null)
+    setOperationError(null)
+
+    const destination = locations.find(
       (location) =>
         location.household_id === holding.household_id &&
-        location.id !== holding.location_id,
+        location.id !== holding.location_id &&
+        location.id === destinationLocationId,
     )
-
-    const destinationLocationId =
-      destinationByHolding[holding.id] ??
-      possibleDestinations[0]?.id
 
     const deviceId =
       deviceRegistration.deviceIdByHousehold[
         holding.household_id
       ]
 
-    if (!destinationLocationId) {
-      setOperationError("No destination location is available")
+    if (!destination) {
+      setOperationError("Select a destination location")
       return
     }
 
@@ -727,19 +789,14 @@ export function HoldingsView({
       quantity,
     }
 
-    setMovingHoldingId(holding.id)
+    setSubmittingHoldingAction("move")
 
     try {
       const operationId = await queueMove(move)
       setOperationMessage(
         `Move ${quantity} bottle${quantity === 1 ? "" : "s"} (${operationId.slice(0, 8)}) queued locally`,
       )
-      setMoveQuantityByHolding(
-        (currentQuantities) => ({
-          ...currentQuantities,
-          [holding.id]: "1",
-        }),
-      )
+      setHoldingActionQuantity("1")
     } catch (caughtError: unknown) {
       setOperationError(
         caughtError instanceof Error
@@ -747,13 +804,14 @@ export function HoldingsView({
           : "Unable to queue move",
       )
     } finally {
-      setMovingHoldingId(null)
+      setSubmittingHoldingAction(null)
     }
   }
 
   async function handleRemove(
     holding: HoldingRow,
     quantity: number,
+    removeReason: RemoveReason,
   ) {
     setOperationMessage(null)
     setOperationError(null)
@@ -770,9 +828,6 @@ export function HoldingsView({
       return
     }
 
-    const removeReason =
-      removeReasonByHolding[holding.id] ?? "DRANK"
-
     const remove: QueueRemoveInput = {
       householdId: holding.household_id,
       deviceId,
@@ -783,7 +838,7 @@ export function HoldingsView({
       removeReason,
     }
 
-    setRemovingHoldingId(holding.id)
+    setSubmittingHoldingAction("remove")
 
     try {
       const operationId = await queueRemove(remove)
@@ -791,12 +846,7 @@ export function HoldingsView({
       setOperationMessage(
         `Remove ${quantity} bottle${quantity === 1 ? "" : "s"} (${operationId.slice(0, 8)}) queued locally`,
       )
-      setRemoveQuantityByHolding(
-        (currentQuantities) => ({
-          ...currentQuantities,
-          [holding.id]: "1",
-        }),
-      )
+      setHoldingActionQuantity("1")
     } catch (caughtError: unknown) {
       setOperationError(
         caughtError instanceof Error
@@ -804,7 +854,7 @@ export function HoldingsView({
           : "Unable to queue removal",
       )
     } finally {
-      setRemovingHoldingId(null)
+      setSubmittingHoldingAction(null)
     }
   }
 
@@ -826,13 +876,13 @@ export function HoldingsView({
         </Notice>
       ) : null}
 
-      {operationMessage ? (
+      {operationMessage && !activeHoldingAction ? (
         <Notice role="status" tone="success">
           {operationMessage}
         </Notice>
       ) : null}
 
-      {operationError ? (
+      {operationError && !activeHoldingAction ? (
         <Notice role="alert" tone="error">
           {operationError}
         </Notice>
@@ -1170,8 +1220,7 @@ export function HoldingsView({
           <tr>
             <th>Wine</th>
             <th>Holding</th>
-            <th>Move bottles</th>
-            <th>Remove bottles</th>
+            <th>Actions</th>
           </tr>
         </thead>
 
@@ -1184,25 +1233,28 @@ export function HoldingsView({
                 location.id !== holding.location_id,
             )
 
+            const activeAction =
+              activeHoldingAction?.holdingId ===
+              holding.id
+                ? activeHoldingAction.action
+                : null
+
             const destinationLocationId =
-              destinationByHolding[holding.id] ??
-              possibleDestinations[0]?.id ??
-              ""
+              moveDestinationId ||
+              (possibleDestinations[0]?.id ?? "")
 
-            const moveQuantityValue =
-              moveQuantityByHolding[holding.id] ?? "1"
+            const actionQuantity =
+              parseInventoryActionQuantity(
+                holdingActionQuantity,
+                activeAction === "add"
+                  ? null
+                  : holding.quantity,
+              )
 
-            const removeQuantityValue =
-              removeQuantityByHolding[holding.id] ?? "1"
-
-            const moveQuantity = parseActionQuantity(
-              moveQuantityValue,
-              holding.quantity,
-            )
-
-            const removeQuantity = parseActionQuantity(
-              removeQuantityValue,
-              holding.quantity,
+            const hasRegisteredDevice = Boolean(
+              deviceRegistration.deviceIdByHousehold[
+                holding.household_id
+              ],
             )
 
             const isPendingNewWine =
@@ -1210,6 +1262,16 @@ export function HoldingsView({
 
             const currentLocation =
               locationsById.get(holding.location_id)
+
+            const currentLocationLabel = currentLocation
+              ? locationLabel(currentLocation)
+              : holding.location_code
+
+            const actionPanelId =
+              `holding-actions-${holding.id}`
+
+            const actionsBusy =
+              submittingHoldingAction !== null
 
             return (
               <tr key={holding.id}>
@@ -1232,9 +1294,7 @@ export function HoldingsView({
                   <div>
                     <strong>{holding.vintage ?? "NV"}</strong>
                     {" · "}
-                    {currentLocation
-                      ? locationLabel(currentLocation)
-                      : holding.location_code}
+                    {currentLocationLabel}
                   </div>
                   <small>
                     {holding.quantity} bottle
@@ -1250,161 +1310,280 @@ export function HoldingsView({
                     Rev {holding.revision}
                   </small>
                 </td>
-                <td className="inventory-actions" data-label="Move bottles">
-                  <div className="inventory-action-controls">
-                  <input
-                    aria-label={`Move quantity for ${holding.producer} ${holding.cuvee}`}
-                    disabled={
-                      holding.quantity < 1 ||
-                      isPendingNewWine
-                    }
-                    max={holding.quantity}
-                    min="1"
-                    onChange={(event) => {
-                      setMoveQuantityByHolding(
-                        (currentQuantities) => ({
-                          ...currentQuantities,
-                          [holding.id]: event.target.value,
-                        }),
-                      )
-                    }}
-                    step="1"
-                    type="number"
-                    value={moveQuantityValue}
-                  />
-
-                  <select
-                    aria-label={`Destination for ${holding.location_code}`}
-                    disabled={
-                      possibleDestinations.length === 0 ||
-                      isPendingNewWine
-                    }
-                    onChange={(event) => {
-                      setDestinationByHolding(
-                        (currentDestinations) => ({
-                          ...currentDestinations,
-                          [holding.id]: event.target.value,
-                        }),
-                      )
-                    }}
-                    value={destinationLocationId}
-                  >
-                    {possibleDestinations.map((location) => (
-                      <option
-                        key={location.id}
-                        value={location.id}
+                <td
+                  className="inventory-actions"
+                  data-label="Actions"
+                >
+                  <div className="inventory-action-cell-content">
+                    <div
+                      aria-label={`Actions for ${holding.producer} ${holding.cuvee}`}
+                      className="inventory-action-picker"
+                      role="group"
+                    >
+                      <button
+                        aria-controls={actionPanelId}
+                        aria-expanded={activeAction === "add"}
+                        disabled={
+                          isPendingNewWine ||
+                          !hasRegisteredDevice ||
+                          actionsBusy
+                        }
+                        onClick={() =>
+                          selectHoldingAction(
+                            holding.id,
+                            "add",
+                          )
+                        }
+                        title={
+                          isPendingNewWine
+                            ? "Wait for this new wine to synchronize before adding more"
+                            : undefined
+                        }
+                        type="button"
                       >
-                        {locationLabel(location)}
-                      </option>
-                    ))}
-                  </select>
+                        Add more
+                      </button>
 
-                  <button
-                    disabled={
-                      moveQuantity === null ||
-                      destinationLocationId.length === 0 ||
-                      isPendingNewWine ||
-                      !deviceRegistration.deviceIdByHousehold[
-                        holding.household_id
-                      ] ||
-                      movingHoldingId === holding.id
-                    }
-                    onClick={() => {
-                      if (moveQuantity !== null) {
-                        void handleMove(
-                          holding,
-                          moveQuantity,
-                        )
-                      }
-                    }}
-                    title={
-                      isPendingNewWine
-                        ? "Wait for this new wine ADD to synchronize before moving it"
-                        : undefined
-                    }
-                    type="button"
-                  >
-                    {movingHoldingId === holding.id
-                      ? "Queuing…"
-                      : "Move"}
-                  </button>
-                  </div>
-                </td>
-                <td className="inventory-actions" data-label="Remove bottles">
-                  <div className="inventory-action-controls">
-                  <input
-                    aria-label={`Remove quantity for ${holding.producer} ${holding.cuvee}`}
-                    disabled={
-                      holding.quantity < 1 ||
-                      isPendingNewWine
-                    }
-                    max={holding.quantity}
-                    min="1"
-                    onChange={(event) => {
-                      setRemoveQuantityByHolding(
-                        (currentQuantities) => ({
-                          ...currentQuantities,
-                          [holding.id]: event.target.value,
-                        }),
-                      )
-                    }}
-                    step="1"
-                    type="number"
-                    value={removeQuantityValue}
-                  />
+                      <button
+                        aria-controls={actionPanelId}
+                        aria-expanded={activeAction === "move"}
+                        disabled={
+                          holding.quantity < 1 ||
+                          isPendingNewWine ||
+                          !hasRegisteredDevice ||
+                          possibleDestinations.length === 0 ||
+                          actionsBusy
+                        }
+                        onClick={() =>
+                          selectHoldingAction(
+                            holding.id,
+                            "move",
+                            possibleDestinations[0]?.id ?? "",
+                          )
+                        }
+                        title={
+                          possibleDestinations.length === 0
+                            ? "Create another location before moving bottles"
+                            : isPendingNewWine
+                              ? "Wait for this new wine to synchronize before moving it"
+                              : undefined
+                        }
+                        type="button"
+                      >
+                        Move
+                      </button>
 
-                  <select
-                    aria-label={`Removal reason for ${holding.producer} ${holding.cuvee}`}
-                    disabled={isPendingNewWine}
-                    onChange={(event) => {
-                      setRemoveReasonByHolding(
-                        (currentReasons) => ({
-                          ...currentReasons,
-                          [holding.id]:
-                            event.target.value as RemoveReason,
-                        }),
-                      )
-                    }}
-                    value={
-                      removeReasonByHolding[holding.id] ??
-                      "DRANK"
-                    }
-                  >
-                    <option value="DRANK">Drank</option>
-                    <option value="GIFTED">Gifted</option>
-                    <option value="BROKEN">Broken</option>
-                    <option value="LOST">Lost</option>
-                    <option value="OTHER">Other</option>
-                  </select>
+                      <button
+                        aria-controls={actionPanelId}
+                        aria-expanded={activeAction === "remove"}
+                        disabled={
+                          holding.quantity < 1 ||
+                          isPendingNewWine ||
+                          !hasRegisteredDevice ||
+                          actionsBusy
+                        }
+                        onClick={() =>
+                          selectHoldingAction(
+                            holding.id,
+                            "remove",
+                          )
+                        }
+                        title={
+                          isPendingNewWine
+                            ? "Wait for this new wine to synchronize before removing it"
+                            : undefined
+                        }
+                        type="button"
+                      >
+                        Consume/remove
+                      </button>
+                    </div>
 
-                  <button
-                    disabled={
-                      removeQuantity === null ||
-                      isPendingNewWine ||
-                      !deviceRegistration.deviceIdByHousehold[
-                        holding.household_id
-                      ] ||
-                      removingHoldingId === holding.id
-                    }
-                    onClick={() => {
-                      if (removeQuantity !== null) {
-                        void handleRemove(
-                          holding,
-                          removeQuantity,
-                        )
-                      }
-                    }}
-                    title={
-                      isPendingNewWine
-                        ? "Wait for this new wine ADD to synchronize before removing it"
-                        : undefined
-                    }
-                    type="button"
-                  >
-                    {removingHoldingId === holding.id
-                      ? "Queuing…"
-                      : "Remove"}
-                  </button>
+                    {activeAction ? (
+                      <div
+                        className="inventory-action-panel"
+                        id={actionPanelId}
+                      >
+                        <strong>
+                          {activeAction === "add"
+                            ? `Add bottles to ${currentLocationLabel}`
+                            : activeAction === "move"
+                              ? `Move bottles from ${currentLocationLabel}`
+                              : `Consume or remove from ${currentLocationLabel}`}
+                        </strong>
+
+                        <form
+                          className="inventory-action-form"
+                          onSubmit={(event) => {
+                            event.preventDefault()
+
+                            if (actionQuantity === null) {
+                              return
+                            }
+
+                            if (activeAction === "add") {
+                              void handleAddMore(
+                                holding,
+                                actionQuantity,
+                              )
+                            } else if (
+                              activeAction === "move"
+                            ) {
+                              void handleMove(
+                                holding,
+                                actionQuantity,
+                                destinationLocationId,
+                              )
+                            } else {
+                              void handleRemove(
+                                holding,
+                                actionQuantity,
+                                holdingRemoveReason,
+                              )
+                            }
+                          }}
+                        >
+                          <label>
+                            Quantity
+                            <input
+                              aria-describedby={`${actionPanelId}-quantity-help`}
+                              disabled={actionsBusy}
+                              inputMode="numeric"
+                              max={
+                                activeAction === "add"
+                                  ? undefined
+                                  : holding.quantity
+                              }
+                              min="1"
+                              onChange={(event) =>
+                                setHoldingActionQuantity(
+                                  event.target.value,
+                                )
+                              }
+                              required
+                              step="1"
+                              type="number"
+                              value={holdingActionQuantity}
+                            />
+                          </label>
+
+                          {activeAction === "move" ? (
+                            <label>
+                              Destination
+                              <select
+                                disabled={actionsBusy}
+                                onChange={(event) =>
+                                  setMoveDestinationId(
+                                    event.target.value,
+                                  )
+                                }
+                                required
+                                value={destinationLocationId}
+                              >
+                                {possibleDestinations.map(
+                                  (location) => (
+                                    <option
+                                      key={location.id}
+                                      value={location.id}
+                                    >
+                                      {locationLabel(location)}
+                                    </option>
+                                  ),
+                                )}
+                              </select>
+                            </label>
+                          ) : null}
+
+                          {activeAction === "remove" ? (
+                            <label>
+                              Reason
+                              <select
+                                disabled={actionsBusy}
+                                onChange={(event) =>
+                                  setHoldingRemoveReason(
+                                    event.target
+                                      .value as RemoveReason,
+                                  )
+                                }
+                                value={holdingRemoveReason}
+                              >
+                                <option value="DRANK">
+                                  Drank
+                                </option>
+                                <option value="GIFTED">
+                                  Gifted
+                                </option>
+                                <option value="BROKEN">
+                                  Broken
+                                </option>
+                                <option value="LOST">
+                                  Lost
+                                </option>
+                                <option value="OTHER">
+                                  Other
+                                </option>
+                              </select>
+                            </label>
+                          ) : null}
+
+                          <small id={`${actionPanelId}-quantity-help`}>
+                            {activeAction === "add"
+                              ? "Enter a positive whole number."
+                              : `Up to ${holding.quantity} bottle${holding.quantity === 1 ? "" : "s"} available.`}
+                          </small>
+
+                          <div className="inventory-action-form__buttons">
+                            <button
+                              disabled={
+                                actionQuantity === null ||
+                                (activeAction === "move" &&
+                                  destinationLocationId.length ===
+                                    0) ||
+                                actionsBusy
+                              }
+                              type="submit"
+                            >
+                              {submittingHoldingAction ===
+                              activeAction
+                                ? "Queuing…"
+                                : activeAction === "add"
+                                  ? "Queue add"
+                                  : activeAction === "move"
+                                    ? "Queue move"
+                                    : "Queue removal"}
+                            </button>
+
+                            <button
+                              disabled={actionsBusy}
+                              onClick={() =>
+                                setActiveHoldingAction(null)
+                              }
+                              type="button"
+                            >
+                              Close
+                            </button>
+                          </div>
+                        </form>
+
+                        {operationMessage ? (
+                          <p
+                            className="inventory-action-feedback inventory-action-feedback--success"
+                            role="status"
+                          >
+                            {operationMessage}
+                          </p>
+                        ) : null}
+
+                        {operationError ? (
+                          <p
+                            className="inventory-action-feedback inventory-action-feedback--error"
+                            role="alert"
+                          >
+                            {operationError}
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </div>
                 </td>
               </tr>
