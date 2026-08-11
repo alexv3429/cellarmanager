@@ -103,7 +103,12 @@ const LOCATIONS_QUERY = `
   from locations l
   join cellars c on c.id = l.cellar_id
   where l.household_id = ?
-  order by c.name, l.code
+    and coalesce(l.is_active, 1) = 1
+    and coalesce(c.is_active, 1) = 1
+  order by
+    c.name,
+    coalesce(l.display_order, 2147483647),
+    l.code
 `
 
 const PENDING_OPERATIONS_QUERY = `

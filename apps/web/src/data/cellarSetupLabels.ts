@@ -14,3 +14,33 @@ export function requireSetupLabel(
 
   return cleaned
 }
+
+export function parseOptionalLocationCapacity(
+  value: string,
+): number | null {
+  const cleaned = value.trim()
+
+  if (cleaned.length === 0) {
+    return null
+  }
+
+  if (!/^\d+$/u.test(cleaned)) {
+    throw new Error(
+      "Location capacity must be a positive whole number",
+    )
+  }
+
+  const capacity = Number(cleaned)
+
+  if (
+    !Number.isSafeInteger(capacity) ||
+    capacity <= 0 ||
+    capacity > 2_147_483_647
+  ) {
+    throw new Error(
+      "Location capacity must be a positive whole number",
+    )
+  }
+
+  return capacity
+}
