@@ -79,6 +79,8 @@ and retained v0.1 historical material.
 
 Release notes: `docs/releases/v0.2.0.md`.
 
+Current product roadmap: `docs/v03-roadmap.md`.
+
 ## License
 
 MIT - see `LICENSE`.

@@ -400,6 +400,73 @@
   white-space: normal;
 }
 
+.inventory-add-panel {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.inventory-add-panel > summary {
+  padding: 14px 16px;
+  color: var(--text-h);
+  cursor: pointer;
+}
+
+.inventory-add-panel[open] > summary {
+  border-bottom: 1px solid var(--border);
+}
+
+.inventory-add-panel__summary {
+  display: inline-grid;
+  gap: 2px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.inventory-add-panel__summary small {
+  color: var(--text);
+  font-weight: 400;
+}
+
+.app-shell__content .inventory-add-panel .add-bottles-form {
+  margin: 0;
+  padding: 16px;
+  border: 0;
+  border-radius: 0;
+}
+
+.app-shell__content .inventory-filters {
+  display: grid;
+  grid-template-columns:
+    minmax(14rem, 2fr)
+    minmax(10rem, 1fr)
+    minmax(12rem, 1fr)
+    auto;
+  align-items: end;
+}
+
+.inventory-filters > h3 {
+  grid-column: 1 / -1;
+}
+
+.app-shell__content .inventory-filters label {
+  display: grid;
+  gap: 5px;
+}
+
+.inventory-filters input,
+.inventory-filters select {
+  width: 100%;
+  min-width: 0;
+}
+
+.inventory-results-summary {
+  margin: -8px 0 0;
+  color: var(--text);
+  font-size: 14px;
+}
+
 .inventory-table th:nth-child(1) {
   width: 26%;
 }
@@ -527,6 +594,19 @@
 }
 
 @media (max-width: 900px) {
+  .app-shell__content .inventory-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .inventory-filters > h3,
+  .inventory-filters > label:first-of-type {
+    grid-column: 1 / -1;
+  }
+
+  .inventory-filters > button {
+    justify-self: start;
+  }
+
   .app-shell__content .add-bottles-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -546,6 +626,24 @@
 }
 
 @media (max-width: 560px) {
+  .app-shell__content .inventory-filters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .inventory-filters > h3,
+  .inventory-filters > label:first-of-type {
+    grid-column: 1;
+  }
+
+  .inventory-filters > button {
+    width: 100%;
+  }
+
+  .inventory-add-panel > summary,
+  .app-shell__content .inventory-add-panel .add-bottles-form {
+    padding: 12px;
+  }
+
   .app-shell__content .add-bottles-form {
     grid-template-columns: minmax(0, 1fr);
   }
