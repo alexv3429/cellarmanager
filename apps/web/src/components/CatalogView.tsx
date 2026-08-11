@@ -69,11 +69,13 @@ const CATALOG_QUERY = `
 interface CatalogViewProps {
   householdId: string
   isOnline: boolean
+  onOpenWine: (wineId: string) => void
 }
 
 export function CatalogView({
   householdId,
   isOnline,
+  onOpenWine,
 }: CatalogViewProps) {
   const {
     data: wines,
@@ -624,23 +626,34 @@ export function CatalogView({
                       </button>
                     </>
                   ) : (
-                    <button
-                      disabled={
-                        !isOnline ||
-                        savingWineId !== null
-                      }
-                      onClick={() =>
-                        startEditing(wine)
-                      }
-                      title={
-                        isOnline
-                          ? undefined
-                          : "Reconnect before editing"
-                      }
-                      type="button"
-                    >
-                      Edit
-                    </button>
+                    <>
+                      <button
+                        onClick={() =>
+                          onOpenWine(wine.id)
+                        }
+                        type="button"
+                      >
+                        View
+                      </button>
+
+                      <button
+                        disabled={
+                          !isOnline ||
+                          savingWineId !== null
+                        }
+                        onClick={() =>
+                          startEditing(wine)
+                        }
+                        title={
+                          isOnline
+                            ? undefined
+                            : "Reconnect before editing"
+                        }
+                        type="button"
+                      >
+                        Edit
+                      </button>
+                    </>
                   )}
                 </td>
               </tr>

@@ -54,6 +54,7 @@ interface HoldingsViewProps {
   userId: string
   householdId: string
   deviceRegistration: RegisteredDevicesState
+  onOpenWine: (wineId: string) => void
 }
 
 type HoldingRow = ProjectedHolding
@@ -206,6 +207,7 @@ export function HoldingsView({
   userId,
   householdId,
   deviceRegistration,
+  onOpenWine,
 }: HoldingsViewProps) {
 
   const {
@@ -1276,9 +1278,21 @@ export function HoldingsView({
             return (
               <tr key={holding.id}>
                 <td data-label="Wine">
-                  <div>
-                    {holding.producer} — {holding.cuvee}
-                  </div>
+                  {isPendingNewWine ? (
+                    <div>
+                      {holding.producer} — {holding.cuvee}
+                    </div>
+                  ) : (
+                    <button
+                      className="wine-detail-link"
+                      onClick={() =>
+                        onOpenWine(holding.wine_id)
+                      }
+                      type="button"
+                    >
+                      {holding.producer} — {holding.cuvee}
+                    </button>
+                  )}
                   <small>
                     {[
                       holding.appellation,
