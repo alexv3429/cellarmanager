@@ -4,10 +4,7 @@ import { useEffect, useState } from "react"
 import "./App.css"
 import { signOutAndClearLocalData } from "./auth/signOut"
 import { useSession } from "./auth/useSession"
-import {
-  AppShell,
-  type AppView,
-} from "./components/AppShell"
+import { AppShell } from "./components/AppShell"
 import { CatalogView } from "./components/CatalogView"
 import { CellarSetupView } from "./components/CellarSetupView"
 import { HoldingsView } from "./components/HoldingsView"
@@ -22,6 +19,11 @@ import {
   resolveHouseholdGate,
 } from "./households/householdGate"
 import { useActiveHousehold } from "./households/useActiveHousehold"
+import {
+  getAppViewFromPathname,
+  getAppViewPath,
+  type AppView,
+} from "./navigation/appNavigation"
 
 type HouseholdOption = {
   id: string
@@ -60,7 +62,36 @@ function ReadyAuthenticatedApp({
   userId,
 }: ReadyAuthenticatedAppProps) {
   const [view, setView] =
-    useState<AppView>("inventory")
+    useState<AppView>(() =>
+      getAppViewFromPathname(window.location.pathname),
+    )
+
+  useEffect(() => {
+    function handlePopState() {
+      setView(
+        getAppViewFromPathname(window.location.pathname),
+      )
+    }
+
+    window.addEventListener("popstate", handlePopState)
+
+    return () => {
+      window.removeEventListener(
+        "popstate",
+        handlePopState,
+      )
+    }
+  }, [])
+
+  function changeView(nextView: AppView) {
+    const nextPath = getAppViewPath(nextView)
+
+    if (window.location.pathname !== nextPath) {
+      window.history.pushState(null, "", nextPath)
+    }
+
+    setView(nextView)
+  }
 
   const deviceRegistration = useRegisteredDevices(
     userId,
@@ -77,7 +108,7 @@ function ReadyAuthenticatedApp({
       isOnline={isOnline}
       onSelectHousehold={selectHousehold}
       onSignOut={signOutAndClearLocalData}
-      onViewChange={setView}
+      onViewChange={changeView}
       syncError={currentSyncError}
       view={view}
     >
