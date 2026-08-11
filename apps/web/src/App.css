@@ -468,19 +468,15 @@
 }
 
 .inventory-table th:nth-child(1) {
-  width: 26%;
+  width: 38%;
 }
 
 .inventory-table th:nth-child(2) {
-  width: 21%;
+  width: 27%;
 }
 
 .inventory-table th:nth-child(3) {
-  width: 30%;
-}
-
-.inventory-table th:nth-child(4) {
-  width: 23%;
+  width: 35%;
 }
 
 .inventory-holding {
@@ -492,62 +488,73 @@
   margin-top: 3px;
 }
 
-.inventory-action-controls {
+.inventory-action-cell-content,
+.inventory-action-panel {
   display: grid;
-  grid-template-columns: 3.25rem minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.inventory-action-picker {
+  display: flex;
+  flex-wrap: wrap;
   gap: 6px;
-  align-items: center;
 }
 
-.app-shell__content .inventory-action-controls > input[type="number"] {
-  flex: 0 0 3.25rem;
-  width: 3.25rem;
-}
-
-.app-shell__content .inventory-action-controls > select {
-  flex: 1 1 9rem;
-  min-width: 0;
-  max-width: 100%;
-}
-
-.inventory-action-controls > button {
-  flex: 0 0 auto;
-}
-
-@media (max-width: 720px) {
-  .app-shell__content .inventory-table {
-    display: block;
-    width: 100%;
-    table-layout: auto;
-    overflow-x: auto;
-    white-space: nowrap;
-  }
-
-  .inventory-table th:nth-child(1),
-  .inventory-table th:nth-child(2),
-  .inventory-table th:nth-child(3),
-  .inventory-table th:nth-child(4) {
-    width: auto;
-  }
-
-  .inventory-holding {
-    white-space: nowrap;
-  }
-
-}
-
-.inventory-action-controls > button {
+.inventory-action-picker button {
   min-height: 36px;
   padding-inline: 8px;
 }
 
-.inventory-table th:nth-child(4) + td,
-.inventory-table td:nth-child(4) {
+.inventory-action-picker button[aria-expanded="true"] {
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
+}
+
+.inventory-action-panel {
+  padding: 12px;
+  border: 1px solid var(--accent-border);
+  border-radius: 10px;
+  background: var(--accent-bg);
+}
+
+.app-shell__content .inventory-action-form {
+  display: grid;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.inventory-action-form label {
+  display: grid;
+  gap: 4px;
+}
+
+.app-shell__content .inventory-action-form input,
+.app-shell__content .inventory-action-form select {
+  width: 100%;
+  max-width: none;
   min-width: 0;
 }
 
-.inventory-table td:nth-child(4) .inventory-action-controls > select {
-  min-width: 5.5rem;
+.inventory-action-form__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.inventory-action-feedback {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+.inventory-action-feedback--success {
+  border: 1px solid #4f7a5a;
+  background: color-mix(in srgb, var(--surface) 88%, #4f7a5a);
+}
+
+.inventory-action-feedback--error {
+  border: 1px solid #a63d45;
+  background: color-mix(in srgb, var(--surface) 88%, #a63d45);
 }
 
 .app-shell__content .add-bottles-form {
@@ -814,15 +821,23 @@
     white-space: normal;
   }
 
-  .inventory-table .inventory-action-controls {
-    grid-template-columns: 3.25rem minmax(0, 1fr) auto;
-    width: 100%;
-    min-width: 0;
+  .inventory-table td[data-label="Actions"] {
+    display: block;
   }
 
-  .inventory-table .inventory-action-controls > select {
+  .inventory-table td[data-label="Actions"]::before {
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .inventory-table .inventory-action-picker {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     width: 100%;
-    min-width: 0;
+  }
+
+  .inventory-table .inventory-action-picker button {
+    width: 100%;
   }
 
   /* Catalog */
@@ -880,19 +895,12 @@
     grid-template-columns: 6rem minmax(0, 1fr);
   }
 
-  .inventory-table td[data-label="Move bottles"],
-  .inventory-table td[data-label="Remove bottles"] {
-    display: block;
+  .inventory-table .inventory-action-picker {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .inventory-table td[data-label="Move bottles"]::before,
-  .inventory-table td[data-label="Remove bottles"]::before {
-    display: block;
-    margin-bottom: 8px;
-  }
-
-  .inventory-table .inventory-action-controls {
-    grid-template-columns: 3rem minmax(0, 1fr) auto;
+  .inventory-table .inventory-action-picker button:last-child {
+    grid-column: 1 / -1;
   }
 }
 

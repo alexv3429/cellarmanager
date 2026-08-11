@@ -24,7 +24,7 @@ redefining the v0.2 inventory architecture:
 |---|---|---|
 | 0.3.1 | Application shell and URL-backed navigation | Complete (#58, #60, #61, #62) |
 | 0.3.2 | Mobile-first inventory browsing | Complete |
-| 0.3.3 | Everyday ADD, MOVE and REMOVE workflows | Planned |
+| 0.3.3 | Everyday ADD, MOVE and REMOVE workflows | Complete |
 | 0.3.4 | Wine detail page | Planned |
 | 0.3.5 | Cellar and location UX | Planned |
 | 0.3.6 | CSV ingestion format and parser | Planned |
