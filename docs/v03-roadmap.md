@@ -27,7 +27,7 @@ redefining the v0.2 inventory architecture:
 | 0.3.3 | Everyday ADD, MOVE and REMOVE workflows | Complete |
 | 0.3.4 | Wine detail page | Complete |
 | 0.3.5 | Cellar and location UX | Complete |
-| 0.3.6 | CSV ingestion format and parser | Planned |
+| 0.3.6 | CSV ingestion format and parser | Complete |
 | 0.3.7 | CSV column mapping | Planned |
 | 0.3.8 | CSV cleaning and normalization | Planned |
 | 0.3.9 | Existing-wine matching and ambiguity detection | Planned |

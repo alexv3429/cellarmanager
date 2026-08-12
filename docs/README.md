@@ -8,6 +8,7 @@ retains only the evidence needed to understand its released migration history.
 - `../README.md` - application, development, validation, and deployment overview
 - `adr/001-v02-target-architecture.md` - React, Supabase, PowerSync, and Cloudflare architecture
 - `adr/002-inventory-operation-model.md` - local-first inventory-operation contract
+- `csv-ingestion.md` - permanent product CSV structural parsing contract
 - `v03-roadmap.md` - personal-production milestone and delivery sequence
 - `github-protection.md` - required `CI Gate` and branch protection
 
