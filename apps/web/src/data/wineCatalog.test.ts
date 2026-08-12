@@ -9,6 +9,7 @@ import {
   getAreaSuggestions,
   getCuveeSuggestions,
   getProducerSuggestions,
+  getWineIdentityKey,
   getVintageSuggestions,
   parseWineFormatMl,
   parseWineVintage,
@@ -144,6 +145,29 @@ describe("wine catalog entry helpers", () => {
         1500,
       )?.id,
     ).toBe("wine-6")
+  })
+
+  it("builds the conservative identity without metadata", () => {
+    expect(
+      getWineIdentityKey(
+        " Domaine   Test ",
+        " CUVÉE A ",
+        2020,
+        " RED ",
+        750,
+      ),
+    ).toBe(
+      getWineIdentityKey(
+        "domaine test",
+        "cuvée a",
+        2020,
+        "red",
+        750,
+      ),
+    )
+    expect(
+      getWineIdentityKey("", "Cuvée", null, "red", 750),
+    ).toBeNull()
   })
 
   it("does not silently choose between ambiguous catalog rows", () => {

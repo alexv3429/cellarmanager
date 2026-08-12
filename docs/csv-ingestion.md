@@ -143,3 +143,31 @@ and raw source value. The original mapped source row and unmapped values remain
 available unchanged. Invalid rows are displayed first and block later import
 stages; the user must correct the source file and upload it again. This step
 does not match wines, reconcile locations, resolve issues, or write data.
+
+## Existing-wine matching contract
+
+Roadmap step 0.3.9 compares every valid cleaned row with the synchronized wine
+catalog for the active household. It reuses the same conservative semantic
+identity as manual ADD and the server:
+
+`producer + cuvée + vintage/NV + color + format_ml`
+
+Identity text is compared case-insensitively after whitespace cleaning.
+Appellation and area remain supporting metadata; they neither merge nor split
+catalog references.
+
+Each valid row receives one deterministic classification:
+
+- **Existing** when exactly one catalog reference has the same identity
+- **New** when no catalog reference has the same identity
+- **Ambiguous** when multiple catalog references have the same identity
+
+Matching never crosses the active-household boundary. Invalid cleaned rows are
+not matched. Ambiguous results retain and display every candidate wine ID plus
+its appellation and area, and no candidate is selected silently. Explicit
+candidate selection remains part of the later issue-resolution step.
+
+The matching view reports counts for existing, new, and ambiguous rows and
+shows ambiguous rows first without changing their source record or line
+context. It reads the local synchronized catalog only; it does not create,
+update, merge, or otherwise write wine or inventory data.
