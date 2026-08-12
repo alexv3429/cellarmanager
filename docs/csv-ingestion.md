@@ -113,3 +113,33 @@ describe bottles without assigning their final physical storage. The later
 location-reconciliation step must assign those rows to a real location—such as
 an explicitly selected overflow location—before the transactional commit can
 be enabled. The importer must not invent or silently choose that location.
+
+## Cleaning and normalization contract
+
+Roadmap step 0.3.8 applies deterministic, read-only cleaning to every mapped
+source row:
+
+- surrounding whitespace is removed and repeated whitespace becomes one space
+- wine color is lowercased, matching the normal catalog entry rules
+- a blank vintage, `NV`, `N.V.`, `non-vintage`, `non millésime`, or
+  `sans millésime` becomes the canonical null/NV value
+- a numeric vintage must contain four digits and fall between 1800 and 2200
+- bottle formats accept a positive metric value in millilitres, centilitres,
+  or litres and become a supported positive whole number of millilitres
+- quantity becomes a supported positive whole number
+- blank optional wine metadata, cellar, and location values become null
+
+Bottle formats without a unit are interpreted as millilitres. Named formats
+such as “magnum” remain invalid because guessing their physical volume would
+make matching unsafe. Decimal comma and decimal point metric values are both
+accepted only when their conversion produces a whole millilitre.
+
+Producer, cuvée, color, bottle format, and quantity must contain a valid value
+on every row. Vintage and supporting metadata may be empty. Cellar and
+location remain optional at this stage and must be reconciled before commit.
+
+Cleaning issues retain the source record number, physical line range, field,
+and raw source value. The original mapped source row and unmapped values remain
+available unchanged. Invalid rows are displayed first and block later import
+stages; the user must correct the source file and upload it again. This step
+does not match wines, reconcile locations, resolve issues, or write data.
