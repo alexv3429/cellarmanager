@@ -14,6 +14,10 @@ import {
   type CsvImportField,
 } from "../data/csvColumnMapping"
 import {
+  cleanCsvMappedRow,
+  summarizeCsvCleaning,
+} from "../data/csvCleaning"
+import {
   parseCsvText,
   type CsvDelimiter,
   type CsvIngestionDocument,
@@ -22,6 +26,7 @@ import { Notice } from "./Notice"
 
 const FILE_SIZE_LIMIT_BYTES = 20_000_000
 const SAMPLE_ROW_COUNT = 3
+const CLEANING_ROW_DISPLAY_LIMIT = 100
 
 function delimiterLabel(
   delimiter: CsvDelimiter | null,
@@ -85,6 +90,41 @@ export function ImportView() {
         ),
       )
   }, [document, mapping])
+
+  const cleanedRows = useMemo(() => {
+    if (!document?.header) {
+      return []
+    }
+
+    return document.rows.map((row) =>
+      cleanCsvMappedRow(
+        mapCsvSourceRow(
+          document.header?.values ?? [],
+          row,
+          mapping,
+        ),
+      ),
+    )
+  }, [document, mapping])
+
+  const cleaningSummary = useMemo(
+    () => summarizeCsvCleaning(cleanedRows),
+    [cleanedRows],
+  )
+
+  const displayedCleanedRows = useMemo(() => {
+    const invalidRows = cleanedRows.filter(
+      (row) => row.issues.length > 0,
+    )
+    const readyRows = cleanedRows.filter(
+      (row) => row.issues.length === 0,
+    )
+
+    return [...invalidRows, ...readyRows].slice(
+      0,
+      CLEANING_ROW_DISPLAY_LIMIT,
+    )
+  }, [cleanedRows])
 
   function applyDocument(
     nextDocument: CsvIngestionDocument,
@@ -192,14 +232,16 @@ export function ImportView() {
     !parserHasErrors &&
     mappingIssues.length === 0
 
+  const showCleaning = mappingIsReady
+
   return (
     <main className="import-view">
       <div className="import-view__intro">
         <h1>Import CSV</h1>
         <p>
-          Upload a CSV, verify its structure, and map each source
-          column to CellarManager. Nothing is written to your
-          cellar during this step.
+          Upload a CSV, map its columns, and validate normalized
+          wine and quantity values. Nothing is written to your
+          cellar during these preparation steps.
         </p>
       </div>
 
@@ -507,23 +549,203 @@ export function ImportView() {
         </section>
       ) : null}
 
+      {showCleaning ? (
+        <section
+          aria-labelledby="cleaning-heading"
+          className="import-cleaning-panel"
+        >
+          <div className="import-section-heading">
+            <div>
+              <h2 id="cleaning-heading">
+                4. Clean and validate
+              </h2>
+              <p>
+                Whitespace, color casing, vintage, metric
+                bottle formats, and quantities are normalized.
+                Source values remain available for comparison.
+              </p>
+            </div>
+            <span className="import-section-heading__status">
+              {cleaningSummary.invalidRowCount === 0
+                ? `${cleaningSummary.readyRowCount} rows ready`
+                : `${cleaningSummary.invalidRowCount} rows need attention`}
+            </span>
+          </div>
+
+          <div
+            aria-label="Cleaning summary"
+            className="import-cleaning-summary"
+          >
+            <div>
+              <strong>{cleaningSummary.totalRowCount}</strong>
+              <span>Total rows</span>
+            </div>
+            <div>
+              <strong>{cleaningSummary.readyRowCount}</strong>
+              <span>Ready rows</span>
+            </div>
+            <div>
+              <strong>{cleaningSummary.invalidRowCount}</strong>
+              <span>Invalid rows</span>
+            </div>
+            <div>
+              <strong>{cleaningSummary.changedValueCount}</strong>
+              <span>Normalized values</span>
+            </div>
+          </div>
+
+          <p className="import-cleaning-display-note">
+            Showing {displayedCleanedRows.length} of {cleaningSummary.totalRowCount} rows. Invalid rows appear first; source record and line numbers remain unchanged.
+          </p>
+
+          {cleaningSummary.issueCount > 0 ? (
+            <Notice role="alert" tone="error">
+              <strong>
+                Correct {cleaningSummary.issueCount} source {cleaningSummary.issueCount === 1 ? "issue" : "issues"}
+              </strong>
+              <p>
+                Cleaning is read-only. Update the CSV and upload
+                it again to resolve these values.
+              </p>
+            </Notice>
+          ) : (
+            <Notice role="status" tone="success">
+              All rows passed cleaning and value validation.
+            </Notice>
+          )}
+
+          <div className="import-cleaning-list">
+            {displayedCleanedRows.map((row) => (
+              <article
+                className={
+                  row.issues.length > 0
+                    ? "import-cleaning-card import-cleaning-card--invalid"
+                    : "import-cleaning-card"
+                }
+                key={row.recordNumber}
+              >
+                <header>
+                  <div>
+                    <strong>
+                      Source record {row.recordNumber}
+                    </strong>
+                    <span>
+                      {sourceLineLabel(
+                        row.sourceLineStart,
+                        row.sourceLineEnd,
+                      )}
+                    </span>
+                  </div>
+                  <span
+                    className={
+                      row.issues.length > 0
+                        ? "import-row-status import-row-status--invalid"
+                        : "import-row-status import-row-status--ready"
+                    }
+                  >
+                    {row.issues.length > 0
+                      ? `${row.issues.length} ${row.issues.length === 1 ? "issue" : "issues"}`
+                      : "Ready"}
+                  </span>
+                </header>
+
+                {row.issues.length > 0 ? (
+                  <ul className="import-cleaning-card__issues">
+                    {row.issues.map((issue) => (
+                      <li key={`${issue.code}:${issue.field}`}>
+                        <strong>{issue.message}</strong>
+                        <span>
+                          Source value: {issue.sourceValue === null || issue.sourceValue.length === 0 ? "Empty" : issue.sourceValue}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+
+                <dl className="import-cleaning-card__values">
+                  {CSV_IMPORT_FIELD_DEFINITIONS.map(
+                    (definition) => {
+                      const value =
+                        row.fields[definition.field]
+                      const fieldIsInvalid = row.issues.some(
+                        (issue) =>
+                          issue.field === definition.field,
+                      )
+
+                      return (
+                        <div key={definition.field}>
+                          <dt>{definition.label}</dt>
+                          <dd
+                            className={
+                              fieldIsInvalid
+                                ? "import-cleaned-value--invalid"
+                                : undefined
+                            }
+                          >
+                            {fieldIsInvalid
+                              ? "Invalid"
+                              : definition.field === "formatMl" && value !== null
+                              ? `${value} ml`
+                              : definition.field === "vintage" && value === null
+                                ? "NV"
+                                : value ?? "Empty"}
+                          </dd>
+                        </div>
+                      )
+                    },
+                  )}
+                </dl>
+
+                {row.changes.length > 0 ? (
+                  <details>
+                    <summary>
+                      Normalized values ({row.changes.length})
+                    </summary>
+                    <ul className="import-cleaning-card__changes">
+                      {row.changes.map((change) => {
+                        const label =
+                          CSV_IMPORT_FIELD_DEFINITIONS.find(
+                            (definition) =>
+                              definition.field === change.field,
+                          )?.label ?? change.field
+
+                        return (
+                          <li key={change.field}>
+                            <strong>{label}</strong>
+                            <span>{change.sourceValue || "Empty"}</span>
+                            <span aria-hidden="true">→</span>
+                            <span>{change.normalizedValue}</span>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </details>
+                ) : null}
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       {document?.header ? (
         <section
-          aria-labelledby="mapping-result-heading"
+          aria-labelledby="import-result-heading"
           className="import-result-panel"
         >
           <div>
-            <h2 id="mapping-result-heading">
-              Mapping result
+            <h2 id="import-result-heading">
+              Import preparation
             </h2>
             <p>
-              {mappingIsReady
-                ? "The column mapping is ready for cleaning and normalization. Rows without resolved storage will be assigned before import."
-                : "Resolve every CSV structure and required mapping issue before continuing."}
+              {!mappingIsReady
+                ? "Resolve every CSV structure and required mapping issue before cleaning."
+                : cleaningSummary.issueCount > 0
+                  ? "Resolve every cleaning issue before matching wines. No data has been written."
+                  : "Cleaning is complete. Wine matching will be added in the next step; unresolved storage will be assigned before import."}
             </p>
           </div>
           <button disabled type="button">
-            Continue to cleaning
+            Continue to wine matching
           </button>
         </section>
       ) : null}
