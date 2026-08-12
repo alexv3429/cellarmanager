@@ -1,6 +1,7 @@
 export type AppView =
   | "inventory"
   | "catalog"
+  | "import"
   | "setup"
 
 export type AppRoute =
@@ -20,6 +21,7 @@ export interface WineDetailHistoryState {
 const APP_VIEW_PATHS: Record<AppView, string> = {
   inventory: "/",
   catalog: "/catalog",
+  import: "/import",
   setup: "/setup",
 }
 
@@ -64,6 +66,8 @@ export function getAppRouteFromPathname(
   switch (normalizedPathname) {
     case "/catalog":
       return { view: "catalog", wineId: null }
+    case "/import":
+      return { view: "import", wineId: null }
     case "/setup":
       return { view: "setup", wineId: null }
     default:
@@ -94,6 +98,7 @@ export function getWineDetailReturnView(
 
   return returnView === "inventory" ||
     returnView === "catalog" ||
+    returnView === "import" ||
     returnView === "setup"
     ? returnView
     : null

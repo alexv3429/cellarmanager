@@ -8,6 +8,7 @@ import { AppShell } from "./components/AppShell"
 import { CatalogView } from "./components/CatalogView"
 import { CellarSetupView } from "./components/CellarSetupView"
 import { HoldingsView } from "./components/HoldingsView"
+import { ImportView } from "./components/ImportView"
 import { LoginForm } from "./components/LoginForm"
 import { OnboardingView } from "./components/OnboardingView"
 import { Notice } from "./components/Notice"
@@ -185,6 +186,8 @@ function ReadyAuthenticatedApp({
           isOnline={isOnline}
         />
       ) : null}
+
+      {route.view === "import" ? <ImportView /> : null}
 
       {route.view === "wine" ? (
         <WineDetailView
