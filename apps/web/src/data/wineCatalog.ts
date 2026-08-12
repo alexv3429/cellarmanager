@@ -18,6 +18,35 @@ function wineTextKey(value: string): string {
   return cleanWineText(value).toLowerCase()
 }
 
+export function getWineIdentityKey(
+  producer: string,
+  cuvee: string,
+  vintage: number | null,
+  color: string,
+  formatMl: number,
+): string | null {
+  const producerKey = wineTextKey(producer)
+  const cuveeKey = wineTextKey(cuvee)
+  const colorKey = wineTextKey(color)
+
+  if (
+    producerKey.length === 0 ||
+    cuveeKey.length === 0 ||
+    colorKey.length === 0 ||
+    formatMl <= 0
+  ) {
+    return null
+  }
+
+  return JSON.stringify([
+    producerKey,
+    cuveeKey,
+    vintage,
+    colorKey,
+    formatMl,
+  ])
+}
+
 export function parseWineVintage(
   value: string,
 ): number | null {
@@ -81,27 +110,28 @@ export function findMatchingWines(
   color: string,
   formatMl: number,
 ): WineCatalogEntry[] {
-  const producerKey = wineTextKey(producer)
-  const cuveeKey = wineTextKey(cuvee)
-  const colorKey = wineTextKey(color)
+  const identityKey = getWineIdentityKey(
+    producer,
+    cuvee,
+    vintage,
+    color,
+    formatMl,
+  )
 
-  if (
-    producerKey.length === 0 ||
-    cuveeKey.length === 0 ||
-    colorKey.length === 0 ||
-    formatMl <= 0
-  ) {
+  if (identityKey === null) {
     return []
   }
 
   return wines.filter(
     (wine) =>
       wine.household_id === householdId &&
-      wineTextKey(wine.producer) === producerKey &&
-      wineTextKey(wine.cuvee) === cuveeKey &&
-      wine.vintage === vintage &&
-      wineTextKey(wine.color) === colorKey &&
-      wine.format_ml === formatMl,
+      getWineIdentityKey(
+        wine.producer,
+        wine.cuvee,
+        wine.vintage,
+        wine.color,
+        wine.format_ml,
+      ) === identityKey,
   )
 }
 

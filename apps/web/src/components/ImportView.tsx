@@ -1,3 +1,4 @@
+import { useQuery } from "@powersync/react"
 import {
   type ChangeEvent,
   useMemo,
@@ -22,11 +23,47 @@ import {
   type CsvDelimiter,
   type CsvIngestionDocument,
 } from "../data/csvIngestion"
+import {
+  matchCsvWines,
+  summarizeCsvWineMatching,
+  type CsvWineMatchClassification,
+} from "../data/csvWineMatching"
+import {
+  formatWineVolume,
+  type WineCatalogEntry,
+} from "../data/wineCatalog"
 import { Notice } from "./Notice"
 
 const FILE_SIZE_LIMIT_BYTES = 20_000_000
 const SAMPLE_ROW_COUNT = 3
 const CLEANING_ROW_DISPLAY_LIMIT = 100
+const MATCHING_ROW_DISPLAY_LIMIT = 100
+
+const WINE_CATALOG_QUERY = `
+  select
+    id,
+    household_id,
+    producer,
+    cuvee,
+    vintage,
+    color,
+    appellation,
+    area,
+    format_ml
+  from wines
+  where household_id = ?
+  order by producer, cuvee, vintage, color, format_ml, id
+`
+
+interface ImportViewProps {
+  householdId: string
+}
+
+interface ImportWorkspaceProps extends ImportViewProps {
+  catalogError: unknown
+  catalogIsLoading: boolean
+  catalogWines: WineCatalogEntry[]
+}
 
 function delimiterLabel(
   delimiter: CsvDelimiter | null,
@@ -52,7 +89,49 @@ function sourceLineLabel(
     : `Lines ${start}–${end}`
 }
 
-export function ImportView() {
+function matchingStatusLabel(
+  classification: CsvWineMatchClassification,
+): string {
+  switch (classification) {
+    case "ambiguous":
+      return "Ambiguous"
+    case "existing":
+      return "Existing"
+    case "invalid":
+      return "Invalid"
+    case "new":
+      return "New"
+  }
+}
+
+export function ImportView({
+  householdId,
+}: ImportViewProps) {
+  const {
+    data: catalogWines,
+    error: catalogError,
+    isLoading: catalogIsLoading,
+  } = useQuery<WineCatalogEntry>(
+    WINE_CATALOG_QUERY,
+    [householdId],
+  )
+
+  return (
+    <ImportWorkspace
+      catalogError={catalogError}
+      catalogIsLoading={catalogIsLoading}
+      catalogWines={catalogWines}
+      householdId={householdId}
+    />
+  )
+}
+
+export function ImportWorkspace({
+  catalogError,
+  catalogIsLoading,
+  catalogWines,
+  householdId,
+}: ImportWorkspaceProps) {
   const latestFileSelection = useRef(0)
   const fileInput = useRef<HTMLInputElement>(null)
   const [fileInputKey, setFileInputKey] = useState(0)
@@ -125,6 +204,39 @@ export function ImportView() {
       CLEANING_ROW_DISPLAY_LIMIT,
     )
   }, [cleanedRows])
+
+  const matchingResults = useMemo(
+    () =>
+      matchCsvWines(
+        cleanedRows,
+        catalogWines,
+        householdId,
+      ),
+    [catalogWines, cleanedRows, householdId],
+  )
+
+  const matchingSummary = useMemo(
+    () => summarizeCsvWineMatching(matchingResults),
+    [matchingResults],
+  )
+
+  const displayedMatchingResults = useMemo(() => {
+    const classifications: CsvWineMatchClassification[] = [
+      "ambiguous",
+      "existing",
+      "new",
+      "invalid",
+    ]
+
+    return classifications
+      .flatMap((classification) =>
+        matchingResults.filter(
+          (result) =>
+            result.classification === classification,
+        ),
+      )
+      .slice(0, MATCHING_ROW_DISPLAY_LIMIT)
+  }, [matchingResults])
 
   function applyDocument(
     nextDocument: CsvIngestionDocument,
@@ -233,6 +345,8 @@ export function ImportView() {
     mappingIssues.length === 0
 
   const showCleaning = mappingIsReady
+  const showMatching =
+    mappingIsReady && cleaningSummary.issueCount === 0
 
   return (
     <main className="import-view">
@@ -727,6 +841,221 @@ export function ImportView() {
         </section>
       ) : null}
 
+      {showMatching ? (
+        <section
+          aria-busy={catalogIsLoading}
+          aria-labelledby="matching-heading"
+          className="import-matching-panel"
+        >
+          <div className="import-section-heading">
+            <div>
+              <h2 id="matching-heading">
+                5. Match catalog wines
+              </h2>
+              <p>
+                Producer, cuvée, vintage, color, and bottle
+                format form the conservative wine identity.
+                Appellation and area are supporting metadata.
+              </p>
+            </div>
+            <span className="import-section-heading__status">
+              {catalogIsLoading
+                ? "Checking catalog"
+                : catalogError
+                  ? "Catalog unavailable"
+                  : matchingSummary.ambiguousRowCount > 0
+                    ? `${matchingSummary.ambiguousRowCount} ambiguous ${matchingSummary.ambiguousRowCount === 1 ? "row" : "rows"}`
+                    : `${matchingSummary.totalRowCount} rows classified`}
+            </span>
+          </div>
+
+          {catalogIsLoading ? (
+            <Notice role="status">
+              Checking the synchronized catalog for the active
+              household…
+            </Notice>
+          ) : catalogError ? (
+            <Notice role="alert" tone="error">
+              <strong>Unable to check the wine catalog</strong>
+              <p>{String(catalogError)}</p>
+            </Notice>
+          ) : (
+            <>
+              <div
+                aria-label="Wine matching summary"
+                className="import-matching-summary"
+              >
+                <div>
+                  <strong>{matchingSummary.totalRowCount}</strong>
+                  <span>Total rows</span>
+                </div>
+                <div>
+                  <strong>{matchingSummary.existingRowCount}</strong>
+                  <span>Existing matches</span>
+                </div>
+                <div>
+                  <strong>{matchingSummary.newRowCount}</strong>
+                  <span>New rows</span>
+                </div>
+                <div>
+                  <strong>{matchingSummary.ambiguousRowCount}</strong>
+                  <span>Ambiguous rows</span>
+                </div>
+              </div>
+
+              <p className="import-matching-display-note">
+                Showing {displayedMatchingResults.length} of {matchingSummary.totalRowCount} rows. Ambiguous rows appear first; matching is read-only.
+              </p>
+
+              {matchingSummary.ambiguousRowCount > 0 ? (
+                <Notice role="alert" tone="warning">
+                  <strong>
+                    Resolve {matchingSummary.ambiguousRowCount} ambiguous {matchingSummary.ambiguousRowCount === 1 ? "row" : "rows"} before import
+                  </strong>
+                  <p>
+                    Every exact catalog candidate is shown below.
+                    Explicit candidate selection will be added in
+                    the issue-resolution step.
+                  </p>
+                </Notice>
+              ) : (
+                <Notice role="status" tone="success">
+                  Every source row is classified as an existing or
+                  new wine.
+                </Notice>
+              )}
+
+              <div className="import-matching-list">
+                {displayedMatchingResults.map((result) => {
+                  const { row } = result
+
+                  return (
+                    <article
+                      className={`import-matching-card import-matching-card--${result.classification}`}
+                      key={row.recordNumber}
+                    >
+                      <header>
+                        <div>
+                          <strong>
+                            Source record {row.recordNumber}
+                          </strong>
+                          <span>
+                            {sourceLineLabel(
+                              row.sourceLineStart,
+                              row.sourceLineEnd,
+                            )}
+                          </span>
+                        </div>
+                        <span
+                          className={`import-row-status import-row-status--${result.classification}`}
+                        >
+                          {matchingStatusLabel(
+                            result.classification,
+                          )}
+                        </span>
+                      </header>
+
+                      <dl className="import-matching-card__identity">
+                        <div>
+                          <dt>Producer</dt>
+                          <dd>{row.fields.producer}</dd>
+                        </div>
+                        <div>
+                          <dt>Cuvée</dt>
+                          <dd>{row.fields.cuvee}</dd>
+                        </div>
+                        <div>
+                          <dt>Vintage</dt>
+                          <dd>{row.fields.vintage ?? "NV"}</dd>
+                        </div>
+                        <div>
+                          <dt>Color</dt>
+                          <dd>{row.fields.color}</dd>
+                        </div>
+                        <div>
+                          <dt>Bottle format</dt>
+                          <dd>
+                            {formatWineVolume(
+                              row.fields.formatMl ?? 0,
+                            )}
+                          </dd>
+                        </div>
+                      </dl>
+
+                      <div className="import-matching-card__outcome">
+                        <strong>
+                          {result.classification === "ambiguous"
+                            ? `${result.candidates.length} catalog references share this identity`
+                            : result.classification === "existing"
+                              ? "One existing catalog reference matched"
+                              : "No existing catalog reference matched"}
+                        </strong>
+                        <p>
+                          {result.classification === "ambiguous"
+                            ? "No reference is selected automatically."
+                            : result.classification === "existing"
+                              ? "This source row will reuse the matched reference."
+                              : "This source row is classified as a new wine."}
+                        </p>
+                        <dl className="import-matching-card__metadata">
+                          <div>
+                            <dt>Source appellation</dt>
+                            <dd>
+                              {row.fields.appellation ?? "Empty"}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt>Source area</dt>
+                            <dd>
+                              {row.fields.area ?? "Empty"}
+                            </dd>
+                          </div>
+                        </dl>
+                      </div>
+
+                      {result.candidates.length > 0 ? (
+                        <ol className="import-match-candidates">
+                          {result.candidates.map(
+                            (candidate, index) => (
+                              <li key={candidate.id}>
+                                <strong>
+                                  {result.classification === "existing"
+                                    ? "Matched catalog reference"
+                                    : `Candidate ${index + 1}`}
+                                </strong>
+                                <dl>
+                                  <div>
+                                    <dt>Appellation</dt>
+                                    <dd>
+                                      {candidate.appellation ??
+                                        "Empty"}
+                                    </dd>
+                                  </div>
+                                  <div>
+                                    <dt>Area</dt>
+                                    <dd>
+                                      {candidate.area ?? "Empty"}
+                                    </dd>
+                                  </div>
+                                  <div>
+                                    <dt>Reference ID</dt>
+                                    <dd>{candidate.id}</dd>
+                                  </div>
+                                </dl>
+                              </li>
+                            ),
+                          )}
+                        </ol>
+                      ) : null}
+                    </article>
+                  )
+                })}
+              </div>
+            </>
+          )}
+        </section>
+      ) : null}
+
       {document?.header ? (
         <section
           aria-labelledby="import-result-heading"
@@ -741,11 +1070,17 @@ export function ImportView() {
                 ? "Resolve every CSV structure and required mapping issue before cleaning."
                 : cleaningSummary.issueCount > 0
                   ? "Resolve every cleaning issue before matching wines. No data has been written."
-                  : "Cleaning is complete. Wine matching will be added in the next step; unresolved storage will be assigned before import."}
+                  : catalogIsLoading
+                    ? "Cleaning is complete. The synchronized catalog is being checked; no data has been written."
+                    : catalogError
+                      ? "Resolve the catalog loading error before matching wines. No data has been written."
+                      : matchingSummary.ambiguousRowCount > 0
+                        ? "Wine matching found ambiguous rows. They require explicit resolution before import; no data has been written."
+                        : "Wine matching is complete. Storage and quantity reconciliation will be added in the next step; no data has been written."}
             </p>
           </div>
           <button disabled type="button">
-            Continue to wine matching
+            Continue to storage matching
           </button>
         </section>
       ) : null}

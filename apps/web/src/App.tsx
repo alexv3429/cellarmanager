@@ -187,7 +187,9 @@ function ReadyAuthenticatedApp({
         />
       ) : null}
 
-      {route.view === "import" ? <ImportView /> : null}
+      {route.view === "import" ? (
+        <ImportView householdId={activeHouseholdId} />
+      ) : null}
 
       {route.view === "wine" ? (
         <WineDetailView

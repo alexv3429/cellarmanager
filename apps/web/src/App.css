@@ -1810,6 +1810,7 @@
 .app-shell__content section.import-mapping-panel,
 .app-shell__content section.import-preview-panel,
 .app-shell__content section.import-cleaning-panel,
+.app-shell__content section.import-matching-panel,
 .app-shell__content section.import-result-panel {
   display: grid;
   gap: 16px;
@@ -2002,13 +2003,15 @@
   border-bottom: 1px solid var(--border);
 }
 
-.import-cleaning-summary {
+.import-cleaning-summary,
+.import-matching-summary {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
 }
 
-.import-cleaning-summary > div {
+.import-cleaning-summary > div,
+.import-matching-summary > div {
   display: grid;
   gap: 2px;
   padding: 12px;
@@ -2017,17 +2020,20 @@
   background: var(--surface-muted);
 }
 
-.import-cleaning-summary strong {
+.import-cleaning-summary strong,
+.import-matching-summary strong {
   color: var(--text-h);
   font-size: 22px;
   line-height: 1;
 }
 
-.import-cleaning-summary span {
+.import-cleaning-summary span,
+.import-matching-summary span {
   font-size: 13px;
 }
 
-.import-cleaning-display-note {
+.import-cleaning-display-note,
+.import-matching-display-note {
   margin: 0;
   font-size: 14px;
 }
@@ -2085,6 +2091,21 @@
 .import-row-status--invalid {
   border-color: color-mix(in srgb, #a63d45 60%, var(--border));
   background: color-mix(in srgb, var(--surface) 88%, #a63d45);
+}
+
+.import-row-status--existing {
+  border-color: color-mix(in srgb, #4f7a5a 55%, var(--border));
+  background: color-mix(in srgb, var(--surface) 88%, #4f7a5a);
+}
+
+.import-row-status--new {
+  border-color: var(--accent-border);
+  background: var(--accent-bg);
+}
+
+.import-row-status--ambiguous {
+  border-color: color-mix(in srgb, #9a6a21 60%, var(--border));
+  background: color-mix(in srgb, var(--surface) 88%, #9a6a21);
 }
 
 .import-cleaning-card__issues,
@@ -2175,6 +2196,143 @@
   white-space: pre-wrap;
 }
 
+.import-matching-list {
+  display: grid;
+  gap: 10px;
+}
+
+.import-matching-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.import-matching-card--ambiguous {
+  border-color: color-mix(in srgb, #9a6a21 60%, var(--border));
+}
+
+.import-matching-card > header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-muted);
+}
+
+.import-matching-card > header > div {
+  display: grid;
+  gap: 2px;
+}
+
+.import-matching-card > header span {
+  font-size: 13px;
+}
+
+.import-matching-card__identity {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.import-matching-card__identity > div {
+  min-width: 0;
+  padding: 9px 12px;
+  border-right: 1px solid var(--border);
+}
+
+.import-matching-card__identity > div:last-child {
+  border-right: 0;
+}
+
+.import-matching-card__identity dt,
+.import-match-candidates dt {
+  color: var(--text-h);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.import-matching-card__identity dd,
+.import-match-candidates dd {
+  margin: 2px 0 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.import-matching-card__outcome {
+  display: grid;
+  gap: 3px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.import-matching-card__outcome p {
+  margin: 0;
+}
+
+.import-matching-card__metadata {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 5px 0 0;
+}
+
+.import-matching-card__metadata > div {
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--surface-muted);
+}
+
+.import-matching-card__metadata dt {
+  color: var(--text-h);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.import-matching-card__metadata dd {
+  margin: 2px 0 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.import-match-candidates {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.import-match-candidates > li {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.import-match-candidates > li:last-child {
+  border-bottom: 0;
+}
+
+.import-match-candidates dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.import-match-candidates dl > div {
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--surface-muted);
+}
+
 .import-result-panel {
   grid-template-columns: minmax(0, 1fr) auto;
   border-color: var(--accent-border);
@@ -2193,6 +2351,25 @@
 
   .import-cleaning-card__values {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .import-matching-card__identity {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .import-matching-card__identity > div {
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .import-matching-card__identity > div:nth-child(2n) {
+    border-right: 0;
+  }
+
+  .import-matching-card__identity > div:last-child {
+    grid-column: 1 / -1;
+    border-right: 0;
+    border-bottom: 0;
   }
 
   .import-cleaning-card__values > div:nth-child(5n) {
@@ -2236,11 +2413,13 @@
     grid-template-columns: minmax(5.5rem, 0.7fr) minmax(0, 1.3fr);
   }
 
-  .import-cleaning-summary {
+  .import-cleaning-summary,
+  .import-matching-summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .import-cleaning-card > header {
+  .import-cleaning-card > header,
+  .import-matching-card > header {
     align-items: flex-start;
   }
 
@@ -2255,5 +2434,22 @@
 
   .import-cleaning-card__changes li > span[aria-hidden="true"] {
     display: none;
+  }
+
+  .import-matching-card__identity,
+  .import-matching-card__metadata,
+  .import-match-candidates dl {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .import-matching-card__identity > div:nth-child(n),
+  .import-matching-card__identity > div:last-child {
+    grid-column: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .import-matching-card__identity > div:last-child {
+    border-bottom: 0;
   }
 }
