@@ -163,6 +163,14 @@ export function AppShell({
         </button>
 
         <button
+          aria-pressed={view === "import"}
+          onClick={() => onViewChange("import")}
+          type="button"
+        >
+          Import
+        </button>
+
+        <button
           aria-pressed={view === "setup"}
           onClick={() => onViewChange("setup")}
           type="button"
