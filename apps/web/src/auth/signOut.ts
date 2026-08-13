@@ -2,6 +2,7 @@ import {
   clearPowerSyncForSignOut,
 } from "../data/powersync/connection"
 import { supabase } from "../data/supabase"
+import { clearAllPendingCsvImportPlans } from "../data/csvImportCommit"
 import { clearActiveHouseholds } from "../households/activeHousehold"
 import { clearLocalAccess } from "./localAccess"
 
@@ -20,6 +21,7 @@ export async function signOutAndClearLocalData(): Promise<void> {
   // through the offline-access path.
   clearLocalAccess(window.localStorage)
   clearActiveHouseholds(window.localStorage)
+  clearAllPendingCsvImportPlans(window.localStorage)
 
   await clearPowerSyncForSignOut()
 }

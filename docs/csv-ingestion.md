@@ -274,3 +274,58 @@ This step is deterministic and read-only. It does not create wines, add or move
 bottles, change cellar setup, enqueue inventory operations, or write import
 state. Roadmap step 0.3.13 performs the first transactional authoritative
 commit after a complete second preview.
+
+## Transactional import commit contract
+
+Roadmap step 0.3.13 turns a complete resolved preview into authoritative
+inventory data. Bulk import is deliberately online-only: the browser submits
+one immutable batch to a PostgreSQL RPC instead of queuing rows individually
+through the offline operation uploader.
+
+The confirmation plan assigns one random import receipt ID, one
+inventory-operation ID per source row, and one requested catalog ID per
+distinct new semantic wine.
+Repeated source rows for the same new wine therefore share one requested wine
+ID while retaining separate quantities and source records. Existing-wine rows
+retain their explicitly resolved catalog IDs.
+
+Before the final action is enabled, every row must have a non-blocking second
+preview, an active destination, a complete normalized wine identity, and a
+positive quantity. The device must be registered, the browser must be online,
+and the user must explicitly acknowledge the final wine, destination, quantity,
+and capacity-warning plan. If synchronized data changes after the confirmation
+opens, the browser discards that confirmation and requires review again.
+
+The server treats the complete JSON payload as untrusted input. It revalidates
+authentication, household membership, device ownership, unique source records
+and operation IDs, requested create/reuse actions, wine identity, positive
+quantities, household destinations, and active cellar/location state. Each row
+then passes through the normal ADD inventory operation functions so catalog
+normalization, conservative semantic matching, immutable activity records, and
+holding updates keep their existing domain behavior.
+
+All rows and the private import receipt are written inside one PostgreSQL
+transaction. A rejected row rolls back earlier wine, holding, journal, and
+receipt writes from the same batch. Capacity remains advisory and does not make
+an otherwise safe row fail.
+
+The import receipt makes an uncertain network response safely retryable. The
+same receipt ID and exact payload return the already-committed result without
+adding stock twice; reuse with a changed household, user, device, timestamp, or
+row payload is rejected. After an error, a separate read-only RPC checks whether
+the receipt was committed: an existing receipt is reported as success, a
+definitely absent receipt unlocks the current preview for correction, and an
+unverifiable response keeps the original IDs frozen for a safe exact retry.
+Receipt verification takes the same per-import transaction lock, so absence is
+reported only after any still-running commit has completed. On success, the UI
+reports imported rows and bottles, created and reused wine
+references, and the receipt ID before offering a clean new-import reset.
+
+Immediately before the first request, the browser persists the immutable plan
+and its IDs locally. A refresh or navigation back to Import verifies that saved
+receipt before allowing a new upload: committed work is reported as success,
+definite rollback unlocks a new attempt, and an unverifiable outcome retains an
+exact-retry action. The plan is removed locally after success, proven rollback,
+or sign-out, so a later intentional import of identical source rows remains
+possible. The original server receipt payload remains private and cannot be
+selected directly by browser roles.
