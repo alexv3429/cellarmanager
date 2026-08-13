@@ -24,6 +24,13 @@ import {
   type CsvIngestionDocument,
 } from "../data/csvIngestion"
 import {
+  reconcileCsvStorage,
+  summarizeCsvStorageReconciliation,
+  type CsvStorageCellar,
+  type CsvStorageLocation,
+  type CsvStorageReconciliationResult,
+} from "../data/csvStorageReconciliation"
+import {
   matchCsvWines,
   summarizeCsvWineMatching,
   type CsvWineMatchClassification,
@@ -38,6 +45,7 @@ const FILE_SIZE_LIMIT_BYTES = 20_000_000
 const SAMPLE_ROW_COUNT = 3
 const CLEANING_ROW_DISPLAY_LIMIT = 100
 const MATCHING_ROW_DISPLAY_LIMIT = 100
+const STORAGE_ROW_DISPLAY_LIMIT = 100
 
 const WINE_CATALOG_QUERY = `
   select
@@ -55,6 +63,35 @@ const WINE_CATALOG_QUERY = `
   order by producer, cuvee, vintage, color, format_ml, id
 `
 
+const STORAGE_CELLARS_QUERY = `
+  select id, household_id, name, is_active
+  from cellars
+  where household_id = ?
+  order by name, id
+`
+
+const STORAGE_LOCATIONS_QUERY = `
+  select
+    l.id,
+    l.household_id,
+    l.cellar_id,
+    l.code,
+    l.is_active,
+    l.capacity,
+    coalesce(sum(h.quantity), 0) as bottle_count
+  from locations l
+  left join holdings h on h.location_id = l.id
+  where l.household_id = ?
+  group by
+    l.id,
+    l.household_id,
+    l.cellar_id,
+    l.code,
+    l.is_active,
+    l.capacity
+  order by l.cellar_id, l.code, l.id
+`
+
 interface ImportViewProps {
   householdId: string
 }
@@ -63,6 +100,10 @@ interface ImportWorkspaceProps extends ImportViewProps {
   catalogError: unknown
   catalogIsLoading: boolean
   catalogWines: WineCatalogEntry[]
+  storageCellars: CsvStorageCellar[]
+  storageError: unknown
+  storageIsLoading: boolean
+  storageLocations: CsvStorageLocation[]
 }
 
 function delimiterLabel(
@@ -104,6 +145,20 @@ function matchingStatusLabel(
   }
 }
 
+function storageStatusLabel(
+  result: CsvStorageReconciliationResult,
+): string {
+  if (result.status !== "ready") {
+    return "Needs storage"
+  }
+
+  return result.issues.some(
+    (storageIssue) => storageIssue.severity === "warning",
+  )
+    ? "Assigned · warning"
+    : "Assigned"
+}
+
 export function ImportView({
   householdId,
 }: ImportViewProps) {
@@ -116,12 +171,38 @@ export function ImportView({
     [householdId],
   )
 
+  const {
+    data: storageCellars,
+    error: storageCellarsError,
+    isLoading: storageCellarsAreLoading,
+  } = useQuery<CsvStorageCellar>(
+    STORAGE_CELLARS_QUERY,
+    [householdId],
+  )
+
+  const {
+    data: storageLocations,
+    error: storageLocationsError,
+    isLoading: storageLocationsAreLoading,
+  } = useQuery<CsvStorageLocation>(
+    STORAGE_LOCATIONS_QUERY,
+    [householdId],
+  )
+
   return (
     <ImportWorkspace
       catalogError={catalogError}
       catalogIsLoading={catalogIsLoading}
       catalogWines={catalogWines}
       householdId={householdId}
+      storageCellars={storageCellars}
+      storageError={
+        storageCellarsError ?? storageLocationsError
+      }
+      storageIsLoading={
+        storageCellarsAreLoading || storageLocationsAreLoading
+      }
+      storageLocations={storageLocations}
     />
   )
 }
@@ -131,6 +212,10 @@ export function ImportWorkspace({
   catalogIsLoading,
   catalogWines,
   householdId,
+  storageCellars,
+  storageError,
+  storageIsLoading,
+  storageLocations,
 }: ImportWorkspaceProps) {
   const latestFileSelection = useRef(0)
   const fileInput = useRef<HTMLInputElement>(null)
@@ -237,6 +322,56 @@ export function ImportWorkspace({
       )
       .slice(0, MATCHING_ROW_DISPLAY_LIMIT)
   }, [matchingResults])
+
+  const storageResults = useMemo(
+    () =>
+      reconcileCsvStorage(
+        cleanedRows,
+        storageCellars,
+        storageLocations,
+        householdId,
+      ),
+    [
+      cleanedRows,
+      householdId,
+      storageCellars,
+      storageLocations,
+    ],
+  )
+
+  const storageSummary = useMemo(
+    () =>
+      summarizeCsvStorageReconciliation(storageResults),
+    [storageResults],
+  )
+
+  const displayedStorageResults = useMemo(() => {
+    const unresolvedResults = storageResults.filter(
+      (result) => result.status !== "ready",
+    )
+    const warningResults = storageResults.filter(
+      (result) =>
+        result.status === "ready" &&
+        result.issues.some(
+          (storageIssue) =>
+            storageIssue.severity === "warning",
+        ),
+    )
+    const readyResults = storageResults.filter(
+      (result) =>
+        result.status === "ready" &&
+        result.issues.every(
+          (storageIssue) =>
+            storageIssue.severity !== "warning",
+        ),
+    )
+
+    return [
+      ...unresolvedResults,
+      ...warningResults,
+      ...readyResults,
+    ].slice(0, STORAGE_ROW_DISPLAY_LIMIT)
+  }, [storageResults])
 
   function applyDocument(
     nextDocument: CsvIngestionDocument,
@@ -347,6 +482,8 @@ export function ImportWorkspace({
   const showCleaning = mappingIsReady
   const showMatching =
     mappingIsReady && cleaningSummary.issueCount === 0
+  const showStorage =
+    showMatching && !catalogIsLoading && !catalogError
 
   return (
     <main className="import-view">
@@ -1056,6 +1193,230 @@ export function ImportWorkspace({
         </section>
       ) : null}
 
+      {showStorage ? (
+        <section
+          aria-busy={storageIsLoading}
+          aria-labelledby="storage-heading"
+          className="import-storage-panel"
+        >
+          <div className="import-section-heading">
+            <div>
+              <h2 id="storage-heading">
+                6. Reconcile storage and quantity
+              </h2>
+              <p>
+                Cellar and location names are matched inside the
+                active household. Quantities are aggregated by
+                location and compared with current occupancy and
+                optional configured capacity.
+              </p>
+            </div>
+            <span className="import-section-heading__status">
+              {storageIsLoading
+                ? "Checking storage"
+                : storageError
+                  ? "Storage unavailable"
+                  : storageSummary.unresolvedRowCount > 0
+                    ? `${storageSummary.unresolvedRowCount} ${storageSummary.unresolvedRowCount === 1 ? "row needs" : "rows need"} storage`
+                    : `${storageSummary.assignedBottleCount} bottles assigned`}
+            </span>
+          </div>
+
+          {storageIsLoading ? (
+            <Notice role="status">
+              Checking synchronized cellars, locations, holdings,
+              and capacities…
+            </Notice>
+          ) : storageError ? (
+            <Notice role="alert" tone="error">
+              <strong>Unable to check cellar storage</strong>
+              <p>{String(storageError)}</p>
+            </Notice>
+          ) : (
+            <>
+              <div
+                aria-label="Storage reconciliation summary"
+                className="import-storage-summary"
+              >
+                <div>
+                  <strong>{storageSummary.totalBottleCount}</strong>
+                  <span>Total bottles</span>
+                </div>
+                <div>
+                  <strong>
+                    {storageSummary.assignedBottleCount}
+                  </strong>
+                  <span>Assigned bottles</span>
+                </div>
+                <div>
+                  <strong>{storageSummary.readyRowCount}</strong>
+                  <span>Assigned rows</span>
+                </div>
+                <div>
+                  <strong>
+                    {storageSummary.unresolvedRowCount}
+                  </strong>
+                  <span>Unresolved rows</span>
+                </div>
+              </div>
+
+              <p className="import-storage-display-note">
+                Showing {displayedStorageResults.length} of {storageSummary.totalRowCount} rows. Unresolved storage and capacity warnings appear first; source context is unchanged.
+              </p>
+
+              {storageSummary.unresolvedRowCount > 0 ? (
+                <Notice role="alert" tone="warning">
+                  <strong>
+                    Assign storage for {storageSummary.unresolvedRowCount} {storageSummary.unresolvedRowCount === 1 ? "row" : "rows"} before import
+                  </strong>
+                  <p>
+                    The importer never invents a cellar, chooses an
+                    overflow location, or restores archived storage.
+                    Assignment controls will be added in the
+                    issue-resolution step.
+                  </p>
+                </Notice>
+              ) : (
+                <Notice role="status" tone="success">
+                  Every source row has an active cellar and
+                  location assignment.
+                </Notice>
+              )}
+
+              {storageSummary.capacityWarningLocationCount > 0 ? (
+                <Notice role="status" tone="warning">
+                  <strong>
+                    Review {storageSummary.capacityWarningLocationCount} capacity {storageSummary.capacityWarningLocationCount === 1 ? "warning" : "warnings"}
+                  </strong>
+                  <p>
+                    Capacity is an advisory setup value. The
+                    projected totals include current bottles plus
+                    every matched row in this CSV.
+                  </p>
+                </Notice>
+              ) : null}
+
+              <div className="import-storage-list">
+                {displayedStorageResults.map((result) => {
+                  const hasWarning = result.issues.some(
+                    (storageIssue) =>
+                      storageIssue.severity === "warning",
+                  )
+
+                  return (
+                    <article
+                      className={
+                        result.status !== "ready"
+                          ? "import-storage-card import-storage-card--unresolved"
+                          : hasWarning
+                            ? "import-storage-card import-storage-card--warning"
+                            : "import-storage-card"
+                      }
+                      key={result.row.recordNumber}
+                    >
+                      <header>
+                        <div>
+                          <strong>
+                            Source record {result.row.recordNumber}
+                          </strong>
+                          <span>
+                            {sourceLineLabel(
+                              result.row.sourceLineStart,
+                              result.row.sourceLineEnd,
+                            )}
+                            <span aria-hidden="true"> · </span>
+                            {result.row.fields.producer} — {result.row.fields.cuvee}
+                          </span>
+                        </div>
+                        <span
+                          className={
+                            result.status !== "ready"
+                              ? "import-row-status import-row-status--unresolved"
+                              : hasWarning
+                                ? "import-row-status import-row-status--warning"
+                                : "import-row-status import-row-status--assigned"
+                          }
+                        >
+                          {storageStatusLabel(result)}
+                        </span>
+                      </header>
+
+                      {result.issues.length > 0 ? (
+                        <ul className="import-storage-card__issues">
+                          {result.issues.map((storageIssue) => (
+                            <li key={storageIssue.code}>
+                              <strong>
+                                {storageIssue.severity === "warning"
+                                  ? "Capacity warning"
+                                  : "Storage issue"}
+                              </strong>
+                              <span>{storageIssue.message}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+
+                      <dl className="import-storage-card__values">
+                        <div>
+                          <dt>CSV cellar</dt>
+                          <dd>
+                            {result.row.fields.cellar ?? "Empty"}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>CSV location</dt>
+                          <dd>
+                            {result.row.fields.location ?? "Empty"}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>Matched storage</dt>
+                          <dd>
+                            {result.cellar && result.location
+                              ? `${result.cellar.name} / ${result.location.code}`
+                              : "Unresolved"}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>Row quantity</dt>
+                          <dd>{result.quantity ?? "Invalid"}</dd>
+                        </div>
+                      </dl>
+
+                      {result.location ? (
+                        <dl className="import-storage-card__occupancy">
+                          <div>
+                            <dt>Current</dt>
+                            <dd>{result.currentBottleCount}</dd>
+                          </div>
+                          <span aria-hidden="true">+</span>
+                          <div>
+                            <dt>This CSV</dt>
+                            <dd>{result.importBottleCount}</dd>
+                          </div>
+                          <span aria-hidden="true">=</span>
+                          <div>
+                            <dt>Projected</dt>
+                            <dd>{result.projectedBottleCount}</dd>
+                          </div>
+                          <span aria-hidden="true">/</span>
+                          <div>
+                            <dt>Capacity</dt>
+                            <dd>
+                              {result.location.capacity ?? "Not set"}
+                            </dd>
+                          </div>
+                        </dl>
+                      ) : null}
+                    </article>
+                  )
+                })}
+              </div>
+            </>
+          )}
+        </section>
+      ) : null}
+
       {document?.header ? (
         <section
           aria-labelledby="import-result-heading"
@@ -1076,11 +1437,19 @@ export function ImportWorkspace({
                       ? "Resolve the catalog loading error before matching wines. No data has been written."
                       : matchingSummary.ambiguousRowCount > 0
                         ? "Wine matching found ambiguous rows. They require explicit resolution before import; no data has been written."
-                        : "Wine matching is complete. Storage and quantity reconciliation will be added in the next step; no data has been written."}
+                        : storageIsLoading
+                          ? "Wine matching is complete. Synchronized storage is being checked; no data has been written."
+                          : storageError
+                            ? "Resolve the storage loading error before continuing. No data has been written."
+                            : storageSummary.unresolvedRowCount > 0
+                              ? "Storage reconciliation found unresolved rows. They require explicit assignment before import; no data has been written."
+                              : storageSummary.capacityWarningLocationCount > 0
+                                ? "Storage is assigned. Review the advisory capacity warnings before preview; no data has been written."
+                                : "Wine and storage reconciliation are complete. The complete import preview will be added in the next step; no data has been written."}
             </p>
           </div>
           <button disabled type="button">
-            Continue to storage matching
+            Continue to import preview
           </button>
         </section>
       ) : null}

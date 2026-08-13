@@ -31,7 +31,7 @@ redefining the v0.2 inventory architecture:
 | 0.3.7 | CSV column mapping | Complete |
 | 0.3.8 | CSV cleaning and normalization | Complete |
 | 0.3.9 | Existing-wine matching and ambiguity detection | Complete |
-| 0.3.10 | Location and quantity reconciliation | Planned |
+| 0.3.10 | Location and quantity reconciliation | Complete |
 | 0.3.11 | Import preview | Planned |
 | 0.3.12 | Import issue resolution | Planned |
 | 0.3.13 | Transactional import commit | Planned |
