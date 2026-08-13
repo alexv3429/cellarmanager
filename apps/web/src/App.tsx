@@ -188,7 +188,16 @@ function ReadyAuthenticatedApp({
       ) : null}
 
       {route.view === "import" ? (
-        <ImportView householdId={activeHouseholdId} />
+        <ImportView
+          deviceId={
+            deviceRegistration.deviceIdByHousehold[
+              activeHouseholdId
+            ] ?? null
+          }
+          householdId={activeHouseholdId}
+          isOnline={isOnline}
+          key={activeHouseholdId}
+        />
       ) : null}
 
       {route.view === "wine" ? (

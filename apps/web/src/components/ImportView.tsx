@@ -1,6 +1,7 @@
 import { useQuery } from "@powersync/react"
 import {
   type ChangeEvent,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -28,6 +29,17 @@ import {
   summarizeCsvImportPreview,
   type CsvImportPreviewRow,
 } from "../data/csvImportPreview"
+import {
+  clearPendingCsvImportPlan,
+  commitCsvImport,
+  createCsvImportCommitPlan,
+  getCsvImportReceipt,
+  getCsvImportCommitSourceKey,
+  readPendingCsvImportPlan,
+  savePendingCsvImportPlan,
+  type CsvImportCommitPlan,
+  type CsvImportCommitResult,
+} from "../data/csvImportCommit"
 import {
   getCsvImportStorageOptions,
   resolveCsvImportIssues,
@@ -104,7 +116,9 @@ const STORAGE_LOCATIONS_QUERY = `
 `
 
 interface ImportViewProps {
+  deviceId: string | null
   householdId: string
+  isOnline: boolean
 }
 
 interface ImportWorkspaceProps extends ImportViewProps {
@@ -320,7 +334,9 @@ function CompactImportPreviewCard({
 }
 
 export function ImportView({
+  deviceId,
   householdId,
+  isOnline,
 }: ImportViewProps) {
   const {
     data: catalogWines,
@@ -354,7 +370,9 @@ export function ImportView({
       catalogError={catalogError}
       catalogIsLoading={catalogIsLoading}
       catalogWines={catalogWines}
+      deviceId={deviceId}
       householdId={householdId}
+      isOnline={isOnline}
       storageCellars={storageCellars}
       storageError={
         storageCellarsError ?? storageLocationsError
@@ -371,7 +389,9 @@ export function ImportWorkspace({
   catalogError,
   catalogIsLoading,
   catalogWines,
+  deviceId,
   householdId,
+  isOnline,
   storageCellars,
   storageError,
   storageIsLoading,
@@ -400,6 +420,94 @@ export function ImportWorkspace({
       locationIdByRecord: {},
       wineIdByRecord: {},
     })
+  const [confirmationIsOpen, setConfirmationIsOpen] =
+    useState(false)
+  const [confirmationAccepted, setConfirmationAccepted] =
+    useState(false)
+  const [commitPlan, setCommitPlan] = useState<
+    CsvImportCommitPlan | null
+  >(() =>
+    readPendingCsvImportPlan(
+      window.localStorage,
+      householdId,
+    ),
+  )
+  const [commitResult, setCommitResult] =
+    useState<CsvImportCommitResult | null>(null)
+  const [commitError, setCommitError] = useState<
+    string | null
+  >(null)
+  const [commitAttempted, setCommitAttempted] =
+    useState(
+      () =>
+        readPendingCsvImportPlan(
+          window.localStorage,
+          householdId,
+        ) !== null,
+    )
+  const [isCommitting, setIsCommitting] = useState(false)
+  const recoveredCommitChecked = useRef(false)
+
+  useEffect(() => {
+    if (
+      !commitPlan ||
+      !commitAttempted ||
+      recoveredCommitChecked.current ||
+      !isOnline
+    ) {
+      return
+    }
+
+    let active = true
+    recoveredCommitChecked.current = true
+    setIsCommitting(true)
+    setCommitError("Checking the previous import receipt…")
+
+    void getCsvImportReceipt({
+      householdId,
+      importId: commitPlan.importId,
+    })
+      .then((receipt) => {
+        if (!active) {
+          return
+        }
+
+        clearPendingCsvImportPlan(
+          window.localStorage,
+          householdId,
+        )
+
+        if (receipt) {
+          setCommitResult(receipt)
+          setCommitError(null)
+          return
+        }
+
+        setCommitPlan(null)
+        setCommitAttempted(false)
+        setCommitError(
+          "The previous import did not commit. Nothing was added, so you can upload and review it again.",
+        )
+      })
+      .catch((error: unknown) => {
+        if (!active) {
+          return
+        }
+
+        setCommitError(
+          `${error instanceof Error ? error.message : "The previous receipt could not be checked."} Keep this page open and retry the same import after reconnecting.`,
+        )
+      })
+      .finally(() => {
+        if (active) {
+          setIsCommitting(false)
+        }
+      })
+
+    return () => {
+      active = false
+    }
+  }, [commitAttempted, commitPlan, householdId, isOnline])
 
   const mappingIssues = useMemo(
     () => validateCsvColumnMapping(mapping),
@@ -632,6 +740,14 @@ export function ImportWorkspace({
     [householdId, storageCellars, storageLocations],
   )
 
+  const resolvedImportSourceKey = useMemo(
+    () =>
+      getCsvImportCommitSourceKey(
+        resolvedImportPreviewRows,
+      ),
+    [resolvedImportPreviewRows],
+  )
+
   const rowsNeedingResolution = useMemo(
     () =>
       initialImportPreviewRows.filter(
@@ -643,6 +759,10 @@ export function ImportWorkspace({
   function applyDocument(
     nextDocument: CsvIngestionDocument,
   ) {
+    if (commitAttempted || isCommitting) {
+      return
+    }
+
     setDocument(nextDocument)
     setMapping(
       nextDocument.header
@@ -656,11 +776,17 @@ export function ImportWorkspace({
       locationIdByRecord: {},
       wineIdByRecord: {},
     })
+    resetCommitState()
   }
 
   async function selectFile(
     event: ChangeEvent<HTMLInputElement>,
   ) {
+    if (commitAttempted || isCommitting) {
+      event.target.value = ""
+      return
+    }
+
     const file = event.target.files?.[0]
     const selectionId = latestFileSelection.current + 1
     latestFileSelection.current = selectionId
@@ -706,7 +832,11 @@ export function ImportWorkspace({
   }
 
   function selectDelimiter(delimiter: CsvDelimiter) {
-    if (sourceText === null) {
+    if (
+      sourceText === null ||
+      commitAttempted ||
+      isCommitting
+    ) {
       return
     }
 
@@ -717,6 +847,10 @@ export function ImportWorkspace({
     sourceColumnIndex: number,
     value: string,
   ) {
+    if (commitAttempted || isCommitting) {
+      return
+    }
+
     const field =
       value.length > 0
         ? (value as CsvImportField)
@@ -733,9 +867,24 @@ export function ImportWorkspace({
       locationIdByRecord: {},
       wineIdByRecord: {},
     })
+    resetCommitState()
+  }
+
+  function resetCommitState() {
+    setConfirmationIsOpen(false)
+    setConfirmationAccepted(false)
+    setCommitPlan(null)
+    setCommitResult(null)
+    setCommitError(null)
+    setCommitAttempted(false)
+    setIsCommitting(false)
   }
 
   function resetImport() {
+    if ((commitAttempted || isCommitting) && !commitResult) {
+      return
+    }
+
     latestFileSelection.current += 1
     setFileInputKey((currentKey) => currentKey + 1)
     setFileName(null)
@@ -748,6 +897,154 @@ export function ImportWorkspace({
       locationIdByRecord: {},
       wineIdByRecord: {},
     })
+    resetCommitState()
+  }
+
+  function openImportConfirmation() {
+    setCommitError(null)
+
+    if (commitPlan && commitAttempted) {
+      setConfirmationAccepted(false)
+      setConfirmationIsOpen(true)
+      return
+    }
+
+    if (!resolutionIsComplete) {
+      setCommitError(
+        "Resolve every blocked row before import.",
+      )
+      return
+    }
+
+    if (!isOnline) {
+      setCommitError(
+        "Reconnect to the internet before importing this CSV.",
+      )
+      return
+    }
+
+    if (!deviceId) {
+      setCommitError(
+        "Wait for this device to finish registering before import.",
+      )
+      return
+    }
+
+    try {
+      setCommitPlan(
+        createCsvImportCommitPlan({
+          deviceId,
+          householdId,
+          previewRows: resolvedImportPreviewRows,
+        }),
+      )
+      setConfirmationAccepted(false)
+      setConfirmationIsOpen(true)
+    } catch (error: unknown) {
+      setCommitError(
+        error instanceof Error
+          ? error.message
+          : "Unable to prepare the import confirmation",
+      )
+    }
+  }
+
+  async function confirmImport() {
+    if (
+      !commitPlan ||
+      (!confirmationAccepted && !commitAttempted) ||
+      isCommitting
+    ) {
+      return
+    }
+
+    if (!isOnline) {
+      setCommitError(
+        "The connection was lost. Reconnect, then retry the same import.",
+      )
+      return
+    }
+
+    if (
+      !commitAttempted &&
+      commitPlan.sourceKey !== resolvedImportSourceKey
+    ) {
+      setCommitPlan(null)
+      setConfirmationAccepted(false)
+      setConfirmationIsOpen(false)
+      setCommitError(
+        "The catalog or cellar changed after confirmation opened. Review the updated preview and confirm again.",
+      )
+      return
+    }
+
+    if (!commitAttempted) {
+      try {
+        savePendingCsvImportPlan(
+          window.localStorage,
+          commitPlan,
+        )
+      } catch {
+        setCommitError(
+          "Unable to save the retry receipt on this device. The import was not started.",
+        )
+        return
+      }
+    }
+
+    recoveredCommitChecked.current = true
+    setCommitAttempted(true)
+    setIsCommitting(true)
+    setCommitError(null)
+
+    try {
+      const result = await commitCsvImport(commitPlan)
+      clearPendingCsvImportPlan(
+        window.localStorage,
+        householdId,
+      )
+      setCommitResult(result)
+      setConfirmationIsOpen(false)
+    } catch (error: unknown) {
+      const commitErrorMessage =
+        error instanceof Error
+          ? error.message
+          : "Unable to commit the CSV import"
+
+      try {
+        const receipt = await getCsvImportReceipt({
+          householdId,
+          importId: commitPlan.importId,
+        })
+
+        if (receipt) {
+          clearPendingCsvImportPlan(
+            window.localStorage,
+            householdId,
+          )
+          setCommitResult(receipt)
+          setConfirmationIsOpen(false)
+        } else {
+          clearPendingCsvImportPlan(
+            window.localStorage,
+            householdId,
+          )
+          setCommitAttempted(false)
+          setCommitPlan(null)
+          setConfirmationAccepted(false)
+          setConfirmationIsOpen(false)
+          setCommitError(
+            `${commitErrorMessage} Nothing was imported. Review the current preview before trying again.`,
+          )
+        }
+      } catch (receiptError: unknown) {
+        setCommitError(
+          `${commitErrorMessage} ${receiptError instanceof Error ? receiptError.message : "The receipt could not be verified."} Keep this page open and retry the same import after reconnecting.`,
+        )
+      }
+    } finally {
+      setIsCommitting(false)
+    }
   }
 
   const parserHasErrors =
@@ -772,6 +1069,9 @@ export function ImportWorkspace({
     resolvedImportPreviewSummary.blockedRowCount === 0
   const preparationIsCollapsed =
     showImportPreview && !preparationExpanded
+  const importIsLocked = isCommitting || commitAttempted
+  const hasRecoveredPendingImport =
+    commitAttempted && commitPlan !== null && !document?.header
 
   return (
     <main className="import-view">
@@ -784,7 +1084,56 @@ export function ImportWorkspace({
         </p>
       </div>
 
-      {preparationIsCollapsed ? (
+      {hasRecoveredPendingImport ? (
+        <section className="import-result-panel">
+          <div>
+            <h2>Previous import awaiting verification</h2>
+            <p>
+              This device retained the exact receipt and row IDs
+              from an interrupted import. Do not upload the CSV
+              again until this receipt is resolved.
+            </p>
+          </div>
+
+          <dl className="import-complete-panel__receipt">
+            <div>
+              <dt>Import receipt</dt>
+              <dd>{commitPlan.importId}</dd>
+            </div>
+            <div>
+              <dt>Pending plan</dt>
+              <dd>
+                {commitPlan.rows.reduce(
+                  (total, row) => total + row.quantity,
+                  0,
+                )} bottles · {commitPlan.rows.length} source {commitPlan.rows.length === 1 ? "row" : "rows"}
+              </dd>
+            </div>
+          </dl>
+
+          {commitError ? (
+            <Notice role="alert" tone="warning">
+              {commitError}
+            </Notice>
+          ) : (
+            <Notice role="status">
+              Checking whether the import committed…
+            </Notice>
+          )}
+
+          <button
+            disabled={!isOnline || isCommitting}
+            onClick={() => void confirmImport()}
+            type="button"
+          >
+            {isCommitting
+              ? "Checking receipt…"
+              : "Retry the same import"}
+          </button>
+        </section>
+      ) : null}
+
+      {hasRecoveredPendingImport ? null : preparationIsCollapsed ? (
         <section className="import-preparation-summary-panel">
           <div>
             <h2>Preparation complete</h2>
@@ -793,6 +1142,7 @@ export function ImportWorkspace({
             </p>
           </div>
           <button
+            disabled={importIsLocked}
             onClick={() => setPreparationExpanded(true)}
             type="button"
           >
@@ -1913,7 +2263,13 @@ export function ImportWorkspace({
                                     resolutionSelections.wineIdByRecord[recordNumber] === candidate.id
                                   }
                                   name={`wine-resolution-${recordNumber}`}
-                                  onChange={() =>
+                                  disabled={importIsLocked}
+                                  onChange={() => {
+                                    if (importIsLocked) {
+                                      return
+                                    }
+
+                                    resetCommitState()
                                     setResolutionSelections(
                                       (current) => ({
                                         ...current,
@@ -1923,7 +2279,7 @@ export function ImportWorkspace({
                                         },
                                       }),
                                     )
-                                  }
+                                  }}
                                   type="radio"
                                   value={candidate.id}
                                 />
@@ -1946,7 +2302,13 @@ export function ImportWorkspace({
                       <label className="import-resolution-destination">
                         <span>Destination</span>
                         <select
-                          onChange={(event) =>
+                          disabled={importIsLocked}
+                          onChange={(event) => {
+                            if (importIsLocked) {
+                              return
+                            }
+
+                            resetCommitState()
                             setResolutionSelections((current) => ({
                               ...current,
                               locationIdByRecord: {
@@ -1955,7 +2317,7 @@ export function ImportWorkspace({
                                   event.target.value || undefined,
                               },
                             }))
-                          }
+                          }}
                           value={
                             resolutionSelections.locationIdByRecord[recordNumber] ?? ""
                           }
@@ -1999,8 +2361,8 @@ export function ImportWorkspace({
               </h2>
               <p>
                 Confirm the final wine, destination, and quantity
-                plan produced after issue resolution. Import
-                commit remains disabled until roadmap step 0.3.13.
+                plan produced after issue resolution. The next
+                stage writes this complete plan as one transaction.
               </p>
             </div>
             <span className="import-section-heading__status">
@@ -2076,14 +2438,14 @@ export function ImportWorkspace({
         </section>
       ) : null}
 
-      {document?.header ? (
+      {document?.header && !commitResult ? (
         <section
           aria-labelledby="import-result-heading"
           className="import-result-panel"
         >
           <div>
             <h2 id="import-result-heading">
-              Import preparation
+              10. Confirm and import
             </h2>
             <p>
               {!mappingIsReady
@@ -2099,14 +2461,140 @@ export function ImportWorkspace({
                       : storageError
                         ? "Resolve the storage loading error before continuing. No data has been written."
                         : !resolutionIsComplete
-                          ? `Resolve ${resolvedImportPreviewSummary.blockedRowCount} ${resolvedImportPreviewSummary.blockedRowCount === 1 ? "row" : "rows"} before the transactional import step. No data has been written.`
+                          ? `Resolve ${resolvedImportPreviewSummary.blockedRowCount} ${resolvedImportPreviewSummary.blockedRowCount === 1 ? "row" : "rows"} before import. No data has been written.`
+                          : !isOnline
+                            ? "Reconnect to import. CSV import requires an online transaction; no data has been written."
+                            : !deviceId
+                              ? "Waiting for this device to finish registering; no data has been written."
                           : resolvedImportPreviewSummary.warningLocationCount > 0
-                            ? "The resolved preview is complete. Review the advisory capacity warnings; no data has been written."
-                            : "The resolved preview is complete and ready for the transactional import step; no data has been written."}
+                            ? "The resolved preview is complete. Review the advisory capacity warnings before confirming; no data has been written."
+                            : "The resolved preview is complete. Continue to the final confirmation when ready; no data has been written."}
             </p>
           </div>
-          <button disabled type="button">
+          <button
+            disabled={
+              !resolutionIsComplete ||
+              !isOnline ||
+              !deviceId ||
+              isCommitting
+            }
+            onClick={openImportConfirmation}
+            type="button"
+          >
             Continue to import confirmation
+          </button>
+
+          {commitError ? (
+            <Notice role="alert" tone="error">
+              <strong>Import not completed</strong>
+              <p>{commitError}</p>
+              {commitPlan ? (
+                <p>
+                  The original receipt is locked. Retry this same
+                  plan so a lost response cannot add the import
+                  twice.
+                </p>
+              ) : null}
+            </Notice>
+          ) : null}
+
+          {confirmationIsOpen && commitPlan ? (
+            <div className="import-confirmation">
+              <div>
+                <h3>Final confirmation</h3>
+                <p>
+                  This will add {commitPlan.rows.reduce((total, row) => total + row.quantity, 0)} {commitPlan.rows.reduce((total, row) => total + row.quantity, 0) === 1 ? "bottle" : "bottles"} across {commitPlan.rows.length} source {commitPlan.rows.length === 1 ? "row" : "rows"}. It may create {new Set(commitPlan.rows.filter((row) => row.wineAction === "create").map((row) => row.requestedWineId)).size} catalog {new Set(commitPlan.rows.filter((row) => row.wineAction === "create").map((row) => row.requestedWineId)).size === 1 ? "wine" : "wines"}.
+                </p>
+                <p>
+                  The complete batch succeeds or rolls back. It
+                  does not replace or remove existing bottles.
+                </p>
+              </div>
+
+              <label className="import-confirmation__acknowledgement">
+                <input
+                  checked={confirmationAccepted}
+                  disabled={isCommitting}
+                  onChange={(event) =>
+                    setConfirmationAccepted(
+                      event.target.checked,
+                    )
+                  }
+                  type="checkbox"
+                />
+                <span>
+                  I reviewed the wines, destinations, quantities,
+                  and any capacity warnings above.
+                </span>
+              </label>
+
+              <div className="import-confirmation__actions">
+                <button
+                  disabled={isCommitting}
+                  onClick={() => {
+                    setConfirmationIsOpen(false)
+                    setConfirmationAccepted(false)
+                  }}
+                  type="button"
+                >
+                  Back to preview
+                </button>
+                <button
+                  disabled={
+                    !confirmationAccepted || isCommitting
+                  }
+                  onClick={() => void confirmImport()}
+                  type="button"
+                >
+                  {isCommitting
+                    ? "Importing…"
+                    : commitAttempted
+                      ? "Retry the same import"
+                      : `Import ${commitPlan.rows.reduce((total, row) => total + row.quantity, 0)} ${commitPlan.rows.reduce((total, row) => total + row.quantity, 0) === 1 ? "bottle" : "bottles"}`}
+                </button>
+              </div>
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+
+      {commitResult ? (
+        <section
+          aria-labelledby="import-complete-heading"
+          className="import-complete-panel"
+        >
+          <div>
+            <h2 id="import-complete-heading">
+              Import complete
+            </h2>
+            <p>
+              The complete CSV batch was committed. Inventory and
+              catalog views will update as synchronization arrives.
+            </p>
+          </div>
+
+          <Notice role="status" tone="success">
+            <strong>
+              {commitResult.importedBottleCount} {commitResult.importedBottleCount === 1 ? "bottle" : "bottles"} imported
+            </strong>
+            <p>
+              {commitResult.importedRowCount} source {commitResult.importedRowCount === 1 ? "row" : "rows"} · {commitResult.createdWineCount} new {commitResult.createdWineCount === 1 ? "wine" : "wines"} · {commitResult.reusedWineCount} reused {commitResult.reusedWineCount === 1 ? "wine" : "wines"}
+            </p>
+          </Notice>
+
+          <dl className="import-complete-panel__receipt">
+            <div>
+              <dt>Import receipt</dt>
+              <dd>{commitResult.importId}</dd>
+            </div>
+            <div>
+              <dt>File</dt>
+              <dd>{fileName ?? "CSV import"}</dd>
+            </div>
+          </dl>
+
+          <button onClick={resetImport} type="button">
+            Import another CSV
           </button>
         </section>
       ) : null}
