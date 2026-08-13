@@ -29,6 +29,11 @@ import {
   type CsvImportPreviewRow,
 } from "../data/csvImportPreview"
 import {
+  getCsvImportStorageOptions,
+  resolveCsvImportIssues,
+  type CsvImportResolutionSelections,
+} from "../data/csvImportResolution"
+import {
   reconcileCsvStorage,
   summarizeCsvStorageReconciliation,
   type CsvStorageCellar,
@@ -178,6 +183,142 @@ function importPreviewStatusLabel(
   }
 }
 
+function CompactImportPreviewCard({
+  result,
+}: {
+  result: CsvImportPreviewRow
+}) {
+  const { row, storage } = result
+
+  return (
+    <article
+      className={`import-final-preview-card import-final-preview-card--${result.status}`}
+    >
+      <header>
+        <div>
+          <strong>
+            {row.fields.producer} — {row.fields.cuvee}
+          </strong>
+          <span>
+            Source record {row.recordNumber}
+            <span aria-hidden="true"> · </span>
+            {sourceLineLabel(
+              row.sourceLineStart,
+              row.sourceLineEnd,
+            )}
+          </span>
+        </div>
+        <span
+          className={`import-row-status import-row-status--preview-${result.status}`}
+        >
+          {importPreviewStatusLabel(result)}
+        </span>
+      </header>
+
+      {result.issues.length > 0 ? (
+        <ul className="import-final-preview-card__issues">
+          {result.issues.map((previewIssue) => (
+            <li
+              key={`${previewIssue.category}:${previewIssue.code}`}
+            >
+              <strong>
+                {previewIssue.severity === "warning"
+                  ? "Advisory warning"
+                  : previewIssue.category === "wine"
+                    ? "Wine decision needed"
+                    : previewIssue.category === "storage"
+                      ? "Storage decision needed"
+                      : "Preview incomplete"}
+              </strong>
+              <span>{previewIssue.message}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      <div className="import-final-preview-card__plan">
+        <section>
+          <span>Wine</span>
+          <strong>
+            {row.fields.vintage ?? "NV"} · {row.fields.color} · {formatWineVolume(row.fields.formatMl ?? 0)}
+          </strong>
+          <span
+            className={`import-plan-action import-plan-action--${result.wineAction}`}
+          >
+            {result.wineAction === "reuse"
+              ? "Reuse catalog wine"
+              : result.wineAction === "create"
+                ? "Create catalog wine"
+                : "Unresolved"}
+          </span>
+        </section>
+
+        <span aria-hidden="true">→</span>
+
+        <section>
+          <span>Destination</span>
+          <strong>
+            {storage?.cellar && storage.location
+              ? `${storage.cellar.name} / ${storage.location.code}`
+              : "Unresolved"}
+          </strong>
+        </section>
+
+        <span aria-hidden="true">→</span>
+
+        <section>
+          <span>Quantity</span>
+          <strong>
+            {row.fields.quantity ?? "Invalid"} {row.fields.quantity === 1 ? "bottle" : "bottles"}
+          </strong>
+        </section>
+      </div>
+
+      <details>
+        <summary>Details and source values</summary>
+        <dl className="import-final-preview-card__details">
+          <div>
+            <dt>Catalog reference</dt>
+            <dd>{result.existingWine?.id ?? "New or unresolved"}</dd>
+          </div>
+          <div>
+            <dt>CSV storage</dt>
+            <dd>
+              {row.fields.cellar ?? "Empty"} / {row.fields.location ?? "Empty"}
+            </dd>
+          </div>
+          <div>
+            <dt>Projected occupancy</dt>
+            <dd>
+              {storage?.location
+                ? `${storage.currentBottleCount} + ${storage.importBottleCount} = ${storage.projectedBottleCount}`
+                : "Unresolved"}
+            </dd>
+          </div>
+          <div>
+            <dt>Capacity</dt>
+            <dd>{storage?.location?.capacity ?? "Not set"}</dd>
+          </div>
+        </dl>
+
+        {row.sourceRow.unmapped.length > 0 ? (
+          <dl className="import-final-preview-card__unmapped">
+            {row.sourceRow.unmapped.map((sourceValue) => (
+              <div key={sourceValue.sourceColumnIndex}>
+                <dt>
+                  {sourceValue.sourceHeader ||
+                    `Column ${sourceValue.sourceColumnIndex + 1}`}
+                </dt>
+                <dd>{sourceValue.value || "Empty"}</dd>
+              </div>
+            ))}
+          </dl>
+        ) : null}
+      </details>
+    </article>
+  )
+}
+
 export function ImportView({
   householdId,
 }: ImportViewProps) {
@@ -252,6 +393,13 @@ export function ImportWorkspace({
   const [fileError, setFileError] = useState<
     string | null
   >(null)
+  const [preparationExpanded, setPreparationExpanded] =
+    useState(false)
+  const [resolutionSelections, setResolutionSelections] =
+    useState<CsvImportResolutionSelections>({
+      locationIdByRecord: {},
+      wineIdByRecord: {},
+    })
 
   const mappingIssues = useMemo(
     () => validateCsvColumnMapping(mapping),
@@ -392,7 +540,7 @@ export function ImportWorkspace({
     ].slice(0, STORAGE_ROW_DISPLAY_LIMIT)
   }, [storageResults])
 
-  const importPreviewRows = useMemo(
+  const initialImportPreviewRows = useMemo(
     () =>
       buildCsvImportPreview(
         matchingResults,
@@ -401,12 +549,48 @@ export function ImportWorkspace({
     [matchingResults, storageResults],
   )
 
-  const importPreviewSummary = useMemo(
-    () => summarizeCsvImportPreview(importPreviewRows),
-    [importPreviewRows],
+  const initialImportPreviewSummary = useMemo(
+    () =>
+      summarizeCsvImportPreview(initialImportPreviewRows),
+    [initialImportPreviewRows],
   )
 
-  const displayedImportPreviewRows = useMemo(() => {
+  const resolvedImport = useMemo(
+    () =>
+      resolveCsvImportIssues({
+        cellars: storageCellars,
+        householdId,
+        locations: storageLocations,
+        rows: cleanedRows,
+        selections: resolutionSelections,
+        wineMatches: matchingResults,
+      }),
+    [
+      cleanedRows,
+      householdId,
+      matchingResults,
+      resolutionSelections,
+      storageCellars,
+      storageLocations,
+    ],
+  )
+
+  const resolvedImportPreviewRows = useMemo(
+    () =>
+      buildCsvImportPreview(
+        resolvedImport.wineMatches,
+        resolvedImport.storageResults,
+      ),
+    [resolvedImport],
+  )
+
+  const resolvedImportPreviewSummary = useMemo(
+    () =>
+      summarizeCsvImportPreview(resolvedImportPreviewRows),
+    [resolvedImportPreviewRows],
+  )
+
+  const displayedInitialPreviewRows = useMemo(() => {
     const statuses: CsvImportPreviewRow["status"][] = [
       "blocked",
       "warning",
@@ -415,12 +599,46 @@ export function ImportWorkspace({
 
     return statuses
       .flatMap((status) =>
-        importPreviewRows.filter(
+        initialImportPreviewRows.filter(
           (result) => result.status === status,
         ),
       )
       .slice(0, IMPORT_PREVIEW_ROW_DISPLAY_LIMIT)
-  }, [importPreviewRows])
+  }, [initialImportPreviewRows])
+
+  const displayedResolvedPreviewRows = useMemo(() => {
+    const statuses: CsvImportPreviewRow["status"][] = [
+      "blocked",
+      "warning",
+      "ready",
+    ]
+
+    return statuses
+      .flatMap((status) =>
+        resolvedImportPreviewRows.filter(
+          (result) => result.status === status,
+        ),
+      )
+      .slice(0, IMPORT_PREVIEW_ROW_DISPLAY_LIMIT)
+  }, [resolvedImportPreviewRows])
+
+  const storageOptions = useMemo(
+    () =>
+      getCsvImportStorageOptions(
+        storageCellars,
+        storageLocations,
+        householdId,
+      ),
+    [householdId, storageCellars, storageLocations],
+  )
+
+  const rowsNeedingResolution = useMemo(
+    () =>
+      initialImportPreviewRows.filter(
+        (result) => result.status === "blocked",
+      ),
+    [initialImportPreviewRows],
+  )
 
   function applyDocument(
     nextDocument: CsvIngestionDocument,
@@ -433,6 +651,11 @@ export function ImportWorkspace({
           )
         : [],
     )
+    setPreparationExpanded(false)
+    setResolutionSelections({
+      locationIdByRecord: {},
+      wineIdByRecord: {},
+    })
   }
 
   async function selectFile(
@@ -506,6 +729,10 @@ export function ImportWorkspace({
           : currentField,
       ),
     )
+    setResolutionSelections({
+      locationIdByRecord: {},
+      wineIdByRecord: {},
+    })
   }
 
   function resetImport() {
@@ -516,6 +743,11 @@ export function ImportWorkspace({
     setDocument(null)
     setMapping([])
     setFileError(null)
+    setPreparationExpanded(false)
+    setResolutionSelections({
+      locationIdByRecord: {},
+      wineIdByRecord: {},
+    })
   }
 
   const parserHasErrors =
@@ -535,6 +767,11 @@ export function ImportWorkspace({
     showMatching && !catalogIsLoading && !catalogError
   const showImportPreview =
     showStorage && !storageIsLoading && !storageError
+  const resolutionIsComplete =
+    showImportPreview &&
+    resolvedImportPreviewSummary.blockedRowCount === 0
+  const preparationIsCollapsed =
+    showImportPreview && !preparationExpanded
 
   return (
     <main className="import-view">
@@ -547,6 +784,23 @@ export function ImportWorkspace({
         </p>
       </div>
 
+      {preparationIsCollapsed ? (
+        <section className="import-preparation-summary-panel">
+          <div>
+            <h2>Preparation complete</h2>
+            <p>
+              {fileName} · {cleaningSummary.totalRowCount} {cleaningSummary.totalRowCount === 1 ? "row" : "rows"} · {matchingSummary.existingRowCount} existing · {matchingSummary.newRowCount} new · {storageSummary.readyRowCount} assigned
+            </p>
+          </div>
+          <button
+            onClick={() => setPreparationExpanded(true)}
+            type="button"
+          >
+            Review or edit stages 1–6
+          </button>
+        </section>
+      ) : (
+        <>
       <section
         aria-labelledby="import-file-heading"
         className="import-file-panel"
@@ -1469,6 +1723,19 @@ export function ImportWorkspace({
       ) : null}
 
       {showImportPreview ? (
+        <div className="import-preparation-collapse-action">
+          <button
+            onClick={() => setPreparationExpanded(false)}
+            type="button"
+          >
+            Collapse preparation stages
+          </button>
+        </div>
+      ) : null}
+        </>
+      )}
+
+      {showImportPreview ? (
         <section
           aria-labelledby="final-preview-heading"
           className="import-final-preview-panel"
@@ -1476,216 +1743,335 @@ export function ImportWorkspace({
           <div className="import-section-heading">
             <div>
               <h2 id="final-preview-heading">
-                7. Preview the import
+                7. Review detected issues
               </h2>
               <p>
-                Review the complete planned outcome for every
-                source row: catalog action, destination, and
-                bottle quantity. Nothing has been written.
+                This first preview preserves the decisions found
+                from the CSV. Blocking rows are shown here and
+                resolved explicitly in the next stage.
               </p>
             </div>
             <span className="import-section-heading__status">
-              {importPreviewSummary.blockedRowCount > 0
-                ? `${importPreviewSummary.blockedRowCount} ${importPreviewSummary.blockedRowCount === 1 ? "row needs" : "rows need"} resolution`
-                : `${importPreviewSummary.readyBottleCount} bottles ready`}
+              {initialImportPreviewSummary.blockedRowCount > 0
+                ? `${initialImportPreviewSummary.blockedRowCount} ${initialImportPreviewSummary.blockedRowCount === 1 ? "row needs" : "rows need"} resolution`
+                : "No blocking issues"}
             </span>
           </div>
 
           <div
-            aria-label="Complete import preview summary"
-            className="import-final-preview-summary"
+            aria-label="Initial import preview summary"
+            className="import-checkpoint-summary"
           >
-            <div>
-              <strong>{importPreviewSummary.totalBottleCount}</strong>
-              <span>Total bottles</span>
-            </div>
-            <div>
-              <strong>{importPreviewSummary.readyBottleCount}</strong>
-              <span>Ready bottles</span>
-            </div>
-            <div>
-              <strong>{importPreviewSummary.newWineCount}</strong>
-              <span>New wines</span>
-            </div>
-            <div>
-              <strong>{importPreviewSummary.existingWineCount}</strong>
-              <span>Existing wines</span>
-            </div>
-            <div>
-              <strong>{importPreviewSummary.destinationCount}</strong>
-              <span>Destinations</span>
-            </div>
-            <div>
-              <strong>{importPreviewSummary.blockedRowCount}</strong>
-              <span>Blocked rows</span>
-            </div>
+            <span>
+              <strong>{initialImportPreviewSummary.totalBottleCount}</strong> bottles
+            </span>
+            <span>
+              <strong>{initialImportPreviewSummary.newWineCount}</strong> new wines
+            </span>
+            <span>
+              <strong>{initialImportPreviewSummary.existingWineCount}</strong> existing wines
+            </span>
+            <span>
+              <strong>{initialImportPreviewSummary.destinationCount}</strong> destinations
+            </span>
+            <span>
+              <strong>{initialImportPreviewSummary.blockedRowCount}</strong> blocked rows
+            </span>
           </div>
 
-          <p className="import-final-preview-display-note">
-            Showing {displayedImportPreviewRows.length} of {importPreviewSummary.totalRowCount} rows. Blocked rows and advisory warnings appear first; repeated wine identities and destinations are counted once above.
-          </p>
-
-          {importPreviewSummary.blockedRowCount > 0 ? (
+          {initialImportPreviewSummary.blockedRowCount > 0 ? (
             <Notice role="alert" tone="warning">
               <strong>
-                Resolve {importPreviewSummary.blockedRowCount} {importPreviewSummary.blockedRowCount === 1 ? "row" : "rows"} before import
+                Resolve {initialImportPreviewSummary.blockedRowCount} {initialImportPreviewSummary.blockedRowCount === 1 ? "row" : "rows"} before import
               </strong>
               <p>
-                This first preview is intentionally blocked when
-                a wine or destination is unresolved. Resolution
-                controls arrive in the next roadmap step.
+                No catalog candidate or destination is selected
+                silently. Every blocker has a decision control in
+                stage 8 below.
               </p>
             </Notice>
           ) : (
             <Notice role="status" tone="success">
-              <strong>The complete import plan is resolved</strong>
-              <p>
-                Review every row below. The issue-resolution and
-                commit steps are still disabled, and no data has
-                been written.
-              </p>
+              All rows were resolved directly from the CSV and
+              synchronized cellar data.
             </Notice>
           )}
 
-          {importPreviewSummary.warningLocationCount > 0 ? (
+          <details className="import-all-preview-rows">
+            <summary>
+              Review the complete first preview ({displayedInitialPreviewRows.length} {displayedInitialPreviewRows.length === 1 ? "row" : "rows"})
+            </summary>
+            <div className="import-final-preview-list">
+              {displayedInitialPreviewRows.map((result) => (
+                <CompactImportPreviewCard
+                  key={result.row.recordNumber}
+                  result={result}
+                />
+              ))}
+            </div>
+          </details>
+        </section>
+      ) : null}
+
+      {showImportPreview ? (
+        <section
+          aria-labelledby="resolution-heading"
+          className="import-resolution-panel"
+        >
+          <div className="import-section-heading">
+            <div>
+              <h2 id="resolution-heading">
+                8. Resolve import issues
+              </h2>
+              <p>
+                Choose only the decisions the CSV could not make
+                safely. Changes update the second preview below;
+                nothing is written.
+              </p>
+            </div>
+            <span className="import-section-heading__status">
+              {resolutionIsComplete
+                ? "All issues resolved"
+                : `${resolvedImportPreviewSummary.blockedRowCount} ${resolvedImportPreviewSummary.blockedRowCount === 1 ? "row remains" : "rows remain"}`}
+            </span>
+          </div>
+
+          {rowsNeedingResolution.length === 0 ? (
+            <Notice role="status" tone="success">
+              No manual decisions are required. The resolved
+              preview is ready for review.
+            </Notice>
+          ) : (
+            <div className="import-resolution-list">
+              {rowsNeedingResolution.map((result) => {
+                const recordNumber = result.row.recordNumber
+                const resolvedRow =
+                  resolvedImportPreviewRows.find(
+                    (row) =>
+                      row.row.recordNumber === recordNumber,
+                  )
+                const needsWine =
+                  result.wineMatch?.classification === "ambiguous"
+                const needsStorage =
+                  result.storage?.status !== "ready"
+
+                return (
+                  <article
+                    className="import-resolution-card"
+                    key={recordNumber}
+                  >
+                    <header>
+                      <div>
+                        <strong>
+                          {result.row.fields.producer} — {result.row.fields.cuvee}
+                        </strong>
+                        <span>
+                          Source record {recordNumber}
+                          <span aria-hidden="true"> · </span>
+                          {result.row.fields.quantity} {result.row.fields.quantity === 1 ? "bottle" : "bottles"}
+                        </span>
+                      </div>
+                      <span
+                        className={`import-row-status import-row-status--preview-${resolvedRow?.status ?? "blocked"}`}
+                      >
+                        {resolvedRow?.status === "blocked"
+                          ? "Needs resolution"
+                          : "Resolved"}
+                      </span>
+                    </header>
+
+                    {resolvedRow?.status === "blocked" ? (
+                      <ul className="import-resolution-card__issues">
+                        {resolvedRow.issues
+                          .filter(
+                            (previewIssue) =>
+                              previewIssue.severity === "error",
+                          )
+                          .map((previewIssue) => (
+                            <li
+                              key={`${previewIssue.category}:${previewIssue.code}`}
+                            >
+                              {previewIssue.message}
+                            </li>
+                          ))}
+                      </ul>
+                    ) : null}
+
+                    {needsWine ? (
+                      <fieldset>
+                        <legend>Catalog reference</legend>
+                        <p>
+                          Choose the existing wine represented by
+                          this source row.
+                        </p>
+                        <div className="import-resolution-candidates">
+                          {result.wineMatch?.candidates.map(
+                            (candidate) => (
+                              <label key={candidate.id}>
+                                <input
+                                  checked={
+                                    resolutionSelections.wineIdByRecord[recordNumber] === candidate.id
+                                  }
+                                  name={`wine-resolution-${recordNumber}`}
+                                  onChange={() =>
+                                    setResolutionSelections(
+                                      (current) => ({
+                                        ...current,
+                                        wineIdByRecord: {
+                                          ...current.wineIdByRecord,
+                                          [recordNumber]: candidate.id,
+                                        },
+                                      }),
+                                    )
+                                  }
+                                  type="radio"
+                                  value={candidate.id}
+                                />
+                                <span>
+                                  <strong>
+                                    {candidate.appellation ?? "No appellation"}
+                                  </strong>
+                                  <small>
+                                    {candidate.area ?? "No area"} · Reference {candidate.id}
+                                  </small>
+                                </span>
+                              </label>
+                            ),
+                          )}
+                        </div>
+                      </fieldset>
+                    ) : null}
+
+                    {needsStorage ? (
+                      <label className="import-resolution-destination">
+                        <span>Destination</span>
+                        <select
+                          onChange={(event) =>
+                            setResolutionSelections((current) => ({
+                              ...current,
+                              locationIdByRecord: {
+                                ...current.locationIdByRecord,
+                                [recordNumber]:
+                                  event.target.value || undefined,
+                              },
+                            }))
+                          }
+                          value={
+                            resolutionSelections.locationIdByRecord[recordNumber] ?? ""
+                          }
+                        >
+                          <option value="">
+                            Choose an active location
+                          </option>
+                          {storageOptions.map(
+                            ({ cellar, location }) => (
+                              <option
+                                key={location.id}
+                                value={location.id}
+                              >
+                                {cellar.name} / {location.code} · {location.bottle_count} current · capacity {location.capacity ?? "not set"}
+                              </option>
+                            ),
+                          )}
+                        </select>
+                        <small>
+                          CSV value: {result.row.fields.cellar ?? "Empty"} / {result.row.fields.location ?? "Empty"}
+                        </small>
+                      </label>
+                    ) : null}
+                  </article>
+                )
+              })}
+            </div>
+          )}
+        </section>
+      ) : null}
+
+      {showImportPreview ? (
+        <section
+          aria-labelledby="resolved-preview-heading"
+          className="import-final-preview-panel"
+        >
+          <div className="import-section-heading">
+            <div>
+              <h2 id="resolved-preview-heading">
+                9. Review the resolved preview
+              </h2>
+              <p>
+                Confirm the final wine, destination, and quantity
+                plan produced after issue resolution. Import
+                commit remains disabled until roadmap step 0.3.13.
+              </p>
+            </div>
+            <span className="import-section-heading__status">
+              {resolutionIsComplete
+                ? `${resolvedImportPreviewSummary.readyBottleCount} bottles ready`
+                : `${resolvedImportPreviewSummary.blockedRowCount} blocked`}
+            </span>
+          </div>
+
+          <div
+            aria-label="Resolved import preview summary"
+            className="import-final-preview-summary"
+          >
+            <div>
+              <strong>{resolvedImportPreviewSummary.totalBottleCount}</strong>
+              <span>Total bottles</span>
+            </div>
+            <div>
+              <strong>{resolvedImportPreviewSummary.readyBottleCount}</strong>
+              <span>Ready bottles</span>
+            </div>
+            <div>
+              <strong>{resolvedImportPreviewSummary.newWineCount}</strong>
+              <span>New wines</span>
+            </div>
+            <div>
+              <strong>{resolvedImportPreviewSummary.existingWineCount}</strong>
+              <span>Existing wines</span>
+            </div>
+            <div>
+              <strong>{resolvedImportPreviewSummary.destinationCount}</strong>
+              <span>Destinations</span>
+            </div>
+            <div>
+              <strong>{resolvedImportPreviewSummary.blockedRowCount}</strong>
+              <span>Blocked rows</span>
+            </div>
+          </div>
+
+          {resolutionIsComplete ? (
+            <Notice role="status" tone="success">
+              <strong>The resolved import plan is complete</strong>
+              <p>
+                Review the compact rows below. No cellar data has
+                been written.
+              </p>
+            </Notice>
+          ) : (
+            <Notice role="alert" tone="warning">
+              Complete every decision in stage 8 before import can
+              proceed.
+            </Notice>
+          )}
+
+          {resolvedImportPreviewSummary.warningLocationCount > 0 ? (
             <Notice role="status" tone="warning">
-              {importPreviewSummary.warningLocationCount} destination {importPreviewSummary.warningLocationCount === 1 ? "has" : "have"} an advisory capacity warning. These rows remain ready for later confirmation.
+              {resolvedImportPreviewSummary.warningLocationCount} destination {resolvedImportPreviewSummary.warningLocationCount === 1 ? "has" : "have"} an advisory capacity warning. These rows remain ready.
             </Notice>
           ) : null}
 
+          <p className="import-final-preview-display-note">
+            Showing {displayedResolvedPreviewRows.length} of {resolvedImportPreviewSummary.totalRowCount} rows. Blockers and warnings appear first; details stay collapsed by default.
+          </p>
+
           <div className="import-final-preview-list">
-            {displayedImportPreviewRows.map((result) => {
-              const { row } = result
-              const storage = result.storage
-
-              return (
-                <article
-                  className={`import-final-preview-card import-final-preview-card--${result.status}`}
-                  key={row.recordNumber}
-                >
-                  <header>
-                    <div>
-                      <strong>
-                        Source record {row.recordNumber}
-                      </strong>
-                      <span>
-                        {sourceLineLabel(
-                          row.sourceLineStart,
-                          row.sourceLineEnd,
-                        )}
-                      </span>
-                    </div>
-                    <span
-                      className={`import-row-status import-row-status--preview-${result.status}`}
-                    >
-                      {importPreviewStatusLabel(result)}
-                    </span>
-                  </header>
-
-                  {result.issues.length > 0 ? (
-                    <ul className="import-final-preview-card__issues">
-                      {result.issues.map((previewIssue) => (
-                        <li key={`${previewIssue.category}:${previewIssue.code}`}>
-                          <strong>
-                            {previewIssue.severity === "warning"
-                              ? "Advisory warning"
-                              : previewIssue.category === "wine"
-                                ? "Wine decision needed"
-                                : previewIssue.category === "storage"
-                                  ? "Storage decision needed"
-                                  : "Preview incomplete"}
-                          </strong>
-                          <span>{previewIssue.message}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-
-                  <div className="import-final-preview-card__plan">
-                    <section>
-                      <span>Wine</span>
-                      <strong>
-                        {row.fields.producer} — {row.fields.cuvee}
-                      </strong>
-                      <p>
-                        {row.fields.vintage ?? "NV"} · {row.fields.color} · {formatWineVolume(row.fields.formatMl ?? 0)}
-                      </p>
-                      <span
-                        className={`import-plan-action import-plan-action--${result.wineAction}`}
-                      >
-                        {result.wineAction === "reuse"
-                          ? "Reuse existing catalog wine"
-                          : result.wineAction === "create"
-                            ? "Create new catalog wine"
-                            : "Wine unresolved"}
-                      </span>
-                      {result.existingWine ? (
-                        <small>
-                          Reference {result.existingWine.id}
-                        </small>
-                      ) : null}
-                    </section>
-
-                    <span aria-hidden="true">→</span>
-
-                    <section>
-                      <span>Destination</span>
-                      <strong>
-                        {storage?.cellar && storage.location
-                          ? `${storage.cellar.name} / ${storage.location.code}`
-                          : "Unresolved storage"}
-                      </strong>
-                      <p>
-                        {storage?.location
-                          ? `Current ${storage.currentBottleCount} + CSV ${storage.importBottleCount} = projected ${storage.projectedBottleCount}`
-                          : `CSV values: ${row.fields.cellar ?? "Empty"} / ${row.fields.location ?? "Empty"}`}
-                      </p>
-                      <small>
-                        Capacity {storage?.location?.capacity ?? "not set"}
-                      </small>
-                    </section>
-
-                    <span aria-hidden="true">→</span>
-
-                    <section>
-                      <span>Quantity</span>
-                      <strong>
-                        {row.fields.quantity ?? "Invalid"} {row.fields.quantity === 1 ? "bottle" : "bottles"}
-                      </strong>
-                      <p>
-                        Planned inventory addition after explicit
-                        resolution and final confirmation.
-                      </p>
-                    </section>
-                  </div>
-
-                  {row.sourceRow.unmapped.length > 0 ? (
-                    <details>
-                      <summary>
-                        Preserved unmapped values ({row.sourceRow.unmapped.length})
-                      </summary>
-                      <dl className="import-final-preview-card__unmapped">
-                        {row.sourceRow.unmapped.map(
-                          (sourceValue) => (
-                            <div
-                              key={sourceValue.sourceColumnIndex}
-                            >
-                              <dt>
-                                {sourceValue.sourceHeader ||
-                                  `Column ${sourceValue.sourceColumnIndex + 1}`}
-                              </dt>
-                              <dd>
-                                {sourceValue.value || "Empty"}
-                              </dd>
-                            </div>
-                          ),
-                        )}
-                      </dl>
-                    </details>
-                  ) : null}
-                </article>
-              )
-            })}
+            {displayedResolvedPreviewRows.map((result) => (
+              <CompactImportPreviewCard
+                key={result.row.recordNumber}
+                result={result}
+              />
+            ))}
           </div>
         </section>
       ) : null}
@@ -1712,15 +2098,15 @@ export function ImportWorkspace({
                       ? "Wine matching is complete. Synchronized storage is being checked; no data has been written."
                       : storageError
                         ? "Resolve the storage loading error before continuing. No data has been written."
-                        : importPreviewSummary.blockedRowCount > 0
-                          ? `The complete preview is available, but ${importPreviewSummary.blockedRowCount} ${importPreviewSummary.blockedRowCount === 1 ? "row requires" : "rows require"} the next issue-resolution step; no data has been written.`
-                          : importPreviewSummary.warningLocationCount > 0
-                            ? "The complete import preview is resolved. Review the advisory capacity warnings; no data has been written."
-                            : "The complete import preview is resolved and ready for the issue-resolution checkpoint; no data has been written."}
+                        : !resolutionIsComplete
+                          ? `Resolve ${resolvedImportPreviewSummary.blockedRowCount} ${resolvedImportPreviewSummary.blockedRowCount === 1 ? "row" : "rows"} before the transactional import step. No data has been written.`
+                          : resolvedImportPreviewSummary.warningLocationCount > 0
+                            ? "The resolved preview is complete. Review the advisory capacity warnings; no data has been written."
+                            : "The resolved preview is complete and ready for the transactional import step; no data has been written."}
             </p>
           </div>
           <button disabled type="button">
-            Continue to issue resolution
+            Continue to import confirmation
           </button>
         </section>
       ) : null}

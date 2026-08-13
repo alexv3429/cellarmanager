@@ -33,7 +33,7 @@ redefining the v0.2 inventory architecture:
 | 0.3.9 | Existing-wine matching and ambiguity detection | Complete |
 | 0.3.10 | Location and quantity reconciliation | Complete |
 | 0.3.11 | Import preview | Complete |
-| 0.3.12 | Import issue resolution | Planned |
+| 0.3.12 | Import issue resolution | Complete |
 | 0.3.13 | Transactional import commit | Planned |
 | 0.3.14 | Import regression fixtures | Planned |
 | 0.3.15 | Activity and synchronization UX | Planned |

@@ -26,6 +26,7 @@ export type CsvStorageIssueCode =
   | "ARCHIVED_CELLAR"
   | "ARCHIVED_LOCATION"
   | "INVALID_SOURCE_ROW"
+  | "INVALID_LOCATION_SELECTION"
   | "LOCATION_CAPACITY_EXCEEDED"
   | "MISSING_CELLAR"
   | "MISSING_LOCATION"
@@ -65,6 +66,10 @@ export interface CsvStorageReconciliationSummary {
   unresolvedRowCount: number
 }
 
+export type CsvStorageLocationSelections = Readonly<
+  Record<number, string | undefined>
+>
+
 interface PreliminaryResult {
   cellar: CsvStorageCellar | null
   issues: CsvStorageIssue[]
@@ -95,6 +100,7 @@ function classifyStorage(
   cellars: CsvStorageCellar[],
   locations: CsvStorageLocation[],
   householdId: string,
+  selectedLocationId?: string,
 ): PreliminaryResult {
   const quantity = row.fields.quantity
 
@@ -111,6 +117,48 @@ function classifyStorage(
       quantity,
       row,
       status: "invalid",
+    }
+  }
+
+  if (selectedLocationId) {
+    const location = locations.find(
+      (candidate) =>
+        candidate.id === selectedLocationId &&
+        candidate.household_id === householdId &&
+        isActive(candidate.is_active),
+    )
+    const cellar = location
+      ? cellars.find(
+          (candidate) =>
+            candidate.id === location.cellar_id &&
+            candidate.household_id === householdId &&
+            isActive(candidate.is_active),
+        ) ?? null
+      : null
+
+    if (location && cellar) {
+      return {
+        cellar,
+        issues: [],
+        location,
+        quantity,
+        row,
+        status: "ready",
+      }
+    }
+
+    return {
+      cellar: null,
+      issues: [
+        issue(
+          "INVALID_LOCATION_SELECTION",
+          "The selected destination is no longer an active location in this household",
+        ),
+      ],
+      location: null,
+      quantity,
+      row,
+      status: "unresolved",
     }
   }
 
@@ -287,6 +335,7 @@ export function reconcileCsvStorage(
   cellars: CsvStorageCellar[],
   locations: CsvStorageLocation[],
   householdId: string,
+  locationSelections: CsvStorageLocationSelections = {},
 ): CsvStorageReconciliationResult[] {
   const preliminaryResults = rows.map((row) =>
     classifyStorage(
@@ -294,6 +343,7 @@ export function reconcileCsvStorage(
       cellars,
       locations,
       householdId,
+      locationSelections[row.recordNumber],
     ),
   )
   const importBottleCountByLocation = new Map<string, number>()

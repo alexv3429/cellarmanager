@@ -232,3 +232,45 @@ This step does not select an ambiguous wine, invent storage, edit source data,
 create catalog references, add holdings, enqueue inventory operations, or
 write any authoritative data. Roadmap step 0.3.12 will resolve supported issues
 and produce the second preview required before transactional commit.
+
+## Import issue-resolution contract
+
+Roadmap step 0.3.12 accepts explicit decisions for the blocking issues exposed
+by the first preview. It supports two decisions per source row:
+
+- an ambiguous wine may be resolved only by choosing one of the exact catalog
+  candidates retained by that row's conservative identity match
+- unresolved storage may be assigned to one active location whose active
+  cellar and household both match the current import household
+
+The resolver treats saved choices as untrusted input. An unknown wine ID, a
+wine that is not one of the row's candidates, an archived or unknown location,
+a location inside an archived cellar, or storage from another household does
+not resolve the row. If synchronized catalog or storage data changes after a
+choice was made, the choice is revalidated; an unsafe or still-ambiguous result
+is blocked again rather than using a stale selection. A newly unique exact wine
+match may still resolve automatically under the existing matching contract.
+
+Location choices are per source row. After every choice, quantities are
+re-aggregated across all automatically matched and manually assigned rows, and
+projected occupancy and advisory capacity warnings are recalculated. Capacity
+remains advisory and never substitutes for an unresolved destination.
+
+The resolved wine matches and storage assignments are passed through the same
+complete preview model as the first preview. The second preview therefore
+retains source records, wine actions, destinations, quantities, warnings, and
+unmapped values while reporting whether any blocker remains. Cleaning errors
+are still corrected in the source CSV; this step does not edit invalid wine or
+quantity values in place.
+
+To keep small imports usable, preparation stages collapse into a reopenable
+summary after the first preview is available. The first preview exposes its
+complete row list on demand, issue-resolution controls show only blocked rows,
+and resolved preview rows keep occupancy and source metadata in expandable
+details. Blocking messages and capacity warnings remain visible without
+expansion.
+
+This step is deterministic and read-only. It does not create wines, add or move
+bottles, change cellar setup, enqueue inventory operations, or write import
+state. Roadmap step 0.3.13 performs the first transactional authoritative
+commit after a complete second preview.
