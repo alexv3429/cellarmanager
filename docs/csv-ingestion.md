@@ -200,3 +200,35 @@ warnings first while retaining the original source record and physical line
 context. This step is read-only: it does not create storage, change capacity,
 move bottles, update holdings, or write import data. Assignment and ambiguity
 controls remain part of the issue-resolution step.
+
+## Complete import preview contract
+
+Roadmap step 0.3.11 combines the cleaned source row, wine classification, and
+storage reconciliation into one deterministic, read-only plan. Each preview
+row shows its original source record and physical line context together with:
+
+- the normalized wine identity and whether the import would reuse one existing
+  catalog reference, create a new catalog reference, or require an explicit
+  wine decision
+- the resolved cellar and location, the location's current and projected
+  occupancy, and its optional configured capacity
+- the positive bottle quantity that would be added after later confirmation
+- every blocking issue and advisory capacity warning
+- all preserved values from source columns that were intentionally left
+  unmapped
+
+Summary counts distinguish total and ready bottles, blocked rows, distinct new
+and existing wine references, distinct resolved destinations, and distinct
+locations with capacity warnings. Repeated CSV rows for the same semantic new
+wine or destination are counted once in those reference totals while remaining
+individually visible with their own quantities and source context.
+
+A preview row is blocked when either its wine decision or storage assignment is
+unresolved. Capacity warnings remain advisory and do not block an otherwise
+resolved row. Blocked rows and warning rows are displayed before ready rows so
+the first preview is useful even before issue-resolution controls exist.
+
+This step does not select an ambiguous wine, invent storage, edit source data,
+create catalog references, add holdings, enqueue inventory operations, or
+write any authoritative data. Roadmap step 0.3.12 will resolve supported issues
+and produce the second preview required before transactional commit.
