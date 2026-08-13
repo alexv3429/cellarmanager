@@ -1812,6 +1812,7 @@
 .app-shell__content section.import-cleaning-panel,
 .app-shell__content section.import-matching-panel,
 .app-shell__content section.import-storage-panel,
+.app-shell__content section.import-final-preview-panel,
 .app-shell__content section.import-result-panel {
   display: grid;
   gap: 16px;
@@ -2121,6 +2122,17 @@
 
 .import-row-status--warning,
 .import-row-status--unresolved {
+  border-color: color-mix(in srgb, #9a6a21 60%, var(--border));
+  background: color-mix(in srgb, var(--surface) 88%, #9a6a21);
+}
+
+.import-row-status--preview-ready {
+  border-color: color-mix(in srgb, #4f7a5a 55%, var(--border));
+  background: color-mix(in srgb, var(--surface) 88%, #4f7a5a);
+}
+
+.import-row-status--preview-blocked,
+.import-row-status--preview-warning {
   border-color: color-mix(in srgb, #9a6a21 60%, var(--border));
   background: color-mix(in srgb, var(--surface) 88%, #9a6a21);
 }
@@ -2465,6 +2477,206 @@
   font-weight: 600;
 }
 
+.import-final-preview-summary {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.import-final-preview-summary > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-muted);
+}
+
+.import-final-preview-summary strong {
+  color: var(--text-h);
+  font-size: 22px;
+  line-height: 1;
+}
+
+.import-final-preview-summary span {
+  font-size: 13px;
+}
+
+.import-final-preview-display-note {
+  margin: 0;
+  font-size: 14px;
+}
+
+.import-final-preview-list {
+  display: grid;
+  gap: 10px;
+}
+
+.import-final-preview-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.import-final-preview-card--blocked,
+.import-final-preview-card--warning {
+  border-color: color-mix(in srgb, #9a6a21 60%, var(--border));
+}
+
+.import-final-preview-card > header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-muted);
+}
+
+.import-final-preview-card > header > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.import-final-preview-card > header span {
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+
+.import-final-preview-card__issues {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 92%, #9a6a21);
+  list-style: none;
+}
+
+.import-final-preview-card__issues li {
+  display: grid;
+  gap: 2px;
+}
+
+.import-final-preview-card__issues span {
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+
+.import-final-preview-card__plan {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1.4fr)
+    auto
+    minmax(0, 1.2fr)
+    auto
+    minmax(0, 0.8fr);
+  gap: 12px;
+  align-items: center;
+  padding: 14px;
+}
+
+.import-final-preview-card__plan > section {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  align-self: stretch;
+  padding: 12px;
+  border-radius: 9px;
+  background: var(--surface-muted);
+}
+
+.import-final-preview-card__plan > section > span:first-child {
+  color: var(--text-h);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.import-final-preview-card__plan strong,
+.import-final-preview-card__plan p,
+.import-final-preview-card__plan small {
+  overflow-wrap: anywhere;
+}
+
+.import-final-preview-card__plan p {
+  margin: 0;
+}
+
+.import-final-preview-card__plan > span {
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+.import-plan-action {
+  width: fit-content;
+  margin-top: 4px;
+  padding: 2px 7px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.import-plan-action--create {
+  border-color: var(--accent-border);
+  background: var(--accent-bg);
+}
+
+.import-plan-action--reuse {
+  border-color: color-mix(in srgb, #4f7a5a 55%, var(--border));
+  background: color-mix(in srgb, var(--surface) 88%, #4f7a5a);
+}
+
+.import-plan-action--unresolved {
+  border-color: color-mix(in srgb, #9a6a21 60%, var(--border));
+  background: color-mix(in srgb, var(--surface) 88%, #9a6a21);
+}
+
+.import-final-preview-card details > summary {
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+  color: var(--text-h);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.import-final-preview-card details[open] > summary {
+  border-bottom: 1px solid var(--border);
+}
+
+.import-final-preview-card__unmapped {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 12px 14px;
+}
+
+.import-final-preview-card__unmapped > div {
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--surface-muted);
+}
+
+.import-final-preview-card__unmapped dt {
+  color: var(--text-h);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.import-final-preview-card__unmapped dd {
+  margin: 2px 0 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
 .import-result-panel {
   grid-template-columns: minmax(0, 1fr) auto;
   border-color: var(--accent-border);
@@ -2487,6 +2699,18 @@
 
   .import-storage-card__values {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .import-final-preview-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .import-final-preview-card__plan {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .import-final-preview-card__plan > span {
+    display: none;
   }
 
   .import-storage-card__values > div {
@@ -2568,9 +2792,17 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .import-final-preview-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .import-cleaning-card > header,
   .import-matching-card > header,
   .import-storage-card > header {
+    align-items: flex-start;
+  }
+
+  .import-final-preview-card > header {
     align-items: flex-start;
   }
 
@@ -2620,5 +2852,9 @@
 
   .import-storage-card__occupancy > span {
     display: none;
+  }
+
+  .import-final-preview-card__unmapped {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
