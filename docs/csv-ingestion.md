@@ -171,3 +171,32 @@ The matching view reports counts for existing, new, and ambiguous rows and
 shows ambiguous rows first without changing their source record or line
 context. It reads the local synchronized catalog only; it does not create,
 update, merge, or otherwise write wine or inventory data.
+
+## Location and quantity reconciliation contract
+
+Roadmap step 0.3.10 compares every valid cleaned row with the synchronized
+cellars and locations for the active household. Cellar names and location
+codes are compared case-insensitively after the same whitespace cleaning used
+for wine identity. A row is assigned only when exactly one active cellar and
+exactly one active location inside that cellar match.
+
+Cellar and location remain optional CSV columns, but both values must be
+resolved before an authoritative import can proceed. A missing, unknown,
+archived, or ambiguous value remains an explicit issue. The importer does not
+invent storage, select an overflow location, restore an archived record, or
+match storage owned by another household.
+
+For each matched location, the importer adds the quantities from every CSV row
+assigned there and compares that total with the location's current synchronized
+bottle count. When a positive capacity has been configured, a projected total
+above that value produces an advisory warning for the location. It does not
+invalidate the otherwise valid assignment because capacity is a rough planning
+value and existing inventory workflows do not enforce it as a hard limit. An
+unconfigured capacity does not produce a warning.
+
+The reconciliation view reports assigned bottles and rows, unresolved rows,
+and distinct locations with capacity warnings. It displays unresolved rows and
+warnings first while retaining the original source record and physical line
+context. This step is read-only: it does not create storage, change capacity,
+move bottles, update holdings, or write import data. Assignment and ambiguity
+controls remain part of the issue-resolution step.
