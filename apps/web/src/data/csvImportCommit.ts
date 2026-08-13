@@ -1,5 +1,4 @@
 import type { CsvImportPreviewRow } from "./csvImportPreview"
-import { supabase } from "./supabase"
 import { getWineIdentityKey } from "./wineCatalog"
 
 export const CSV_IMPORT_COMMIT_ROW_LIMIT = 100_000
@@ -70,6 +69,12 @@ interface CsvImportCommitRpcRow {
   imported_bottle_count: unknown
   imported_row_count: unknown
   reused_wine_count: unknown
+}
+
+async function getDefaultRpcClient(): Promise<CsvImportRpcClient> {
+  const { supabase } = await import("./supabase")
+
+  return supabase
 }
 
 function requireNonEmptyString(
@@ -471,9 +476,10 @@ function parseCommitResult(data: unknown): CsvImportCommitResult {
 
 export async function commitCsvImport(
   plan: CsvImportCommitPlan,
-  rpcClient: CsvImportRpcClient = supabase,
+  rpcClient?: CsvImportRpcClient,
 ): Promise<CsvImportCommitResult> {
-  const { data, error } = await rpcClient.rpc(
+  const client = rpcClient ?? (await getDefaultRpcClient())
+  const { data, error } = await client.rpc(
     "commit_csv_import",
     {
       p_created_at_client: plan.createdAtClient,
@@ -519,9 +525,10 @@ export async function getCsvImportReceipt(
     householdId: string
     importId: string
   },
-  rpcClient: CsvImportRpcClient = supabase,
+  rpcClient?: CsvImportRpcClient,
 ): Promise<CsvImportCommitResult | null> {
-  const { data, error } = await rpcClient.rpc(
+  const client = rpcClient ?? (await getDefaultRpcClient())
+  const { data, error } = await client.rpc(
     "get_csv_import_receipt",
     {
       p_household_id: householdId,
