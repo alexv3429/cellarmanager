@@ -33,9 +33,10 @@ wines, reconcile storage and quantities, apply all-row defaults, normalize
 known values, and create an initial cellar/location when required.
 
 The canonical [`docs/product-roadmap.md`](docs/product-roadmap.md) sequences the
-remaining rich-library, collaboration, capture/enrichment, history/insight, and
-v1.0 reliability work. Full internationalization and arbitrary graphical cellar
-layouts are explicitly post-v1.0 unless that roadmap is changed first.
+remaining rich-library and reviewed web enrichment, collaboration, photo/OCR/
+barcode capture, history/insight, and v1.0 reliability work. Full
+internationalization and arbitrary graphical cellar layouts are explicitly
+post-v1.0 unless that roadmap is changed first.
 
 ## Development
 

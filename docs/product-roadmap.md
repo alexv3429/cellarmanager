@@ -10,7 +10,7 @@ crosses a milestone boundary.
 | Milestone | Promise | Status |
 |---|---|---|
 | `v0.3` | A cellar can live safely in CellarManager through daily manual use or guarded CSV import | Released (`v0.3.0`) |
-| `v0.4` | CellarManager describes wines meaningfully, not only enough to distinguish inventory references | Next |
+| `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable web data | Next |
 | `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | Planned |
 | `v0.6` | Adding or identifying wine requires dramatically less typing | Planned |
 | `v0.7` | CellarManager explains what happened to the cellar and what the collection means over time | Planned |
@@ -61,24 +61,40 @@ and roadmap update before feature implementation begins.
 
 CSV import moved into v0.3 because personal production required a safe way to
 bootstrap an existing cellar. v0.4 keeps portable export and optional round-trip
-compatibility, but does not build a second importer.
+compatibility, but does not build a second importer. It also delivers the first
+end-to-end web-enrichment workflow for drinking windows and food pairings.
+
+“Reliable” enrichment means that every production source is suitable for
+programmatic use, has documented access and licensing terms, and can be matched
+to a wine conservatively. Retrieved values retain their provider, provider wine
+ID or URL when available, and retrieval time. The user reviews candidates before
+applying them, and enrichment never silently replaces a user-maintained value.
+Provider outages, missing matches, rate limits, and partial results must leave
+the existing cellar usable and unchanged.
 
 | Step | Scope |
 |---|---|
 | 0.4.1 | Define the richer wine-detail schema and field-provenance rules |
 | 0.4.2 | Personal wine notes and editing |
-| 0.4.3 | Drinking-window fields and editing |
+| 0.4.3 | Drinking-window, food-pairing, and serving-guidance fields and editing |
 | 0.4.4 | Country, region, classification, and vineyard |
 | 0.4.5 | Grapes, sweetness, alcohol, and certifications |
-| 0.4.6 | External identifiers and barcode model |
+| 0.4.6 | External wine identifiers used for conservative enrichment matching |
 | 0.4.7 | Restore corresponding archived v0.1 metadata through current models |
 | 0.4.8 | Rich catalog filtering and search |
 | 0.4.9 | Duplicate detection and explicit merge workflow |
-| 0.4.10 | CSV export with a documented portable format |
-| 0.4.11 | Optional export/re-import round-trip compatibility |
-| 0.4.12 | v0.4 acceptance and release |
+| 0.4.10 | Assess source quality, coverage, licensing, and access; select the production enrichment provider or complementary providers |
+| 0.4.11 | Secure provider-neutral retrieval infrastructure with server-side credentials, caching, rate limiting, and error handling |
+| 0.4.12 | Production provider integration covering drinking windows and food pairings |
+| 0.4.13 | Conservative wine matching plus preview, review, and provenance-preserving apply workflow |
+| 0.4.14 | CSV export with a documented portable format |
+| 0.4.15 | Optional export/re-import round-trip compatibility |
+| 0.4.16 | v0.4 acceptance and release |
 
-Purchase/value analytics and photo/OCR capture are not v0.4 work.
+Barcode scanning and lookup, photos, OCR, purchase cost, and valuation are not
+v0.4 work. Serving guidance and other fields may be retrieved in v0.4 when the
+selected provider supplies them reliably, but drinking windows and food
+pairings are the required enrichment baseline.
 
 ## v0.5 — Shared-household collaboration
 
@@ -101,10 +117,11 @@ make incompatible changes while offline.
 | 0.5.11 | Full membership security matrix |
 | 0.5.12 | v0.5 acceptance and release |
 
-## v0.6 — Capture and enrichment
+## v0.6 — Capture-assisted enrichment
 
-Camera, OCR, barcode, and provider workflows feed the same normalization and
-candidate-resolution principles established by CSV import:
+Camera, OCR, and barcode workflows extend the v0.4 provider boundary and feed
+the same normalization and candidate-resolution principles established by CSV
+import:
 
 `photo/OCR/barcode -> normalized candidate -> review -> match/create -> wine`
 
@@ -113,7 +130,7 @@ never inventory authority.
 
 | Step | Scope |
 |---|---|
-| 0.6.1 | Capture and enrichment architecture decision |
+| 0.6.1 | Capture architecture extending the v0.4 enrichment boundary |
 | 0.6.2 | Image/storage security model |
 | 0.6.3 | Camera and photo upload |
 | 0.6.4 | Image preprocessing |
@@ -124,7 +141,7 @@ never inventory authority.
 | 0.6.9 | Photo-to-inventory ADD flow |
 | 0.6.10 | Batch-entry workflow |
 | 0.6.11 | Location QR codes |
-| 0.6.12 | External enrichment-provider architecture |
+| 0.6.12 | Wine barcode identifiers, scanning, and provider lookup |
 | 0.6.13 | Restore useful archived v0.1 enrichment identifiers/data |
 | 0.6.14 | Accuracy and privacy acceptance |
 | 0.6.15 | v0.6 release |
