@@ -1,0 +1,7 @@
+sep=;
+Domaine;Cuvée;Millésime;Couleur;Appellation;Région;Format ml;Cave;Emplacement;Quantité;Commentaire
+"  Domaine Existing  ";"Cuvée Existante";2020;" ROUGE ";Morgon;Beaujolais;"75 cl";" Main Cellar ";A1;2;"catalogue exact"
+"Domaine Ambiguous";"Cuvée Double";2019;red;Morgon;Beaujolais;"750 ml";;;1;"choisir la référence et le rangement"
+"New Estate";"Cuvée Libre";N.V.;WHITE;;Loire;"0,75 L";"Main Cellar";A2;3;"nouveau vin"
+" New   Estate ";"Cuvée Libre";NV;white;;Loire;"75 cl";;;2;"même vin, autre rangement
+note conservée"
