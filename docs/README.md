@@ -17,12 +17,13 @@ retains only the evidence needed to understand its released migration history.
 
 ## Released history and migration evidence
 
+- `releases/v0.3.0.md` - personal-production baseline release
 - `releases/v0.2.0.md` - first local-first release
 - `adr/003-v01-data-migration.md` - historical one-off migration decision
 - `v01-final-rebaseline.md` - normalized migration baseline
 - `v01-production-acceptance.md` - production migration acceptance
 
 The accepted v0.1 FastAPI/SQLite runtime and migration implementation are not
-part of active development or CI. The `v0.1.0` and `v0.2.0` Git tags preserve
-them if historical inspection is ever required. New product development belongs
-in `apps/web/` and `supabase/`.
+part of active development or CI. The `v0.1.0`, `v0.2.0`, and `v0.3.0` Git tags
+preserve the released history if inspection is ever required. New product
+development belongs in `apps/web/` and `supabase/`.

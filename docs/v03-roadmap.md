@@ -39,7 +39,7 @@ redefining the v0.2 inventory architecture:
 | 0.3.15 | Activity and synchronization UX | Complete |
 | 0.3.16 | PWA, mobile polish and accessibility | Complete |
 | 0.3.17 | Personal-production acceptance | Complete |
-| 0.3.18 | v0.3.0 release | Planned |
+| 0.3.18 | v0.3.0 release | Complete |
 
 The multiple PRs listed for 0.3.1 are a historical exception. Remaining steps
 are delivered as one logical step per PR. Each step is implemented and checked
@@ -67,3 +67,11 @@ created. It must use normal domain rules rather than unrestricted table writes.
 
 Bulk CSV import may require an online connection in v0.3. Everyday ADD, MOVE
 and REMOVE retain their v0.2 offline behavior.
+
+## Milestone conclusion
+
+All eighteen steps are complete. The accepted application, release metadata,
+and release notes define the `v0.3.0` personal-production baseline. After the
+release PR is merged, the annotated `v0.3.0` tag is created from the resulting
+protected `main` commit; no additional Milestone 3 feature work follows that
+tag.
