@@ -19,7 +19,7 @@
     "supabase": "supabase"
   },
   "devDependencies": {
-    "supabase": "^2.111.0",
-    "wrangler": "^4.119.0"
+    "supabase": "^2.112.0",
+    "wrangler": "^4.120.0"
   }
 }
