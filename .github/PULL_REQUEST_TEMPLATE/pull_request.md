@@ -14,6 +14,7 @@
 - [ ] `git diff --check` passes
 - [ ] New or changed behavior has automated tests
 - [ ] Documentation was updated when behavior, setup, or operations changed
+- [ ] Roadmap and ADR implications were reviewed when milestone scope or a stable contract changed
 - [ ] Database/schema implications were reviewed
 - [ ] Offline behavior and synchronization implications were reviewed
 - [ ] No secrets, databases, generated coverage files, or patch backups are committed

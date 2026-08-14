@@ -7,6 +7,10 @@ real personal-production household.
 
 Acceptance was **completed on 2026-08-14**.
 
+Release step 0.3.18 subsequently completed, and this accepted baseline was
+published as `v0.3.0` on the same date. This file remains the acceptance-time
+record rather than a live production inventory report.
+
 ## Safety boundary
 
 - The existing PostgreSQL household remains the authoritative cellar.
@@ -74,5 +78,6 @@ a follow-up validation opportunity rather than a known production blocker.
 ## Acceptance conclusion
 
 All automated gates and the user smoke pass succeeded. v0.3 is accepted as the
-personal-production baseline and roadmap step 0.3.17 is complete. Creating the
-`v0.3.0` release and tag remains the separate 0.3.18 PR.
+personal-production baseline and roadmap step 0.3.17 is complete. The separate
+0.3.18 release step later published the annotated `v0.3.0` tag and GitHub
+Release; see [`releases/v0.3.0.md`](releases/v0.3.0.md).

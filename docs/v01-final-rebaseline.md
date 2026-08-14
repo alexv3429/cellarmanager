@@ -6,6 +6,10 @@ v0.2 wine reference model was completed.
 It is an acceptance record, not a copy of the private source database or its
 generated source exports.
 
+All counts and “future” statements below are historical v0.2 migration-time
+evidence. The permanent product CSV importer later shipped in `v0.3.0`; see
+[`csv-ingestion.md`](csv-ingestion.md) for its current contract.
+
 ## Authoritative source
 
 SHA-256:
@@ -105,8 +109,8 @@ After migration:
 The v0.1 importer is a one-off legacy migration, not the permanent product CSV
 importer.
 
-However, the normalization principles established here are intended to be
-reused by the future CSV ingestion pipeline:
+The normalization principles established here were later reused by the v0.3
+CSV ingestion pipeline:
 
 - normalize surrounding and repeated whitespace
 - normalize casing where the data model requires it
@@ -119,6 +123,6 @@ reused by the future CSV ingestion pipeline:
 - provide a deterministic preview/reconciliation result before import
 - preserve unmodeled source information rather than silently discarding it
 
-A future CSV importer should place a column-mapping and review layer in front
-of those rules rather than treating each CSV row as an unquestioned database
-row.
+The released CSV importer places a column-mapping, cleaning, matching, and
+review layer in front of those rules rather than treating each CSV row as an
+unquestioned database row.

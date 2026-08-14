@@ -6,6 +6,10 @@ migration into the hosted v0.2 PostgreSQL household.
 The migration itself was already applied before this acceptance pass. This
 step does not re-import or mutate production data.
 
+All quantities and uses of “current” below refer to the v0.2 acceptance moment,
+not today's production household. This record must not be used as a live bottle
+count or a reason to re-run the retired migration.
+
 ## Authoritative source
 
 The source SQLite database SHA-256 is:

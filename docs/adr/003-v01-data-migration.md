@@ -5,6 +5,11 @@
 
 ## Context
 
+The real v0.1 SQLite cellar had to move to the new PostgreSQL model without
+changing the private source, losing UUIDs, silently merging wines, or inventing
+history. This was a one-time production transition, not a general onboarding
+feature.
+
 ## Decision
 
 v0.1 SQLite remains the migration source.
@@ -13,6 +18,12 @@ Counts and quantities are reconciled before acceptance.
 The original database is never modified.
 
 ## Alternatives considered
+
+- Continuing to run v0.1 would leave two production authorities.
+- Direct ad hoc table copies would not provide normalization, dry-run evidence,
+  or reconciliation.
+- Treating the private archive as a reusable product importer would couple new
+  users to one historical schema.
 
 ## Consequences
 

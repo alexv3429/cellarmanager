@@ -32,15 +32,18 @@ transactionally commit reasonably messy cellar exports. It can match existing
 wines, reconcile storage and quantities, apply all-row defaults, normalize
 known values, and create an initial cellar/location when required.
 
-Later milestones cover CSV export, duplicate/merge tooling, shared-household
-workflows, capture/enrichment, internationalization, advanced graphical cellar
-layouts, and purchase/value history.
+The canonical [`docs/product-roadmap.md`](docs/product-roadmap.md) sequences the
+remaining rich-library, collaboration, capture/enrichment, history/insight, and
+v1.0 reliability work. Full internationalization and arbitrary graphical cellar
+layouts are explicitly post-v1.0 unless that roadmap is changed first.
 
 ## Development
 
 Install dependencies:
 
     npm ci
+
+Development and CI use Node 24, as pinned by `.node-version` and `package.json`.
 
 Copy the web environment template:
 
@@ -65,9 +68,11 @@ Manage local Supabase from the repository root:
     npm run repository:check
     npm run supabase -- test db
     npm run web:ci
+    npm run audit
     git diff --check
 
-GitHub CI runs both the web gate and the Supabase database acceptance suite.
+GitHub CI combines repository and web checks, the Supabase database acceptance
+suite, and the production-dependency audit behind the required `CI Gate` check.
 
 ## Deployment
 
@@ -78,7 +83,9 @@ Build with:
 `wrangler.jsonc` serves `apps/web/dist` through Cloudflare Workers Static
 Assets with SPA fallback.
 
-Production is smoke-tested before the `v0.3.0` tag is created.
+The `v0.3.0` production build was smoke-tested before its annotated release tag
+was created. See `apps/web/README.md` for local development and production/PWA
+testing commands.
 
 ## Documentation
 
@@ -87,7 +94,9 @@ migration evidence.
 
 Release notes: `docs/releases/v0.3.0.md`.
 
-Current product roadmap: `docs/v03-roadmap.md`.
+Current product roadmap: `docs/product-roadmap.md`.
+
+Completed v0.3 delivery record: `docs/v03-roadmap.md`.
 
 ## License
 

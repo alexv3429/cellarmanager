@@ -1,5 +1,8 @@
 # v0.3 personal production roadmap
 
+Status: **Complete** — released as `v0.3.0` on 2026-08-14. The canonical
+forward-looking roadmap is [`product-roadmap.md`](product-roadmap.md).
+
 v0.3 is the personal production baseline: a user can make CellarManager the
 authoritative day-to-day record of a cellar, either by entering it manually or
 by safely bootstrapping it from a reasonably messy CSV.
@@ -48,10 +51,10 @@ then opened as a ready-for-review PR. The next step starts only after that PR is
 merged.
 
 After 0.3.4, the already-accepted v0.1 FastAPI/SQLite runtime and its one-off
-migration tooling were retired from the active tree and CI. The `v0.1.0` and
-`v0.2.0` tags preserve that history; the acceptance evidence below remains in
-the repository. This maintenance cleanup does not change the product delivery
-sequence.
+migration tooling were retired from the active tree and CI. The `v0.1.0`,
+`v0.2.0`, and `v0.3.0` tags preserve released history; the acceptance evidence
+below remains in the repository. This maintenance cleanup does not change the
+product delivery sequence.
 
 ## CSV import safety contract
 
@@ -71,7 +74,6 @@ and REMOVE retain their v0.2 offline behavior.
 ## Milestone conclusion
 
 All eighteen steps are complete. The accepted application, release metadata,
-and release notes define the `v0.3.0` personal-production baseline. After the
-release PR is merged, the annotated `v0.3.0` tag is created from the resulting
-protected `main` commit; no additional Milestone 3 feature work follows that
-tag.
+and release notes define the `v0.3.0` personal-production baseline. The release
+PR was merged and the annotated `v0.3.0` tag was created from its protected
+`main` merge commit. No additional Milestone 3 feature work follows that tag.

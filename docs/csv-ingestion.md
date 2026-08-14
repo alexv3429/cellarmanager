@@ -1,4 +1,4 @@
-# CSV ingestion contract
+# CSV import contract
 
 Roadmap step 0.3.6 establishes the structural boundary for the permanent CSV
 importer. It turns CSV text into an inspectable document; it does not map
@@ -68,14 +68,16 @@ remain unresolved.
 These limits protect the browser parser. The upload workspace also rejects
 files larger than 20 MB before reading them.
 
-## Deferred steps
+## Pipeline layering
 
-The remaining importer stages stay intentionally separate:
+The released importer keeps its stages intentionally separate:
 
-1. 0.3.8 cleans and normalizes mapped values.
-2. 0.3.9–0.3.12 match, reconcile, preview, and resolve issues.
-3. 0.3.13 performs the first transactional authoritative write.
-4. 0.3.14 locks the full flow with import regression fixtures.
+1. column mapping assigns source data without changing it
+2. cleaning creates a normalized working copy
+3. matching and reconciliation classify wines and storage
+4. preview and explicit issue resolution produce the reviewed plan
+5. transactional commit performs the bottle-data write
+6. regression fixtures lock the complete browser-side flow
 
 This separation preserves the required
 `upload -> map -> clean -> preview -> resolve -> preview -> commit` safety flow.
@@ -113,8 +115,8 @@ explicit review.
 The mapping UI shows up to three raw sample values per source column and a
 mapped preview of the first three source records. Every unmapped value is
 retained with its source header and column index. Mapping does not trim,
-normalize, interpret, or write values. The disabled “Continue to cleaning”
-control documents the next pipeline stage without implementing it early.
+normalize, interpret, or write values. “Continue to cleaning” becomes available
+only when the mapping is structurally ready for the next stage.
 
 Cellar and location are optional source mappings because a valid source may
 describe bottles without assigning their final physical storage. The later
@@ -182,7 +184,7 @@ Each valid row receives one deterministic classification:
 Matching never crosses the active-household boundary. Invalid cleaned rows are
 not matched. Ambiguous results retain and display every candidate wine ID plus
 its appellation and area, and no candidate is selected silently. Explicit
-candidate selection remains part of the later issue-resolution step.
+candidate selection remains part of the issue-resolution stage.
 
 The matching view reports counts for existing, new, and ambiguous rows and
 shows ambiguous rows first without changing their source record or line
@@ -218,9 +220,10 @@ unconfigured capacity does not produce a warning.
 The reconciliation view reports assigned bottles and rows, unresolved rows,
 and distinct locations with capacity warnings. It displays unresolved rows and
 warnings first while retaining the original source record and physical line
-context. This step is read-only: it does not create storage, change capacity,
-move bottles, update holdings, or write import data. Assignment and ambiguity
-controls remain part of the issue-resolution step.
+context. The automatic reconciliation calculation is read-only: it does not
+change capacity, move bottles, update holdings, or write import data. The only
+setup write in the larger resolution workspace is the user's explicit creation
+of a named cellar and its first location as described above.
 
 ## Complete import preview contract
 
@@ -251,8 +254,8 @@ the first preview is useful even before issue-resolution controls exist.
 
 This step does not select an ambiguous wine, invent storage, edit source data,
 create catalog references, add holdings, enqueue inventory operations, or
-write any authoritative data. Roadmap step 0.3.12 will resolve supported issues
-and produce the second preview required before transactional commit.
+write any authoritative data. The issue-resolution stage resolves supported
+issues and produces the second preview required before transactional commit.
 
 ## Import issue-resolution contract
 
@@ -291,10 +294,12 @@ and resolved preview rows keep occupancy and source metadata in expandable
 details. Blocking messages and capacity warnings remain visible without
 expansion.
 
-This step is deterministic and read-only. It does not create wines, add or move
-bottles, change cellar setup, enqueue inventory operations, or write import
-state. Roadmap step 0.3.13 performs the first transactional authoritative
-commit after a complete second preview.
+Wine selection, storage assignment, and preview generation are deterministic
+and read-only. They do not create wines, add or move bottles, enqueue inventory
+operations, or write import state. The optional explicit cellar/location action
+is the sole pre-commit setup write and remains visible even if the import is
+cancelled. The transactional commit stage performs the bottle-data write only
+after a complete second preview.
 
 ## Transactional import commit contract
 
