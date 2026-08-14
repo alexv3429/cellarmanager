@@ -32,16 +32,32 @@ export default defineConfig({
       ],
 
       manifest: {
+        id: "/",
         name: "CellarManager",
         short_name: "Cellar",
         description:
           "Local-first wine cellar inventory management.",
+        lang: "en",
         start_url: "/",
         scope: "/",
         display: "standalone",
-        background_color: "#ffffff",
+        background_color: "#f7f4ef",
         theme_color: "#6d1b2b",
         categories: ["food", "lifestyle", "utilities"],
+        shortcuts: [
+          {
+            name: "Inventory",
+            short_name: "Inventory",
+            description: "Browse cellar holdings",
+            url: "/",
+          },
+          {
+            name: "Activity",
+            short_name: "Activity",
+            description: "Review recent inventory changes",
+            url: "/activity",
+          },
+        ],
         icons: [
           {
             src: "/pwa-192x192.png",
@@ -65,6 +81,7 @@ export default defineConfig({
       },
 
       workbox: {
+        cleanupOutdatedCaches: true,
         globPatterns: [
           "**/*.{js,css,html,ico,png,svg,webmanifest,wasm}",
         ],

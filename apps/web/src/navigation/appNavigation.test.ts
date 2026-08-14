@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   getAppRouteFromPathname,
+  getAppRouteTitle,
   getAppViewFromPathname,
   getAppViewPath,
   getWineDetailPath,
@@ -76,6 +77,18 @@ describe("app navigation", () => {
     expect(getWineDetailPath("wine special/2020")).toBe(
       "/wines/wine%20special%2F2020",
     )
+  })
+
+  it("provides route-specific document titles", () => {
+    expect(
+      getAppRouteTitle({ view: "inventory", wineId: null }),
+    ).toBe("Inventory · CellarManager")
+    expect(
+      getAppRouteTitle({ view: "activity", wineId: null }),
+    ).toBe("Activity · CellarManager")
+    expect(
+      getAppRouteTitle({ view: "wine", wineId: "wine-1" }),
+    ).toBe("Wine details · CellarManager")
   })
 
   it("restores safe wine detail return destinations", () => {

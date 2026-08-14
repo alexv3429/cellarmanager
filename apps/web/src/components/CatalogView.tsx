@@ -444,17 +444,20 @@ export function CatalogView({
       ) : null}
 
       <table className="catalog-table">
+        <caption className="visually-hidden">
+          Filtered wine catalog
+        </caption>
         <thead>
           <tr>
-            <th>Producer</th>
-            <th>Cuvée</th>
-            <th>Vintage</th>
-            <th>Color</th>
-            <th>Appellation</th>
-            <th>Area</th>
-            <th>Format</th>
-            <th>Current bottles</th>
-            <th>Actions</th>
+            <th scope="col">Producer</th>
+            <th scope="col">Cuvée</th>
+            <th scope="col">Vintage</th>
+            <th scope="col">Color</th>
+            <th scope="col">Appellation</th>
+            <th scope="col">Area</th>
+            <th scope="col">Format</th>
+            <th scope="col">Current bottles</th>
+            <th scope="col">Actions</th>
           </tr>
         </thead>
 

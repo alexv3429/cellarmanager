@@ -24,6 +24,7 @@ import {
 import { useActiveHousehold } from "./households/useActiveHousehold"
 import {
   getAppRouteFromPathname,
+  getAppRouteTitle,
   getAppViewPath,
   getWineDetailPath,
   getWineDetailReturnView,
@@ -145,6 +146,11 @@ function ReadyAuthenticatedApp({
   return (
     <AppShell
       activeHouseholdId={activeHouseholdId}
+      contentKey={
+        route.view === "wine"
+          ? `wine:${route.wineId}`
+          : route.view
+      }
       deviceRegistration={deviceRegistration}
       householdError={householdError}
       households={households}
@@ -153,6 +159,7 @@ function ReadyAuthenticatedApp({
       onSelectHousehold={selectHousehold}
       onSignOut={signOutAndClearLocalData}
       onViewChange={changeView}
+      pageTitle={getAppRouteTitle(route)}
       syncError={currentSyncError}
       view={
         route.view === "wine"

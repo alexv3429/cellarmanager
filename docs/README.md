@@ -10,6 +10,7 @@ retains only the evidence needed to understand its released migration history.
 - `adr/002-inventory-operation-model.md` - local-first inventory-operation contract
 - `activity-and-sync.md` - recent inventory activity and synchronization-state UX
 - `csv-ingestion.md` - permanent product CSV structural parsing contract
+- `pwa-mobile-accessibility.md` - install, phone interaction, and accessibility baseline
 - `v03-roadmap.md` - personal-production milestone and delivery sequence
 - `github-protection.md` - required `CI Gate` and branch protection
 
