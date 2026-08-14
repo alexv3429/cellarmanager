@@ -16,6 +16,12 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    ignore:
+      # Keep Node declarations aligned with the supported 24.x runtime. Upgrade
+      # both deliberately when the repository moves to a new Node major.
+      - dependency-name: "@types/node"
+        update-types:
+          - "version-update:semver-major"
 
   - package-ecosystem: "github-actions"
     directory: "/"
