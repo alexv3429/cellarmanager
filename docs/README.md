@@ -11,6 +11,7 @@ retains only the evidence needed to understand its released migration history.
 - `activity-and-sync.md` - recent inventory activity and synchronization-state UX
 - `csv-ingestion.md` - permanent product CSV structural parsing contract
 - `pwa-mobile-accessibility.md` - install, phone interaction, and accessibility baseline
+- `v03-personal-production-acceptance.md` - final v0.3 production acceptance checklist
 - `v03-roadmap.md` - personal-production milestone and delivery sequence
 - `github-protection.md` - required `CI Gate` and branch protection
 

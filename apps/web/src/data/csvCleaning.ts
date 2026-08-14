@@ -58,6 +58,16 @@ export interface CsvCleaningSummary {
   totalRowCount: number
 }
 
+export type CsvCuveeFallback =
+  | { mode: "appellation" }
+  | { mode: "color" }
+  | { mode: "fixed"; value: string }
+  | { mode: "none" }
+
+export interface CsvCleaningOptions {
+  cuveeFallback?: CsvCuveeFallback
+}
+
 const fieldLabels = new Map(
   CSV_IMPORT_FIELD_DEFINITIONS.map((definition) => [
     definition.field,
@@ -73,7 +83,9 @@ const fieldOrder = new Map(
 )
 
 const nvKeys = new Set([
+  "n m",
   "n v",
+  "nm",
   "non millesime",
   "non vintage",
   "nv",
@@ -263,6 +275,57 @@ function cleanTextField(
   return normalized
 }
 
+function cleanCuvee(
+  row: CsvMappedSourceRow,
+  issues: CsvCleaningIssue[],
+  changes: CsvCleaningChange[],
+  options: CsvCleaningOptions,
+  cleanedAppellation: string | null,
+  cleanedColor: string | null,
+): string | null {
+  const sourceValue = row.fields.cuvee
+  const cleaned = cleanWineText(sourceValue ?? "")
+
+  if (cleaned.length > 0) {
+    recordChange(changes, "cuvee", sourceValue, cleaned)
+    return cleaned
+  }
+
+  const fallback = options.cuveeFallback ?? {
+    mode: "none",
+  }
+  const fallbackValue =
+    fallback.mode === "appellation"
+      ? cleanedAppellation
+      : fallback.mode === "color"
+        ? cleanedColor
+        : fallback.mode === "fixed"
+          ? cleanWineText(fallback.value)
+          : null
+
+  if (fallbackValue) {
+    recordChange(
+      changes,
+      "cuvee",
+      sourceValue,
+      fallbackValue,
+    )
+    return fallbackValue
+  }
+
+  addIssue(
+    row,
+    issues,
+    "MISSING_REQUIRED_VALUE",
+    "cuvee",
+    fallback.mode === "none"
+      ? "Cuvée is required"
+      : "Cuvée is empty and the selected fallback has no value",
+    sourceValue,
+  )
+  return null
+}
+
 function cleanVintage(
   row: CsvMappedSourceRow,
   issues: CsvCleaningIssue[],
@@ -367,17 +430,29 @@ function cleanQuantity(
 
 export function cleanCsvMappedRow(
   row: CsvMappedSourceRow,
+  options: CsvCleaningOptions = {},
 ): CsvCleanedSourceRow {
   const issues: CsvCleaningIssue[] = []
   const changes: CsvCleaningChange[] = []
+  const cleanedAppellation = cleanTextField(
+    row,
+    "appellation",
+    issues,
+    changes,
+  )
+  const cleanedColor = cleanTextField(
+    row,
+    "color",
+    issues,
+    changes,
+    {
+      lowercase: true,
+      required: true,
+    },
+  )
 
   const fields: CsvCleanedFields = {
-    appellation: cleanTextField(
-      row,
-      "appellation",
-      issues,
-      changes,
-    ),
+    appellation: cleanedAppellation,
     area: cleanTextField(row, "area", issues, changes),
     cellar: cleanTextField(
       row,
@@ -385,13 +460,15 @@ export function cleanCsvMappedRow(
       issues,
       changes,
     ),
-    color: cleanTextField(row, "color", issues, changes, {
-      lowercase: true,
-      required: true,
-    }),
-    cuvee: cleanTextField(row, "cuvee", issues, changes, {
-      required: true,
-    }),
+    color: cleanedColor,
+    cuvee: cleanCuvee(
+      row,
+      issues,
+      changes,
+      options,
+      cleanedAppellation,
+      cleanedColor,
+    ),
     formatMl: cleanBottleFormat(row, issues, changes),
     location: cleanTextField(
       row,

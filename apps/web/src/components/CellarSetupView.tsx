@@ -224,11 +224,12 @@ export function CellarSetupView({
     const saved = await runMutation(
       "create-cellar",
       "Cellar saved. Waiting for synchronization.",
-      () =>
-        createCellar(
+      async () => {
+        await createCellar(
           householdId,
           formValue(form, "name"),
-        ),
+        )
+      },
     )
 
     if (saved) {
@@ -246,13 +247,14 @@ export function CellarSetupView({
     const saved = await runMutation(
       `create-location:${cellar.id}`,
       `Location saved in ${cellar.name}. Waiting for synchronization.`,
-      () =>
-        createLocation(
+      async () => {
+        await createLocation(
           cellar.household_id,
           cellar.id,
           formValue(form, "code"),
           formValue(form, "capacity"),
-        ),
+        )
+      },
     )
 
     if (saved) {

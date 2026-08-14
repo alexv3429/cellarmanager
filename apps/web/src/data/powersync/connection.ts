@@ -18,6 +18,7 @@ let pendingOperation: Promise<void> = Promise.resolve()
 interface PowerSyncAccess {
   userId: string | null
   connectToBackend: boolean
+  onLocalReady?: () => void
 }
 
 function serialize(
@@ -43,6 +44,7 @@ async function clearForUserChange(): Promise<void> {
 export function setPowerSyncAccess({
   userId,
   connectToBackend,
+  onLocalReady,
 }: PowerSyncAccess): Promise<void> {
   return serialize(async () => {
     if (userId === null) {
@@ -71,6 +73,9 @@ export function setPowerSyncAccess({
 
     setDatabaseOwner(window.localStorage, userId)
     activeUserId = userId
+
+    await powerSyncDatabase.waitForReady()
+    onLocalReady?.()
 
     if (!connectToBackend) {
       if (connectionRequested) {

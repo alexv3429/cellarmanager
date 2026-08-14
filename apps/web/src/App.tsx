@@ -363,12 +363,12 @@ export default function App() {
       userId,
       connectToBackend:
         session !== null && isOnline,
-    })
-      .then(() => {
+      onLocalReady: () => {
         if (active) {
           setPreparedUserId(userId)
         }
-      })
+      },
+    })
       .catch((error: unknown) => {
         if (!active) {
           return

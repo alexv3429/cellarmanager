@@ -20,6 +20,10 @@ export type CsvColumnMapping = Array<
   CsvImportField | null
 >
 
+export type CsvImportFieldDefaults = Partial<
+  Record<CsvImportField, string>
+>
+
 export interface CsvImportFieldDefinition {
   description: string
   field: CsvImportField
@@ -203,6 +207,7 @@ export function suggestCsvColumnMapping(
 
 export function validateCsvColumnMapping(
   mapping: CsvColumnMapping,
+  fieldDefaults: CsvImportFieldDefaults = {},
 ): CsvMappingIssue[] {
   const columnIndexesByField = new Map<
     CsvImportField,
@@ -238,12 +243,13 @@ export function validateCsvColumnMapping(
 
       if (
         definition.required &&
-        sourceColumnIndexes.length === 0
+        sourceColumnIndexes.length === 0 &&
+        !fieldDefaults[definition.field]?.trim()
       ) {
         return [
           {
             field: definition.field,
-            message: `${definition.label} must be mapped`,
+            message: `${definition.label} must be mapped or set once for every row`,
             sourceColumnIndexes,
             type: "MISSING_REQUIRED_FIELD",
           },
@@ -259,8 +265,11 @@ export function mapCsvSourceRow(
   headers: string[],
   row: CsvSourceRecord,
   mapping: CsvColumnMapping,
+  fieldDefaults: CsvImportFieldDefaults = {},
 ): CsvMappedSourceRow {
-  const fields: Partial<Record<CsvImportField, string>> = {}
+  const fields: Partial<Record<CsvImportField, string>> = {
+    ...fieldDefaults,
+  }
   const unmapped: CsvMappedSourceValue[] = []
 
   headers.forEach((sourceHeader, sourceColumnIndex) => {

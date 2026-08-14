@@ -59,6 +59,8 @@ describe("CSV cleaning and normalization", () => {
       "",
       "NV",
       "N.V.",
+      "NM",
+      "N.M.",
       "non-vintage",
       "Sans millésime",
     ]) {
@@ -76,6 +78,83 @@ describe("CSV cleaning and normalization", () => {
       expect(cleaned.fields.vintage).toBeNull()
       expect(cleaned.issues).toEqual([])
     }
+  })
+
+  it("applies an explicit fallback only to empty cuvée cells", () => {
+    const fields = {
+      appellation: "Fitou",
+      color: "RED",
+      cuvee: "",
+      formatMl: "750 ml",
+      producer: "Domaine Test",
+      quantity: "1",
+      vintage: "NM",
+    }
+
+    const fromAppellation = cleanCsvMappedRow(
+      mappedRow(fields),
+      { cuveeFallback: { mode: "appellation" } },
+    )
+    const fromColor = cleanCsvMappedRow(mappedRow(fields), {
+      cuveeFallback: { mode: "color" },
+    })
+    const fromFixedValue = cleanCsvMappedRow(
+      mappedRow(fields),
+      {
+        cuveeFallback: {
+          mode: "fixed",
+          value: " Generic ",
+        },
+      },
+    )
+    const existingCuvee = cleanCsvMappedRow(
+      mappedRow({ ...fields, cuvee: "Réserve" }),
+      { cuveeFallback: { mode: "appellation" } },
+    )
+
+    expect(fromAppellation.fields.cuvee).toBe("Fitou")
+    expect(fromColor.fields.cuvee).toBe("red")
+    expect(fromFixedValue.fields.cuvee).toBe("Generic")
+    expect(existingCuvee.fields.cuvee).toBe("Réserve")
+    expect(fromAppellation.fields.vintage).toBeNull()
+    expect(fromAppellation.issues).toEqual([])
+    expect(fromAppellation.changes).toContainEqual({
+      field: "vintage",
+      normalizedValue: "NV",
+      sourceValue: "NM",
+    })
+  })
+
+  it("keeps an empty cuvée invalid when no usable fallback is selected", () => {
+    const fields = {
+      appellation: "",
+      color: "red",
+      cuvee: "",
+      formatMl: "750 ml",
+      producer: "Domaine Test",
+      quantity: "1",
+    }
+
+    const withoutFallback = cleanCsvMappedRow(
+      mappedRow(fields),
+    )
+    const emptyAppellationFallback = cleanCsvMappedRow(
+      mappedRow(fields),
+      { cuveeFallback: { mode: "appellation" } },
+    )
+
+    expect(withoutFallback.issues).toContainEqual(
+      expect.objectContaining({
+        code: "MISSING_REQUIRED_VALUE",
+        field: "cuvee",
+      }),
+    )
+    expect(emptyAppellationFallback.issues).toContainEqual(
+      expect.objectContaining({
+        code: "MISSING_REQUIRED_VALUE",
+        field: "cuvee",
+      }),
+    )
   })
 
   it("rejects malformed and out-of-range vintages", () => {

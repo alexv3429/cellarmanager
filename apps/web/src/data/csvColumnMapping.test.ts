@@ -6,6 +6,7 @@ import {
   suggestCsvColumnMapping,
   validateCsvColumnMapping,
   type CsvColumnMapping,
+  type CsvImportFieldDefaults,
 } from "./csvColumnMapping"
 
 describe("CSV column mapping", () => {
@@ -82,6 +83,22 @@ describe("CSV column mapping", () => {
     ).toEqual([])
   })
 
+  it("accepts an explicit all-row value instead of a required source column", () => {
+    const mapping: CsvColumnMapping = [
+      "producer",
+      "cuvee",
+      "color",
+      "quantity",
+    ]
+    const fieldDefaults: CsvImportFieldDefaults = {
+      formatMl: "750 ml",
+    }
+
+    expect(
+      validateCsvColumnMapping(mapping, fieldDefaults),
+    ).toEqual([])
+  })
+
   it("reports duplicate assignments with source indexes", () => {
     const issues = validateCsvColumnMapping([
       "producer",
@@ -130,6 +147,32 @@ describe("CSV column mapping", () => {
           value: "Gift",
         },
       ],
+    })
+  })
+
+  it("applies explicit all-row values while preserving mapped source values", () => {
+    const mapped = mapCsvSourceRow(
+      ["Producer", "Cuvée", "Color", "Quantity"],
+      {
+        recordNumber: 2,
+        sourceLineEnd: 2,
+        sourceLineStart: 2,
+        values: ["Domaine Test", "Réserve", "red", "6"],
+      },
+      ["producer", "cuvee", "color", "quantity"],
+      {
+        cellar: "Main Cellar",
+        formatMl: "750 ml",
+      },
+    )
+
+    expect(mapped.fields).toEqual({
+      cellar: "Main Cellar",
+      color: "red",
+      cuvee: "Réserve",
+      formatMl: "750 ml",
+      producer: "Domaine Test",
+      quantity: "6",
     })
   })
 })
