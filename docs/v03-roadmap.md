@@ -37,7 +37,7 @@ redefining the v0.2 inventory architecture:
 | 0.3.13 | Transactional import commit | Complete |
 | 0.3.14 | Import regression fixtures | Complete |
 | 0.3.15 | Activity and synchronization UX | Complete |
-| 0.3.16 | PWA, mobile polish and accessibility | Planned |
+| 0.3.16 | PWA, mobile polish and accessibility | Complete |
 | 0.3.17 | Personal-production acceptance | Planned |
 | 0.3.18 | v0.3.0 release | Planned |
 

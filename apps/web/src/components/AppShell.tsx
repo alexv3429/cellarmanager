@@ -1,13 +1,19 @@
 import { useQuery, useStatus } from "@powersync/react"
 import {
+  type MouseEvent as ReactMouseEvent,
   type ReactNode,
+  useEffect,
+  useRef,
   useState,
 } from "react"
 
 import type {
   RegisteredDevicesState,
 } from "../devices/useRegisteredDevices"
-import type { AppView } from "../navigation/appNavigation"
+import {
+  getAppViewPath,
+  type AppView,
+} from "../navigation/appNavigation"
 import { getSyncStatusPresentation } from "../data/syncStatusView"
 import { Notice } from "./Notice"
 
@@ -19,6 +25,7 @@ interface HouseholdOption {
 interface AppShellProps {
   activeHouseholdId: string
   children: ReactNode
+  contentKey: string
   deviceRegistration: RegisteredDevicesState
   householdError: string | null
   households: HouseholdOption[]
@@ -27,6 +34,7 @@ interface AppShellProps {
   onSelectHousehold: (householdId: string) => void
   onSignOut: () => Promise<void>
   onViewChange: (view: AppView) => void
+  pageTitle: string
   syncError: string | null
   view: AppView
 }
@@ -55,6 +63,7 @@ function errorMessage(error: unknown): string | null {
 export function AppShell({
   activeHouseholdId,
   children,
+  contentKey,
   deviceRegistration,
   householdError,
   households,
@@ -63,6 +72,7 @@ export function AppShell({
   onSelectHousehold,
   onSignOut,
   onViewChange,
+  pageTitle,
   syncError,
   view,
 }: AppShellProps) {
@@ -77,6 +87,25 @@ export function AppShell({
 
   const [signOutError, setSignOutError] =
     useState<string | null>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
+  const previousContentKey = useRef(contentKey)
+
+  useEffect(() => {
+    document.title = pageTitle
+
+    if (previousContentKey.current === contentKey) {
+      return
+    }
+
+    previousContentKey.current = contentKey
+
+    const animationFrame = window.requestAnimationFrame(() => {
+      window.scrollTo({ left: 0, top: 0 })
+      contentRef.current?.focus({ preventScroll: true })
+    })
+
+    return () => window.cancelAnimationFrame(animationFrame)
+  }, [contentKey, pageTitle])
 
   const pendingOperationCount = Math.max(
     0,
@@ -122,6 +151,25 @@ export function AppShell({
     }
   }
 
+  function navigate(
+    event: ReactMouseEvent<HTMLAnchorElement>,
+    nextView: AppView,
+  ) {
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.altKey ||
+      event.ctrlKey ||
+      event.metaKey ||
+      event.shiftKey
+    ) {
+      return
+    }
+
+    event.preventDefault()
+    onViewChange(nextView)
+  }
+
   const deviceStatus = deviceRegistration.isReady
     ? "Ready"
     : deviceRegistration.isRegistering
@@ -132,6 +180,10 @@ export function AppShell({
 
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#main-content">
+        Skip to main content
+      </a>
+
       <header className="app-shell__header">
         <div className="app-shell__identity">
           <div className="app-shell__brand">
@@ -207,45 +259,45 @@ export function AppShell({
         aria-label="Primary"
         className="app-shell__nav"
       >
-        <button
-          aria-pressed={view === "inventory"}
-          onClick={() => onViewChange("inventory")}
-          type="button"
+        <a
+          aria-current={view === "inventory" ? "page" : undefined}
+          href={getAppViewPath("inventory")}
+          onClick={(event) => navigate(event, "inventory")}
         >
           Inventory
-        </button>
+        </a>
 
-        <button
-          aria-pressed={view === "activity"}
-          onClick={() => onViewChange("activity")}
-          type="button"
+        <a
+          aria-current={view === "activity" ? "page" : undefined}
+          href={getAppViewPath("activity")}
+          onClick={(event) => navigate(event, "activity")}
         >
           Activity
-        </button>
+        </a>
 
-        <button
-          aria-pressed={view === "catalog"}
-          onClick={() => onViewChange("catalog")}
-          type="button"
+        <a
+          aria-current={view === "catalog" ? "page" : undefined}
+          href={getAppViewPath("catalog")}
+          onClick={(event) => navigate(event, "catalog")}
         >
           Catalog
-        </button>
+        </a>
 
-        <button
-          aria-pressed={view === "import"}
-          onClick={() => onViewChange("import")}
-          type="button"
+        <a
+          aria-current={view === "import" ? "page" : undefined}
+          href={getAppViewPath("import")}
+          onClick={(event) => navigate(event, "import")}
         >
           Import
-        </button>
+        </a>
 
-        <button
-          aria-pressed={view === "setup"}
-          onClick={() => onViewChange("setup")}
-          type="button"
+        <a
+          aria-current={view === "setup" ? "page" : undefined}
+          href={getAppViewPath("setup")}
+          onClick={(event) => navigate(event, "setup")}
         >
           Cellar setup
-        </button>
+        </a>
       </nav>
 
       {householdError ||
@@ -287,7 +339,12 @@ export function AppShell({
         </div>
       ) : null}
 
-      <div className="app-shell__content">
+      <div
+        className="app-shell__content"
+        id="main-content"
+        ref={contentRef}
+        tabIndex={-1}
+      >
         {children}
       </div>
     </div>

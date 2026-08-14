@@ -87,6 +87,21 @@ export function getWineDetailPath(wineId: string): string {
   return `/wines/${encodeURIComponent(wineId)}`
 }
 
+export function getAppRouteTitle(route: AppRoute): string {
+  const pageTitle =
+    route.view === "wine"
+      ? "Wine details"
+      : {
+          activity: "Activity",
+          catalog: "Catalog",
+          import: "Import",
+          inventory: "Inventory",
+          setup: "Cellar setup",
+        }[route.view]
+
+  return `${pageTitle} · CellarManager`
+}
+
 export function getWineDetailReturnView(
   historyState: unknown,
 ): AppView | null {

@@ -1163,11 +1163,14 @@ export function HoldingsView({
       ) : null}
 
       <table className="inventory-table">
+        <caption className="visually-hidden">
+          Filtered cellar inventory
+        </caption>
         <thead>
           <tr>
-            <th>Wine</th>
-            <th>Holding</th>
-            <th>Actions</th>
+            <th scope="col">Wine</th>
+            <th scope="col">Holding</th>
+            <th scope="col">Actions</th>
           </tr>
         </thead>
 
