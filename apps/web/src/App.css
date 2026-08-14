@@ -388,10 +388,11 @@
     min-width: 0;
     justify-content: center;
     padding: 7px 3px;
-    font-size: 14px;
+    font-size: clamp(12px, 3.4vw, 14px);
     line-height: 1.15;
     text-align: center;
-    overflow-wrap: anywhere;
+    overflow-wrap: normal;
+    white-space: nowrap;
   }
 
   .app-shell__alerts {
@@ -2159,6 +2160,55 @@
   gap: 10px;
 }
 
+.import-create-destination {
+  overflow: hidden;
+  border: 1px solid var(--accent-border);
+  border-radius: 10px;
+  background: var(--accent-bg);
+}
+
+.import-create-destination > summary {
+  padding: 12px 14px;
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+.import-create-destination[open] > summary {
+  border-bottom: 1px solid var(--accent-border);
+}
+
+.import-create-destination > div {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.import-create-destination p {
+  margin: 0;
+}
+
+.import-create-destination form {
+  display: grid;
+  grid-template-columns:
+    minmax(10rem, 1fr)
+    minmax(10rem, 1fr)
+    minmax(8rem, 0.6fr)
+    auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.import-create-destination label {
+  display: grid;
+  gap: 4px;
+}
+
+.import-create-destination input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+}
+
 .import-resolution-card {
   min-width: 0;
   overflow: hidden;
@@ -2393,6 +2443,128 @@
 
 .import-mapping-card__samples em {
   font-size: 13px;
+}
+
+.app-shell__content .import-mapping-defaults {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--accent-border);
+  border-radius: 10px;
+  background: var(--accent-bg);
+}
+
+.import-mapping-defaults h3,
+.import-mapping-defaults p {
+  margin: 0;
+}
+
+.import-mapping-defaults > div:first-child,
+.import-mapping-default-applied,
+.import-mapping-default-applied > div:first-child,
+.import-mapping-default-required,
+.import-mapping-default-required > div:first-child,
+.import-mapping-default-list,
+.import-mapping-default label,
+.import-mapping-default-add label {
+  display: grid;
+  gap: 4px;
+}
+
+.import-mapping-default-applied,
+.import-mapping-default-required,
+.import-mapping-default-more {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.import-mapping-default-applied,
+.import-mapping-default-required {
+  gap: 10px;
+}
+
+.import-mapping-default-applied span,
+.import-mapping-default-required span {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.import-mapping-default-list {
+  gap: 8px;
+}
+
+.import-mapping-default,
+.import-mapping-default-add {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.import-mapping-default-add {
+  grid-template-columns:
+    minmax(10rem, 0.8fr)
+    minmax(10rem, 1fr)
+    auto;
+}
+
+.import-mapping-default input,
+.import-mapping-default-add input,
+.import-mapping-default-add select {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+}
+
+.import-mapping-default-more summary {
+  width: fit-content;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.import-mapping-default-more[open] summary {
+  margin-bottom: 6px;
+}
+
+.import-mapping-default-more > p {
+  margin-bottom: 10px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.app-shell__content .import-cuvee-fallback {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-muted);
+}
+
+.import-cuvee-fallback h3,
+.import-cuvee-fallback p {
+  margin: 0;
+}
+
+.import-cuvee-fallback > div:first-child,
+.import-cuvee-fallback__controls,
+.import-cuvee-fallback__controls label {
+  display: grid;
+  gap: 4px;
+}
+
+.import-cuvee-fallback__controls {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.import-cuvee-fallback__controls select,
+.import-cuvee-fallback__controls input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
 }
 
 .import-preview-list {
@@ -3249,8 +3421,13 @@
   }
 
   .import-resolution-candidates,
-  .import-final-preview-card__details {
+  .import-final-preview-card__details,
+  .import-create-destination form {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .import-create-destination button {
+    width: 100%;
   }
 
   .import-file-summary,
@@ -3274,6 +3451,17 @@
 
   .import-mapping-card {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .import-mapping-default,
+  .import-mapping-default-add,
+  .import-cuvee-fallback__controls {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .import-mapping-default button,
+  .import-mapping-default-add button {
+    width: 100%;
   }
 
   .import-mapping-card__samples {

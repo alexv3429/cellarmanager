@@ -82,6 +82,7 @@ export default defineConfig({
 
       workbox: {
         cleanupOutdatedCaches: true,
+        globIgnores: ["@powersync/**/*"],
         globPatterns: [
           "**/*.{js,css,html,ico,png,svg,webmanifest,wasm}",
         ],

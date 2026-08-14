@@ -23,6 +23,17 @@ describe("household application gate", () => {
     ).toBe("loading")
   })
 
+  it("opens a persisted active household while membership refreshes", () => {
+    expect(
+      resolveHouseholdGate({
+        ...BASE_INPUT,
+        activeHouseholdId: "household-1",
+        householdCount: 1,
+        householdsLoading: true,
+      }),
+    ).toBe("ready")
+  })
+
   it("waits for initial online synchronization", () => {
     expect(
       resolveHouseholdGate({

@@ -134,7 +134,9 @@ function prepareStructurallyValidFixture(text: string) {
       mapping,
     ),
   )
-  const cleanedRows = mappedRows.map(cleanCsvMappedRow)
+  const cleanedRows = mappedRows.map((row) =>
+    cleanCsvMappedRow(row),
+  )
 
   return {
     cleanedRows,

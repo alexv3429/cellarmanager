@@ -16,6 +16,19 @@ export interface HouseholdOption {
   name: string
 }
 
+function readInitialActiveHouseholdId(
+  userId: string,
+): string | null {
+  try {
+    return readActiveHouseholdId(
+      window.localStorage,
+      userId,
+    )
+  } catch {
+    return null
+  }
+}
+
 export function useActiveHousehold(userId: string) {
   const {
     data: households,
@@ -34,7 +47,9 @@ export function useActiveHousehold(userId: string) {
   )
 
   const [activeHouseholdId, setActiveHouseholdId] =
-    useState<string | null>(null)
+    useState<string | null>(() =>
+      readInitialActiveHouseholdId(userId),
+    )
 
   const [selectionError, setSelectionError] =
     useState<string | null>(null)

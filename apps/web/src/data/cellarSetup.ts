@@ -17,11 +17,30 @@ async function requireRpcSuccess(
   }
 }
 
+async function requireRpcId(
+  promise: PromiseLike<{
+    data: unknown
+    error: { message: string } | null
+  }>,
+): Promise<string> {
+  const { data, error } = await promise
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  if (typeof data !== "string" || data.length === 0) {
+    throw new Error("The server did not return the created record ID")
+  }
+
+  return data
+}
+
 export async function createCellar(
   householdId: string,
   name: string,
-): Promise<void> {
-  await requireRpcSuccess(
+): Promise<string> {
+  return requireRpcId(
     supabase.rpc("create_cellar", {
       p_household_id: householdId,
       p_name: requireSetupLabel(name, "Cellar name"),
@@ -46,8 +65,8 @@ export async function createLocation(
   cellarId: string,
   code: string,
   capacity: string,
-): Promise<void> {
-  await requireRpcSuccess(
+): Promise<string> {
+  return requireRpcId(
     supabase.rpc("create_location", {
       p_household_id: householdId,
       p_cellar_id: cellarId,
@@ -55,6 +74,51 @@ export async function createLocation(
       p_capacity: parseOptionalLocationCapacity(capacity),
     }),
   )
+}
+
+export async function createInitialImportDestination(
+  householdId: string,
+  cellarName: string,
+  locationCode: string,
+  capacity: string,
+): Promise<{ cellarId: string; locationId: string }> {
+  const normalizedCellarName = requireSetupLabel(
+    cellarName,
+    "Cellar name",
+  )
+  const normalizedLocationCode = requireSetupLabel(
+    locationCode,
+    "Location code",
+  )
+  const normalizedCapacity = parseOptionalLocationCapacity(
+    capacity,
+  )
+  const cellarId = await createCellar(
+    householdId,
+    normalizedCellarName,
+  )
+
+  try {
+    const locationId = await createLocation(
+      householdId,
+      cellarId,
+      normalizedLocationCode,
+      normalizedCapacity === null
+        ? ""
+        : String(normalizedCapacity),
+    )
+
+    return { cellarId, locationId }
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Unable to create the initial location"
+
+    throw new Error(
+      `Cellar “${normalizedCellarName}” was created, but its initial location was not confirmed: ${message}`,
+    )
+  }
 }
 
 export async function renameLocation(

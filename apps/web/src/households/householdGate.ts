@@ -26,12 +26,12 @@ export function resolveHouseholdGate({
   isOnline,
   syncError,
 }: HouseholdGateInput): HouseholdGateState {
-  if (householdsLoading) {
-    return "loading"
-  }
-
   if (activeHouseholdId) {
     return "ready"
+  }
+
+  if (householdsLoading) {
+    return "loading"
   }
 
   if (householdError || syncError) {

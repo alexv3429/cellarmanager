@@ -22,6 +22,13 @@ the app does not reload in the middle of inventory work. Cached application
 files make the shell available offline, while PowerSync remains responsible for
 persisted cellar data and queued inventory operations.
 
+The production bundle contains legacy public PowerSync assets as well as the
+hashed worker and SQLite assets referenced by the application. The service
+worker excludes the redundant `@powersync/` copies from its precache. This
+avoids caching the same runtime twice and prevents URL-normalization redirects
+from blocking service-worker installation through a temporary Cloudflare
+tunnel.
+
 PWA lifecycle behavior must be tested from a production build. Vite's normal
 development server is useful for implementation but does not represent the
 installed service worker or phone networking path.

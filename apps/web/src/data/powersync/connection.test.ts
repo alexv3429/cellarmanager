@@ -18,6 +18,7 @@ const databaseMocks = vi.hoisted(() => ({
   connect: vi.fn(),
   disconnect: vi.fn(),
   disconnectAndClear: vi.fn(),
+  waitForReady: vi.fn(),
 }))
 
 vi.mock("./database", () => ({
@@ -59,6 +60,7 @@ describe("PowerSync account isolation", () => {
     databaseMocks.disconnectAndClear.mockResolvedValue(
       undefined,
     )
+    databaseMocks.waitForReady.mockResolvedValue(undefined)
 
     vi.stubGlobal("window", {
       localStorage: new MemoryStorage(),
@@ -83,6 +85,45 @@ describe("PowerSync account isolation", () => {
     ).not.toHaveBeenCalled()
 
     expect(databaseMocks.connect).toHaveBeenCalledTimes(1)
+  })
+
+  it("exposes the validated local database before the remote connection finishes", async () => {
+    let finishConnection: (() => void) | undefined
+
+    databaseMocks.connect.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finishConnection = resolve
+        }),
+    )
+
+    const { setPowerSyncAccess } =
+      await loadConnection()
+    const onLocalReady = vi.fn()
+    const access = setPowerSyncAccess({
+      userId: "user-1",
+      connectToBackend: true,
+      onLocalReady,
+    })
+
+    await vi.waitFor(() => {
+      expect(onLocalReady).toHaveBeenCalledTimes(1)
+      expect(databaseMocks.connect).toHaveBeenCalledTimes(1)
+    })
+
+    expect(
+      databaseMocks.waitForReady.mock.invocationCallOrder[0],
+    ).toBeLessThan(
+      onLocalReady.mock.invocationCallOrder[0],
+    )
+    expect(
+      onLocalReady.mock.invocationCallOrder[0],
+    ).toBeLessThan(
+      databaseMocks.connect.mock.invocationCallOrder[0],
+    )
+
+    finishConnection?.()
+    await access
   })
 
   it("clears the previous local database before switching users", async () => {

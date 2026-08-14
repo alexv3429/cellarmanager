@@ -93,14 +93,22 @@ headers to the following CellarManager fields:
 | Color | Required |
 | Appellation | Optional supporting metadata |
 | Area | Optional supporting metadata |
-| Bottle format | Required |
+| Bottle format | Required; may use an explicit value applied to every row |
 | Cellar | Optional; unresolved storage is handled before import |
 | Location | Optional; unresolved storage is handled before import |
-| Quantity | Required |
+| Quantity | Required; may use an explicit value applied to every row |
 
-Each target field may be assigned to at most one source column. Header-based
-suggestions recognize a conservative set of common English and French labels;
-unknown or duplicate-looking headers remain unmapped for explicit review.
+Each target field may be assigned to at most one source column. When a source
+omits a column because every row has the same value, the user may explicitly
+set that target field once for every row. This applies to required and optional
+fields—for example `750 ml` for Bottle format—and is shown in the sample,
+cleaning, preview, and commit plan exactly like a mapped source value. The
+importer never supplies such a value implicitly. A target field cannot use a
+source mapping and an all-row value at the same time.
+
+Header-based suggestions recognize a conservative set of common English and
+French labels; unknown or duplicate-looking headers remain unmapped for
+explicit review.
 
 The mapping UI shows up to three raw sample values per source column and a
 mapped preview of the first three source records. Every unmapped value is
@@ -116,13 +124,14 @@ be enabled. The importer must not invent or silently choose that location.
 
 ## Cleaning and normalization contract
 
-Roadmap step 0.3.8 applies deterministic, read-only cleaning to every mapped
-source row:
+Roadmap step 0.3.8 applies deterministic cleaning to the importer's working
+copy of every mapped source row. The uploaded source and authoritative cellar
+data remain unchanged during preparation:
 
 - surrounding whitespace is removed and repeated whitespace becomes one space
 - wine color is lowercased, matching the normal catalog entry rules
-- a blank vintage, `NV`, `N.V.`, `non-vintage`, `non millésime`, or
-  `sans millésime` becomes the canonical null/NV value
+- a blank vintage, `NV`, `N.V.`, `NM`, `N.M.`, `non-vintage`,
+  `non millésime`, or `sans millésime` becomes the canonical null/NV value
 - a numeric vintage must contain four digits and fall between 1800 and 2200
 - bottle formats accept a positive metric value in millilitres, centilitres,
   or litres and become a supported positive whole number of millilitres
@@ -135,14 +144,22 @@ make matching unsafe. Decimal comma and decimal point metric values are both
 accepted only when their conversion produces a whole millilitre.
 
 Producer, cuvée, color, bottle format, and quantity must contain a valid value
-on every row. Vintage and supporting metadata may be empty. Cellar and
-location remain optional at this stage and must be reconciled before commit.
+on every row. For blank cells in a mapped Cuvée column, the user may explicitly
+choose one import-only fallback: a fixed value, the row's normalized Color, or
+the row's normalized Appellation. Non-empty Cuvée cells are never replaced. A
+blank or unavailable selected fallback leaves the row invalid, so the database
+still receives a non-empty cuvée and its schema does not change. Vintage and
+supporting metadata may be empty. Cellar and location remain optional at this
+stage and must be reconciled before commit.
 
 Cleaning issues retain the source record number, physical line range, field,
 and raw source value. The original mapped source row and unmapped values remain
-available unchanged. Invalid rows are displayed first and block later import
-stages; the user must correct the source file and upload it again. This step
-does not match wines, reconcile locations, resolve issues, or write data.
+available unchanged. Safe, documented equivalences such as `NM` to `NV` are
+normalized automatically; this is a working-copy transformation, not a write
+to the source file or database. Invalid rows are displayed first and block later import
+stages; the user must correct the source file and upload it again, or configure
+the explicit blank-Cuvée fallback when that is the only issue. This step does
+not match wines, reconcile locations, resolve issues, or write data.
 
 ## Existing-wine matching contract
 
@@ -184,7 +201,11 @@ Cellar and location remain optional CSV columns, but both values must be
 resolved before an authoritative import can proceed. A missing, unknown,
 archived, or ambiguous value remains an explicit issue. The importer does not
 invent storage, select an overflow location, restore an archived record, or
-match storage owned by another household.
+match storage owned by another household. The user may explicitly create a new
+cellar and its first location from the resolution stage, then assign every
+currently storage-unresolved row to that destination. Cellar setup is written
+immediately and remains even if the CSV is later cancelled; bottle inventory is
+still written only by final transactional confirmation.
 
 For each matched location, the importer adds the quantities from every CSV row
 assigned there and compares that total with the location's current synchronized
