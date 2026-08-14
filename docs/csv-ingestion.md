@@ -75,7 +75,7 @@ The remaining importer stages stay intentionally separate:
 1. 0.3.8 cleans and normalizes mapped values.
 2. 0.3.9–0.3.12 match, reconcile, preview, and resolve issues.
 3. 0.3.13 performs the first transactional authoritative write.
-4. 0.3.14 adds full import regression fixtures.
+4. 0.3.14 locks the full flow with import regression fixtures.
 
 This separation preserves the required
 `upload -> map -> clean -> preview -> resolve -> preview -> commit` safety flow.
@@ -329,3 +329,35 @@ exact-retry action. The plan is removed locally after success, proven rollback,
 or sign-out, so a later intentional import of identical source rows remains
 possible. The original server receipt payload remains private and cannot be
 selected directly by browser roles.
+
+## Import regression fixture contract
+
+Roadmap step 0.3.14 locks the complete browser-side pipeline with small,
+synthetic CSV files under
+`apps/web/src/data/fixtures/csv-import/`. The fixtures contain no personal
+cellar data and are never submitted to the linked Supabase project.
+
+The permanent matrix covers three boundaries:
+
+- a messy but resolvable import uses an Excel separator directive, common
+  French headers, normalized text and metric formats, an unmapped multiline
+  note, an exact catalog match, an explicit ambiguous-wine selection, repeated
+  rows for one new semantic wine, explicit storage assignments, and an
+  advisory capacity warning
+- a structurally valid unsafe import retains invalid vintage, format, and
+  quantity issues together with unresolved wine and storage decisions, and it
+  remains blocked before commit planning
+- a structurally malformed import retains quote and column-count errors and is
+  rejected before column mapping
+
+`csvImportRegression.test.ts` composes the same parser, header suggestion,
+mapping, cleaning, catalog matching, storage reconciliation, issue resolution,
+preview, commit-plan, and RPC-adapter functions used by the application. Its
+successful fixture asserts the final immutable row payload and shared new-wine
+ID before a mocked RPC returns the receipt summary. The PostgreSQL regression
+suite remains responsible for the authoritative transaction, rollback,
+idempotency, and security behavior behind that RPC.
+
+Expectations are explicit rather than snapshots. Changing a fixture therefore
+requires an intentional review of source lines, normalization, decisions,
+summary counts, destinations, and final operation payloads.
