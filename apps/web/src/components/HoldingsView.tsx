@@ -64,20 +64,6 @@ interface InventoryLocationRow extends InventoryLocation {
   cellar_name: string
 }
 
-interface InventoryOperationRow {
-  id: string
-  operation_type: string
-  source_code: string | null
-  source_cellar_name: string | null
-  destination_code: string | null
-  destination_cellar_name: string | null
-  quantity: number
-  remove_reason: string | null
-  status: string
-  error_code: string | null
-  created_at_client: string
-}
-
 const HOLDINGS_QUERY = `
   select
     h.id,
@@ -162,50 +148,10 @@ const PENDING_OPERATIONS_QUERY = `
     and operation_type in ('ADD', 'MOVE', 'REMOVE')
 `
 
-const OPERATIONS_QUERY = `
-  select
-    operation.id,
-    operation.operation_type,
-    source.code as source_code,
-    source_cellar.name as source_cellar_name,
-    destination.code as destination_code,
-    destination_cellar.name as destination_cellar_name,
-    operation.quantity,
-    operation.remove_reason,
-    operation.status,
-    operation.error_code,
-    operation.created_at_client
-  from inventory_operations operation
-  left join locations source
-    on source.id = operation.source_location_id
-  left join cellars source_cellar
-    on source_cellar.id = source.cellar_id
-  left join locations destination
-    on destination.id = operation.destination_location_id
-  left join cellars destination_cellar
-    on destination_cellar.id = destination.cellar_id
-  where operation.household_id = ?
-  order by operation.created_at_client desc
-  limit 10
-`
-
 function locationLabel(
   location: InventoryLocationRow,
 ): string {
   return `${location.cellar_name} / ${location.code}`
-}
-
-function operationLocationLabel(
-  cellarName: string | null,
-  code: string | null,
-): string {
-  if (!code) {
-    return "—"
-  }
-
-  return cellarName
-    ? `${cellarName} / ${code}`
-    : code
 }
 
 export function HoldingsView({
@@ -251,12 +197,6 @@ export function HoldingsView({
     PENDING_OPERATIONS_QUERY,
     [householdId],
   )
-
-  const { data: operations } =
-    useQuery<InventoryOperationRow>(
-      OPERATIONS_QUERY,
-      [householdId],
-    )
 
   const holdings = useMemo(
     () =>
@@ -1611,52 +1551,6 @@ export function HoldingsView({
         </tbody>
       </table>
 
-      <h2>Recent operations</h2>
-
-      {operations.length === 0 ? (
-        <p>No inventory operations found.</p>
-      ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Operation</th>
-              <th>Movement</th>
-              <th>Quantity</th>
-              <th>Reason</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {operations.map((operation) => (
-              <tr key={operation.id}>
-                <td>{operation.operation_type}</td>
-                <td>
-                  {operationLocationLabel(
-                    operation.source_cellar_name,
-                    operation.source_code,
-                  )}
-                  {" → "}
-                  {operationLocationLabel(
-                    operation.destination_cellar_name,
-                    operation.destination_code,
-                  )}
-                </td>
-                <td>{operation.quantity}</td>
-                <td>
-                  {operation.remove_reason ?? "—"}
-                </td>
-                <td>
-                  {operation.status}
-                  {operation.error_code
-                    ? ` (${operation.error_code})`
-                    : ""}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
     </main>
   )
 }

@@ -5,6 +5,7 @@ import "./App.css"
 import { signOutAndClearLocalData } from "./auth/signOut"
 import { useSession } from "./auth/useSession"
 import { AppShell } from "./components/AppShell"
+import { ActivityView } from "./components/ActivityView"
 import { CatalogView } from "./components/CatalogView"
 import { CellarSetupView } from "./components/CellarSetupView"
 import { HoldingsView } from "./components/HoldingsView"
@@ -167,6 +168,15 @@ function ReadyAuthenticatedApp({
             openWineDetail(wineId, "inventory")
           }
           userId={userId}
+        />
+      ) : null}
+
+      {route.view === "activity" ? (
+        <ActivityView
+          householdId={activeHouseholdId}
+          onOpenWine={(wineId) =>
+            openWineDetail(wineId, "activity")
+          }
         />
       ) : null}
 
