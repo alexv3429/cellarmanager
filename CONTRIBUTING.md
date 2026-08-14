@@ -41,6 +41,12 @@ Every behavior change needs a regression test and documentation when it affects
 users, operators, security, architecture, data formats, or contributor work.
 The pull-request template records the required evidence.
 
+Keep current-facing documentation in the present tense and update
+`docs/product-roadmap.md` before work crosses a milestone boundary. Release
+notes, acceptance records, and migration evidence are historical documents;
+preserve their recorded facts and add a clearly dated note when later work
+changes their context.
+
 The current product lives in `apps/web/`, `supabase/`, and the root Cloudflare
 configuration. The retired v0.1 runtime is available only from historical Git
 tags and must not be reintroduced into the active tree.
@@ -48,6 +54,7 @@ tags and must not be reintroduced into the active tree.
 See:
 
 - [`README.md`](README.md)
+- [`docs/product-roadmap.md`](docs/product-roadmap.md)
 - [`docs/v03-roadmap.md`](docs/v03-roadmap.md)
 - [`docs/github-protection.md`](docs/github-protection.md)
 - [`docs/adr/`](docs/adr/)
