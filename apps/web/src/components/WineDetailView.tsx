@@ -145,6 +145,8 @@ function locationLabel(
 
 function returnViewLabel(view: AppView): string {
   switch (view) {
+    case "activity":
+      return "activity"
     case "inventory":
       return "inventory"
     case "setup":

@@ -11,12 +11,14 @@ import {
 describe("app navigation", () => {
   it("maps application paths to views", () => {
     expect(getAppViewFromPathname("/")).toBe("inventory")
+    expect(getAppViewFromPathname("/activity")).toBe("activity")
     expect(getAppViewFromPathname("/catalog")).toBe("catalog")
     expect(getAppViewFromPathname("/import")).toBe("import")
     expect(getAppViewFromPathname("/setup")).toBe("setup")
   })
 
   it("accepts trailing slashes", () => {
+    expect(getAppViewFromPathname("/activity/")).toBe("activity")
     expect(getAppViewFromPathname("/catalog/")).toBe("catalog")
     expect(getAppViewFromPathname("/import/")).toBe("import")
     expect(getAppViewFromPathname("/setup/")).toBe("setup")
@@ -64,6 +66,7 @@ describe("app navigation", () => {
 
   it("maps views to canonical paths", () => {
     expect(getAppViewPath("inventory")).toBe("/")
+    expect(getAppViewPath("activity")).toBe("/activity")
     expect(getAppViewPath("catalog")).toBe("/catalog")
     expect(getAppViewPath("import")).toBe("/import")
     expect(getAppViewPath("setup")).toBe("/setup")
@@ -81,6 +84,12 @@ describe("app navigation", () => {
         wineDetailReturnView: "inventory",
       }),
     ).toBe("inventory")
+
+    expect(
+      getWineDetailReturnView({
+        wineDetailReturnView: "activity",
+      }),
+    ).toBe("activity")
 
     expect(
       getWineDetailReturnView({

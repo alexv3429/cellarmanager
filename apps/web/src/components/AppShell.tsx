@@ -1,4 +1,4 @@
-import { useStatus } from "@powersync/react"
+import { useQuery, useStatus } from "@powersync/react"
 import {
   type ReactNode,
   useState,
@@ -8,6 +8,7 @@ import type {
   RegisteredDevicesState,
 } from "../devices/useRegisteredDevices"
 import type { AppView } from "../navigation/appNavigation"
+import { getSyncStatusPresentation } from "../data/syncStatusView"
 import { Notice } from "./Notice"
 
 interface HouseholdOption {
@@ -30,6 +31,27 @@ interface AppShellProps {
   view: AppView
 }
 
+interface PendingOperationCountRow {
+  pending_count: number
+}
+
+const PENDING_OPERATION_COUNT_QUERY = `
+  select count(*) as pending_count
+  from inventory_operations
+  where household_id = ?
+    and status = 'PENDING'
+`
+
+function errorMessage(error: unknown): string | null {
+  if (!error) {
+    return null
+  }
+
+  return error instanceof Error
+    ? error.message
+    : String(error)
+}
+
 export function AppShell({
   activeHouseholdId,
   children,
@@ -45,9 +67,39 @@ export function AppShell({
   view,
 }: AppShellProps) {
   const status = useStatus()
+  const {
+    data: pendingOperationCounts,
+    error: pendingOperationCountError,
+  } = useQuery<PendingOperationCountRow>(
+    PENDING_OPERATION_COUNT_QUERY,
+    [activeHouseholdId],
+  )
 
   const [signOutError, setSignOutError] =
     useState<string | null>(null)
+
+  const pendingOperationCount = Math.max(
+    0,
+    Number(pendingOperationCounts[0]?.pending_count ?? 0),
+  )
+  const effectiveSyncError =
+    syncError ??
+    errorMessage(status.uploadError) ??
+    errorMessage(status.downloadError) ??
+    errorMessage(pendingOperationCountError)
+  const syncPresentation = getSyncStatusPresentation({
+    connected: status.connected,
+    connecting: status.connecting,
+    downloading: status.downloading,
+    error: effectiveSyncError,
+    hasSynced: status.hasSynced === true,
+    isOnline,
+    pendingOperationCount,
+    uploading: status.uploading,
+  })
+  const lastSyncLabel = status.lastSyncedAt
+    ? `Last complete sync ${status.lastSyncedAt.toLocaleString()}`
+    : null
 
   async function signOut() {
     setSignOutError(null)
@@ -86,18 +138,27 @@ export function AppShell({
             CellarManager
           </div>
 
-          <div className="app-shell__status">
+          <div
+            aria-live="polite"
+            className={`app-shell__sync app-shell__sync--${syncPresentation.tone}`}
+            role="status"
+            title={lastSyncLabel ?? undefined}
+          >
+            <span aria-hidden="true" className="app-shell__sync-dot" />
             <span>
-              {status.connected ? "Connected" : "Offline"}
+              <strong>{syncPresentation.label}</strong>
+              <small>{syncPresentation.detail}</small>
             </span>
-            <span aria-hidden="true"> · </span>
-            <span>
-              {status.hasSynced
-                ? "Local data ready"
-                : "Initial synchronization pending"}
-            </span>
-            <span aria-hidden="true"> · </span>
-            <span>Device: {deviceStatus}</span>
+          </div>
+
+          <div className="app-shell__device-status">
+            Device: {deviceStatus}
+            {lastSyncLabel ? (
+              <>
+                <span aria-hidden="true"> · </span>
+                {lastSyncLabel}
+              </>
+            ) : null}
           </div>
 
           {isOfflineAccess ? (
@@ -155,6 +216,14 @@ export function AppShell({
         </button>
 
         <button
+          aria-pressed={view === "activity"}
+          onClick={() => onViewChange("activity")}
+          type="button"
+        >
+          Activity
+        </button>
+
+        <button
           aria-pressed={view === "catalog"}
           onClick={() => onViewChange("catalog")}
           type="button"
@@ -180,7 +249,7 @@ export function AppShell({
       </nav>
 
       {householdError ||
-      syncError ||
+      effectiveSyncError ||
       signOutError ||
       deviceRegistration.error ? (
         <div className="app-shell__alerts">
@@ -190,9 +259,9 @@ export function AppShell({
             </Notice>
           ) : null}
 
-          {syncError ? (
+          {effectiveSyncError ? (
             <Notice role="alert" tone="error">
-              Synchronization paused: {syncError}
+              Synchronization paused: {effectiveSyncError}
             </Notice>
           ) : null}
 
