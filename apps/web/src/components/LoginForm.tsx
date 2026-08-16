@@ -1,6 +1,9 @@
 import { type FormEvent, useState } from "react"
 
-import { resolveSignUpSuccess } from "../auth/signUpFlow"
+import {
+  getSignUpEmailRedirectTo,
+  resolveSignUpSuccess,
+} from "../auth/signUpFlow"
 import { supabase } from "../data/supabase"
 import { Notice } from "./Notice"
 
@@ -63,6 +66,11 @@ export function LoginForm() {
       } = await supabase.auth.signUp({
         email: email.trim(),
         password,
+        options: {
+          emailRedirectTo: getSignUpEmailRedirectTo(
+            window.location.origin,
+          ),
+        },
       })
 
       if (signUpError) {

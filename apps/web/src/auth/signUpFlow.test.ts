@@ -1,6 +1,31 @@
 import { describe, expect, it } from "vitest"
 
-import { resolveSignUpSuccess } from "./signUpFlow"
+import {
+  getSignUpEmailRedirectTo,
+  resolveSignUpSuccess,
+} from "./signUpFlow"
+
+describe("sign-up email redirect", () => {
+  it("uses the deployed application's origin", () => {
+    expect(
+      getSignUpEmailRedirectTo(
+        "https://cellarmanager.example.com/import?step=2",
+      ),
+    ).toBe("https://cellarmanager.example.com")
+  })
+
+  it("supports a local HTTP origin", () => {
+    expect(
+      getSignUpEmailRedirectTo("http://127.0.0.1:5173"),
+    ).toBe("http://127.0.0.1:5173")
+  })
+
+  it("rejects origins that cannot be used for web redirects", () => {
+    expect(() =>
+      getSignUpEmailRedirectTo("file:///tmp/cellarmanager"),
+    ).toThrow("must use HTTP or HTTPS")
+  })
+})
 
 describe("sign-up completion", () => {
   it("leaves immediate authenticated signup to the session transition", () => {
