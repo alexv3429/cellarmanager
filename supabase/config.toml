@@ -412,3 +412,22 @@ enabled = true
 # declarative_schema_path = "./database"
 # JSON string passed through to pg-delta SQL formatting.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":80,\"commaStyle\":\"trailing\"}"
+
+# Hosted production overrides. `supabase config push` merges this block over the
+# local development defaults when targeting the linked project, which prevents
+# localhost-only Auth URLs or local email settings from reaching production.
+[remotes.production]
+project_id = "sxdqcvnjtayfxinyospb"
+
+[remotes.production.auth]
+site_url = "https://cellarmanager.cellarcloud.workers.dev"
+additional_redirect_urls = ["https://cellarmanager.cellarcloud.workers.dev"]
+
+[remotes.production.auth.email]
+enable_confirmations = true
+max_frequency = "1m"
+otp_length = 8
+
+[remotes.production.auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true

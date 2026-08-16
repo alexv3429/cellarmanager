@@ -4,6 +4,18 @@ export interface SignUpSuccessState {
   message: string | null
 }
 
+export function getSignUpEmailRedirectTo(
+  applicationOrigin: string,
+): string {
+  const origin = new URL(applicationOrigin)
+
+  if (origin.protocol !== "http:" && origin.protocol !== "https:") {
+    throw new Error("The application origin must use HTTP or HTTPS")
+  }
+
+  return origin.origin
+}
+
 export function resolveSignUpSuccess(
   hasSession: boolean,
 ): SignUpSuccessState {
