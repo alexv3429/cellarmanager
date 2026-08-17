@@ -41,7 +41,7 @@ describe("sign-up completion", () => {
       nextMode: "sign-in",
       clearPassword: true,
       message:
-        "Check your email for a confirmation link, then sign in.",
+        "Check your inbox and Spam folder for a confirmation link, then sign in.",
     })
   })
 })

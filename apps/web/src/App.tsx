@@ -13,6 +13,7 @@ import { ImportView } from "./components/ImportView"
 import { LoginForm } from "./components/LoginForm"
 import { OnboardingView } from "./components/OnboardingView"
 import { Notice } from "./components/Notice"
+import { ResetPasswordForm } from "./components/ResetPasswordForm"
 import { WineDetailView } from "./components/WineDetailView"
 import {
   setPowerSyncAccess,
@@ -341,6 +342,8 @@ export default function App() {
     isLoading,
     isOnline,
     isOfflineAccess,
+    isPasswordRecovery,
+    finishPasswordRecovery,
     error: sessionError,
   } = useSession()
 
@@ -358,6 +361,27 @@ export default function App() {
     let active = true
 
     setSyncError(null)
+
+    if (isPasswordRecovery) {
+      setPreparedUserId(null)
+
+      void setPowerSyncAccess({
+        userId: null,
+        connectToBackend: false,
+      }).catch((error: unknown) => {
+        if (active) {
+          setSyncError(
+            error instanceof Error
+              ? error.message
+              : "Unable to pause local cellar data",
+          )
+        }
+      })
+
+      return () => {
+        active = false
+      }
+    }
 
     void setPowerSyncAccess({
       userId,
@@ -384,7 +408,7 @@ export default function App() {
     return () => {
       active = false
     }
-  }, [isOnline, session, userId])
+  }, [isOnline, isPasswordRecovery, session, userId])
 
   if (isLoading) {
     return (
@@ -401,6 +425,26 @@ export default function App() {
         <h1>CellarManager</h1>
         <Notice role="alert" tone="error">
           {sessionError}
+        </Notice>
+      </main>
+    )
+  }
+
+  if (isPasswordRecovery) {
+    if (session) {
+      return (
+        <ResetPasswordForm
+          onComplete={finishPasswordRecovery}
+        />
+      )
+    }
+
+    return (
+      <main className="standalone-page">
+        <h1>CellarManager</h1>
+        <Notice role="status" tone="warning">
+          Reconnect to the internet to use this password reset
+          link.
         </Notice>
       </main>
     )

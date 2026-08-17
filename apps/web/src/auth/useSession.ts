@@ -1,7 +1,14 @@
 import type { Session } from "@supabase/supabase-js"
 import { useEffect, useState } from "react"
 
-import { supabase } from "../data/supabase"
+import {
+  readPasswordRecoveryPending,
+  setPasswordRecoveryPending,
+} from "./authEmailFlow"
+import {
+  startedFromPasswordRecoveryLink,
+  supabase,
+} from "../data/supabase"
 import {
   resolveOfflineUserId,
   saveLocalAccess,
@@ -43,6 +50,15 @@ export function useSession() {
 
   const [isLoading, setIsLoading] = useState(true)
 
+  const [isPasswordRecovery, setIsPasswordRecovery] =
+    useState(
+      () =>
+        startedFromPasswordRecoveryLink ||
+        readPasswordRecoveryPending(
+          window.sessionStorage,
+        ),
+    )
+
   const [isOnline, setIsOnline] = useState(
     () => navigator.onLine,
   )
@@ -60,6 +76,11 @@ export function useSession() {
 
       setSession(null)
       setUserId(null)
+      setIsPasswordRecovery(false)
+      setPasswordRecoveryPending(
+        window.sessionStorage,
+        false,
+      )
       setError(null)
       setIsLoading(false)
     }
@@ -174,7 +195,7 @@ export function useSession() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(
-      (_event, nextSession) => {
+      (event, nextSession) => {
         if (!active) {
           return
         }
@@ -185,6 +206,14 @@ export function useSession() {
         if (!navigator.onLine) {
           applyOfflineAccess()
           return
+        }
+
+        if (event === "PASSWORD_RECOVERY") {
+          setIsPasswordRecovery(true)
+          setPasswordRecoveryPending(
+            window.sessionStorage,
+            true,
+          )
         }
 
         if (nextSession) {
@@ -228,6 +257,14 @@ export function useSession() {
     userId,
     isLoading,
     isOnline,
+    isPasswordRecovery,
+    finishPasswordRecovery: () => {
+      setIsPasswordRecovery(false)
+      setPasswordRecoveryPending(
+        window.sessionStorage,
+        false,
+      )
+    },
     isOfflineAccess:
       userId !== null && session === null,
     error,
