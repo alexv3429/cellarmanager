@@ -1516,6 +1516,21 @@
   background: transparent;
 }
 
+.standalone-page__auth-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+}
+
+.standalone-page__auth-links button {
+  min-height: 44px;
+  padding: 4px 0;
+  border: 0;
+  color: var(--accent);
+  background: transparent;
+  text-align: left;
+}
+
 .cellar-setup-management__heading {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(16rem, 24rem);

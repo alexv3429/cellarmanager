@@ -1,13 +1,72 @@
 import { type FormEvent, useState } from "react"
 
 import {
+  getAuthEmailRedirectTo,
+  getAuthEmailRequestMessage,
+} from "../auth/authEmailFlow"
+import {
   getSignUpEmailRedirectTo,
   resolveSignUpSuccess,
 } from "../auth/signUpFlow"
 import { supabase } from "../data/supabase"
 import { Notice } from "./Notice"
 
-type AuthMode = "sign-in" | "sign-up"
+type AuthMode =
+  | "sign-in"
+  | "sign-up"
+  | "forgot-password"
+  | "resend-confirmation"
+
+function getAuthModeTitle(mode: AuthMode): string {
+  if (mode === "sign-up") {
+    return "Create account"
+  }
+
+  if (mode === "forgot-password") {
+    return "Forgot password"
+  }
+
+  if (mode === "resend-confirmation") {
+    return "Send confirmation email again"
+  }
+
+  return "Sign in"
+}
+
+function getSubmitLabel(
+  mode: AuthMode,
+  isSubmitting: boolean,
+): string {
+  if (isSubmitting) {
+    if (mode === "sign-up") {
+      return "Creating account…"
+    }
+
+    if (mode === "forgot-password") {
+      return "Sending reset link…"
+    }
+
+    if (mode === "resend-confirmation") {
+      return "Sending confirmation…"
+    }
+
+    return "Signing in…"
+  }
+
+  if (mode === "sign-up") {
+    return "Create account"
+  }
+
+  if (mode === "forgot-password") {
+    return "Send password reset link"
+  }
+
+  if (mode === "resend-confirmation") {
+    return "Send confirmation email"
+  }
+
+  return "Sign in"
+}
 
 function getAuthErrorMessage(error: unknown): string {
   return error instanceof Error
@@ -46,10 +105,12 @@ export function LoginForm() {
     setIsSubmitting(true)
 
     try {
+      const normalizedEmail = email.trim()
+
       if (mode === "sign-in") {
         const { error: signInError } =
           await supabase.auth.signInWithPassword({
-            email: email.trim(),
+            email: normalizedEmail,
             password,
           })
 
@@ -60,11 +121,58 @@ export function LoginForm() {
         return
       }
 
+      if (mode === "forgot-password") {
+        const { error: resetError } =
+          await supabase.auth.resetPasswordForEmail(
+            normalizedEmail,
+            {
+              redirectTo: getAuthEmailRedirectTo(
+                window.location.origin,
+              ),
+            },
+          )
+
+        if (resetError) {
+          setError(resetError.message)
+          return
+        }
+
+        setMessage(
+          getAuthEmailRequestMessage("password-reset"),
+        )
+        return
+      }
+
+      if (mode === "resend-confirmation") {
+        const { error: resendError } =
+          await supabase.auth.resend({
+            type: "signup",
+            email: normalizedEmail,
+            options: {
+              emailRedirectTo: getAuthEmailRedirectTo(
+                window.location.origin,
+              ),
+            },
+          })
+
+        if (resendError) {
+          setError(resendError.message)
+          return
+        }
+
+        setMessage(
+          getAuthEmailRequestMessage(
+            "signup-confirmation",
+          ),
+        )
+        return
+      }
+
       const {
         data,
         error: signUpError,
       } = await supabase.auth.signUp({
-        email: email.trim(),
+        email: normalizedEmail,
         password,
         options: {
           emailRedirectTo: getSignUpEmailRedirectTo(
@@ -102,9 +210,20 @@ export function LoginForm() {
       <p>Local-first wine cellar inventory.</p>
 
       <form onSubmit={handleSubmit}>
-        <h2>
-          {mode === "sign-in" ? "Sign in" : "Create account"}
-        </h2>
+        <h2>{getAuthModeTitle(mode)}</h2>
+
+        {mode === "forgot-password" ? (
+          <p>
+            We will email you a secure link to choose a new
+            password.
+          </p>
+        ) : null}
+
+        {mode === "resend-confirmation" ? (
+          <p>
+            Enter the address used to create your account.
+          </p>
+        ) : null}
 
         <label>
           Email
@@ -120,36 +239,56 @@ export function LoginForm() {
           />
         </label>
 
-        <label>
-          Password
-          <input
-            autoComplete={
-              mode === "sign-up"
-                ? "new-password"
-                : "current-password"
-            }
-            disabled={isSubmitting}
-            onChange={(event) =>
-              setPassword(event.target.value)
-            }
-            required
-            type="password"
-            value={password}
-          />
-        </label>
+        {mode === "sign-in" || mode === "sign-up" ? (
+          <label>
+            Password
+            <input
+              autoComplete={
+                mode === "sign-up"
+                  ? "new-password"
+                  : "current-password"
+              }
+              disabled={isSubmitting}
+              minLength={mode === "sign-up" ? 6 : undefined}
+              onChange={(event) =>
+                setPassword(event.target.value)
+              }
+              required
+              type="password"
+              value={password}
+            />
+          </label>
+        ) : null}
 
         <button
           disabled={isSubmitting}
           type="submit"
         >
-          {isSubmitting
-            ? mode === "sign-up"
-              ? "Creating account…"
-              : "Signing in…"
-            : mode === "sign-up"
-              ? "Create account"
-              : "Sign in"}
+          {getSubmitLabel(mode, isSubmitting)}
         </button>
+
+        {mode === "sign-in" ? (
+          <div className="standalone-page__auth-links">
+            <button
+              disabled={isSubmitting}
+              onClick={() =>
+                changeMode("forgot-password")
+              }
+              type="button"
+            >
+              Forgot password?
+            </button>
+            <button
+              disabled={isSubmitting}
+              onClick={() =>
+                changeMode("resend-confirmation")
+              }
+              type="button"
+            >
+              Send confirmation email again
+            </button>
+          </div>
+        ) : null}
 
         {message ? (
           <Notice role="status" tone="success">
@@ -167,18 +306,26 @@ export function LoginForm() {
       <p className="standalone-page__mode-switch">
         {mode === "sign-in"
           ? "New to CellarManager?"
-          : "Already have an account?"}
-        {" "}
+          : mode === "sign-up"
+            ? "Already have an account?"
+            : null}
+        {mode === "sign-in" || mode === "sign-up"
+          ? " "
+          : null}
         <button
           disabled={isSubmitting}
-          onClick={() =>
+          onClick={() => {
             changeMode(
               mode === "sign-in" ? "sign-up" : "sign-in",
             )
-          }
+          }}
           type="button"
         >
-          {mode === "sign-in" ? "Create account" : "Sign in"}
+          {mode === "sign-in"
+            ? "Create account"
+            : mode === "sign-up"
+              ? "Sign in"
+              : "Back to sign in"}
         </button>
       </p>
     </main>

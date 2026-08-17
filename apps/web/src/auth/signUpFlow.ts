@@ -1,3 +1,5 @@
+import { getAuthEmailRedirectTo } from "./authEmailFlow"
+
 export interface SignUpSuccessState {
   nextMode: "sign-in" | "sign-up"
   clearPassword: boolean
@@ -7,13 +9,7 @@ export interface SignUpSuccessState {
 export function getSignUpEmailRedirectTo(
   applicationOrigin: string,
 ): string {
-  const origin = new URL(applicationOrigin)
-
-  if (origin.protocol !== "http:" && origin.protocol !== "https:") {
-    throw new Error("The application origin must use HTTP or HTTPS")
-  }
-
-  return origin.origin
+  return getAuthEmailRedirectTo(applicationOrigin)
 }
 
 export function resolveSignUpSuccess(
@@ -31,6 +27,6 @@ export function resolveSignUpSuccess(
     nextMode: "sign-in",
     clearPassword: true,
     message:
-      "Check your email for a confirmation link, then sign in.",
+      "Check your inbox and Spam folder for a confirmation link, then sign in.",
   }
 }
