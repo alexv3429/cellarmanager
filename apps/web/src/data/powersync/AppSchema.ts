@@ -32,7 +32,101 @@ const wines = new Table(
     appellation: column.text,
     area: column.text,
     format_ml: column.integer,
+    country: column.text,
+    region: column.text,
+    classification: column.text,
+    vineyard: column.text,
+    sweetness: column.text,
+    alcohol_abv: column.text,
+    drink_from_year: column.integer,
+    drink_until_year: column.integer,
+    serving_temperature_min_c: column.text,
+    serving_temperature_max_c: column.text,
+    serving_guidance: column.text,
     created_at: column.text
+  },
+  { indexes: {} }
+);
+
+const wine_notes = new Table(
+  {
+    // id column (text) is automatically included
+    household_id: column.text,
+    wine_id: column.text,
+    user_id: column.text,
+    notes: column.text,
+    created_at: column.text,
+    updated_at: column.text
+  },
+  { indexes: {} }
+);
+
+const wine_grape_components = new Table(
+  {
+    // id column (text) is automatically included
+    household_id: column.text,
+    wine_id: column.text,
+    grape_name: column.text,
+    percentage: column.text,
+    display_order: column.integer,
+    created_at: column.text
+  },
+  { indexes: {} }
+);
+
+const wine_food_pairings = new Table(
+  {
+    // id column (text) is automatically included
+    household_id: column.text,
+    wine_id: column.text,
+    pairing: column.text,
+    display_order: column.integer,
+    created_at: column.text
+  },
+  { indexes: {} }
+);
+
+const wine_certifications = new Table(
+  {
+    // id column (text) is automatically included
+    household_id: column.text,
+    wine_id: column.text,
+    certification: column.text,
+    display_order: column.integer,
+    created_at: column.text
+  },
+  { indexes: {} }
+);
+
+const wine_external_identifiers = new Table(
+  {
+    // id column (text) is automatically included
+    household_id: column.text,
+    wine_id: column.text,
+    identifier_scheme: column.text,
+    identifier_value: column.text,
+    external_url: column.text,
+    created_at: column.text
+  },
+  { indexes: {} }
+);
+
+const wine_field_provenance = new Table(
+  {
+    // id column (text) is automatically included
+    household_id: column.text,
+    wine_id: column.text,
+    field_name: column.text,
+    source_kind: column.text,
+    source_name: column.text,
+    source_reference: column.text,
+    source_url: column.text,
+    value_snapshot: column.text,
+    confidence: column.text,
+    retrieved_at: column.text,
+    applied_at: column.text,
+    applied_by: column.text,
+    is_current: column.integer
   },
   { indexes: {} }
 );
@@ -119,6 +213,12 @@ export const AppSchema = new Schema({
   households,
   household_members,
   wines,
+  wine_notes,
+  wine_grape_components,
+  wine_food_pairings,
+  wine_certifications,
+  wine_external_identifiers,
+  wine_field_provenance,
   cellars,
   locations,
   holdings,
