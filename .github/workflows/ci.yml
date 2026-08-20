@@ -37,6 +37,9 @@ jobs:
       - name: Check repository policy
         run: npm run repository:check
 
+      - name: Test the LWIN snapshot importer
+        run: npm run lwin:test
+
       - name: Lint, test, and build the web application
         run: npm run web:ci
 

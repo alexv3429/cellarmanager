@@ -9,16 +9,19 @@
   ],
   "scripts": {
     "repository:check": "node scripts/check_repository.mjs",
+    "lwin:import": "node scripts/lwin/import_snapshot.mjs",
+    "lwin:test": "node --test scripts/lwin/*.test.mjs",
     "web:dev": "npm run dev --workspace @cellarmanager/web",
     "web:lint": "npm run lint --workspace @cellarmanager/web",
     "web:test": "npm run test --workspace @cellarmanager/web",
     "web:build": "npm run build --workspace @cellarmanager/web",
     "web:ci": "npm run web:lint && npm run web:test && npm run web:build",
-    "ci": "npm run repository:check && npm run web:ci",
+    "ci": "npm run repository:check && npm run lwin:test && npm run web:ci",
     "audit": "npm audit --omit=dev --audit-level=high",
     "supabase": "supabase"
   },
   "devDependencies": {
+    "@excel.js/exceljs": "^0.12.0",
     "supabase": "^2.111.0",
     "wrangler": "^4.119.0"
   }

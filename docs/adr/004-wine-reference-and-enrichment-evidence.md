@@ -30,7 +30,7 @@ CellarManager assigns its own stable UUIDs to four reference concepts:
    lot when known
 4. package, including bottle format and GTIN when known
 
-LWIN7, LWIN11/LWIN16, GTIN, Wine-Searcher IDs, provider IDs, and producer SKUs
+LWIN7, LWIN11/LWIN16/LWIN18, GTIN, Wine-Searcher IDs, provider IDs, and producer SKUs
 are external identifiers attached to those concepts. No provider identifier is
 the database primary key. References can be merged or superseded without
 rewriting household inventory history.

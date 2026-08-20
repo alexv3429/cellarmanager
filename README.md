@@ -71,6 +71,7 @@ Manage local Supabase from the repository root:
 ## Validation
 
     npm run repository:check
+    npm run lwin:test
     npm run supabase -- test db
     npm run web:ci
     npm run audit
