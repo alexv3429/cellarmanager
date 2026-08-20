@@ -32,6 +32,8 @@ const wines = new Table(
     appellation: column.text,
     area: column.text,
     format_ml: column.integer,
+    wine_reference_id: column.text,
+    wine_reference_type: column.text,
     created_at: column.text
   },
   { indexes: {} }
