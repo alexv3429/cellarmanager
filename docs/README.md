@@ -3,11 +3,12 @@
 The repository documentation describes the current local-first application and
 retains only the evidence needed to understand its released migration history.
 
-## Current product
+## Current product and active design
 
 - [`../README.md`](../README.md) - application, development, validation, and deployment overview
 - [`product-roadmap.md`](product-roadmap.md) - canonical v0.4-to-v1.0 product sequence
-- [`adr/README.md`](adr/README.md) - architecture decisions and their status
+- [`wine-reference-validation.md`](wine-reference-validation.md) - LWIN coverage, conservative matching, and fallback evidence for v0.4
+- [`adr/README.md`](adr/README.md) - released architecture and accepted v0.4 design decisions
 - [`activity-and-sync.md`](activity-and-sync.md) - recent inventory activity and synchronization-state UX
 - [`csv-ingestion.md`](csv-ingestion.md) - complete guarded CSV import contract
 - [`pwa-mobile-accessibility.md`](pwa-mobile-accessibility.md) - install, phone interaction, and accessibility baseline

@@ -67,28 +67,29 @@ end-to-end web-enrichment workflow for drinking windows and food pairings.
 “Reliable” enrichment means that every production source is suitable for
 programmatic use, has documented access and licensing terms, and can be matched
 to a wine conservatively. Retrieved values retain their provider, provider wine
-ID or URL when available, and retrieval time. The user reviews candidates before
-applying them, and enrichment never silently replaces a user-maintained value.
-Provider outages, missing matches, rate limits, and partial results must leave
-the existing cellar usable and unchanged.
+ID or URL when available, and retrieval time. Ambiguous candidates require
+review. Automatic links require independent hard guards and a regression set
+with zero known false automatic matches. Enrichment never silently replaces a
+user-maintained value. Provider outages, missing matches, rate limits, and
+partial results must leave the existing cellar usable and unchanged.
 
 | Step | Scope |
 |---|---|
-| 0.4.1 | Define the richer wine-detail schema and field-provenance rules |
-| 0.4.2 | Personal wine notes and editing |
-| 0.4.3 | Drinking-window, food-pairing, and serving-guidance fields and editing |
-| 0.4.4 | Country, region, classification, and vineyard |
-| 0.4.5 | Grapes, sweetness, alcohol, and certifications |
-| 0.4.6 | External wine identifiers used for conservative enrichment matching |
-| 0.4.7 | Restore corresponding archived v0.1 metadata through current models |
-| 0.4.8 | Rich catalog filtering and search |
-| 0.4.9 | Duplicate detection and explicit merge workflow |
-| 0.4.10 | Assess source quality, coverage, licensing, and access; select the production enrichment provider or complementary providers |
-| 0.4.11 | Secure provider-neutral retrieval infrastructure with server-side credentials, caching, rate limiting, and error handling |
-| 0.4.12 | Production provider integration covering drinking windows and food pairings |
-| 0.4.13 | Conservative wine matching plus preview, review, and provenance-preserving apply workflow |
-| 0.4.14 | CSV export with a documented portable format |
-| 0.4.15 | Optional export/re-import round-trip compatibility |
+| 0.4.1 | Validate and accept the shared wine-reference, evidence, matching, and fallback architecture |
+| 0.4.2 | Shared producer, product, release, package, alias, supersession, and external-identifier schema |
+| 0.4.3 | LWIN reference snapshot import, attribution, refresh, and missing-reference handling |
+| 0.4.4 | Conservative matching candidates, household decisions, rejection memory, and review workflow |
+| 0.4.5 | Trial source quality, coverage, access, and written usage rights; select complementary production providers |
+| 0.4.6 | Typed enrichment claims, source/licence policy, entitlement boundary, and recommendation-projection schema |
+| 0.4.7 | Secure provider-neutral job infrastructure with server-side credentials, caching, retries, rate limits, and offline demand states |
+| 0.4.8 | Production drinking-window provider adapter, review, attribution, and exact-versus-estimated display |
+| 0.4.9 | Production food-pairing provider adapter, structured categories, review, attribution, and style fallback |
+| 0.4.10 | Personal notes, manual overrides, serving guidance, and editing |
+| 0.4.11 | Country, region, classification, vineyard, grapes, sweetness, alcohol, and certifications |
+| 0.4.12 | Restore corresponding archived v0.1 metadata through current models |
+| 0.4.13 | Rich catalog filtering, search, and data-quality diagnostics |
+| 0.4.14 | Duplicate detection and explicit merge workflow |
+| 0.4.15 | CSV export with a documented portable format and optional round-trip compatibility |
 | 0.4.16 | v0.4 acceptance and release |
 
 Barcode scanning and lookup, photos, OCR, purchase cost, and valuation are not

@@ -15,8 +15,12 @@ CellarManager is a local-first wine cellar inventory application.
 PostgreSQL holdings are authoritative. ADD, MOVE and REMOVE are recorded as
 inventory operations, can be queued offline, and converge safely after reconnect.
 
-See `docs/adr/001-v02-target-architecture.md` and
-`docs/adr/002-inventory-operation-model.md`.
+See [`docs/adr/001-v02-target-architecture.md`](docs/adr/001-v02-target-architecture.md)
+and [`docs/adr/002-inventory-operation-model.md`](docs/adr/002-inventory-operation-model.md)
+for the released application foundation. The accepted
+[`docs/adr/004-wine-reference-and-enrichment-evidence.md`](docs/adr/004-wine-reference-and-enrichment-evidence.md)
+defines the shared wine-reference and enrichment boundary for v0.4; its
+implementation follows the product roadmap below.
 
 ## v0.3 capabilities
 
