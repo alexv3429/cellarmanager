@@ -47,12 +47,30 @@ Candidate generation and reviewed household decisions belong to roadmap step
   promoted here automatically.
 - `wine_reference_external_identifiers` attaches an authority, scheme, and
   value to one identity. LWIN7 belongs to products, LWIN11 to releases, and
-  LWIN16 to packages. GTIN schemes belong to packages.
+  LWIN16 and pack-aware LWIN18 belong to packages. GTIN schemes belong to
+  packages.
 - `wine_reference_supersessions` distinguishes a duplicate merge from a real
   successor relationship. Edges must stay within one identity type and cannot
   form cycles. Existing household links are not rewritten.
 
 External identifiers are alternate keys, never CellarManager primary keys.
+Liv-ex encodes non-vintage products as `1000` inside longer LWINs; that provider
+encoding stays in the external identifier. CellarManager keeps the internal
+vintage null and uses an actual NV release discriminator when one is known.
+
+## LWIN source cache
+
+Roadmap step 0.4.3 imports the official LWIN7 workbook into a separate,
+versioned source cache. The cache retains live, combined, and deleted rows and
+their successor references; it does not eagerly create a permanent
+CellarManager product for every provider row. Only a later reviewed match
+promotes the relevant source row into this UUID-backed hierarchy.
+
+The active cache changes atomically after complete validation. Source rows,
+snapshot metadata, attribution, and durable missing-identifier demands remain
+service-only and outside PowerSync. See
+[`lwin-reference-snapshots.md`](lwin-reference-snapshots.md) for the operational
+contract.
 
 ## Access and synchronization
 
@@ -67,7 +85,6 @@ library and licensed provider evidence are not copied to every device.
 
 ## Deferred work
 
-- 0.4.3 imports and refreshes the attributed LWIN snapshot.
 - 0.4.4 adds conservative candidates, household confirmations and rejections,
   and the reviewed link workflow.
 - 0.4.5 trials drinking-window and pairing sources and their usage rights.

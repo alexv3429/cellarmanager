@@ -103,6 +103,7 @@ try {
     "merge_group:",
     "name: CI Gate",
     "npm run repository:check",
+    "npm run lwin:test",
     "npm run web:ci",
     "npm run supabase -- test db",
   ]) {

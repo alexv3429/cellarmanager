@@ -464,6 +464,13 @@ values
         'liv-ex',
         'LWIN16',
         '1234567202000750'
+    ),
+    (
+        '00000000-0000-4000-8000-000000000531',
+        'package',
+        'liv-ex',
+        'LWIN18',
+        '123456720200600750'
     );
 
 select is(
@@ -472,8 +479,8 @@ select is(
         from public.wine_reference_external_identifiers
         where authority = 'liv-ex'
     ),
-    3::bigint,
-    'LWIN7, LWIN11, and LWIN16 attach at their correct levels'
+    4::bigint,
+    'LWIN7, LWIN11, LWIN16, and LWIN18 attach at their correct levels'
 );
 
 select throws_ok(
