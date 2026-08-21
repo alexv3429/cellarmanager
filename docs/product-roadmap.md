@@ -10,7 +10,7 @@ crosses a milestone boundary.
 | Milestone | Promise | Status |
 |---|---|---|
 | `v0.3` | A cellar can live safely in CellarManager through daily manual use or guarded CSV import | Released (`v0.3.0`) |
-| `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable web data | In progress (0.4.2 complete) |
+| `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable evidence | In progress (0.4.5 under review) |
 | `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | Planned |
 | `v0.6` | Adding or identifying wine requires dramatically less typing | Planned |
 | `v0.7` | CellarManager explains what happened to the cellar and what the collection means over time | Planned |
@@ -62,16 +62,19 @@ and roadmap update before feature implementation begins.
 CSV import moved into v0.3 because personal production required a safe way to
 bootstrap an existing cellar. v0.4 keeps portable export and optional round-trip
 compatibility, but does not build a second importer. It also delivers the first
-end-to-end web-enrichment workflow for drinking windows and food pairings.
+end-to-end, evidence-backed enrichment workflow for drinking windows and food
+pairings.
 
-“Reliable” enrichment means that every production source is suitable for
-programmatic use, has documented access and licensing terms, and can be matched
-to a wine conservatively. Retrieved values retain their provider, provider wine
-ID or URL when available, and retrieval time. Ambiguous candidates require
-review. Automatic links require independent hard guards and a regression set
-with zero known false automatic matches. Enrichment never silently replaces a
-user-maintained value. Provider outages, missing matches, rate limits, and
-partial results must leave the existing cellar usable and unchanged.
+“Reliable” enrichment means that every factual input has reviewable provenance,
+scope, and confidence. External production sources must be suitable for
+programmatic use, have documented access and licensing terms, and be matched to
+a wine conservatively. Retrieved values retain their provider, provider wine ID
+or URL when available, and retrieval time. Derived recommendations retain the
+knowledge versions and rules that produced them and are labelled as estimates,
+not source claims. Ambiguous candidates require review. Enrichment never
+silently replaces a user-maintained value. Missing evidence, provider outages,
+rate limits, and partial results must leave the existing cellar usable and
+unchanged.
 
 | Step | Scope |
 |---|---|
@@ -79,11 +82,11 @@ partial results must leave the existing cellar usable and unchanged.
 | 0.4.2 | Shared producer, product, release, package, alias, supersession, and external-identifier schema |
 | 0.4.3 | LWIN reference snapshot import, attribution, refresh, and missing-reference handling |
 | 0.4.4 | Conservative matching candidates, household decisions, rejection memory, and review workflow |
-| 0.4.5 | Trial source quality, coverage, access, and written usage rights; select complementary production providers |
-| 0.4.6 | Typed enrichment claims, source/licence policy, entitlement boundary, and recommendation-projection schema |
-| 0.4.7 | Secure provider-neutral job infrastructure with server-side credentials, caching, retries, rate limits, and offline demand states |
-| 0.4.8 | Production drinking-window provider adapter, review, attribution, and exact-versus-estimated display |
-| 0.4.9 | Production food-pairing provider adapter, structured categories, review, attribution, and style fallback |
+| 0.4.5 | Trial provider quality, coverage, access, and rights; prove or reject a curated place/vintage/producer/cuvée maturity-and-pairing model when providers cannot meet the exact-release baseline |
+| 0.4.6 | Versioned place, vintage, producer-era, cuvée, evidence, observation, and recommendation-projection schema |
+| 0.4.7 | Reviewed knowledge publishing and asynchronous enrichment demand infrastructure, with optional provider credentials, caching, retries, rate limits, and offline states |
+| 0.4.8 | Production maturity, urgency, storage-purpose, and moving-hint projections with explanations, confidence, review, and manual override |
+| 0.4.9 | Production dish-profile and food-pairing projections with ingredient/style constraints, personal preference refinement, explanations, and repeated owner acceptance |
 | 0.4.10 | Personal notes, manual overrides, serving guidance, and editing |
 | 0.4.11 | Country, region, classification, vineyard, grapes, sweetness, alcohol, and certifications |
 | 0.4.12 | Restore corresponding archived v0.1 metadata through current models |

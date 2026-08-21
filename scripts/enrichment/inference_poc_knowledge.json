@@ -1,0 +1,725 @@
+{
+  "version": 1,
+  "status": "proof-of-concept",
+  "sources": [
+    {
+      "id": "owner-workbook-v2",
+      "name": "Caves_2.0 owner workbook",
+      "type": "private-owner-observation",
+      "url": null,
+      "usage": "Private benchmark and seed observations only; never shared globally without an explicit owner decision."
+    },
+    {
+      "id": "inao-volnay",
+      "name": "INAO Volnay Premier Cru product record and specification",
+      "type": "official-regulatory",
+      "url": "https://www.inao.gouv.fr/produit/volnay-premier-cru-24737",
+      "usage": "Appellation scope and regulatory identity."
+    },
+    {
+      "id": "bivb-2017",
+      "name": "Bourgogne Wines 2017 vintage profile",
+      "type": "official-interprofessional",
+      "url": "https://www.bourgogne-wines.com/food-and-wine-combinations/choosing-and-serving-wine/vintages/2017-vintage%2C3347%2C16912.html",
+      "usage": "Vintage structure and style evidence."
+    },
+    {
+      "id": "bivb-2018",
+      "name": "Bourgogne Wines 2018 vintage profile",
+      "type": "official-interprofessional",
+      "url": "https://www.bourgogne-wines.com/food-and-wine-combinations/choosing-and-serving-wine/vintages/2018-vintage%2C3347%2C16914.html",
+      "usage": "Vintage structure and style evidence."
+    },
+    {
+      "id": "bivb-2020",
+      "name": "Bourgogne Wines 2020 vintage profile",
+      "type": "official-interprofessional",
+      "url": "https://www.bourgogne-wines.com/food-and-wine-combinations/choosing-and-serving-wine/vintages/2020-vintage%2C3347%2C16915.html",
+      "usage": "Vintage structure and style evidence."
+    },
+    {
+      "id": "bivb-vintages",
+      "name": "Bourgogne Wines vintage archive",
+      "type": "official-interprofessional",
+      "url": "https://www.bourgogne-wines.com/press/vintages%2C2333%2C9343.html",
+      "usage": "Vintage comparison and 2021/2022 discovery."
+    },
+    {
+      "id": "boillot-tech",
+      "name": "Louis Boillot technical profile",
+      "type": "trade-technical-sheet",
+      "url": "https://www.rarewineco.com/media/183399/boillot-tech-sheet.pdf",
+      "usage": "Producer and Volnay Caillerets vineyard/winemaking candidate facts; review before production use."
+    },
+    {
+      "id": "barthod-profile",
+      "name": "Ghislaine Barthod producer profile",
+      "type": "trade-producer-profile",
+      "url": "https://www.fmv.co.uk/producer/domaine-ghislaine-barthod",
+      "usage": "Producer-style candidate facts; review before production use."
+    },
+    {
+      "id": "dureuil-champs-gains",
+      "name": "Dureuil-Janthial Les Champs Gains technical sheet",
+      "type": "official-producer-technical-sheet",
+      "url": "https://www.dureuil-janthial.fr/wp-content/uploads/2021/12/fiche_techniques_dureuil_janthial_uk_les_champs_gains_1_er_cru_blanc.pdf",
+      "usage": "Cuvée site, grape, vinification and structural profile."
+    },
+    {
+      "id": "inao-pic-saint-loup",
+      "name": "INAO Pic Saint-Loup red product record",
+      "type": "official-regulatory",
+      "url": "https://www.inao.gouv.fr/en/node/4855",
+      "usage": "Red/rosé-only appellation scope, grapes and structural style."
+    },
+    {
+      "id": "clos-marie-profile",
+      "name": "Clos Marie producer and cuvée profile",
+      "type": "trade-producer-profile",
+      "url": "https://www.legardevins.com/nos-domaines/clos-marie/",
+      "usage": "Producer and blend candidate facts; review before production use."
+    },
+    {
+      "id": "piemonte-vintage-archive",
+      "name": "Vignaioli Piemontesi annual vintage archive",
+      "type": "regional-industry-with-public-authority",
+      "url": "https://www.vignaioli.it/riviste-e-pubblicazioni/anteprima-vendemmia/",
+      "usage": "Piemonte vintage evidence from 2004 onward."
+    },
+    {
+      "id": "piemonte-2018",
+      "name": "Piemonte Anteprima Vendemmia 2018",
+      "type": "regional-industry-with-public-authority",
+      "url": "https://www.vignaioli.it/wp-content/uploads/2018/11/annata-2018_web-1.pdf",
+      "usage": "2018 climate and Nebbiolo quality evidence."
+    },
+    {
+      "id": "piemonte-2019",
+      "name": "Regione Piemonte 2019 vintage summary",
+      "type": "official-regional",
+      "url": "https://www.regione.piemonte.it/web/pinforma/notizie/anteprima-vendemmia-2019-dati-dellannata-piemonte",
+      "usage": "2019 climate and Nebbiolo quality evidence."
+    },
+    {
+      "id": "piemonte-docg",
+      "name": "Regione Piemonte DOCG and DOC register",
+      "type": "official-regulatory",
+      "url": "https://www.regione.piemonte.it/web/temi/agricoltura/viticoltura-enologia/vini-denominazione-origine-docg-doc",
+      "usage": "Piemonte appellation identity and specifications."
+    },
+    {
+      "id": "gd-vajra-official",
+      "name": "G.D. Vajra official wine and vineyard profiles",
+      "type": "official-producer",
+      "url": "https://www.gdvajra.it/en/inspired-by-the-mountaintops",
+      "usage": "Bricco delle Viole site and producer-style candidate facts."
+    },
+    {
+      "id": "conterno-fantino-official",
+      "name": "Conterno Fantino official Barolo profiles",
+      "type": "official-producer",
+      "url": "https://www.conternofantino.it/en/barolo/",
+      "usage": "Producer, cru and cuvée identity and style candidate facts."
+    }
+  ],
+  "placeProfiles": [
+    {
+      "id": "volnay-premier-cru-red",
+      "placeGroup": "bourgogne",
+      "appellationAliases": ["volnay 1c", "volnay premier cru"],
+      "colors": ["red"],
+      "maturity": {
+        "firstTryAge": [6, 9],
+        "likelyBestAge": [10, 16],
+        "drinkByAge": [17, 23]
+      },
+      "attributes": {
+        "body": 3.2,
+        "acidity": 4.2,
+        "tannin": 3.5,
+        "sweetness": 0,
+        "alcohol": 3,
+        "aromaticIntensity": 4,
+        "freshness": 4.2,
+        "savory": 3.2
+      },
+      "confidence": 0.76,
+      "evidence": ["inao-volnay"],
+      "rationale": "Volnay Premier Cru red baseline; the age ranges are a curated POC hypothesis, not an INAO drinking-window claim."
+    },
+    {
+      "id": "chambolle-premier-cru-red",
+      "placeGroup": "bourgogne",
+      "appellationAliases": ["chambolle musigny 1c", "chambolle musigny premier cru"],
+      "colors": ["red"],
+      "maturity": {
+        "firstTryAge": [7, 10],
+        "likelyBestAge": [11, 18],
+        "drinkByAge": [19, 25]
+      },
+      "attributes": {
+        "body": 3,
+        "acidity": 4.2,
+        "tannin": 3.2,
+        "sweetness": 0,
+        "alcohol": 3,
+        "aromaticIntensity": 4.4,
+        "freshness": 4.2,
+        "savory": 3
+      },
+      "confidence": 0.68,
+      "evidence": ["bivb-vintages"],
+      "rationale": "Chambolle-Musigny Premier Cru red baseline awaiting a dedicated regulatory/site source."
+    },
+    {
+      "id": "puligny-premier-cru-white",
+      "placeGroup": "bourgogne",
+      "appellationAliases": ["puligny montrachet 1c", "puligny montrachet premier cru"],
+      "colors": ["white"],
+      "maturity": {
+        "firstTryAge": [4, 7],
+        "likelyBestAge": [7, 12],
+        "drinkByAge": [13, 18]
+      },
+      "attributes": {
+        "body": 3.5,
+        "acidity": 4.5,
+        "tannin": 0,
+        "sweetness": 0,
+        "alcohol": 3.2,
+        "aromaticIntensity": 3.6,
+        "freshness": 4.5,
+        "savory": 3.3
+      },
+      "confidence": 0.72,
+      "evidence": ["dureuil-champs-gains"],
+      "rationale": "Puligny-Montrachet Premier Cru white baseline calibrated for a taut, mineral example."
+    },
+    {
+      "id": "pic-saint-loup-red",
+      "placeGroup": "languedoc",
+      "appellationAliases": ["pic saint loup"],
+      "colors": ["red"],
+      "maturity": {
+        "firstTryAge": [4, 7],
+        "likelyBestAge": [7, 12],
+        "drinkByAge": [13, 18]
+      },
+      "attributes": {
+        "body": 4.1,
+        "acidity": 3.5,
+        "tannin": 4,
+        "sweetness": 0,
+        "alcohol": 4,
+        "aromaticIntensity": 4.1,
+        "freshness": 3.6,
+        "savory": 4.2
+      },
+      "confidence": 0.82,
+      "evidence": ["inao-pic-saint-loup"],
+      "rationale": "Official Pic Saint-Loup red structure informs the profile; maturity ages remain a curated POC hypothesis."
+    },
+    {
+      "id": "languedoc-white",
+      "placeGroup": "languedoc",
+      "regionAliases": ["languedoc"],
+      "colors": ["white"],
+      "maturity": {
+        "firstTryAge": [2, 4],
+        "likelyBestAge": [4, 7],
+        "drinkByAge": [8, 11]
+      },
+      "attributes": {
+        "body": 3.2,
+        "acidity": 3.6,
+        "tannin": 0,
+        "sweetness": 0,
+        "alcohol": 3.5,
+        "aromaticIntensity": 4,
+        "freshness": 3.7,
+        "savory": 2.8
+      },
+      "confidence": 0.48,
+      "evidence": ["owner-workbook-v2"],
+      "rationale": "Broad white Languedoc fallback used only when a precise legal appellation/profile is unavailable."
+    },
+    {
+      "id": "barolo-red",
+      "placeGroup": "piemonte",
+      "appellationAliases": ["barolo"],
+      "colors": ["red"],
+      "maturity": {
+        "firstTryAge": [9, 13],
+        "likelyBestAge": [14, 22],
+        "drinkByAge": [23, 32]
+      },
+      "attributes": {
+        "body": 4,
+        "acidity": 4.5,
+        "tannin": 5,
+        "sweetness": 0,
+        "alcohol": 4,
+        "aromaticIntensity": 4.8,
+        "freshness": 4.2,
+        "savory": 4.8
+      },
+      "confidence": 0.83,
+      "evidence": ["piemonte-docg", "piemonte-vintage-archive"],
+      "rationale": "Nebbiolo/Barolo baseline built independently from Burgundy; maturity ages are a curated POC hypothesis."
+    },
+    {
+      "id": "barbaresco-red",
+      "placeGroup": "piemonte",
+      "appellationAliases": ["barbaresco"],
+      "colors": ["red"],
+      "maturity": {
+        "firstTryAge": [7, 10],
+        "likelyBestAge": [11, 18],
+        "drinkByAge": [19, 26]
+      },
+      "attributes": {
+        "body": 3.7,
+        "acidity": 4.5,
+        "tannin": 4.5,
+        "sweetness": 0,
+        "alcohol": 3.8,
+        "aromaticIntensity": 4.6,
+        "freshness": 4.2,
+        "savory": 4.5
+      },
+      "confidence": 0.78,
+      "evidence": ["piemonte-docg", "piemonte-vintage-archive"],
+      "rationale": "Nebbiolo/Barbaresco baseline built independently from Burgundy."
+    }
+  ],
+  "vintageProfiles": [
+    {
+      "id": "bourgogne-red-2017",
+      "placeGroup": "bourgogne",
+      "color": "red",
+      "vintage": 2017,
+      "openingYears": -1,
+      "longevityYears": -1,
+      "attributeAdjustments": { "body": -0.2, "tannin": -0.3, "aromaticIntensity": 0.3 },
+      "confidence": 0.82,
+      "evidence": ["bivb-2017"],
+      "rationale": "Elegant, expressive and harmonious rather than a deeply structured default year."
+    },
+    {
+      "id": "bourgogne-red-2018",
+      "placeGroup": "bourgogne",
+      "color": "red",
+      "vintage": 2018,
+      "openingYears": 1,
+      "longevityYears": 2,
+      "attributeAdjustments": { "body": 0.4, "tannin": 0.4, "aromaticIntensity": 0.2 },
+      "confidence": 0.86,
+      "evidence": ["bivb-2018"],
+      "rationale": "Concentrated, structured and balanced red vintage with good keeping potential."
+    },
+    {
+      "id": "bourgogne-red-2020",
+      "placeGroup": "bourgogne",
+      "color": "red",
+      "vintage": 2020,
+      "openingYears": 2,
+      "longevityYears": 3,
+      "attributeAdjustments": { "body": 0.4, "acidity": 0.2, "tannin": 0.5 },
+      "confidence": 0.88,
+      "evidence": ["bivb-2020"],
+      "rationale": "Hot, dry season with retained acidity and impressive tannic structure."
+    },
+    {
+      "id": "bourgogne-red-2022",
+      "placeGroup": "bourgogne",
+      "color": "red",
+      "vintage": 2022,
+      "openingYears": 1,
+      "longevityYears": 2,
+      "attributeAdjustments": { "body": 0.2, "tannin": 0.2 },
+      "confidence": 0.56,
+      "evidence": ["bivb-vintages", "owner-workbook-v2"],
+      "rationale": "Preliminary POC profile; requires a more specific Côte de Beaune vintage source."
+    },
+    {
+      "id": "bourgogne-white-2017",
+      "placeGroup": "bourgogne",
+      "color": "white",
+      "vintage": 2017,
+      "openingYears": 0,
+      "longevityYears": 1,
+      "attributeAdjustments": { "acidity": 0.3, "freshness": 0.3 },
+      "confidence": 0.82,
+      "evidence": ["bivb-2017"],
+      "rationale": "Elegant, balanced and mineral white vintage."
+    },
+    {
+      "id": "bourgogne-white-2021",
+      "placeGroup": "bourgogne",
+      "color": "white",
+      "vintage": 2021,
+      "openingYears": 0,
+      "longevityYears": 1,
+      "attributeAdjustments": { "body": -0.2, "acidity": 0.5, "freshness": 0.5 },
+      "confidence": 0.7,
+      "evidence": ["bivb-vintages", "owner-workbook-v2"],
+      "rationale": "Lively, delicate profile; producer/site acidity can still support ageing."
+    },
+    {
+      "id": "languedoc-red-2013",
+      "placeGroup": "languedoc",
+      "color": "red",
+      "vintage": 2013,
+      "openingYears": -1,
+      "longevityYears": -2,
+      "attributeAdjustments": { "body": -0.4, "tannin": -0.3 },
+      "confidence": 0.5,
+      "evidence": ["owner-workbook-v2"],
+      "rationale": "Owner seed observation: lighter profile intended for earlier drinking."
+    },
+    {
+      "id": "languedoc-red-2017",
+      "placeGroup": "languedoc",
+      "color": "red",
+      "vintage": 2017,
+      "openingYears": 1,
+      "longevityYears": 2,
+      "attributeAdjustments": { "body": 0.4, "tannin": 0.4 },
+      "confidence": 0.52,
+      "evidence": ["owner-workbook-v2"],
+      "rationale": "Owner seed observation: concentrated and structured."
+    },
+    {
+      "id": "languedoc-red-2018",
+      "placeGroup": "languedoc",
+      "color": "red",
+      "vintage": 2018,
+      "openingYears": 0,
+      "longevityYears": 1,
+      "attributeAdjustments": { "body": 0.2, "aromaticIntensity": 0.2 },
+      "confidence": 0.5,
+      "evidence": ["owner-workbook-v2"],
+      "rationale": "Owner seed observation awaiting an official local vintage source."
+    },
+    {
+      "id": "languedoc-red-2019",
+      "placeGroup": "languedoc",
+      "color": "red",
+      "vintage": 2019,
+      "openingYears": 1,
+      "longevityYears": 2,
+      "attributeAdjustments": { "body": 0.4, "alcohol": 0.2, "tannin": 0.2 },
+      "confidence": 0.5,
+      "evidence": ["owner-workbook-v2"],
+      "rationale": "Owner seed observation: rich, solar and powerful while balanced."
+    },
+    {
+      "id": "languedoc-red-2020",
+      "placeGroup": "languedoc",
+      "color": "red",
+      "vintage": 2020,
+      "openingYears": 1,
+      "longevityYears": 2,
+      "attributeAdjustments": { "body": 0.3, "tannin": 0.4 },
+      "confidence": 0.5,
+      "evidence": ["owner-workbook-v2"],
+      "rationale": "Owner seed observation: warm year with firm structure."
+    },
+    {
+      "id": "languedoc-red-2022",
+      "placeGroup": "languedoc",
+      "color": "red",
+      "vintage": 2022,
+      "openingYears": 0,
+      "longevityYears": 1,
+      "attributeAdjustments": { "body": 0.2, "freshness": 0.2 },
+      "confidence": 0.48,
+      "evidence": ["owner-workbook-v2"],
+      "rationale": "Owner seed observation awaiting an official local vintage source."
+    },
+    {
+      "id": "languedoc-white-2020",
+      "placeGroup": "languedoc",
+      "color": "white",
+      "vintage": 2020,
+      "openingYears": 0,
+      "longevityYears": 1,
+      "attributeAdjustments": { "body": 0.2, "aromaticIntensity": 0.2 },
+      "confidence": 0.46,
+      "evidence": ["owner-workbook-v2"],
+      "rationale": "Owner seed observation; intentionally low confidence."
+    },
+    {
+      "id": "piemonte-red-2006",
+      "placeGroup": "piemonte",
+      "color": "red",
+      "vintage": 2006,
+      "openingYears": 2,
+      "longevityYears": 4,
+      "attributeAdjustments": { "tannin": 0.4, "acidity": 0.2 },
+      "confidence": 0.7,
+      "evidence": ["piemonte-vintage-archive", "owner-workbook-v2"],
+      "rationale": "Structured long-ageing Piemonte seed, backed by the regional vintage archive and owner history."
+    },
+    {
+      "id": "piemonte-red-2008",
+      "placeGroup": "piemonte",
+      "color": "red",
+      "vintage": 2008,
+      "openingYears": 0,
+      "longevityYears": 1,
+      "attributeAdjustments": { "acidity": 0.2 },
+      "confidence": 0.68,
+      "evidence": ["piemonte-vintage-archive", "owner-workbook-v2"],
+      "rationale": "Balanced Piemonte seed, independently sourced from the regional archive rather than Burgundy."
+    },
+    {
+      "id": "piemonte-red-2017",
+      "placeGroup": "piemonte",
+      "color": "red",
+      "vintage": 2017,
+      "openingYears": 0,
+      "longevityYears": 1,
+      "attributeAdjustments": { "body": 0.2, "tannin": 0.2 },
+      "confidence": 0.74,
+      "evidence": ["piemonte-vintage-archive"],
+      "rationale": "Low-yield, fast-ripening year still assessed as excellent for important, long-lived reds."
+    },
+    {
+      "id": "piemonte-red-2018",
+      "placeGroup": "piemonte",
+      "color": "red",
+      "vintage": 2018,
+      "openingYears": -1,
+      "longevityYears": 1,
+      "attributeAdjustments": { "body": 0.2, "tannin": -0.1, "aromaticIntensity": 0.2 },
+      "confidence": 0.82,
+      "evidence": ["piemonte-2018"],
+      "rationale": "Four-star Piemonte vintage; Langhe/Roero Nebbiolo was rated highly, with a less severe opening hypothesis than 2006."
+    }
+  ],
+  "producerProfiles": [
+    {
+      "id": "louis-boillot",
+      "producerAliases": ["boillot", "louis boillot", "domaine louis boillot"],
+      "openingYears": 0,
+      "longevityYears": 1,
+      "attributeAdjustments": { "body": -0.1, "tannin": -0.1, "freshness": 0.2 },
+      "confidence": 0.7,
+      "evidence": ["boillot-tech"],
+      "rationale": "Gentle extraction and limited new oak support a refined rather than forceful style hypothesis."
+    },
+    {
+      "id": "ghislaine-barthod",
+      "producerAliases": ["barthod", "ghislaine barthod", "domaine ghislaine barthod"],
+      "openingYears": 1,
+      "longevityYears": 2,
+      "attributeAdjustments": { "tannin": 0.2, "aromaticIntensity": 0.2, "freshness": 0.2 },
+      "confidence": 0.66,
+      "evidence": ["barthod-profile"],
+      "rationale": "Concentrated, harmonious wines with demonstrated ageing potential."
+    },
+    {
+      "id": "dureuil-janthial",
+      "producerAliases": ["dureuil janthial", "domaine dureuil janthial"],
+      "openingYears": 0,
+      "longevityYears": 1,
+      "attributeAdjustments": { "acidity": 0.3, "freshness": 0.3 },
+      "confidence": 0.78,
+      "evidence": ["dureuil-champs-gains"],
+      "rationale": "Taut, mineral, cool-site white profile."
+    },
+    {
+      "id": "clos-marie",
+      "producerAliases": ["clos marie"],
+      "openingYears": 1,
+      "longevityYears": 2,
+      "attributeAdjustments": { "body": 0.2, "tannin": 0.2, "savory": 0.2 },
+      "confidence": 0.62,
+      "evidence": ["clos-marie-profile"],
+      "rationale": "Low-intervention, structured Pic Saint-Loup producer hypothesis."
+    },
+    {
+      "id": "gd-vajra",
+      "producerAliases": ["vajra", "g d vajra", "gd vajra"],
+      "openingYears": 0,
+      "longevityYears": 2,
+      "attributeAdjustments": { "aromaticIntensity": 0.3, "freshness": 0.3 },
+      "confidence": 0.8,
+      "evidence": ["gd-vajra-official"],
+      "rationale": "High-altitude, slow-ripening, aromatic and fresh producer/site profile."
+    },
+    {
+      "id": "conterno-fantino",
+      "producerAliases": ["conterno fantino"],
+      "openingYears": 1,
+      "longevityYears": 2,
+      "attributeAdjustments": { "body": 0.2, "tannin": 0.2, "aromaticIntensity": 0.2 },
+      "confidence": 0.78,
+      "evidence": ["conterno-fantino-official"],
+      "rationale": "Cru-specific Barolo producer profile."
+    }
+  ],
+  "cuveeProfiles": [
+    {
+      "id": "boillot-caillerets",
+      "producerProfileId": "louis-boillot",
+      "cuveeAliases": ["caillerets", "les caillerets"],
+      "placeProfileId": "volnay-premier-cru-red",
+      "openingYears": 1,
+      "longevityYears": 2,
+      "attributeAdjustments": { "tannin": 0.2, "savory": 0.2 },
+      "confidence": 0.75,
+      "evidence": ["boillot-tech"],
+      "rationale": "Old-vine Volnay Premier Cru parcel; the longevity adjustment is a test hypothesis."
+    },
+    {
+      "id": "barthod-gruenchers",
+      "producerProfileId": "ghislaine-barthod",
+      "cuveeAliases": ["gruenchers", "les gruenchers"],
+      "placeProfileId": "chambolle-premier-cru-red",
+      "openingYears": 1,
+      "longevityYears": 2,
+      "attributeAdjustments": { "aromaticIntensity": 0.2, "tannin": 0.2 },
+      "confidence": 0.6,
+      "evidence": ["barthod-profile", "owner-workbook-v2"],
+      "rationale": "Owner-backed cru hypothesis requiring a dedicated official/producer technical source."
+    },
+    {
+      "id": "dureuil-champs-gains",
+      "producerProfileId": "dureuil-janthial",
+      "cuveeAliases": ["les champs gains", "champs gains"],
+      "placeProfileId": "puligny-premier-cru-white",
+      "openingYears": 0,
+      "longevityYears": 2,
+      "attributeAdjustments": { "acidity": 0.4, "freshness": 0.3, "savory": 0.2 },
+      "confidence": 0.88,
+      "evidence": ["dureuil-champs-gains"],
+      "rationale": "Cool east-facing site producing taut, mineral Chardonnay."
+    },
+    {
+      "id": "clos-marie-les-glorieuses",
+      "producerProfileId": "clos-marie",
+      "cuveeAliases": ["les glorieuses"],
+      "placeProfileId": "pic-saint-loup-red",
+      "openingYears": 1,
+      "longevityYears": 3,
+      "attributeAdjustments": { "body": 0.4, "tannin": 0.4, "savory": 0.3 },
+      "confidence": 0.68,
+      "evidence": ["clos-marie-profile"],
+      "rationale": "Grenache/Syrah flagship-style blend hypothesis with additional structure."
+    },
+    {
+      "id": "clos-marie-simon",
+      "producerProfileId": "clos-marie",
+      "cuveeAliases": ["simon"],
+      "placeProfileId": "pic-saint-loup-red",
+      "openingYears": -1,
+      "longevityYears": 0,
+      "attributeAdjustments": { "body": -0.2, "aromaticIntensity": 0.2 },
+      "confidence": 0.62,
+      "evidence": ["clos-marie-profile", "owner-workbook-v2"],
+      "rationale": "Earlier-opening cuvée hypothesis retained as a testable owner observation."
+    },
+    {
+      "id": "cazeneuve-le-causse",
+      "producerAliases": ["cazeneuve"],
+      "cuveeAliases": ["le causse"],
+      "placeProfileId": "languedoc-white",
+      "openingYears": 1,
+      "longevityYears": 1,
+      "attributeAdjustments": { "body": 0.2, "savory": 0.2 },
+      "confidence": 0.48,
+      "evidence": ["owner-workbook-v2"],
+      "rationale": "Private seed only; precise legal appellation and producer technical evidence remain missing."
+    },
+    {
+      "id": "vajra-bricco-delle-viole",
+      "producerProfileId": "gd-vajra",
+      "cuveeAliases": ["bricco delle viole"],
+      "placeProfileId": "barolo-red",
+      "openingYears": 1,
+      "longevityYears": 4,
+      "attributeAdjustments": { "aromaticIntensity": 0.4, "freshness": 0.3, "tannin": 0.2 },
+      "confidence": 0.9,
+      "evidence": ["gd-vajra-official"],
+      "rationale": "High-altitude, slowly ripening vineyard with pronounced aromatic freshness."
+    },
+    {
+      "id": "conterno-vigna-del-gris",
+      "producerProfileId": "conterno-fantino",
+      "cuveeAliases": ["vigna del gris"],
+      "placeProfileId": "barolo-red",
+      "openingYears": 1,
+      "longevityYears": 3,
+      "attributeAdjustments": { "body": 0.2, "tannin": 0.2 },
+      "confidence": 0.82,
+      "evidence": ["conterno-fantino-official"],
+      "rationale": "Ginestra cru identity is confirmed; maturity adjustment remains a POC hypothesis."
+    },
+    {
+      "id": "conterno-sori-ginestra",
+      "producerProfileId": "conterno-fantino",
+      "cuveeAliases": ["vigna sori ginestra", "sori ginestra"],
+      "placeProfileId": "barolo-red",
+      "openingYears": 2,
+      "longevityYears": 5,
+      "attributeAdjustments": { "body": 0.4, "tannin": 0.4, "savory": 0.2 },
+      "confidence": 0.82,
+      "evidence": ["conterno-fantino-official"],
+      "rationale": "Distinct Ginestra cru profile; stronger/longer than Vigna del Gris is deliberately testable."
+    }
+  ],
+  "dishProfiles": [
+    {
+      "id": "salad-vinaigrette",
+      "name": "Green salad with vinaigrette",
+      "attributes": { "intensity": 2, "fat": 1, "acidity": 4, "sweetness": 0, "salt": 2, "umami": 1, "spice": 0, "protein": 0, "fish": 0 }
+    },
+    {
+      "id": "roast-chicken-mushrooms",
+      "name": "Roast chicken with mushrooms",
+      "attributes": { "intensity": 3, "fat": 3, "acidity": 1, "sweetness": 0, "salt": 2, "umami": 3, "spice": 0, "protein": 3, "fish": 0 }
+    },
+    {
+      "id": "duck-cherry",
+      "name": "Duck breast with cherry sauce",
+      "attributes": { "intensity": 4, "fat": 4, "acidity": 2, "sweetness": 1, "salt": 2, "umami": 2, "spice": 0, "protein": 4, "fish": 0 }
+    },
+    {
+      "id": "grilled-beef",
+      "name": "Grilled beef",
+      "attributes": { "intensity": 5, "fat": 4, "acidity": 0, "sweetness": 0, "salt": 3, "umami": 3, "spice": 1, "protein": 5, "fish": 0 }
+    },
+    {
+      "id": "salmon-lemon",
+      "name": "Grilled salmon with lemon",
+      "attributes": { "intensity": 3, "fat": 3, "acidity": 3, "sweetness": 0, "salt": 2, "umami": 2, "spice": 0, "protein": 2, "fish": 4 }
+    },
+    {
+      "id": "spicy-lamb-tagine",
+      "name": "Spicy lamb tagine",
+      "attributes": { "intensity": 4, "fat": 3, "acidity": 1, "sweetness": 2, "salt": 2, "umami": 2, "spice": 4, "protein": 4, "fish": 0 }
+    },
+    {
+      "id": "tomato-pasta",
+      "name": "Tomato pasta",
+      "attributes": { "intensity": 3, "fat": 2, "acidity": 4, "sweetness": 1, "salt": 2, "umami": 3, "spice": 1, "protein": 1, "fish": 0 }
+    },
+    {
+      "id": "mushroom-risotto",
+      "name": "Mushroom risotto",
+      "attributes": { "intensity": 3, "fat": 3, "acidity": 1, "sweetness": 0, "salt": 2, "umami": 4, "spice": 0, "protein": 1, "fish": 0 }
+    },
+    {
+      "id": "aged-cheese",
+      "name": "Aged hard cheese",
+      "attributes": { "intensity": 4, "fat": 4, "acidity": 1, "sweetness": 0, "salt": 4, "umami": 4, "spice": 0, "protein": 3, "fish": 0 }
+    },
+    {
+      "id": "fruit-tart",
+      "name": "Fruit tart",
+      "attributes": { "intensity": 3, "fat": 2, "acidity": 2, "sweetness": 4, "salt": 0, "umami": 0, "spice": 0, "protein": 0, "fish": 0 }
+    }
+  ]
+}

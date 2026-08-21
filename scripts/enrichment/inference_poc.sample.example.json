@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "asOfYear": 2026,
+  "wines": [
+    {
+      "sampleId": "public-example-1",
+      "producer": "Dureuil-Janthial",
+      "cuvee": "Les Champs Gains",
+      "vintage": 2017,
+      "appellation": "Puligny-Montrachet 1C",
+      "region": "Bourgogne",
+      "color": "Blanc",
+      "quantity": 1,
+      "formats": ["75cl"],
+      "locations": [],
+      "workbookWindow": null,
+      "workbookComment": null
+    }
+  ]
+}

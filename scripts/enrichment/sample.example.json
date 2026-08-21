@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "wines": [
+    {
+      "sampleId": "public-example-1",
+      "producer": "Ghislaine Barthod",
+      "cuvee": "Aux Beaux Bruns",
+      "vintage": 2020,
+      "appellation": "Chambolle-Musigny Premier Cru",
+      "color": "red",
+      "lwin7": null
+    }
+  ]
+}
