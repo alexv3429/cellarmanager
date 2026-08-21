@@ -166,6 +166,11 @@ owner review before release.
   policies, plural evidence, private observations, and explainable household
   projections. See
   [`../enrichment-knowledge-schema.md`](../enrichment-knowledge-schema.md).
+- The 0.4.7 publishing workflow validates and hashes reviewed knowledge before
+  atomic activation. Synchronized wines create idempotent service-only demands;
+  bounded lease jobs, stale-work cancellation, rights-aware cache metadata, and
+  rate-limit buckets keep enrichment asynchronous and provider-neutral. See
+  [`../enrichment-publishing-and-jobs.md`](../enrichment-publishing-and-jobs.md).
 
 ## Deferred decisions
 
