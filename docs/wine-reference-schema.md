@@ -36,9 +36,10 @@ colour, appellation, area, and format exactly as imported or edited. Its nullabl
 confirmed product, release, or package. A producer-only link is not sufficiently
 specific for a wine.
 
-The migration does not guess or backfill links for existing production wines.
-Candidate generation and reviewed household decisions belong to roadmap step
-0.4.4.
+The schema migration does not guess or backfill links for existing production
+wines. Roadmap step 0.4.4 adds review-only LWIN candidates and explicit
+household decisions; see
+[`wine-reference-matching.md`](wine-reference-matching.md).
 
 ## Shared identity evidence
 
@@ -74,19 +75,18 @@ contract.
 
 ## Access and synchronization
 
-The shared tables have RLS enabled and grant no access to anonymous,
+The shared tables have RLS enabled and grant no direct access to anonymous,
 authenticated-browser, or PowerSync roles. Trusted service code maintains them
 through the `service_role`. They are deliberately absent from the PowerSync
-publication.
+publication. Step 0.4.4 exposes only security-definer review and decision RPCs;
+it does not expose the source library or matching evidence tables.
 
-Only the nullable household link is part of the synchronized `wines` row. Later
-steps may expose a reviewed household display projection, but the full global
+Only the nullable household link is part of the synchronized `wines` row. The
+online review RPC returns the current household projection, but the full global
 library and licensed provider evidence are not copied to every device.
 
 ## Deferred work
 
-- 0.4.4 adds conservative candidates, household confirmations and rejections,
-  and the reviewed link workflow.
 - 0.4.5 trials drinking-window and pairing sources and their usage rights.
 - 0.4.6 adds plural typed claims and household recommendation projections after
   those rights are known.

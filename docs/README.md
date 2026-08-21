@@ -10,6 +10,7 @@ retains only the evidence needed to understand its released migration history.
 - [`wine-reference-validation.md`](wine-reference-validation.md) - LWIN coverage, conservative matching, and fallback evidence for v0.4
 - [`wine-reference-schema.md`](wine-reference-schema.md) - shared producer, product, release, package, alias, and identifier model
 - [`lwin-reference-snapshots.md`](lwin-reference-snapshots.md) - attributed LWIN7 snapshot import, atomic refresh, and missing-ID demands
+- [`wine-reference-matching.md`](wine-reference-matching.md) - conservative candidates, household decisions, rejection memory, and reviewed links
 - [`adr/README.md`](adr/README.md) - released architecture and accepted v0.4 design decisions
 - [`activity-and-sync.md`](activity-and-sync.md) - recent inventory activity and synchronization-state UX
 - [`csv-ingestion.md`](csv-ingestion.md) - complete guarded CSV import contract

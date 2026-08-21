@@ -37,6 +37,7 @@ import { updateWineCatalog } from "../data/wineCatalogMutations"
 import type { RegisteredDevicesState } from "../devices/useRegisteredDevices"
 import type { AppView } from "../navigation/appNavigation"
 import { Notice } from "./Notice"
+import { WineReferenceMatchReview } from "./WineReferenceMatchReview"
 
 interface WineDetailViewProps {
   deviceRegistration: RegisteredDevicesState
@@ -1022,6 +1023,13 @@ export function WineDetailView({
             </div>
           </dl>
         )}
+
+        {!isEditing ? (
+          <WineReferenceMatchReview
+            isOnline={isOnline}
+            wine={wine}
+          />
+        ) : null}
       </section>
 
       <section
