@@ -20,7 +20,9 @@ and [`docs/adr/002-inventory-operation-model.md`](docs/adr/002-inventory-operati
 for the released application foundation. The accepted
 [`docs/adr/004-wine-reference-and-enrichment-evidence.md`](docs/adr/004-wine-reference-and-enrichment-evidence.md)
 defines the shared wine-reference and enrichment boundary for v0.4; its
-implementation follows the product roadmap below.
+implementation follows the product roadmap below. The current v0.4 foundation
+includes an attributed LWIN snapshot and a conservative, explicitly reviewed
+household matching workflow.
 
 ## v0.3 capabilities
 
