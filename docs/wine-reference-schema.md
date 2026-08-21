@@ -87,9 +87,12 @@ library and licensed provider evidence are not copied to every device.
 
 ## Deferred work
 
-- 0.4.5 trials drinking-window and pairing sources and their usage rights.
-- 0.4.6 adds plural typed claims and household recommendation projections after
-  those rights are known.
+- 0.4.5 trialled drinking-window and pairing sources, selected no production
+  provider, and validated an inference-first maturity model.
+- 0.4.6 adds the versioned place/vintage/producer-era/cuvee knowledge,
+  attributable evidence, household observation, and recommendation projection
+  boundary described in
+  [`enrichment-knowledge-schema.md`](enrichment-knowledge-schema.md).
 
-No drinking window, pairing, provider payload, or provider credential is added
-by this schema step.
+No provider payload or credential is added by either schema step. Production
+calculation, publishing, and display remain later roadmap work.
