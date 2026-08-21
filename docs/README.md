@@ -14,6 +14,7 @@ retains only the evidence needed to understand its released migration history.
 - [`enrichment-provider-trial.md`](enrichment-provider-trial.md) - drinking-window and pairing source quality, access, and written-rights gate
 - [`enrichment-inference-poc.md`](enrichment-inference-poc.md) - private, explainable maturity/storage/pairing proof of concept after the provider trial
 - [`enrichment-knowledge-schema.md`](enrichment-knowledge-schema.md) - versioned shared profiles, source rights, evidence, household observations, and derived projections
+- [`enrichment-publishing-and-jobs.md`](enrichment-publishing-and-jobs.md) - atomic reviewed-knowledge publication and provider-neutral asynchronous demand/job lifecycle
 - [`enrichment-provider-rights-request.md`](enrichment-provider-rights-request.md) - provider contact drafts for licensing, retention, provenance, and methodology answers
 - [`adr/README.md`](adr/README.md) - released architecture and accepted v0.4 design decisions
 - [`activity-and-sync.md`](activity-and-sync.md) - recent inventory activity and synchronization-state UX

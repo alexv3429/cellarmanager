@@ -134,8 +134,9 @@ and Cellar Setup continued to work normally.
 
 ## Next steps
 
-- 0.4.7 publishes reviewed knowledge versions and creates asynchronous demand
-  and calculation infrastructure.
+- 0.4.7 publishes reviewed knowledge versions and creates the asynchronous
+  demand and calculation infrastructure documented in
+  [`enrichment-publishing-and-jobs.md`](enrichment-publishing-and-jobs.md).
 - 0.4.8 defines and displays production maturity, urgency, storage-purpose, and
   moving-hint projection payloads.
 - 0.4.9 adds dish profiles and pairing payloads, corrects the POC gaps, and
