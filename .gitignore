@@ -14,6 +14,7 @@ dist/
 build/
 coverage/
 .wrangler/
+.provider-trials/
 
 *.log
 .DS_Store

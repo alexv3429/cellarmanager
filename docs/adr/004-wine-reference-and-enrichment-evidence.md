@@ -65,6 +65,12 @@ Claims are reused across households only when the provider licence and account
 entitlement allow that reuse. Shared identity does not imply shared rights to
 licensed content.
 
+Claim scope is earned from evidence returned by the provider. Including a
+vintage in a search query does not make a product-level response release-level.
+An exact-release claim requires an explicit matching vintage or identified NV
+release in the response; an omitted vintage remains product-scoped. A returned
+red/white/rose contradiction is a hard rejection, never a scoring penalty.
+
 ### Recommendations are projections, not source facts
 
 CellarManager derives a display recommendation from eligible claims. The
@@ -75,10 +81,16 @@ specificity, freshness, and legal usability remain separate dimensions.
 Fallback levels are explicit:
 
 1. exact release/package claim
-2. exact product or nearby-vintage estimate
-3. comparable site/appellation/vintage/style estimate
-4. regional/style guidance
-5. unknown or user-maintained value
+2. exact product guidance that is explicitly vintage-agnostic
+3. nearby-vintage estimate supported by comparable vintage/weather evidence
+4. comparable site/appellation/vintage/style estimate
+5. regional/style guidance
+6. unknown or user-maintained value
+
+Calendar adjacency alone does not make two vintages comparable. Solar, rainy,
+cool, hot, or otherwise atypical years can materially change structure and
+drinking evolution, so a nearby-vintage projection must retain its comparison
+rationale and contributing vintage evidence.
 
 Pairings use normalized category codes with localized labels and optional
 source rationale. Free text alone is not the shared pairing model.
@@ -119,9 +131,21 @@ the fields they are authoritative for; no source receives a global reliability
 rank. General web search and language models may help discover candidates but
 are not canonical sources.
 
-The production drinking-window and pairing providers remain undecided until a
-trial establishes coverage and written rights for caching, display,
-attribution, offline use, and retention.
+The 0.4.5 provider trial selected no production provider: the trialable sources
+did not jointly meet exact-release identity, vintage sensitivity, pairing
+coverage, provenance, and written-rights requirements. A private proof of
+concept then evaluated a curated place/vintage/producer/cuvée knowledge model.
+The owner classified 17/20 maturity results as useful and none as wrong, which
+passes the maturity gate and outperformed the complete online-provider trial.
+Pairing produced no wrong verdicts but only 6/10 useful scenarios, below its
+separate 70% gate.
+
+CellarManager will therefore make the reviewed, versioned knowledge model the
+production enrichment foundation. Web/provider records remain eligible
+attributable evidence inputs and benchmarks; they are not automatically the
+runtime authority. Production pairing must incorporate the recorded
+ingredient, colour/style, spice, and personal-preference gaps and pass a new
+owner review before release.
 
 ## Consequences
 
@@ -141,7 +165,7 @@ attribution, offline use, and retention.
 ## Deferred decisions
 
 - exact table and column names
-- the production drinking-window and food-pairing providers
+- optional production evidence providers and their permitted uses
 - final scoring weights and automatic thresholds
 - LWIN snapshot refresh versus API integration
 - whether licensed recommendations are synchronized or online-only
