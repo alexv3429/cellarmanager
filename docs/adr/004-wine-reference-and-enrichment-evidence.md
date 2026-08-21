@@ -161,10 +161,14 @@ owner review before release.
 - The existing flat household-rich schema proposal and single-current-source
   provenance model must be replaced rather than accepted as the v0.4
   foundation.
+- The 0.4.6 schema implements this boundary with immutable knowledge versions,
+  typed place/vintage/producer-era/cuvee profiles, versioned source-rights
+  policies, plural evidence, private observations, and explainable household
+  projections. See
+  [`../enrichment-knowledge-schema.md`](../enrichment-knowledge-schema.md).
 
 ## Deferred decisions
 
-- exact table and column names
 - optional production evidence providers and their permitted uses
 - final scoring weights and automatic thresholds
 - LWIN snapshot refresh versus API integration
