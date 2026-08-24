@@ -1,4 +1,5 @@
 import { matchesSearch } from "./searchFilters"
+import type { LocationStoragePurpose } from "./cellarSetup"
 
 type SyncedBoolean = boolean | number | null | undefined
 
@@ -17,6 +18,7 @@ export interface CellarSetupLocation {
   household_id: string
   id: string
   is_active: SyncedBoolean
+  storage_purpose: LocationStoragePurpose
 }
 
 export interface CellarSetupHolding {
@@ -49,6 +51,43 @@ export interface LocationOccupancy {
   detail: string
   label: string
   tone: LocationOccupancyTone
+}
+
+export const LOCATION_STORAGE_PURPOSES: Array<{
+  description: string
+  label: string
+  value: LocationStoragePurpose
+}> = [
+  {
+    description: "Long-term storage for bottles that should keep aging.",
+    label: "Aging",
+    value: "aging",
+  },
+  {
+    description: "Easy-access storage for bottles to open or assess soon.",
+    label: "Service",
+    value: "service",
+  },
+  {
+    description: "Temporary or unsorted storage.",
+    label: "Overflow",
+    value: "overflow",
+  },
+  {
+    description: "A general location with no single storage role.",
+    label: "Mixed",
+    value: "mixed",
+  },
+]
+
+export function getLocationStoragePurposeLabel(
+  purpose: LocationStoragePurpose,
+): string {
+  return (
+    LOCATION_STORAGE_PURPOSES.find(
+      (candidate) => candidate.value === purpose,
+    )?.label ?? "Mixed"
+  )
 }
 
 const setupLabelCollator = new Intl.Collator(undefined, {

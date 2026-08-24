@@ -38,6 +38,7 @@ import type { RegisteredDevicesState } from "../devices/useRegisteredDevices"
 import type { AppView } from "../navigation/appNavigation"
 import { Notice } from "./Notice"
 import { WineReferenceMatchReview } from "./WineReferenceMatchReview"
+import { WineMaturityPanel } from "./WineMaturityPanel"
 
 interface WineDetailViewProps {
   deviceRegistration: RegisteredDevicesState
@@ -1031,6 +1032,8 @@ export function WineDetailView({
           />
         ) : null}
       </section>
+
+      <WineMaturityPanel isOnline={isOnline} wineId={wine.id} />
 
       <section
         aria-labelledby="wine-stock-heading"

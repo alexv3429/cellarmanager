@@ -171,6 +171,11 @@ owner review before release.
   bounded lease jobs, stale-work cancellation, rights-aware cache metadata, and
   rate-limit buckets keep enrichment asynchronous and provider-neutral. See
   [`../enrichment-publishing-and-jobs.md`](../enrichment-publishing-and-jobs.md).
+- The 0.4.8 calculator publishes conservative, year-sensitive maturity and
+  storage projections only for reviewed compatible places. Unsupported wines
+  remain visibly unassessed; exact-projection feedback and owner adjustments
+  never overwrite model provenance. See
+  [`../maturity-projections.md`](../maturity-projections.md).
 
 ## Deferred decisions
 

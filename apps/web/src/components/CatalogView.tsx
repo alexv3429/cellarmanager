@@ -15,6 +15,12 @@ import {
 import {
   updateWineCatalog,
 } from "../data/wineCatalogMutations"
+import {
+  getHouseholdMaturityOverview,
+  maturityAssessmentReasonLabel,
+  type MaturityOverviewItem,
+  type MaturityState,
+} from "../data/wineMaturity"
 import { Notice } from "./Notice"
 
 interface CatalogWineRow {
@@ -33,6 +39,31 @@ type StockFilter =
   | "ALL"
   | "IN_STOCK"
   | "ZERO_STOCK"
+
+type MaturityFilter =
+  | "ALL"
+  | "DRINK_SOON"
+  | "READY"
+  | "HOLD"
+  | "UNASSESSED"
+
+function matchesMaturityFilter(
+  state: MaturityState | null,
+  filter: MaturityFilter,
+): boolean {
+  switch (filter) {
+    case "DRINK_SOON":
+      return state === "priority" || state === "assess-now"
+    case "READY":
+      return state === "assess" || state === "ready"
+    case "HOLD":
+      return state === "hold"
+    case "UNASSESSED":
+      return state === null
+    default:
+      return true
+  }
+}
 
 const CATALOG_QUERY = `
   select
@@ -91,6 +122,13 @@ export function CatalogView({
     useState<StockFilter>("ALL")
   const [vintageFilter, setVintageFilter] =
     useState("ALL")
+  const [maturityFilter, setMaturityFilter] =
+    useState<MaturityFilter>("ALL")
+  const [maturityOverview, setMaturityOverview] =
+    useState<MaturityOverviewItem[]>([])
+  const [maturityLoading, setMaturityLoading] = useState(false)
+  const [maturityError, setMaturityError] =
+    useState<string | null>(null)
 
   const [editingWineId, setEditingWineId] =
     useState<string | null>(null)
@@ -119,6 +157,53 @@ export function CatalogView({
     setMutationMessage(null)
     setMutationError(null)
   }, [householdId])
+
+  useEffect(() => {
+    setMaturityOverview([])
+    setMaturityError(null)
+
+    if (!isOnline) {
+      setMaturityFilter("ALL")
+      setMaturityLoading(false)
+      return
+    }
+
+    let cancelled = false
+    setMaturityLoading(true)
+
+    void getHouseholdMaturityOverview(householdId)
+      .then((overview) => {
+        if (!cancelled) {
+          setMaturityOverview(overview)
+        }
+      })
+      .catch((caughtError: unknown) => {
+        if (!cancelled) {
+          setMaturityError(
+            caughtError instanceof Error
+              ? caughtError.message
+              : "Unable to load maturity guidance",
+          )
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setMaturityLoading(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [householdId, isOnline])
+
+  const maturityByWineId = useMemo(
+    () =>
+      new Map(
+        maturityOverview.map((item) => [item.wineId, item]),
+      ),
+    [maturityOverview],
+  )
 
   const vintageOptions = useMemo(() => {
     const vintages = [
@@ -188,6 +273,16 @@ export function CatalogView({
           return false
         }
 
+        const maturity = maturityByWineId.get(wine.id)
+        if (
+          !matchesMaturityFilter(
+            maturity?.state ?? null,
+            maturityFilter,
+          )
+        ) {
+          return false
+        }
+
         if (
           stockFilter === "ZERO_STOCK" &&
           wine.quantity !== 0
@@ -217,8 +312,28 @@ export function CatalogView({
           ],
           search,
         )
+      }).sort((left, right) => {
+        if (maturityFilter === "ALL") {
+          return 0
+        }
+
+        const leftMaturity = maturityByWineId.get(left.id)
+        const rightMaturity = maturityByWineId.get(right.id)
+        return (
+          (rightMaturity?.urgencyScore ?? 0) -
+            (leftMaturity?.urgencyScore ?? 0) ||
+          (leftMaturity?.drinkByYear ?? Number.MAX_SAFE_INTEGER) -
+            (rightMaturity?.drinkByYear ?? Number.MAX_SAFE_INTEGER)
+        )
       }),
-    [search, stockFilter, vintageFilter, wines],
+    [
+      maturityByWineId,
+      maturityFilter,
+      search,
+      stockFilter,
+      vintageFilter,
+      wines,
+    ],
   )
 
   const totalBottles = wines.reduce(
@@ -234,12 +349,14 @@ export function CatalogView({
   const hasFilters =
     search.trim().length > 0 ||
     stockFilter !== "ALL" ||
-    vintageFilter !== "ALL"
+    vintageFilter !== "ALL" ||
+    maturityFilter !== "ALL"
 
   function clearFilters() {
     setSearch("")
     setStockFilter("ALL")
     setVintageFilter("ALL")
+    setMaturityFilter("ALL")
   }
 
   function startEditing(wine: CatalogWineRow) {
@@ -397,6 +514,25 @@ export function CatalogView({
           </select>
         </label>
 
+        <label>
+          When to drink
+          <select
+            disabled={!isOnline || maturityLoading}
+            onChange={(event) =>
+              setMaturityFilter(
+                event.target.value as MaturityFilter,
+              )
+            }
+            value={maturityFilter}
+          >
+            <option value="ALL">All maturity states</option>
+            <option value="DRINK_SOON">Drink sooner</option>
+            <option value="READY">Assess or ready</option>
+            <option value="HOLD">Keep aging</option>
+            <option value="UNASSESSED">Not assessed</option>
+          </select>
+        </label>
+
         <button
           disabled={!hasFilters}
           onClick={clearFilters}
@@ -405,6 +541,12 @@ export function CatalogView({
           Clear filters
         </button>
       </section>
+
+      {maturityError ? (
+        <Notice role="alert" tone="warning">
+          Maturity guidance is temporarily unavailable: {maturityError}
+        </Notice>
+      ) : null}
 
       <datalist id="catalog-color-suggestions">
         {colorSuggestions.map((color) => (
@@ -431,6 +573,9 @@ export function CatalogView({
         Showing {visibleWines.length} of {wines.length} wines
         {" · "}
         {visibleBottles} of {totalBottles} bottles
+        {isOnline && !maturityLoading && !maturityError
+          ? ` · ${maturityOverview.filter((item) => item.state !== null).length} assessed · ${maturityOverview.filter((item) => item.demandStatus === "needs-review").length} need input or review`
+          : ""}
       </p>
 
       {!isLoading && wines.length === 0 ? (
@@ -468,6 +613,7 @@ export function CatalogView({
 
             const isSaving =
               savingWineId === wine.id
+            const maturity = maturityByWineId.get(wine.id)
 
             return (
               <tr key={wine.id}>
@@ -503,7 +649,28 @@ export function CatalogView({
                       value={editCuvee}
                     />
                   ) : (
-                    wine.cuvee
+                    <div className="catalog-wine-cuvee">
+                      <span>{wine.cuvee}</span>
+                      {maturity?.state ? (
+                        <span
+                          className={`maturity-badge maturity-badge--${maturity.state}`}
+                        >
+                          {maturity.stateLabel}
+                          {maturity.drinkByYear
+                            ? ` · by ${maturity.drinkByYear}`
+                            : ""}
+                          {maturity.moveNeeded
+                            ? " · move suggested"
+                            : ""}
+                        </span>
+                      ) : maturity?.assessmentReason ? (
+                        <span className="maturity-badge maturity-badge--unassessed">
+                          {maturityAssessmentReasonLabel(
+                            maturity.assessmentReason,
+                          )}
+                        </span>
+                      ) : null}
+                    </div>
                   )}
                 </td>
 

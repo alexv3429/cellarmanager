@@ -21,8 +21,9 @@ for the released application foundation. The accepted
 [`docs/adr/004-wine-reference-and-enrichment-evidence.md`](docs/adr/004-wine-reference-and-enrichment-evidence.md)
 defines the shared wine-reference and enrichment boundary for v0.4; its
 implementation follows the product roadmap below. The current v0.4 foundation
-includes an attributed LWIN snapshot and a conservative, explicitly reviewed
-household matching workflow.
+includes an attributed LWIN snapshot, a conservative explicitly reviewed
+household matching workflow, versioned inference knowledge, and asynchronous
+maturity/storage projections for supported wines.
 
 ## v0.3 capabilities
 

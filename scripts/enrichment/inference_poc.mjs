@@ -102,7 +102,7 @@ function inferenceCard(inference, sourceIndex) {
     <div class="ranges">
       <span><small>First trial</small>${escapeHtml(yearRange(inference.maturity.firstTry))}</span>
       <span><small>Likely best</small>${escapeHtml(yearRange(inference.maturity.likelyBest))}</span>
-      <span><small>Outer horizon</small>${escapeHtml(yearRange(inference.maturity.drinkBy))}</span>
+      <span><small>Preferably drink by</small>${escapeHtml(yearRange(inference.maturity.drinkBy))}</span>
     </div>
     <div class="columns"><section><h3>Storage action</h3><p>${escapeHtml(inference.location.message)}</p>
       <p class="meta">Purpose: ${escapeHtml(inference.location.purpose)}</p></section>

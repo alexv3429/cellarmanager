@@ -53,7 +53,7 @@ For each wine the POC returns:
 
 - a first-trial range;
 - a likely-best range;
-- a deliberately wider outer drinking horizon;
+- a deliberately later suggested drink-by year;
 - `hold`, `start assessing`, `likely ready`, `prioritize`, or later-assessment
   state;
 - aging/service storage purpose and a move-one-bottle hint;
@@ -104,7 +104,7 @@ row-level validation file remains private.
 The owner judged this inference-first result more accurate than the complete
 online-provider trial. The three questionable maturity results were bounded
 timing adjustments rather than reversed advice: one white Languedoc wine
-should probably be consumed earlier, and two outer horizons may be slightly
+should probably be consumed earlier, and two suggested drink-by years may be slightly
 too long. There was no accepted colour/style contradiction and no systematic
 regional failure.
 
