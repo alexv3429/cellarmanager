@@ -62,6 +62,7 @@ describe("initial CSV import destination", () => {
         p_cellar_id: "cellar-1",
         p_code: "Unsorted",
         p_household_id: "household-1",
+        p_storage_purpose: "overflow",
       },
     )
   })

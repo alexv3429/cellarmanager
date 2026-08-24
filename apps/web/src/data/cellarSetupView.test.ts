@@ -37,6 +37,7 @@ const locations: CellarSetupLocation[] = [
     household_id: "household-a",
     id: "location-a10",
     is_active: 1,
+    storage_purpose: "aging",
   },
   {
     capacity: null,
@@ -46,6 +47,7 @@ const locations: CellarSetupLocation[] = [
     household_id: "household-a",
     id: "location-floor-2",
     is_active: 0,
+    storage_purpose: "mixed",
   },
   {
     capacity: 8,
@@ -55,6 +57,7 @@ const locations: CellarSetupLocation[] = [
     household_id: "household-a",
     id: "location-a2",
     is_active: 1,
+    storage_purpose: "service",
   },
 ]
 

@@ -272,9 +272,9 @@ function maturityMessage(asOfYear, state, ranges) {
     return `Past the central estimate; prioritize it and aim to drink by about ${ranges.drinkBy[0]}.`;
   }
   if (state === "late") {
-    return `Inside the outer drinking horizon; open soon and assess bottle condition.`;
+    return `Past the likely best period; open soon and assess bottle condition.`;
   }
-  return `Beyond the modeled horizon; assess a bottle now rather than assuming it is lost.`;
+  return `Past the suggested drink-by year; assess a bottle now rather than assuming it is lost.`;
 }
 
 function locationAdvice(wine, asOfYear, state, ranges) {

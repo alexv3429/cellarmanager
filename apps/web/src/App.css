@@ -629,6 +629,46 @@
   margin-bottom: 6px;
 }
 
+.catalog-wine-cuvee {
+  display: grid;
+  gap: 5px;
+}
+
+.maturity-badge {
+  width: fit-content;
+  max-width: 100%;
+  padding: 2px 7px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-muted);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.maturity-badge--priority,
+.maturity-badge--assess-now {
+  border-color: color-mix(in srgb, #a63d45 60%, var(--border));
+  background: color-mix(in srgb, var(--surface) 88%, #a63d45);
+}
+
+.maturity-badge--assess,
+.maturity-badge--ready {
+  border-color: color-mix(in srgb, #9a6a21 60%, var(--border));
+  background: color-mix(in srgb, var(--surface) 88%, #9a6a21);
+}
+
+.maturity-badge--hold {
+  border-color: color-mix(in srgb, #4f7a5a 55%, var(--border));
+  background: color-mix(in srgb, var(--surface) 88%, #4f7a5a);
+}
+
+.maturity-badge--unassessed {
+  border-style: dashed;
+  color: var(--text-muted);
+}
+
 .inventory-add-panel {
   overflow: hidden;
   border: 1px solid var(--border);
@@ -871,10 +911,190 @@
 }
 
 .app-shell__content section.wine-detail-reference,
+.app-shell__content section.wine-maturity,
 .app-shell__content section.wine-detail-stock {
   display: grid;
   gap: 16px;
   align-items: stretch;
+}
+
+.wine-maturity__summary,
+.wine-maturity__storage,
+.wine-maturity__feedback,
+.wine-maturity__explanation,
+.wine-maturity__override {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-muted);
+}
+
+.wine-maturity__summary {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.wine-maturity__summary h3,
+.wine-maturity__summary p,
+.wine-maturity__storage p,
+.wine-maturity__override p {
+  margin: 0;
+}
+
+.wine-maturity__summary h3 {
+  margin-top: 7px;
+}
+
+.wine-maturity__summary p,
+.wine-maturity__override p {
+  margin-top: 4px;
+}
+
+.wine-maturity__badge,
+.wine-maturity__confidence,
+.wine-maturity__move {
+  display: inline-flex;
+  width: fit-content;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.wine-maturity__confidence {
+  flex: 0 0 auto;
+}
+
+.wine-maturity__window {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.wine-maturity__window > div {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.wine-maturity__window dt {
+  font-size: 13px;
+}
+
+.wine-maturity__window dd {
+  margin: 4px 0 0;
+  color: var(--text-h);
+  font-family: var(--heading);
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.wine-maturity__storage {
+  display: grid;
+  gap: 8px;
+}
+
+.wine-maturity__storage > div {
+  display: grid;
+  gap: 2px;
+}
+
+.wine-maturity__storage > div span {
+  font-size: 13px;
+}
+
+.wine-maturity__move--possible {
+  border-color: color-mix(in srgb, #4f7a5a 55%, var(--border));
+  background: color-mix(in srgb, var(--surface) 88%, #4f7a5a);
+}
+
+.wine-maturity__move--blocked {
+  border-color: color-mix(in srgb, #9a6a21 60%, var(--border));
+  background: color-mix(in srgb, var(--surface) 88%, #9a6a21);
+}
+
+.wine-maturity__explanation > summary,
+.wine-maturity__override > summary {
+  color: var(--text-h);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.wine-maturity__explanation p,
+.wine-maturity__explanation ul,
+.wine-maturity__explanation ol {
+  margin-bottom: 0;
+}
+
+.wine-maturity__contributions {
+  display: grid;
+  gap: 10px;
+  padding-left: 22px;
+}
+
+.wine-maturity__contributions li > * {
+  display: block;
+}
+
+.wine-maturity__contributions span {
+  margin-top: 2px;
+  color: var(--muted);
+}
+
+.wine-maturity__feedback {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.wine-maturity__feedback > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.wine-maturity__feedback button[aria-pressed="true"] {
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
+}
+
+.app-shell__content .wine-maturity__override form {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  align-items: end;
+  margin-top: 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.wine-maturity__override form label {
+  display: grid;
+  gap: 5px;
+}
+
+.wine-maturity__override form input,
+.wine-maturity__override form select {
+  width: 100%;
+  min-width: 0;
+}
+
+.wine-maturity__override-note {
+  grid-column: span 2;
+}
+
+.wine-maturity__override form > div {
+  display: flex;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .wine-detail-section-heading {
@@ -1148,6 +1368,10 @@
   .wine-reference-candidates {
     grid-template-columns: minmax(0, 1fr);
   }
+
+  .app-shell__content .wine-maturity__override form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 560px) {
@@ -1166,8 +1390,26 @@
   }
 
   .wine-reference-review__heading,
-  .wine-reference-current {
+  .wine-reference-current,
+  .wine-maturity__summary,
+  .wine-maturity__feedback {
     display: grid;
+  }
+
+  .wine-maturity__window,
+  .app-shell__content .wine-maturity__override form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wine-maturity__override-note {
+    grid-column: auto;
+  }
+
+  .wine-maturity__feedback > div,
+  .wine-maturity__feedback button,
+  .wine-maturity__override form > div,
+  .wine-maturity__override form > div button {
+    width: 100%;
   }
 
   .wine-detail-section-heading > button {
@@ -1664,8 +1906,10 @@
 }
 
 .cellar-setup-create form input,
+.cellar-setup-create form select,
 .cellar-setup-search input,
-.cellar-card form input {
+.cellar-card form input,
+.cellar-card form select {
   width: 100%;
   min-width: 0;
 }
@@ -1779,6 +2023,7 @@
   grid-template-columns:
     minmax(0, 2fr)
     minmax(10rem, 1fr)
+    minmax(9rem, 1fr)
     auto;
   gap: 12px;
   align-items: end;
@@ -1870,6 +2115,16 @@
   line-height: 1.35;
 }
 
+.cellar-location__summary .cellar-location__purpose {
+  width: fit-content;
+  padding: 2px 7px;
+  border: 1px solid var(--accent-border);
+  border-radius: 999px;
+  color: var(--accent);
+  background: var(--accent-bg);
+  font-weight: 600;
+}
+
 .cellar-location__occupancy--empty,
 .cellar-location__occupancy--available {
   border-color: color-mix(in srgb, #4f7a5a 55%, var(--border));
@@ -1913,6 +2168,7 @@
   flex: 1 1 18rem;
   grid-template-columns:
     minmax(8rem, 1fr)
+    minmax(8rem, 0.7fr)
     minmax(8rem, 0.7fr)
     auto;
   gap: 6px;

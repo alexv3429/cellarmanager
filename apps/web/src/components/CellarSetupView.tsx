@@ -10,6 +10,7 @@ import {
   archiveLocation,
   createCellar,
   createLocation,
+  type LocationStoragePurpose,
   renameCellar,
   restoreCellar,
   restoreLocation,
@@ -22,8 +23,10 @@ import {
   formatBottleCount,
   formatLocationCount,
   getLocationOccupancy,
+  getLocationStoragePurposeLabel,
   isSetupRecordActive,
   moveLocationId,
+  LOCATION_STORAGE_PURPOSES,
   type CellarSetupCellar,
   type CellarSetupCellarSummary,
   type CellarSetupHolding,
@@ -51,7 +54,8 @@ const LOCATIONS_QUERY = `
     code,
     is_active,
     display_order,
-    capacity
+    capacity,
+    storage_purpose
   from locations
   where household_id = ?
 `
@@ -253,6 +257,7 @@ export function CellarSetupView({
           cellar.id,
           formValue(form, "code"),
           formValue(form, "capacity"),
+          formValue(form, "storagePurpose") as LocationStoragePurpose,
         )
       },
     )
@@ -299,6 +304,7 @@ export function CellarSetupView({
           location.id,
           formValue(form, "code"),
           formValue(form, "capacity"),
+          formValue(form, "storagePurpose") as LocationStoragePurpose,
         ),
     )
 
@@ -675,6 +681,25 @@ export function CellarSetupView({
                         />
                       </label>
 
+                      <label>
+                        Purpose
+                        <select
+                          defaultValue="mixed"
+                          name="storagePurpose"
+                        >
+                          {LOCATION_STORAGE_PURPOSES.map(
+                            (purpose) => (
+                              <option
+                                key={purpose.value}
+                                value={purpose.value}
+                              >
+                                {purpose.label}
+                              </option>
+                            ),
+                          )}
+                        </select>
+                      </label>
+
                       <button
                         disabled={
                           !isOnline || busyAction !== null
@@ -731,6 +756,11 @@ export function CellarSetupView({
                                   >
                                     {occupancy.label}
                                   </span>
+                                  <span className="cellar-location__purpose">
+                                    {getLocationStoragePurposeLabel(
+                                      location.storage_purpose,
+                                    )}
+                                  </span>
                                   <span>{occupancy.detail}</span>
                                 </div>
 
@@ -752,6 +782,26 @@ export function CellarSetupView({
                                         name="code"
                                         required
                                       />
+                                    </label>
+                                    <label>
+                                      <span>Purpose</span>
+                                      <select
+                                        defaultValue={
+                                          location.storage_purpose
+                                        }
+                                        name="storagePurpose"
+                                      >
+                                        {LOCATION_STORAGE_PURPOSES.map(
+                                          (purpose) => (
+                                            <option
+                                              key={purpose.value}
+                                              value={purpose.value}
+                                            >
+                                              {purpose.label}
+                                            </option>
+                                          ),
+                                        )}
+                                      </select>
                                     </label>
                                     <label>
                                       <span>Capacity (optional)</span>

@@ -4,6 +4,12 @@ import {
 } from "./cellarSetupLabels"
 import { supabase } from "./supabase"
 
+export type LocationStoragePurpose =
+  | "aging"
+  | "service"
+  | "overflow"
+  | "mixed"
+
 async function requireRpcSuccess(
   promise: PromiseLike<{
     data: unknown
@@ -65,6 +71,7 @@ export async function createLocation(
   cellarId: string,
   code: string,
   capacity: string,
+  storagePurpose: LocationStoragePurpose = "mixed",
 ): Promise<string> {
   return requireRpcId(
     supabase.rpc("create_location", {
@@ -72,6 +79,7 @@ export async function createLocation(
       p_cellar_id: cellarId,
       p_code: requireSetupLabel(code, "Location code"),
       p_capacity: parseOptionalLocationCapacity(capacity),
+      p_storage_purpose: storagePurpose,
     }),
   )
 }
@@ -106,6 +114,7 @@ export async function createInitialImportDestination(
       normalizedCapacity === null
         ? ""
         : String(normalizedCapacity),
+      "overflow",
     )
 
     return { cellarId, locationId }
@@ -137,12 +146,14 @@ export async function updateLocation(
   locationId: string,
   code: string,
   capacity: string,
+  storagePurpose: LocationStoragePurpose,
 ): Promise<void> {
   await requireRpcSuccess(
     supabase.rpc("update_location", {
       p_location_id: locationId,
       p_code: requireSetupLabel(code, "Location code"),
       p_capacity: parseOptionalLocationCapacity(capacity),
+      p_storage_purpose: storagePurpose,
     }),
   )
 }

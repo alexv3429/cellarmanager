@@ -80,8 +80,10 @@ to the queue until the maximum attempt count is reached. Completion compares
 the job's wine fingerprint and knowledge version with current state; stale work
 is cancelled rather than published over a newer edit or model.
 
-Step 0.4.8 will run the maturity calculation and write the projection in the
-same server transaction before reporting `complete` or `partial`.
+Step 0.4.8 adds a maturity-specific claim and processing boundary. It writes the
+maturity and storage projections in the same server transaction before
+reporting `complete`; unsupported wines finish explicitly as `needs-review`.
+See [`maturity-projections.md`](maturity-projections.md).
 
 ## Provider boundary
 
@@ -108,9 +110,10 @@ across workers without guessing from an in-process counter.
 ## Access and synchronization
 
 Demands, jobs, provider cache entries, and rate-limit buckets have RLS enabled,
-are service-only, and are absent from PowerSync. Household users will eventually
-see permitted projection status and advice through a narrower application API;
-they cannot inspect the global queue or provider metadata.
+are service-only, and are absent from PowerSync. Household users see the
+permitted maturity projection subset through the narrow 0.4.8 application RPCs;
+they cannot inspect the global queue or provider metadata. Pairing remains
+deferred.
 
 The migration creates no job, provider call, evidence, knowledge version, or
 projection by itself. It only backfills two queued demands per existing wine.

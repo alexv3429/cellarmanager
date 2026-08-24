@@ -14,7 +14,9 @@ source -> versioned policy -> evidence
 place -> reviewed profile ----+-> immutable knowledge version
 vintage -> reviewed profile --+             |
 producer era -> profile -------+             v
+producer x vintage -> profile -+             |
 cuvee -> reviewed profile -----+     household projection
+exact release -> profile ------+             ^
                                             ^
 household observation ----------------------+
 ```
@@ -52,7 +54,7 @@ visible instead of overwriting an earlier claim.
 ## Versioned knowledge model
 
 `enrichment_places` supplies stable hierarchical geography from country down to
-site or parcel. The database prevents hierarchy cycles and keeps a normalized
+appellation, climat, site, or parcel. The database prevents hierarchy cycles and keeps a normalized
 lookup name alongside canonical display text.
 
 Each `enrichment_knowledge_versions` row records a model key/version and, after
@@ -64,16 +66,21 @@ without deleting the historical input used by an existing projection.
 Every `enrichment_profiles` root has exactly one typed row:
 
 - `enrichment_place_profiles` contains the baseline structure and monotonic
-  first-trial, likely-best, and outer-horizon ages for a place and colour;
+  first-trial, likely-best, and suggested drink-by ages for a place and colour;
+- `enrichment_place_adjustment_profiles` refines an inherited regional baseline
+  at appellation, climat, site, or parcel level;
 - `enrichment_vintage_profiles` adjusts the baseline for local vintage
   conditions;
 - `enrichment_producer_era_profiles` adjusts it for one producer across an
   explicit vintage interval, so ownership or winemaking changes do not rewrite
   history;
+- `enrichment_producer_vintage_interaction_profiles` applies only when all
+  reviewed vintage-condition tags match one producer era;
 - `enrichment_cuvee_profiles` adjusts one canonical product and may identify
-  its site.
+  its site;
+- `enrichment_release_profiles` confines an observation to one exact release.
 
-Body, acidity, tannin, sweetness, alcohol, freshness, and savoury structure use
+Body, acidity, tannin, sweetness, alcohol, freshness, savoury, and concentration use
 a bounded 0–5 baseline. Later layers store bounded adjustments instead of
 repeating an entire synthetic wine profile. Confidence and rationale live on
 the reviewed root; supporting evidence is normalized through
@@ -135,10 +142,12 @@ and Cellar Setup continued to work normally.
 ## Next steps
 
 - 0.4.7 publishes reviewed knowledge versions and creates the asynchronous
-  demand and calculation infrastructure documented in
+  demand and job infrastructure documented in
   [`enrichment-publishing-and-jobs.md`](enrichment-publishing-and-jobs.md).
-- 0.4.8 defines and displays production maturity, urgency, storage-purpose, and
-  moving-hint projection payloads.
+- 0.4.8 calculates and displays production maturity, urgency, storage-purpose,
+  and moving-hint projection payloads as documented in
+  [`maturity-projections.md`](maturity-projections.md).
 - 0.4.9 adds dish profiles and pairing payloads, corrects the POC gaps, and
   repeats owner acceptance before pairing ships.
-- 0.4.10 adds personal observation and manual-override editing.
+- 0.4.10 expands personal observation editing and serving guidance on top of
+  the narrow maturity-window adjustment introduced in 0.4.8.

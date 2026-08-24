@@ -1,0 +1,396 @@
+{
+  "schemaVersion": 1,
+  "knowledgeVersion": 3,
+  "modelVersion": "hierarchy-poc-1.0.0",
+  "label": "Hierarchical maturity model — reviewed proof of concept",
+  "reviewedOn": "2026-08-24",
+  "methodologyUrl": "https://github.com/alexv3429/cellarmanager/blob/main/docs/maturity-hierarchy-poc.md",
+  "sources": [
+    {
+      "id": "owner-workbook-boillot",
+      "name": "Caves_2.0 — Boillot sheet",
+      "kind": "private-owner-calibration",
+      "url": null
+    },
+    {
+      "id": "bivb-bourgogne-red",
+      "name": "BIVB Bourgogne appellation profile",
+      "kind": "official-place",
+      "url": "https://www.bourgogne-wines.com/wine-and-terroir/bourgogne-and-its-appellations/bourgogne,2458,9253.html"
+    },
+    {
+      "id": "bivb-gevrey",
+      "name": "BIVB Gevrey-Chambertin appellation profile",
+      "kind": "official-place",
+      "url": "https://www.bourgogne-wines.com/wine-and-terroir/bourgogne-and-its-appellations/gevrey-chambertin,2458,9253.html"
+    },
+    {
+      "id": "bivb-vintages",
+      "name": "BIVB Bourgogne vintage archive",
+      "kind": "official-vintage",
+      "url": "https://www.bourgogne-wines.com/food-and-wine-combinations/choosing-and-serving-wine/vintages/vintages,3347,16880.html"
+    },
+    {
+      "id": "evocelles-place",
+      "name": "Albert Bichot Les Evocelles place profile",
+      "kind": "producer-place",
+      "url": "https://www.albert-bichot.com/fr/gevrey-chambertin-les-evocelles_76"
+    },
+    {
+      "id": "boillot-vertical",
+      "name": "Published Louis Boillot vertical and producer commentary",
+      "kind": "expert-secondary",
+      "url": "https://v1.vinous.com/producers/domaine-louis-boillot-et-fils-b2597368-66cc-40b7-b2e7-07b8fe8352a5?article_id=1836"
+    },
+    {
+      "id": "boillot-evocelles-2017",
+      "name": "Berry Bros. & Rudd Louis Boillot Les Evocelles 2017",
+      "kind": "expert-secondary",
+      "url": "https://www.bbr.com/products-20171021284-2017-gevrey-chambertin-les-evocelles-domaine-louis-boillot-and-fils-burgundy"
+    },
+    {
+      "id": "boillot-evocelles-2021",
+      "name": "Published Louis Boillot Les Evocelles 2021 assessments",
+      "kind": "expert-secondary",
+      "url": "https://goedhuiswaddesdon.com/products/2021-gevrey-chambertin-les-evocelles-louis-boillot-3x75cl"
+    },
+    {
+      "id": "boillot-evocelles-2022",
+      "name": "Published Louis Boillot Les Evocelles 2022 assessments",
+      "kind": "expert-secondary",
+      "url": "https://vinous.com/wines/domaine-louis-boillot-et-fils-gevrey-chambertin-les-evocelles/2022"
+    },
+    {
+      "id": "owner-workbook-cal-demoura",
+      "name": "Caves_2.0 — Cal Demoura sheet",
+      "kind": "private-owner-calibration",
+      "url": null
+    },
+    {
+      "id": "cal-demoura-official",
+      "name": "Mas Cal Demoura wine and site profiles",
+      "kind": "producer-primary",
+      "url": "https://www.caldemoura.com/les-vins"
+    }
+  ],
+  "places": [
+    {
+      "id": "bourgogne",
+      "parentId": null,
+      "type": "region",
+      "name": "Bourgogne red",
+      "aliases": ["Bourgogne", "Burgundy"],
+      "color": "red",
+      "window": {"first": 2, "bestStart": 4, "bestEnd": 7, "outer": 11},
+      "traits": {"body": 2.6, "acidity": 4.0, "tannin": 2.6, "freshness": 4.0, "concentration": 2.6},
+      "confidence": 0.78,
+      "evidence": ["bivb-bourgogne-red", "owner-workbook-boillot"],
+      "rationale": "Regional Pinot Noir baseline: fresh, relatively light, and intended to be refined by a more specific place."
+    },
+    {
+      "id": "gevrey-chambertin",
+      "parentId": "bourgogne",
+      "type": "appellation",
+      "name": "Gevrey-Chambertin",
+      "aliases": ["Gevrey-Chambertin", "Gevrey Chambertin"],
+      "color": "red",
+      "windowAdjustment": {"first": 2, "bestStart": 2, "bestEnd": 4, "outer": 5},
+      "traits": {"body": 0.8, "acidity": 0.1, "tannin": 0.9, "freshness": 0.0, "concentration": 0.8},
+      "confidence": 0.84,
+      "evidence": ["bivb-gevrey", "owner-workbook-boillot"],
+      "rationale": "Firm, full-bodied and tannin-supported Gevrey structure extends the regional baseline."
+    },
+    {
+      "id": "les-evocelles",
+      "parentId": "gevrey-chambertin",
+      "type": "climat",
+      "name": "Les Evocelles",
+      "aliases": ["Les Evocelles", "Evocelles"],
+      "color": "red",
+      "windowAdjustment": {"first": 0, "bestStart": 0, "bestEnd": 2, "outer": 2},
+      "traits": {"body": 0.0, "acidity": 0.3, "tannin": -0.1, "freshness": 0.4, "concentration": 0.2},
+      "confidence": 0.72,
+      "evidence": ["evocelles-place", "boillot-vertical"],
+      "rationale": "The high, east-facing site adds tension and freshness while fine tannins support a longer central period and later suggested drink-by year."
+    },
+    {
+      "id": "languedoc",
+      "parentId": null,
+      "type": "region",
+      "name": "Languedoc red",
+      "aliases": ["Languedoc", "Languedoc-Roussillon"],
+      "color": "red",
+      "window": {"first": 1, "bestStart": 3, "bestEnd": 6, "outer": 10},
+      "traits": {"body": 3.2, "acidity": 3.2, "tannin": 3.0, "freshness": 3.2, "concentration": 3.2},
+      "confidence": 0.64,
+      "evidence": ["owner-workbook-cal-demoura"],
+      "rationale": "Broad Mediterranean red baseline, deliberately refined before it is used for a named cru."
+    },
+    {
+      "id": "terrasses-du-larzac",
+      "parentId": "languedoc",
+      "type": "appellation",
+      "name": "Terrasses du Larzac",
+      "aliases": ["Terrasses du Larzac"],
+      "color": "red",
+      "windowAdjustment": {"first": 2, "bestStart": 1, "bestEnd": 2, "outer": 3},
+      "traits": {"body": 0.6, "acidity": 0.3, "tannin": 0.6, "freshness": 0.4, "concentration": 0.6},
+      "confidence": 0.76,
+      "evidence": ["cal-demoura-official", "owner-workbook-cal-demoura"],
+      "rationale": "The cooler limestone-supported cru adds structure and freshness to the broad Languedoc baseline."
+    }
+  ],
+  "vintages": [
+    {
+      "id": "bourgogne-red-2017",
+      "placeId": "bourgogne",
+      "name": "Bourgogne red 2017",
+      "color": "red",
+      "vintage": 2017,
+      "tags": ["balanced", "elegant"],
+      "windowAdjustment": {"first": 0, "bestStart": 0, "bestEnd": -1, "outer": -1},
+      "traits": {"body": -0.2, "tannin": -0.3, "freshness": 0.1},
+      "confidence": 0.82,
+      "evidence": ["bivb-vintages"],
+      "rationale": "Expressive, harmonious and balanced rather than deeply structured."
+    },
+    {
+      "id": "bourgogne-red-2018",
+      "placeId": "bourgogne",
+      "name": "Bourgogne red 2018",
+      "color": "red",
+      "vintage": 2018,
+      "tags": ["hot", "dry", "structured"],
+      "windowAdjustment": {"first": 1, "bestStart": 1, "bestEnd": 1, "outer": 1},
+      "traits": {"body": 0.4, "tannin": 0.4, "freshness": 0.0, "concentration": 0.5},
+      "confidence": 0.86,
+      "evidence": ["bivb-vintages"],
+      "rationale": "A hot, dry, concentrated and structured vintage with good balance."
+    },
+    {
+      "id": "bourgogne-red-2019",
+      "placeId": "bourgogne",
+      "name": "Bourgogne red 2019",
+      "color": "red",
+      "vintage": 2019,
+      "tags": ["hot", "dry", "concentrated"],
+      "windowAdjustment": {"first": -1, "bestStart": -1, "bestEnd": 1, "outer": 1},
+      "traits": {"body": 0.3, "acidity": 0.2, "tannin": 0.3, "freshness": 0.2, "concentration": 0.4},
+      "confidence": 0.76,
+      "evidence": ["bivb-vintages"],
+      "rationale": "Ripe fruit permits earlier assessment while density, acidity and refined tannins preserve longevity."
+    },
+    {
+      "id": "bourgogne-red-2020",
+      "placeId": "bourgogne",
+      "name": "Bourgogne red 2020",
+      "color": "red",
+      "vintage": 2020,
+      "tags": ["hot", "dry", "structured", "acidity-retained"],
+      "windowAdjustment": {"first": 2, "bestStart": 2, "bestEnd": 4, "outer": 4},
+      "traits": {"body": 0.4, "acidity": 0.2, "tannin": 0.5, "freshness": 0.1, "concentration": 0.5},
+      "confidence": 0.88,
+      "evidence": ["bivb-vintages"],
+      "rationale": "Hot and dry, yet with preserved acidity and an impressive tannic structure."
+    },
+    {
+      "id": "bourgogne-red-2021",
+      "placeId": "bourgogne",
+      "name": "Bourgogne red 2021",
+      "color": "red",
+      "vintage": 2021,
+      "tags": ["cool", "wet", "delicate"],
+      "windowAdjustment": {"first": -1, "bestStart": -1, "bestEnd": -2, "outer": -2},
+      "traits": {"body": -0.4, "acidity": 0.3, "tannin": -0.4, "freshness": 0.3, "concentration": -0.4},
+      "confidence": 0.74,
+      "evidence": ["bivb-vintages", "owner-workbook-boillot"],
+      "rationale": "A cooler, more delicate year suitable for earlier assessment, with important local variation."
+    },
+    {
+      "id": "bourgogne-red-2022",
+      "placeId": "bourgogne",
+      "name": "Bourgogne red 2022",
+      "color": "red",
+      "vintage": 2022,
+      "tags": ["hot", "dry", "soft-tannin"],
+      "windowAdjustment": {"first": 0, "bestStart": 0, "bestEnd": -1, "outer": -1},
+      "traits": {"body": 0.2, "acidity": -0.1, "tannin": 0.1, "freshness": 0.1, "concentration": 0.3},
+      "confidence": 0.70,
+      "evidence": ["bivb-vintages", "owner-workbook-boillot"],
+      "rationale": "A hot, dry vintage with concentration, moderate acidity and relatively soft tannins."
+    },
+    {
+      "id": "languedoc-red-2023",
+      "placeId": "languedoc",
+      "name": "Languedoc red 2023",
+      "color": "red",
+      "vintage": 2023,
+      "tags": ["hot", "dry", "structured", "young-evidence"],
+      "windowAdjustment": {"first": 0, "bestStart": 0, "bestEnd": 0, "outer": 0},
+      "traits": {"body": 0.3, "acidity": 0.0, "tannin": 0.3, "freshness": 0.0, "concentration": 0.3},
+      "confidence": 0.48,
+      "evidence": ["owner-workbook-cal-demoura"],
+      "rationale": "Young structured owner observation retained without a speculative calendar shift."
+    }
+  ],
+  "producerEras": [
+    {
+      "id": "louis-boillot-1984-2021",
+      "producerKey": "louis-boillot",
+      "name": "Louis Boillot — established era",
+      "aliases": ["Louis Boillot", "Boillot"],
+      "matchPolicy": "owner-confirmed-alias",
+      "color": "red",
+      "firstVintage": 1984,
+      "finalVintage": 2021,
+      "windowAdjustment": {"first": 0, "bestStart": 0, "bestEnd": 0, "outer": 0},
+      "traits": {"acidity": 0.2, "tannin": -0.1, "freshness": 0.2},
+      "interactions": [
+        {
+          "label": "Early harvest and freshness retention in a hot, dry vintage",
+          "tagsAll": ["hot", "dry"],
+          "windowAdjustment": {"first": 0, "bestStart": 0, "bestEnd": 1, "outer": 1},
+          "traits": {"acidity": 0.2, "freshness": 0.2},
+          "rationale": "The producer's documented early-picking response partially protects freshness and longevity in hot years."
+        }
+      ],
+      "confidence": 0.76,
+      "evidence": ["boillot-vertical", "boillot-evocelles-2017", "owner-workbook-boillot"],
+      "rationale": "Early picking, full destemming and measured extraction favor freshness, fine tannins and site expression."
+    },
+    {
+      "id": "louis-clement-boillot-2022-present",
+      "producerKey": "louis-boillot",
+      "name": "Louis and Clément Boillot — transition era",
+      "aliases": ["Louis Boillot", "Boillot"],
+      "matchPolicy": "owner-confirmed-alias",
+      "color": "red",
+      "firstVintage": 2022,
+      "finalVintage": null,
+      "windowAdjustment": {"first": 0, "bestStart": 0, "bestEnd": 0, "outer": 0},
+      "traits": {"acidity": 0.1, "tannin": -0.1, "freshness": 0.2},
+      "interactions": [
+        {
+          "label": "Freshness retained despite hot, dry conditions",
+          "tagsAll": ["hot", "dry"],
+          "windowAdjustment": {"first": 0, "bestStart": 0, "bestEnd": 1, "outer": 1},
+          "traits": {"freshness": 0.2},
+          "rationale": "The 2022 wines were reported to taste fresher than their measured acidity suggested."
+        }
+      ],
+      "confidence": 0.65,
+      "evidence": ["boillot-evocelles-2022"],
+      "rationale": "A separately versioned transition period avoids assuming that the established Louis Boillot style is permanently unchanged."
+    },
+    {
+      "id": "cal-demoura-2023",
+      "producerKey": "cal-demoura",
+      "name": "Isabelle and Vincent Goumard at Mas Cal Demoura — 2023 reviewed era",
+      "aliases": ["Cal Demoura", "Mas Cal Demoura"],
+      "matchPolicy": "owner-confirmed-alias",
+      "color": "red",
+      "firstVintage": 2023,
+      "finalVintage": 2023,
+      "windowAdjustment": {"first": 0, "bestStart": 0, "bestEnd": 0, "outer": 0},
+      "traits": {"acidity": 0.2, "tannin": -0.1, "freshness": 0.3},
+      "interactions": [],
+      "confidence": 0.76,
+      "evidence": ["cal-demoura-official", "owner-workbook-cal-demoura"],
+      "rationale": "The producer describes balance, freshness and fine tannins across distinct landscape and parcel wines; the POC deliberately limits this profile to the reviewed vintage."
+    }
+  ],
+  "cuvees": [
+    {
+      "id": "les-evocelles-louis-boillot",
+      "producerKey": "louis-boillot",
+      "placeId": "les-evocelles",
+      "name": "Gevrey-Chambertin Les Evocelles",
+      "aliases": ["Evocelles", "Les Evocelles"],
+      "color": "red",
+      "windowAdjustment": {"first": 0, "bestStart": 0, "bestEnd": 0, "outer": 0},
+      "traits": {"concentration": 0.2, "freshness": 0.1},
+      "confidence": 0.74,
+      "evidence": ["boillot-vertical", "boillot-evocelles-2017"],
+      "rationale": "Old vines and recurring observations of tension, fine tannins and mineral freshness support the exact cuvee identity."
+    },
+    {
+      "id": "terres-de-jonquieres-cal-demoura",
+      "producerKey": "cal-demoura",
+      "placeId": "terrasses-du-larzac",
+      "name": "Terres de Jonquières",
+      "aliases": ["Terres de Jonquieres", "Terres de Jonquières", "Terre de Jonquières"],
+      "color": "red",
+      "windowAdjustment": {"first": 0, "bestStart": 0, "bestEnd": -3, "outer": -3},
+      "traits": {"body": -0.2, "tannin": -0.3, "freshness": 0.2, "concentration": -0.2},
+      "confidence": 0.78,
+      "evidence": ["cal-demoura-official", "owner-workbook-cal-demoura"],
+      "rationale": "A balanced multi-site blend with pure fruit and fine tannins is the earliest reviewed red in the 2023 range."
+    },
+    {
+      "id": "combariolles-cal-demoura",
+      "producerKey": "cal-demoura",
+      "placeId": "terrasses-du-larzac",
+      "name": "Les Combariolles",
+      "aliases": ["Combariolles", "Les Combariolles"],
+      "color": "red",
+      "windowAdjustment": {"first": 2, "bestStart": 3, "bestEnd": 1, "outer": 2},
+      "traits": {"body": 0.3, "acidity": 0.3, "tannin": 0.3, "freshness": 0.2, "concentration": 0.6},
+      "confidence": 0.80,
+      "evidence": ["cal-demoura-official", "owner-workbook-cal-demoura"],
+      "rationale": "The limestone parcel's density, vertical energy and depth justify a later central period than the landscape blend."
+    },
+    {
+      "id": "belle-fiolle-cal-demoura",
+      "producerKey": "cal-demoura",
+      "placeId": "terrasses-du-larzac",
+      "name": "Belle Fiolle",
+      "aliases": ["Belle Fiolle"],
+      "color": "red",
+      "windowAdjustment": {"first": 0, "bestStart": 0, "bestEnd": -1, "outer": 0},
+      "traits": {"body": -0.3, "acidity": 0.1, "tannin": -0.4, "freshness": 0.3, "concentration": -0.2},
+      "confidence": 0.76,
+      "evidence": ["cal-demoura-official", "owner-workbook-cal-demoura"],
+      "rationale": "Cinsault-led elegance, freshness and perfume support an earlier, less tannic central period."
+    },
+    {
+      "id": "feu-sacre-cal-demoura",
+      "producerKey": "cal-demoura",
+      "placeId": "terrasses-du-larzac",
+      "name": "Feu Sacré",
+      "aliases": ["Feu Sacre", "Feu Sacré"],
+      "color": "red",
+      "windowAdjustment": {"first": 4, "bestStart": 6, "bestEnd": 7, "outer": 7},
+      "traits": {"body": 0.5, "acidity": 0.2, "tannin": 0.3, "freshness": 0.2, "concentration": 0.8},
+      "confidence": 0.82,
+      "evidence": ["cal-demoura-official", "owner-workbook-cal-demoura"],
+      "rationale": "Old Grenache generosity is balanced by site freshness and explicitly described as having very high potential."
+    },
+    {
+      "id": "fragments-cal-demoura",
+      "producerKey": "cal-demoura",
+      "placeId": "terrasses-du-larzac",
+      "name": "Fragments",
+      "aliases": ["Fragments"],
+      "color": "red",
+      "windowAdjustment": {"first": 5, "bestStart": 8, "bestEnd": 9, "outer": 10},
+      "traits": {"body": 0.6, "acidity": 0.5, "tannin": 0.7, "freshness": 0.5, "concentration": 0.8},
+      "confidence": 0.82,
+      "evidence": ["cal-demoura-official", "owner-workbook-cal-demoura"],
+      "rationale": "The northern old-vine Syrah parcel is intense, structured and explicitly described by the producer as requiring patience."
+    }
+  ],
+  "releases": [
+    {
+      "id": "les-evocelles-louis-boillot-2021",
+      "producerKey": "louis-boillot",
+      "cuveeId": "les-evocelles-louis-boillot",
+      "name": "Les Evocelles 2021",
+      "vintage": 2021,
+      "windowAdjustment": {"first": 0, "bestStart": 0, "bestEnd": -2, "outer": -3},
+      "traits": {"concentration": -0.3},
+      "confidence": 0.80,
+      "evidence": ["boillot-evocelles-2021", "owner-workbook-boillot"],
+      "rationale": "Frost, coulure and hail sharply reduced the crop; published assessments describe an earlier, shorter-lived expression."
+    }
+  ]
+}

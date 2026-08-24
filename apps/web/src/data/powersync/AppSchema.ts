@@ -59,6 +59,7 @@ const locations = new Table(
     is_active: column.integer,
     display_order: column.integer,
     capacity: column.integer,
+    storage_purpose: column.text,
     created_at: column.text
   },
   { indexes: {} }
