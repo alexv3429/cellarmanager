@@ -1,0 +1,252 @@
+{
+  "schemaVersion": 1,
+  "knowledgeVersion": 6,
+  "modelVersion": "pairing-1.2.0",
+  "label": "Refined reviewed structural food pairing model",
+  "reviewedOn": "2026-08-25",
+  "methodologyUrl": "https://github.com/alexv3429/cellarmanager/blob/main/docs/pairing-projections.md",
+  "profileCorrections": [
+    {
+      "place": "Maury",
+      "color": "red",
+      "sweetness": 4.5,
+      "classification": "vin-doux-naturel",
+      "distinctFrom": "Maury Sec",
+      "source": "https://www.inao.gouv.fr/produit/maury-rouge-9042"
+    },
+    {
+      "place": "Maury Sec",
+      "color": "red",
+      "sweetness": 0,
+      "classification": "dry",
+      "distinctFrom": "Maury",
+      "source": "https://www.inao.gouv.fr/produit/maury-rouge-9042"
+    }
+  ],
+  "dishes": [
+    {
+      "key": "salad-vinaigrette",
+      "category": "Vegetables and light dishes",
+      "name": "Green salad with vinaigrette",
+      "description": "A light salad whose dressing makes acidity the main constraint.",
+      "attributes": { "intensity": 2, "fat": 1, "acidity": 4, "sweetness": 0, "salt": 2, "umami": 1, "spice": 0, "protein": 0, "fish": 0 }
+    },
+    {
+      "key": "roast-chicken-mushrooms",
+      "category": "Poultry and pork",
+      "name": "Roast chicken with mushrooms",
+      "description": "Moderate richness, poultry protein, and earthy umami.",
+      "attributes": { "intensity": 3, "fat": 3, "acidity": 1, "sweetness": 0, "salt": 2, "umami": 3, "spice": 0, "protein": 3, "fish": 0 }
+    },
+    {
+      "key": "duck-cherry",
+      "category": "Poultry and pork",
+      "name": "Duck breast with cherry sauce",
+      "description": "Rich poultry with a lightly sweet fruit sauce.",
+      "attributes": { "intensity": 4, "fat": 4, "acidity": 2, "sweetness": 1, "salt": 2, "umami": 2, "spice": 0, "protein": 4, "fish": 0 }
+    },
+    {
+      "key": "grilled-beef",
+      "category": "Meat and game",
+      "name": "Grilled beef",
+      "description": "A powerful grilled protein with fat, salt, and umami.",
+      "attributes": { "intensity": 5, "fat": 4, "acidity": 0, "sweetness": 0, "salt": 3, "umami": 3, "spice": 1, "protein": 5, "fish": 0 }
+    },
+    {
+      "key": "salmon-lemon",
+      "category": "Fish and seafood",
+      "name": "Grilled salmon with lemon",
+      "description": "Rich fish with a material citrus-acidity constraint.",
+      "attributes": { "intensity": 3, "fat": 3, "acidity": 3, "sweetness": 0, "salt": 2, "umami": 2, "spice": 0, "protein": 2, "fish": 4 }
+    },
+    {
+      "key": "spicy-lamb-tagine",
+      "category": "Spiced dishes",
+      "name": "Spiced lamb tagine",
+      "description": "Rich lamb with aromatic spice and mild sweetness; heat is adjustable.",
+      "attributes": { "intensity": 4, "fat": 3, "acidity": 1, "sweetness": 2, "salt": 2, "umami": 2, "spice": 3, "protein": 4, "fish": 0 }
+    },
+    {
+      "key": "tomato-pasta",
+      "category": "Pasta, rice, and pizza",
+      "name": "Tomato pasta",
+      "description": "A medium-weight dish dominated by tomato acidity and savoury character.",
+      "attributes": { "intensity": 3, "fat": 2, "acidity": 4, "sweetness": 1, "salt": 2, "umami": 3, "spice": 1, "protein": 1, "fish": 0 }
+    },
+    {
+      "key": "mushroom-risotto",
+      "category": "Pasta, rice, and pizza",
+      "name": "Mushroom risotto",
+      "description": "Creamy texture with pronounced mushroom umami.",
+      "attributes": { "intensity": 3, "fat": 3, "acidity": 1, "sweetness": 0, "salt": 2, "umami": 4, "spice": 0, "protein": 1, "fish": 0 }
+    },
+    {
+      "key": "aged-cheese",
+      "category": "Cheese",
+      "name": "Aged hard cheese",
+      "description": "An intense, fatty, salty, and umami-rich cheese.",
+      "attributes": { "intensity": 4, "fat": 4, "acidity": 1, "sweetness": 0, "salt": 4, "umami": 4, "spice": 0, "protein": 3, "fish": 0 }
+    },
+    {
+      "key": "fruit-tart",
+      "category": "Dessert and fruit",
+      "name": "Fruit tart",
+      "description": "A sweet dessert; the wine must be at least as sweet as the dish.",
+      "attributes": { "intensity": 3, "fat": 2, "acidity": 2, "sweetness": 4, "salt": 0, "umami": 0, "spice": 0, "protein": 0, "fish": 0 }
+    },
+    {
+      "key": "custom-dish",
+      "category": "Custom",
+      "name": "Custom dish",
+      "description": "A neutral starting point. Adjust the structure below to describe the actual recipe.",
+      "attributes": { "intensity": 2, "fat": 2, "acidity": 2, "sweetness": 0, "salt": 2, "umami": 2, "spice": 0, "protein": 1, "fish": 0 }
+    },
+    {
+      "key": "vegetable-crudites",
+      "category": "Vegetables and light dishes",
+      "name": "Raw vegetables or crudités",
+      "description": "A very light, crisp vegetable dish with modest acidity and almost no richness.",
+      "attributes": { "intensity": 1, "fat": 0, "acidity": 2, "sweetness": 0, "salt": 1, "umami": 1, "spice": 0, "protein": 0, "fish": 0 }
+    },
+    {
+      "key": "grilled-vegetables",
+      "category": "Vegetables and light dishes",
+      "name": "Grilled vegetables with herbs",
+      "description": "Moderate char, olive-oil richness, and savoury vegetables without heavy protein.",
+      "attributes": { "intensity": 3, "fat": 2, "acidity": 1, "sweetness": 1, "salt": 2, "umami": 3, "spice": 0, "protein": 0, "fish": 0 }
+    },
+    {
+      "key": "oysters-shellfish",
+      "category": "Fish and seafood",
+      "name": "Oysters or raw shellfish",
+      "description": "Delicate seafood dominated by salinity, freshness, and tannin sensitivity.",
+      "attributes": { "intensity": 2, "fat": 0, "acidity": 1, "sweetness": 0, "salt": 4, "umami": 3, "spice": 0, "protein": 1, "fish": 5 }
+    },
+    {
+      "key": "white-fish-butter",
+      "category": "Fish and seafood",
+      "name": "White fish with butter sauce",
+      "description": "Delicate fish made richer by a butter or cream sauce.",
+      "attributes": { "intensity": 3, "fat": 4, "acidity": 1, "sweetness": 0, "salt": 2, "umami": 2, "spice": 0, "protein": 2, "fish": 5 }
+    },
+    {
+      "key": "sushi-sashimi",
+      "category": "Fish and seafood",
+      "name": "Sushi or sashimi",
+      "description": "Delicate raw fish with salty soy, seasoned rice, and a strong tannin constraint.",
+      "attributes": { "intensity": 2, "fat": 1, "acidity": 2, "sweetness": 1, "salt": 3, "umami": 3, "spice": 0, "protein": 1, "fish": 5 }
+    },
+    {
+      "key": "chicken-cream",
+      "category": "Poultry and pork",
+      "name": "Chicken with cream sauce",
+      "description": "Mild poultry with substantial creamy richness and modest savoury depth.",
+      "attributes": { "intensity": 3, "fat": 4, "acidity": 1, "sweetness": 0, "salt": 2, "umami": 2, "spice": 0, "protein": 3, "fish": 0 }
+    },
+    {
+      "key": "roast-pork",
+      "category": "Poultry and pork",
+      "name": "Roast pork",
+      "description": "Moderately powerful roast meat with fat, protein, and browned savoury flavours.",
+      "attributes": { "intensity": 4, "fat": 3, "acidity": 1, "sweetness": 0, "salt": 2, "umami": 3, "spice": 0, "protein": 4, "fish": 0 }
+    },
+    {
+      "key": "charcuterie",
+      "category": "Poultry and pork",
+      "name": "Charcuterie or cured meat",
+      "description": "Fatty, salty, savoury cured meat with substantial flavour intensity.",
+      "attributes": { "intensity": 4, "fat": 4, "acidity": 0, "sweetness": 0, "salt": 5, "umami": 4, "spice": 1, "protein": 3, "fish": 0 }
+    },
+    {
+      "key": "beef-stew",
+      "category": "Meat and game",
+      "name": "Slow-cooked beef stew",
+      "description": "A powerful, rich, protein-heavy dish with concentrated slow-cooked umami.",
+      "attributes": { "intensity": 5, "fat": 4, "acidity": 2, "sweetness": 0, "salt": 3, "umami": 5, "spice": 0, "protein": 5, "fish": 0 }
+    },
+    {
+      "key": "roast-lamb-herbs",
+      "category": "Meat and game",
+      "name": "Roast lamb with herbs",
+      "description": "Rich, aromatic red meat with firm protein and restrained spice.",
+      "attributes": { "intensity": 4, "fat": 3, "acidity": 1, "sweetness": 0, "salt": 2, "umami": 3, "spice": 1, "protein": 5, "fish": 0 }
+    },
+    {
+      "key": "game-stew",
+      "category": "Meat and game",
+      "name": "Game or venison stew",
+      "description": "Intense lean game with concentrated savoury slow-cooked flavours.",
+      "attributes": { "intensity": 5, "fat": 3, "acidity": 2, "sweetness": 0, "salt": 3, "umami": 4, "spice": 1, "protein": 5, "fish": 0 }
+    },
+    {
+      "key": "creamy-pasta",
+      "category": "Pasta, rice, and pizza",
+      "name": "Creamy pasta",
+      "description": "Medium-intensity pasta whose cream or cheese makes richness the main constraint.",
+      "attributes": { "intensity": 3, "fat": 4, "acidity": 1, "sweetness": 0, "salt": 2, "umami": 2, "spice": 0, "protein": 1, "fish": 0 }
+    },
+    {
+      "key": "seafood-risotto",
+      "category": "Pasta, rice, and pizza",
+      "name": "Seafood risotto",
+      "description": "Creamy rice with seafood salinity, umami, and tannin sensitivity.",
+      "attributes": { "intensity": 3, "fat": 3, "acidity": 2, "sweetness": 0, "salt": 3, "umami": 3, "spice": 0, "protein": 1, "fish": 4 }
+    },
+    {
+      "key": "pizza",
+      "category": "Pasta, rice, and pizza",
+      "name": "Tomato and cheese pizza",
+      "description": "Tomato acidity combined with melted-cheese fat, salt, and umami.",
+      "attributes": { "intensity": 4, "fat": 3, "acidity": 3, "sweetness": 1, "salt": 3, "umami": 4, "spice": 0, "protein": 1, "fish": 0 }
+    },
+    {
+      "key": "mild-coconut-curry",
+      "category": "Spiced dishes",
+      "name": "Mild coconut curry",
+      "description": "A rich, aromatic curry with coconut sweetness and moderate chilli heat.",
+      "attributes": { "intensity": 4, "fat": 4, "acidity": 1, "sweetness": 2, "salt": 2, "umami": 2, "spice": 2, "protein": 2, "fish": 0 }
+    },
+    {
+      "key": "hot-chilli-curry",
+      "category": "Spiced dishes",
+      "name": "Hot chilli curry",
+      "description": "An intense curry where chilli heat creates a material alcohol and tannin risk.",
+      "attributes": { "intensity": 5, "fat": 3, "acidity": 1, "sweetness": 1, "salt": 2, "umami": 3, "spice": 5, "protein": 3, "fish": 0 }
+    },
+    {
+      "key": "soft-cheese",
+      "category": "Cheese",
+      "name": "Soft creamy cheese",
+      "description": "A creamy, fatty cheese with moderate salt, intensity, and umami.",
+      "attributes": { "intensity": 3, "fat": 4, "acidity": 1, "sweetness": 0, "salt": 2, "umami": 3, "spice": 0, "protein": 2, "fish": 0 }
+    },
+    {
+      "key": "blue-cheese",
+      "category": "Cheese",
+      "name": "Blue cheese",
+      "description": "A very intense, salty, fatty, and umami-rich cheese.",
+      "attributes": { "intensity": 5, "fat": 4, "acidity": 1, "sweetness": 0, "salt": 5, "umami": 5, "spice": 0, "protein": 3, "fish": 0 }
+    },
+    {
+      "key": "chocolate-dessert",
+      "category": "Dessert and fruit",
+      "name": "Chocolate dessert",
+      "description": "An intense, rich, very sweet dessert that requires a genuinely sweet wine.",
+      "attributes": { "intensity": 5, "fat": 4, "acidity": 0, "sweetness": 5, "salt": 0, "umami": 1, "spice": 0, "protein": 0, "fish": 0 }
+    },
+    {
+      "key": "creme-brulee",
+      "category": "Dessert and fruit",
+      "name": "Crème brûlée or custard dessert",
+      "description": "A rich custard dessert with pronounced sweetness and caramelised intensity.",
+      "attributes": { "intensity": 4, "fat": 4, "acidity": 0, "sweetness": 5, "salt": 0, "umami": 0, "spice": 0, "protein": 0, "fish": 0 }
+    },
+    {
+      "key": "fresh-fruit",
+      "category": "Dessert and fruit",
+      "name": "Fresh fruit",
+      "description": "A light dessert where fruit acidity and sweetness both matter.",
+      "attributes": { "intensity": 2, "fat": 0, "acidity": 3, "sweetness": 3, "salt": 0, "umami": 0, "spice": 0, "protein": 0, "fish": 0 }
+    }
+  ]
+}

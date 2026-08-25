@@ -10,7 +10,7 @@ crosses a milestone boundary.
 | Milestone | Promise | Status |
 |---|---|---|
 | `v0.3` | A cellar can live safely in CellarManager through daily manual use or guarded CSV import | Released (`v0.3.0`) |
-| `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable evidence | In progress (0.4.8 under review) |
+| `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable evidence | In progress (0.4.9 under validation) |
 | `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | Planned |
 | `v0.6` | Adding or identifying wine requires dramatically less typing | Planned |
 | `v0.7` | CellarManager explains what happened to the cellar and what the collection means over time | Planned |
@@ -90,7 +90,7 @@ unchanged.
 | 0.4.10 | Personal notes, manual overrides, serving guidance, and editing |
 | 0.4.11 | Country, region, classification, vineyard, grapes, sweetness, alcohol, and certifications |
 | 0.4.12 | Restore corresponding archived v0.1 metadata through current models |
-| 0.4.13 | Rich catalog filtering, search, and data-quality diagnostics |
+| 0.4.13 | Rich catalog filtering/search, profile-coverage diagnostics, and a prioritized shared-knowledge curation queue |
 | 0.4.14 | Duplicate detection and explicit merge workflow |
 | 0.4.15 | CSV export with a documented portable format and optional round-trip compatibility |
 | 0.4.16 | v0.4 acceptance and release |
@@ -99,6 +99,14 @@ Barcode scanning and lookup, photos, OCR, purchase cost, and valuation are not
 v0.4 work. Serving guidance and other fields may be retrieved in v0.4 when the
 selected provider supplies them reliably, but drinking windows and food
 pairings are the required enrichment baseline.
+
+Shared maturity and pairing knowledge is curated continuously after 0.4.9; it
+is not deferred to one final bulk import. Missing producer, cuvee, release, and
+dish specificity may be added through reviewed immutable versions at any time.
+Step 0.4.13 makes that work systematic by aggregating and prioritizing missing
+coverage across affected wines and households. Step 0.4.16 reviews remaining
+coverage and unresolved reasons as a release gate, while a new unknown producer
+continues to receive the safe broader place/vintage estimate immediately.
 
 ## v0.5 — Shared-household collaboration
 

@@ -85,6 +85,11 @@ maturity and storage projections in the same server transaction before
 reporting `complete`; unsupported wines finish explicitly as `needs-review`.
 See [`maturity-projections.md`](maturity-projections.md).
 
+Step 0.4.9 adds the parallel pairing-profile processor. It reuses the reviewed
+wine structure and provenance produced by the active maturity hierarchy, then
+serves dish-specific, in-stock comparisons through narrow online RPCs. See
+[`pairing-projections.md`](pairing-projections.md).
+
 ## Provider boundary
 
 No provider is production-approved yet, so current jobs use the curated model
@@ -112,8 +117,9 @@ across workers without guessing from an in-process counter.
 Demands, jobs, provider cache entries, and rate-limit buckets have RLS enabled,
 are service-only, and are absent from PowerSync. Household users see the
 permitted maturity projection subset through the narrow 0.4.8 application RPCs;
-they cannot inspect the global queue or provider metadata. Pairing remains
-deferred.
+they cannot inspect the global queue or provider metadata. The 0.4.9 pairing
+RPCs apply the same membership boundary and keep dish profiles, preferences,
+feedback, and projections outside PowerSync.
 
 The migration creates no job, provider call, evidence, knowledge version, or
 projection by itself. It only backfills two queued demands per existing wine.

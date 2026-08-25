@@ -23,7 +23,9 @@ defines the shared wine-reference and enrichment boundary for v0.4; its
 implementation follows the product roadmap below. The current v0.4 foundation
 includes an attributed LWIN snapshot, a conservative explicitly reviewed
 household matching workflow, versioned inference knowledge, and asynchronous
-maturity/storage projections for supported wines.
+maturity/storage projections for supported wines. The active v0.4 work also
+prepares reviewed dish profiles and explainable, personally refined food-pairing
+suggestions from bottles that are physically in stock.
 
 ## v0.3 capabilities
 

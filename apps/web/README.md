@@ -9,6 +9,7 @@ toolchain remain authoritative.
 | URL | Workspace |
 |---|---|
 | `/` | Inventory |
+| `/pairing` | Food-pairing suggestions from in-stock bottles |
 | `/activity` | Recent inventory activity |
 | `/catalog` | Wine catalog |
 | `/import` | Guarded CSV import |

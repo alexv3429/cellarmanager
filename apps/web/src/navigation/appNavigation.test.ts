@@ -12,6 +12,7 @@ import {
 describe("app navigation", () => {
   it("maps application paths to views", () => {
     expect(getAppViewFromPathname("/")).toBe("inventory")
+    expect(getAppViewFromPathname("/pairing")).toBe("pairing")
     expect(getAppViewFromPathname("/activity")).toBe("activity")
     expect(getAppViewFromPathname("/catalog")).toBe("catalog")
     expect(getAppViewFromPathname("/import")).toBe("import")
@@ -20,6 +21,7 @@ describe("app navigation", () => {
 
   it("accepts trailing slashes", () => {
     expect(getAppViewFromPathname("/activity/")).toBe("activity")
+    expect(getAppViewFromPathname("/pairing/")).toBe("pairing")
     expect(getAppViewFromPathname("/catalog/")).toBe("catalog")
     expect(getAppViewFromPathname("/import/")).toBe("import")
     expect(getAppViewFromPathname("/setup/")).toBe("setup")
@@ -67,6 +69,7 @@ describe("app navigation", () => {
 
   it("maps views to canonical paths", () => {
     expect(getAppViewPath("inventory")).toBe("/")
+    expect(getAppViewPath("pairing")).toBe("/pairing")
     expect(getAppViewPath("activity")).toBe("/activity")
     expect(getAppViewPath("catalog")).toBe("/catalog")
     expect(getAppViewPath("import")).toBe("/import")
@@ -87,6 +90,9 @@ describe("app navigation", () => {
       getAppRouteTitle({ view: "activity", wineId: null }),
     ).toBe("Activity · CellarManager")
     expect(
+      getAppRouteTitle({ view: "pairing", wineId: null }),
+    ).toBe("Food pairing · CellarManager")
+    expect(
       getAppRouteTitle({ view: "wine", wineId: "wine-1" }),
     ).toBe("Wine details · CellarManager")
   })
@@ -103,6 +109,12 @@ describe("app navigation", () => {
         wineDetailReturnView: "activity",
       }),
     ).toBe("activity")
+
+    expect(
+      getWineDetailReturnView({
+        wineDetailReturnView: "pairing",
+      }),
+    ).toBe("pairing")
 
     expect(
       getWineDetailReturnView({

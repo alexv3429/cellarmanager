@@ -268,6 +268,14 @@ export function AppShell({
         </a>
 
         <a
+          aria-current={view === "pairing" ? "page" : undefined}
+          href={getAppViewPath("pairing")}
+          onClick={(event) => navigate(event, "pairing")}
+        >
+          Pairing
+        </a>
+
+        <a
           aria-current={view === "activity" ? "page" : undefined}
           href={getAppViewPath("activity")}
           onClick={(event) => navigate(event, "activity")}
