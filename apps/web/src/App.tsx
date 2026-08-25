@@ -12,6 +12,7 @@ import { HoldingsView } from "./components/HoldingsView"
 import { ImportView } from "./components/ImportView"
 import { LoginForm } from "./components/LoginForm"
 import { OnboardingView } from "./components/OnboardingView"
+import { PairingView } from "./components/PairingView"
 import { Notice } from "./components/Notice"
 import { ResetPasswordForm } from "./components/ResetPasswordForm"
 import { WineDetailView } from "./components/WineDetailView"
@@ -80,6 +81,13 @@ function ReadyAuthenticatedApp({
       getWineDetailReturnView(window.history.state) ??
       "catalog",
     )
+  const [hasMountedPairing, setHasMountedPairing] =
+    useState(
+      () =>
+        route.view === "pairing" ||
+        getWineDetailReturnView(window.history.state) ===
+          "pairing",
+    )
 
   useEffect(() => {
     function handlePopState() {
@@ -101,6 +109,12 @@ function ReadyAuthenticatedApp({
       )
     }
   }, [])
+
+  useEffect(() => {
+    if (route.view === "pairing") {
+      setHasMountedPairing(true)
+    }
+  }, [route.view])
 
   function changeView(nextView: AppView) {
     const nextPath = getAppViewPath(nextView)
@@ -186,6 +200,18 @@ function ReadyAuthenticatedApp({
             openWineDetail(wineId, "activity")
           }
         />
+      ) : null}
+
+      {hasMountedPairing ? (
+        <div hidden={route.view !== "pairing"}>
+          <PairingView
+            householdId={activeHouseholdId}
+            isOnline={isOnline}
+            onOpenWine={(wineId) =>
+              openWineDetail(wineId, "pairing")
+            }
+          />
+        </div>
       ) : null}
 
       {route.view === "catalog" ? (

@@ -139,15 +139,16 @@ enabled, and the migration created no knowledge version, observation, or
 projection data. The owner then confirmed that the deployed Inventory, Catalog,
 and Cellar Setup continued to work normally.
 
-## Next steps
+## Implemented extensions and next step
 
-- 0.4.7 publishes reviewed knowledge versions and creates the asynchronous
-  demand and job infrastructure documented in
+- 0.4.7 publishes reviewed knowledge versions and runs the asynchronous demand
+  and job infrastructure documented in
   [`enrichment-publishing-and-jobs.md`](enrichment-publishing-and-jobs.md).
 - 0.4.8 calculates and displays production maturity, urgency, storage-purpose,
   and moving-hint projection payloads as documented in
   [`maturity-projections.md`](maturity-projections.md).
-- 0.4.9 adds dish profiles and pairing payloads, corrects the POC gaps, and
-  repeats owner acceptance before pairing ships.
-- 0.4.10 expands personal observation editing and serving guidance on top of
-  the narrow maturity-window adjustment introduced in 0.4.8.
+- 0.4.9 adds reviewed dish profiles and pairing payloads, corrects the POC gaps,
+  and requires repeated owner acceptance as documented in
+  [`pairing-projections.md`](pairing-projections.md).
+- 0.4.10 next expands personal observation editing and serving guidance on top
+  of the narrow maturity-window adjustment introduced in 0.4.8.

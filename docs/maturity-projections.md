@@ -162,8 +162,10 @@ The idempotent installer creates and atomically publishes the reviewed version.
 A `pg_cron` worker claims at most 100 maturity jobs each minute and writes the
 maturity and storage projections in one database transaction. Unsupported wines
 finish as `needs-review`; a calculation error retries with bounded attempts.
-The maturity-specific worker does not create or process the still-deferred
-pairing jobs.
+The maturity-specific worker does not process pairing jobs. Step 0.4.9 adds a
+separate processor that reuses the reviewed structure and provenance without
+changing maturity advice; see
+[`pairing-projections.md`](pairing-projections.md).
 
 Knowledge, jobs, evidence, projections, reviews, and overrides remain outside
 PowerSync. Browser code receives only household-scoped JSON through narrow

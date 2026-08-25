@@ -16,6 +16,7 @@ retains only the evidence needed to understand its released migration history.
 - [`enrichment-knowledge-schema.md`](enrichment-knowledge-schema.md) - versioned shared profiles, source rights, evidence, household observations, and derived projections
 - [`enrichment-publishing-and-jobs.md`](enrichment-publishing-and-jobs.md) - atomic reviewed-knowledge publication and provider-neutral asynchronous demand/job lifecycle
 - [`maturity-projections.md`](maturity-projections.md) - production maturity windows, urgency, location purpose, moving hints, review, and owner adjustment
+- [`pairing-projections.md`](pairing-projections.md) - reviewed dish profiles, in-stock food-pairing suggestions, personal preferences, explanations, and repeated feedback
 - [`maturity-knowledge-v2.md`](maturity-knowledge-v2.md) - expanded exact-appellation maturity profiles, evidence inputs, safety boundary, and private aggregate coverage
 - [`maturity-hierarchy-poc.md`](maturity-hierarchy-poc.md) - validated and promoted region, appellation/climat, time-bounded producer, cuvee, interaction, and release model
 - [`enrichment-provider-rights-request.md`](enrichment-provider-rights-request.md) - provider contact drafts for licensing, retention, provenance, and methodology answers

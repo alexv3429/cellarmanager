@@ -1,5 +1,6 @@
 export type AppView =
   | "inventory"
+  | "pairing"
   | "activity"
   | "catalog"
   | "import"
@@ -21,6 +22,7 @@ export interface WineDetailHistoryState {
 
 const APP_VIEW_PATHS: Record<AppView, string> = {
   inventory: "/",
+  pairing: "/pairing",
   activity: "/activity",
   catalog: "/catalog",
   import: "/import",
@@ -66,6 +68,8 @@ export function getAppRouteFromPathname(
   }
 
   switch (normalizedPathname) {
+    case "/pairing":
+      return { view: "pairing", wineId: null }
     case "/activity":
       return { view: "activity", wineId: null }
     case "/catalog":
@@ -96,6 +100,7 @@ export function getAppRouteTitle(route: AppRoute): string {
           catalog: "Catalog",
           import: "Import",
           inventory: "Inventory",
+          pairing: "Food pairing",
           setup: "Cellar setup",
         }[route.view]
 
@@ -116,6 +121,7 @@ export function getWineDetailReturnView(
   const returnView = historyState.wineDetailReturnView
 
   return returnView === "inventory" ||
+    returnView === "pairing" ||
     returnView === "activity" ||
     returnView === "catalog" ||
     returnView === "import" ||
