@@ -74,10 +74,16 @@ existing behavior: a confirmed link whose supporting identity changed may need
 review again. The other descriptive facts do not automatically confirm or
 invalidate a shared reference.
 
+## Archived v0.1 restoration
+
+Step 0.4.12 restores only missing facts from the hash-verified private archive.
+Exact preserved wine UUIDs avoid semantic matching; equal values are
+idempotent, conflicts preserve the current value, and a transaction preview is
+required before apply. See
+[`v01-metadata-restoration.md`](v01-metadata-restoration.md).
+
 ## Follow-on roadmap
 
-- 0.4.12 restores corresponding archived v0.1 facts through this model without
-  reviving the retired application.
 - 0.4.13 adds rich catalog search/filtering and reports missing fact/profile
   coverage.
 - 0.4.14 turns allowlisted web findings for missing facts and profiles into
