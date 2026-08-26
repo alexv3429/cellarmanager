@@ -9,6 +9,8 @@
   ],
   "scripts": {
     "repository:check": "node scripts/check_repository.mjs",
+    "v01:metadata": "node scripts/v01/restore_metadata.mjs",
+    "v01:test": "node --test scripts/v01/*.test.mjs",
     "lwin:import": "node scripts/lwin/import_snapshot.mjs",
     "lwin:test": "node --test scripts/lwin/*.test.mjs",
     "enrichment:trial": "node scripts/enrichment/provider_trial.mjs",
@@ -20,7 +22,7 @@
     "web:test": "npm run test --workspace @cellarmanager/web",
     "web:build": "npm run build --workspace @cellarmanager/web",
     "web:ci": "npm run web:lint && npm run web:test && npm run web:build",
-    "ci": "npm run repository:check && npm run lwin:test && npm run enrichment:test && npm run web:ci",
+    "ci": "npm run repository:check && npm run v01:test && npm run lwin:test && npm run enrichment:test && npm run web:ci",
     "audit": "npm audit --omit=dev --audit-level=high",
     "supabase": "supabase"
   },

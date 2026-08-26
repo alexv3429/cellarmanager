@@ -21,6 +21,13 @@ members may read household-visible observations but only the author may edit or
 delete one. The future shared curation workflow may use an observation as a
 research signal, but promotion requires separate evidence and review.
 
+Step 0.4.12 uses the same household-observation boundary to preserve archived
+v0.1 windows and free-text advice. Each restored note is visibly labelled as
+archived data and uses a deterministic ID. It does not create a maturity
+override or replace the current reviewed estimate. The guarded procedure is
+documented in
+[`v01-metadata-restoration.md`](v01-metadata-restoration.md).
+
 ## Observation contract
 
 `household_wine_observations` already provides the durable boundary introduced
