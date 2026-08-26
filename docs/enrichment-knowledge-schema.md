@@ -153,3 +153,6 @@ and Cellar Setup continued to work normally.
 - 0.4.10 adds secured personal observation editing and derived serving guidance
   on top of the narrow maturity-window adjustment introduced in 0.4.8; see
   [`personal-observations-serving.md`](personal-observations-serving.md).
+- 0.4.11 adds synchronized household wine facts without converting them into
+  reviewed profiles or silently changing projections; see
+  [`rich-wine-facts.md`](rich-wine-facts.md).

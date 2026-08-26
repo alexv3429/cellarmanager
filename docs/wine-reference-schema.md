@@ -31,10 +31,16 @@ mistaken for another.
 ## Household boundary
 
 `public.wines` remains household-owned and keeps its producer, cuvee, vintage,
-colour, appellation, area, and format exactly as imported or edited. Its nullable
+colour, appellation, region, format, and later descriptive facts exactly as
+imported or edited. Its nullable
 `wine_reference_id` and `wine_reference_type` can point to the most specific
 confirmed product, release, or package. A producer-only link is not sufficiently
 specific for a wine.
+
+Roadmap step 0.4.11 adds country, classification, vineyard, grape composition,
+sweetness, label alcohol, and certification labels to that household row. They
+remain household facts rather than shared reference claims; see
+[`rich-wine-facts.md`](rich-wine-facts.md).
 
 The schema migration does not guess or backfill links for existing production
 wines. Roadmap step 0.4.4 adds review-only LWIN candidates and explicit

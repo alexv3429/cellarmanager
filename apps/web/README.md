@@ -80,4 +80,6 @@ transactional Supabase RPC while online.
 
 Reviewed maturity, pairing, serving guidance, and personal observations use
 narrow online Supabase RPCs and remain outside PowerSync. Owner observations
-and adjustments stay separate from immutable shared knowledge.
+and adjustments stay separate from immutable shared knowledge. Household wine
+facts are synchronized on the existing `wines` row for offline reading; their
+bounded owner-only editor still writes through a narrow online RPC.

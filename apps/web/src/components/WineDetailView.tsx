@@ -37,6 +37,7 @@ import { updateWineCatalog } from "../data/wineCatalogMutations"
 import type { RegisteredDevicesState } from "../devices/useRegisteredDevices"
 import type { AppView } from "../navigation/appNavigation"
 import { Notice } from "./Notice"
+import { WineFactsPanel } from "./WineFactsPanel"
 import { WineReferenceMatchReview } from "./WineReferenceMatchReview"
 import { WineMaturityPanel } from "./WineMaturityPanel"
 import { WinePersonalGuidancePanel } from "./WinePersonalGuidancePanel"
@@ -66,6 +67,15 @@ const WINE_QUERY = `
     color,
     appellation,
     area,
+    country,
+    classification,
+    vineyard,
+    grape_composition,
+    sweetness_category,
+    alcohol_percent,
+    certifications,
+    wine_reference_id,
+    wine_reference_type,
     format_ml
   from wines
   where household_id = ?
@@ -249,7 +259,6 @@ export function WineDetailView({
   const [editColor, setEditColor] = useState("")
   const [editAppellation, setEditAppellation] =
     useState("")
-  const [editArea, setEditArea] = useState("")
   const [editFormatMl, setEditFormatMl] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const [editMessage, setEditMessage] =
@@ -312,7 +321,6 @@ export function WineDetailView({
     )
     setEditColor(wine.color)
     setEditAppellation(wine.appellation ?? "")
-    setEditArea(wine.area ?? "")
     setEditFormatMl(String(wine.format_ml))
     setIsEditing(true)
   }
@@ -340,7 +348,7 @@ export function WineDetailView({
         editVintage,
         editColor,
         editAppellation,
-        editArea,
+        wine.area ?? "",
         editFormatMl,
       )
 
@@ -946,18 +954,6 @@ export function WineDetailView({
             </label>
 
             <label>
-              Area / region
-              <input
-                disabled={isSaving}
-                onChange={(event) =>
-                  setEditArea(event.target.value)
-                }
-                placeholder="Optional"
-                value={editArea}
-              />
-            </label>
-
-            <label>
               Bottle format (ml)
               <input
                 disabled={isSaving}
@@ -1016,10 +1012,6 @@ export function WineDetailView({
               <dd>{wine.appellation ?? "—"}</dd>
             </div>
             <div>
-              <dt>Area / region</dt>
-              <dd>{wine.area ?? "—"}</dd>
-            </div>
-            <div>
               <dt>Format</dt>
               <dd>{formatWineVolume(wine.format_ml)}</dd>
             </div>
@@ -1033,6 +1025,8 @@ export function WineDetailView({
           />
         ) : null}
       </section>
+
+      <WineFactsPanel isOnline={isOnline} wine={wine} />
 
       <WineMaturityPanel isOnline={isOnline} wineId={wine.id} />
 

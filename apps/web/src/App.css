@@ -903,6 +903,7 @@
 }
 
 .app-shell__content section.wine-detail-reference,
+.app-shell__content section.wine-facts,
 .app-shell__content section.wine-maturity,
 .app-shell__content section.wine-personal-guidance,
 .app-shell__content section.wine-detail-stock {
@@ -1404,6 +1405,191 @@
   font-weight: 600;
 }
 
+.wine-facts__content,
+.wine-facts__form {
+  display: grid;
+  gap: 16px;
+}
+
+.wine-facts__suggestions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px 16px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid var(--accent-border);
+  border-radius: 12px;
+  background: var(--accent-bg);
+}
+
+.wine-facts__suggestions p {
+  margin: 4px 0;
+  color: var(--text-h);
+  overflow-wrap: anywhere;
+}
+
+.wine-facts__suggestion-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 8px 0 4px;
+  padding: 0;
+  color: var(--text);
+  font-size: 13px;
+  list-style: none;
+}
+
+.wine-facts__suggestion-sources a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.wine-facts__suggestions-scope {
+  grid-column: 1 / -1;
+  padding-top: 8px;
+  border-top: 1px solid var(--accent-border);
+  line-height: 1.45;
+}
+
+.wine-facts__metadata {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.wine-facts__metadata > div,
+.wine-facts__lists > div,
+.wine-facts__grapes,
+.wine-facts__empty {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-muted);
+}
+
+.wine-facts__metadata dt {
+  color: var(--text);
+  font-size: 13px;
+}
+
+.wine-facts__metadata dd {
+  margin: 5px 0 0;
+  color: var(--text-h);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.wine-facts__lists {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.wine-facts__lists h3,
+.wine-facts__lists p,
+.wine-facts__empty p,
+.wine-facts__grapes p {
+  margin: 0;
+}
+
+.wine-facts__lists h3 {
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+.wine-facts__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wine-facts__tags li {
+  padding: 6px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-h);
+  font-size: 14px;
+}
+
+.wine-facts__empty {
+  display: grid;
+  gap: 5px;
+  border-style: dashed;
+}
+
+.wine-facts__origin-fields,
+.wine-facts__style-fields {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.wine-facts__style-fields {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr);
+}
+
+.wine-facts__origin-fields label,
+.wine-facts__style-fields label {
+  display: grid;
+  gap: 5px;
+  align-content: start;
+}
+
+.wine-facts__origin-fields input,
+.wine-facts__style-fields input,
+.wine-facts__style-fields select,
+.wine-facts__style-fields textarea {
+  width: 100%;
+  min-width: 0;
+}
+
+.wine-facts__certifications-field small {
+  line-height: 1.4;
+}
+
+.wine-facts__grapes {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.wine-facts__grapes legend {
+  padding: 0 5px;
+  color: var(--text-h);
+  font-family: var(--heading);
+  font-weight: 700;
+}
+
+.wine-facts__grape-list {
+  display: grid;
+  gap: 8px;
+}
+
+.wine-facts__grape-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(7rem, 10rem) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.wine-facts__grape-row input {
+  width: 100%;
+  min-width: 0;
+}
+
+.wine-facts__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .wine-reference-review {
   display: grid;
   gap: 14px;
@@ -1629,6 +1815,11 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .wine-facts__metadata,
+  .wine-facts__origin-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .wine-reference-candidates {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -1672,6 +1863,19 @@
     display: grid;
   }
 
+  .wine-facts__metadata,
+  .wine-facts__lists,
+  .wine-facts__origin-fields,
+  .wine-facts__style-fields,
+  .wine-facts__grape-row,
+  .wine-facts__suggestions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wine-facts__suggestions-scope {
+    grid-column: auto;
+  }
+
   .wine-maturity__window,
   .app-shell__content .wine-maturity__override form,
   .wine-serving__summary,
@@ -1705,6 +1909,14 @@
   .wine-observation-form__actions button,
   .wine-serving__override form > div,
   .wine-serving__override form > div button {
+    width: 100%;
+  }
+
+  .wine-facts__actions,
+  .wine-facts__actions button,
+  .wine-facts__grape-row button,
+  .wine-facts__grapes > button,
+  .wine-facts__suggestions button {
     width: 100%;
   }
 

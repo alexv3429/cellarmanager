@@ -7,6 +7,15 @@ export interface WineCatalogEntry {
   color: string
   appellation: string | null
   area: string | null
+  country?: string | null
+  classification?: string | null
+  vineyard?: string | null
+  grape_composition?: unknown
+  sweetness_category?: string | null
+  alcohol_percent?: number | string | null
+  certifications?: unknown
+  wine_reference_id?: string | null
+  wine_reference_type?: string | null
   format_ml: number
 }
 
