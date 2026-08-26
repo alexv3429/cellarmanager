@@ -26,7 +26,9 @@ household matching workflow, versioned inference knowledge, and asynchronous
 maturity/storage projections for supported wines, reviewed dish profiles,
 explainable food-pairing suggestions from bottles physically in stock, and
 household-scoped observations and serving adjustments that never rewrite the
-shared library.
+shared library. Household wines can also retain structured origin, grape,
+style, label-alcohol, and certification facts without promoting them into
+shared truth.
 
 ## v0.3 capabilities
 

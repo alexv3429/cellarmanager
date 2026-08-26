@@ -18,6 +18,7 @@ retains only the evidence needed to understand its released migration history.
 - [`maturity-projections.md`](maturity-projections.md) - production maturity windows, urgency, location purpose, moving hints, review, and owner adjustment
 - [`pairing-projections.md`](pairing-projections.md) - reviewed dish profiles, in-stock food-pairing suggestions, personal preferences, explanations, and repeated feedback
 - [`personal-observations-serving.md`](personal-observations-serving.md) - household and personal notes, derived serving estimates, explicit owner adjustments, and editing
+- [`rich-wine-facts.md`](rich-wine-facts.md) - household origin, composition, sweetness, alcohol, certification, editing, and provenance boundary
 - [`maturity-knowledge-v2.md`](maturity-knowledge-v2.md) - expanded exact-appellation maturity profiles, evidence inputs, safety boundary, and private aggregate coverage
 - [`maturity-hierarchy-poc.md`](maturity-hierarchy-poc.md) - validated and promoted region, appellation/climat, time-bounded producer, cuvee, interaction, and release model
 - [`enrichment-provider-rights-request.md`](enrichment-provider-rights-request.md) - provider contact drafts for licensing, retention, provenance, and methodology answers
