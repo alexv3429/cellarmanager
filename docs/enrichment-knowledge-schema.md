@@ -150,5 +150,6 @@ and Cellar Setup continued to work normally.
 - 0.4.9 adds reviewed dish profiles and pairing payloads, corrects the POC gaps,
   and requires repeated owner acceptance as documented in
   [`pairing-projections.md`](pairing-projections.md).
-- 0.4.10 next expands personal observation editing and serving guidance on top
-  of the narrow maturity-window adjustment introduced in 0.4.8.
+- 0.4.10 adds secured personal observation editing and derived serving guidance
+  on top of the narrow maturity-window adjustment introduced in 0.4.8; see
+  [`personal-observations-serving.md`](personal-observations-serving.md).

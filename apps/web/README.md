@@ -77,3 +77,7 @@ PostgreSQL holdings are authoritative. PowerSync persists synchronized household
 data and queued local-first ADD/MOVE/REMOVE operations. The CSV importer prepares
 and previews locally, then performs its explicit final write through the guarded
 transactional Supabase RPC while online.
+
+Reviewed maturity, pairing, serving guidance, and personal observations use
+narrow online Supabase RPCs and remain outside PowerSync. Owner observations
+and adjustments stay separate from immutable shared knowledge.

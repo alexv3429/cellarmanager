@@ -175,3 +175,8 @@ settled, with no queued, leased, retrying, or failed work, and exactly one
 minute worker is scheduled. Production preparation did not create any
 dish-specific recommendation: those are calculated only when a household
 member requests a pairing.
+
+Step 0.4.10 reuses each reviewed wine-side profile for transparent serving
+temperature and aeration estimates. It does not create a second structural
+opinion; see
+[`personal-observations-serving.md`](personal-observations-serving.md).
