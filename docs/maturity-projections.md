@@ -142,6 +142,10 @@ same evidence and review gate. This preserves a useful broad estimate for a new
 producer while preventing an unverified web inference or one household's alias
 from silently becoming global truth.
 
+Step 0.4.10 makes those observations editable and adds serving guidance without
+changing this promotion boundary; see
+[`personal-observations-serving.md`](personal-observations-serving.md).
+
 Catalog data-quality diagnostics should distinguish missing knowledge from
 contradictory catalog data. A contradiction should display the stored values,
 the suggested correction and its source, with explicit accept and ignore
