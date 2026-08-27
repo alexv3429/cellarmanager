@@ -33,7 +33,10 @@ export interface MaturityOverviewItem {
   isOverride: boolean
   moveMessage: string | null
   moveNeeded: boolean
+  profileLayers: string[]
+  profileWarnings: string[]
   projectionId: string | null
+  specificity: string | null
   state: MaturityState | null
   stateLabel: string | null
   storagePurpose: string | null
@@ -273,6 +276,10 @@ function stringArray(value: unknown, field: string): string[] {
   return value.map((item) => text(item, field))
 }
 
+function optionalStringArray(value: unknown, field: string): string[] {
+  return value === undefined || value === null ? [] : stringArray(value, field)
+}
+
 function parseContributions(value: unknown): MaturityContribution[] {
   if (value === undefined) {
     return []
@@ -399,7 +406,16 @@ export function parseMaturityOverview(value: unknown): MaturityOverviewItem[] {
       isOverride: boolean(item.is_override, "override flag"),
       moveMessage: optionalText(item.move_message, "move message"),
       moveNeeded: boolean(item.move_needed, "move-needed flag"),
+      profileLayers: optionalStringArray(item.profile_layers, "profile layers"),
+      profileWarnings: optionalStringArray(
+        item.profile_warnings,
+        "profile warnings",
+      ),
       projectionId: optionalText(item.projection_id, "projection id"),
+      specificity:
+        item.specificity === undefined
+          ? null
+          : optionalText(item.specificity, "specificity"),
       state: optionalMaturityState(item.state),
       stateLabel: optionalText(item.state_label, "state label"),
       storagePurpose: optionalText(item.storage_purpose, "storage purpose"),

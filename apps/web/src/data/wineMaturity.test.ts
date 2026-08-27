@@ -143,7 +143,10 @@ describe("maturity RPC boundary", () => {
           is_override: false,
           move_message: "Move 1 bottle to service storage.",
           move_needed: true,
+          profile_layers: ["region", "vintage", "producer-era"],
+          profile_warnings: ["No confirmed cuvee or climat profile was used."],
           projection_id: "projection-1",
+          specificity: "producer-era",
           state: "ready",
           state_label: "Likely ready",
           storage_purpose: "split-service-and-aging",
@@ -160,6 +163,8 @@ describe("maturity RPC boundary", () => {
     ).resolves.toMatchObject([
       {
         moveNeeded: true,
+        profileLayers: ["region", "vintage", "producer-era"],
+        specificity: "producer-era",
         state: "ready",
         wineId: "wine-1",
       },

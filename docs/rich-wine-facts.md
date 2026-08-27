@@ -84,8 +84,9 @@ required before apply. See
 
 ## Follow-on roadmap
 
-- 0.4.13 adds rich catalog search/filtering and reports missing fact/profile
-  coverage.
+- 0.4.13 adds rich catalog search/filtering, exact profile-layer diagnostics,
+  and a prioritized coverage queue; see
+  [`catalog-coverage-curation.md`](catalog-coverage-curation.md).
 - 0.4.14 turns allowlisted web findings for missing facts and profiles into
   attributed drafts and requires visible review before trusted shared
   publication.
