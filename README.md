@@ -28,7 +28,9 @@ explainable food-pairing suggestions from bottles physically in stock, and
 household-scoped observations and serving adjustments that never rewrite the
 shared library. Household wines can also retain structured origin, grape,
 style, label-alcohol, and certification facts without promoting them into
-shared truth.
+shared truth. The catalog searches and filters those facts, distinguishes
+owner-data issues from exact missing profile layers, and prioritizes the
+highest-impact shared-library curation work without exposing household data.
 
 ## v0.3 capabilities
 
