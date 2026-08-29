@@ -206,6 +206,27 @@ describe("wine catalog entry helpers", () => {
     ).toBeUndefined()
   })
 
+  it("ignores a retired duplicate during later catalog matching", () => {
+    const base = wines[0] as WineCatalogEntry
+    const retiredDuplicate: WineCatalogEntry = {
+      ...base,
+      id: "wine-retired",
+      merged_into_wine_id: base.id,
+    }
+
+    expect(
+      findExactWine(
+        [base, retiredDuplicate],
+        "household-1",
+        "Domaine Test",
+        "Cuvée A",
+        2020,
+        "red",
+        750,
+      )?.id,
+    ).toBe(base.id)
+  })
+
   it("keeps producer suggestions inside the selected household", () => {
     expect(
       getProducerSuggestions(wines, "household-1"),

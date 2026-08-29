@@ -46,9 +46,11 @@ import {
 } from "../data/enrichmentResearch"
 import { EnrichmentResearchInbox } from "./EnrichmentResearchInbox"
 import { Notice } from "./Notice"
+import { WineDuplicateReview } from "./WineDuplicateReview"
 
 interface CatalogWineRow {
   id: string
+  household_id: string
   producer: string
   cuvee: string
   vintage: number | null
@@ -62,8 +64,12 @@ interface CatalogWineRow {
   sweetness_category: SweetnessCategory | null
   alcohol_percent: number | string | null
   certifications: unknown
+  wine_reference_id: string | null
+  wine_reference_type: string | null
+  merged_into_wine_id: string | null
   format_ml: number
   quantity: number
+  position_count: number
 }
 
 interface CatalogWine extends CatalogWineRow {
@@ -117,6 +123,7 @@ function curationCategoryLabel(item: CatalogCurationItem): string {
 const CATALOG_QUERY = `
   select
     w.id,
+    w.household_id,
     w.producer,
     w.cuvee,
     w.vintage,
@@ -130,14 +137,21 @@ const CATALOG_QUERY = `
     w.sweetness_category,
     w.alcohol_percent,
     w.certifications,
+    w.wine_reference_id,
+    w.wine_reference_type,
+    w.merged_into_wine_id,
     w.format_ml,
-    coalesce(sum(h.quantity), 0) as quantity
+    coalesce(sum(h.quantity), 0) as quantity,
+    coalesce(sum(case when h.quantity > 0 then 1 else 0 end), 0)
+      as position_count
   from wines w
   left join holdings h
     on h.wine_id = w.id
   where w.household_id = ?
+    and w.merged_into_wine_id is null
   group by
     w.id,
+    w.household_id,
     w.producer,
     w.cuvee,
     w.vintage,
@@ -151,6 +165,9 @@ const CATALOG_QUERY = `
     w.sweetness_category,
     w.alcohol_percent,
     w.certifications,
+    w.wine_reference_id,
+    w.wine_reference_type,
+    w.merged_into_wine_id,
     w.format_ml
   order by
     w.producer,
@@ -1207,6 +1224,12 @@ export function CatalogView({
           onRefresh={() => void refreshResearchInbox()}
         />
       </section>
+
+      <WineDuplicateReview
+        householdId={householdId}
+        isOnline={isOnline}
+        wines={catalogWines}
+      />
 
       <datalist id="catalog-color-suggestions">
         {colorSuggestions.map((color) => (

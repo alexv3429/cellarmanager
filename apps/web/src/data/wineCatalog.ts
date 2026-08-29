@@ -16,6 +16,7 @@ export interface WineCatalogEntry {
   certifications?: unknown
   wine_reference_id?: string | null
   wine_reference_type?: string | null
+  merged_into_wine_id?: string | null
   format_ml: number
 }
 
@@ -134,6 +135,7 @@ export function findMatchingWines(
   return wines.filter(
     (wine) =>
       wine.household_id === householdId &&
+      !wine.merged_into_wine_id &&
       getWineIdentityKey(
         wine.producer,
         wine.cuvee,

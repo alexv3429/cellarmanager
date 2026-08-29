@@ -23,7 +23,7 @@ const ACTIVITY_QUERY = `
     operation.user_id,
     operation.operation_type,
     operation.wine_id,
-    wine.id as catalog_wine_id,
+    coalesce(wine.merged_into_wine_id, wine.id) as catalog_wine_id,
     coalesce(wine.producer, operation.wine_producer) as producer,
     coalesce(wine.cuvee, operation.wine_cuvee) as cuvee,
     coalesce(wine.vintage, operation.wine_vintage) as vintage,
