@@ -176,6 +176,8 @@ describe("wine facts", () => {
           ],
           grape_note: "Confirm the producer or label.",
           region: "Burgundy",
+          sweetness_category: "bone-dry",
+          alcohol_percent: 13.5,
           subregion: "Côte de Nuits",
           vineyard: "Les Evocelles",
         },
@@ -208,6 +210,8 @@ describe("wine facts", () => {
           { name: "Chardonnay", percentage: null },
         ],
         grapeNote: "Confirm the producer or label.",
+        sweetnessCategory: "bone-dry",
+        alcoholPercent: 13.5,
         region: "Burgundy",
         subregion: "Côte de Nuits",
         vineyard: "Les Evocelles",
@@ -216,27 +220,72 @@ describe("wine facts", () => {
   })
 
   it("loads suggestions through the narrow read RPC", async () => {
-    const rpc = vi.fn().mockResolvedValue({
-      data: {
-        reason: "No reviewed facts are available",
-        sources: [],
-        status: "unavailable",
-        values: null,
-      },
-      error: null,
-    })
+    const rpc = vi.fn().mockImplementation((functionName: string) =>
+      Promise.resolve({
+        data:
+          functionName === "get_researched_wine_fact_suggestions"
+            ? {
+                reason: null,
+                sources: [
+                  {
+                    kind: "reviewed-web",
+                    name: "Producer official site",
+                    reviewed_at: "2026-08-27T15:00:00Z",
+                    url: "https://producer.example/wine",
+                  },
+                ],
+                status: "available",
+                values: {
+                  grape_composition: [
+                    { name: "Gamay", percentage: null },
+                  ],
+                  sweetness_category: "bone-dry",
+                },
+              }
+            : {
+                reason: "No reviewed reference facts are available",
+                sources: [],
+                status: "unavailable",
+                values: null,
+              },
+        error: null,
+      }),
+    )
 
     await expect(
       getWineFactSuggestions("wine-1", { rpc }),
     ).resolves.toEqual({
-      reason: "No reviewed facts are available",
-      sources: [],
-      status: "unavailable",
-      values: null,
+      reason: null,
+      sources: [
+        {
+          identifierScheme: null,
+          identifierValue: null,
+          kind: "reviewed-web",
+          name: "Producer official site",
+          reviewedAt: "2026-08-27T15:00:00Z",
+          url: "https://producer.example/wine",
+        },
+      ],
+      status: "available",
+      values: {
+        alcoholPercent: null,
+        classification: null,
+        country: null,
+        grapeComposition: [{ name: "Gamay", percentage: null }],
+        grapeNote: null,
+        region: null,
+        subregion: null,
+        sweetnessCategory: "bone-dry",
+        vineyard: null,
+      },
     })
     expect(rpc).toHaveBeenCalledWith("get_wine_fact_suggestions", {
       p_wine_id: "wine-1",
     })
+    expect(rpc).toHaveBeenCalledWith(
+      "get_researched_wine_fact_suggestions",
+      { p_wine_id: "wine-1" },
+    )
   })
 
   it("sends only the bounded rich-facts RPC contract", async () => {

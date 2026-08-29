@@ -143,10 +143,17 @@ export function WineFactsPanel({
             }))
         : [{ ...EMPTY_GRAPE }],
     )
-    setSweetness(parsed.facts.sweetnessCategory ?? "")
+    setSweetness(
+      parsed.facts.sweetnessCategory ??
+        suggested?.sweetnessCategory ??
+        "",
+    )
     setAlcoholPercent(
       parsed.facts.alcoholPercent === null
-        ? ""
+        ? suggested?.alcoholPercent === null ||
+          suggested?.alcoholPercent === undefined
+          ? ""
+          : String(suggested.alcoholPercent)
         : String(parsed.facts.alcoholPercent),
     )
     setCertifications(parsed.facts.certifications.join(", "))
@@ -294,6 +301,12 @@ export function WineFactsPanel({
                       .map((grape) => grape.name)
                       .join(", ")
                   : null,
+                suggestions.values.sweetnessCategory
+                  ? sweetnessLabel(suggestions.values.sweetnessCategory)
+                  : null,
+                suggestions.values.alcoholPercent === null
+                  ? null
+                  : alcoholLabel(suggestions.values.alcoholPercent),
               ]
                 .filter(Boolean)
                 .join(" · ")}
@@ -337,10 +350,9 @@ export function WineFactsPanel({
           ) : null}
 
           <small className="wine-facts__suggestions-scope">
-            LWIN supplies identity and origin. Reviewed appellation
-            knowledge may add typical grapes, but never claims an exact
-            blend without bottle-level evidence. Broader web-research
-            coverage remains in roadmap step 0.4.14.
+            Suggestions combine reviewed references and published,
+            attributable web research. Typical appellation grapes never
+            claim an exact blend without bottle-level evidence.
           </small>
         </aside>
       ) : null}
@@ -521,9 +533,8 @@ export function WineFactsPanel({
           </div>
 
           <Notice tone="info">
-            These are household-maintained facts. Future enrichment may
-            propose sourced values, but it will not overwrite them
-            silently.
+            These remain household-maintained facts. Reviewed enrichment
+            can fill missing fields only after you choose and save them.
           </Notice>
 
           <div className="wine-facts__actions">

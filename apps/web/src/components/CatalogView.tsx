@@ -36,6 +36,15 @@ import {
   type MaturityOverviewItem,
   type MaturityState,
 } from "../data/wineMaturity"
+import {
+  enrichmentResearchCurationAction,
+  findEnrichmentResearchForCurationItem,
+  getEnrichmentResearchInbox,
+  markEnrichmentResearchSeen,
+  requestEnrichmentResearch,
+  type EnrichmentResearchInbox as ResearchInbox,
+} from "../data/enrichmentResearch"
+import { EnrichmentResearchInbox } from "./EnrichmentResearchInbox"
 import { Notice } from "./Notice"
 
 interface CatalogWineRow {
@@ -192,6 +201,15 @@ export function CatalogView({
   const [maturityLoading, setMaturityLoading] = useState(false)
   const [maturityError, setMaturityError] =
     useState<string | null>(null)
+  const [researchInbox, setResearchInbox] =
+    useState<ResearchInbox | null>(null)
+  const [researchLoading, setResearchLoading] = useState(false)
+  const [researchError, setResearchError] =
+    useState<string | null>(null)
+  const [researchMessage, setResearchMessage] =
+    useState<string | null>(null)
+  const [requestingCurationItemId, setRequestingCurationItemId] =
+    useState<string | null>(null)
 
   const [editingWineId, setEditingWineId] =
     useState<string | null>(null)
@@ -265,6 +283,42 @@ export function CatalogView({
         if (!cancelled) {
           setMaturityLoading(false)
         }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [householdId, isOnline])
+
+  useEffect(() => {
+    setResearchInbox(null)
+    setResearchError(null)
+    setResearchMessage(null)
+    setRequestingCurationItemId(null)
+
+    if (!isOnline) {
+      setResearchLoading(false)
+      return
+    }
+
+    let cancelled = false
+    setResearchLoading(true)
+
+    void getEnrichmentResearchInbox(householdId)
+      .then((inbox) => {
+        if (!cancelled) setResearchInbox(inbox)
+      })
+      .catch((caughtError: unknown) => {
+        if (!cancelled) {
+          setResearchError(
+            caughtError instanceof Error
+              ? caughtError.message
+              : "Unable to load enrichment research",
+          )
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setResearchLoading(false)
       })
 
     return () => {
@@ -600,6 +654,79 @@ export function CatalogView({
     setFactFilter("ALL")
     setProfileFilter("ALL")
     setCurationItemId(itemId)
+  }
+
+  async function refreshResearchInbox() {
+    if (!isOnline) return
+    setResearchLoading(true)
+    setResearchError(null)
+    try {
+      setResearchInbox(await getEnrichmentResearchInbox(householdId))
+    } catch (caughtError: unknown) {
+      setResearchError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to refresh enrichment research",
+      )
+    } finally {
+      setResearchLoading(false)
+    }
+  }
+
+  async function requestResearch(item: CatalogCurationItem) {
+    const wineId = item.wineIds[0]
+    if (!isOnline || !wineId || item.category === "wine-data") return
+
+    setRequestingCurationItemId(item.id)
+    setResearchError(null)
+    setResearchMessage(null)
+    try {
+      setResearchInbox(
+        await requestEnrichmentResearch(
+          householdId,
+          wineId,
+          item.gap,
+          item.priority,
+        ),
+      )
+      setResearchMessage(
+        "Research requested. It will use only approved sources and will return as an inactive draft for review.",
+      )
+    } catch (caughtError: unknown) {
+      setResearchError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to request enrichment research",
+      )
+    } finally {
+      setRequestingCurationItemId(null)
+    }
+  }
+
+  function openResearchCase(caseId: string) {
+    const card = document.getElementById(`research-case-${caseId}`)
+    if (!card) return
+
+    const inbox = card.closest("details")
+    if (inbox instanceof HTMLDetailsElement) inbox.open = true
+    window.requestAnimationFrame(() => {
+      card.scrollIntoView({ behavior: "smooth", block: "start" })
+    })
+  }
+
+  async function markResearchSeen() {
+    if (!isOnline || (researchInbox?.unreadCount ?? 0) === 0) return
+    try {
+      setResearchInbox(
+        await markEnrichmentResearchSeen(householdId, null),
+      )
+    } catch (caughtError: unknown) {
+      setResearchError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to mark research as seen",
+      )
+    }
   }
 
   function startEditing(wine: CatalogWineRow) {
@@ -984,16 +1111,25 @@ export function CatalogView({
               </span>
             </summary>
             <p>
-              Ranked by bottles and wines affected. Shared research remains a
-              visible draft until review in step 0.4.14.
+              Ranked by bottles and wines affected. Research uses approved
+              sources and remains an inactive, attributable draft until review.
             </p>
 
             {curationQueue.length === 0 ? (
               <p>No fact, profile, or cellar-data gaps were detected.</p>
             ) : (
               <ol>
-                {curationQueue.slice(0, 12).map((item) => (
-                  <li key={item.id}>
+                {curationQueue.slice(0, 12).map((item) => {
+                  const research = findEnrichmentResearchForCurationItem(
+                    researchInbox,
+                    item.gap,
+                    item.wineIds,
+                  )
+                  const researchAction =
+                    enrichmentResearchCurationAction(research)
+
+                  return (
+                    <li key={item.id}>
                     <div>
                       <span className="catalog-curation-queue__category">
                         {curationCategoryLabel(item)}
@@ -1006,18 +1142,42 @@ export function CatalogView({
                         {item.bottleCount} {item.bottleCount === 1 ? "bottle" : "bottles"}
                       </small>
                     </div>
-                    <button
-                      aria-pressed={activeCurationItem?.id === item.id}
-                      disabled={activeCurationItem?.id === item.id}
-                      onClick={() => showCurationWines(item.id)}
-                      type="button"
-                    >
-                      {activeCurationItem?.id === item.id
-                        ? "Shown below"
-                        : "Filter catalog"}
-                    </button>
-                  </li>
-                ))}
+                    <div className="catalog-curation-queue__actions">
+                      <button
+                        aria-pressed={activeCurationItem?.id === item.id}
+                        disabled={activeCurationItem?.id === item.id}
+                        onClick={() => showCurationWines(item.id)}
+                        type="button"
+                      >
+                        {activeCurationItem?.id === item.id
+                          ? "Shown below"
+                          : "Show wines"}
+                      </button>
+                      {item.category !== "wine-data" ? (
+                        <button
+                          disabled={
+                            researchAction.kind === "waiting" ||
+                            (researchAction.kind === "request" &&
+                              (!isOnline || requestingCurationItemId !== null))
+                          }
+                          onClick={() => {
+                            if (researchAction.kind === "open" && research) {
+                              openResearchCase(research.caseId)
+                            } else if (researchAction.kind === "request") {
+                              void requestResearch(item)
+                            }
+                          }}
+                          type="button"
+                        >
+                          {requestingCurationItemId === item.id
+                            ? "Requesting…"
+                            : researchAction.label}
+                        </button>
+                      ) : null}
+                    </div>
+                    </li>
+                  )
+                })}
               </ol>
             )}
 
@@ -1028,6 +1188,24 @@ export function CatalogView({
             ) : null}
           </details>
         )}
+
+        {researchMessage ? (
+          <Notice role="status" tone="success">
+            {researchMessage}
+          </Notice>
+        ) : null}
+
+        <EnrichmentResearchInbox
+          error={researchError}
+          householdId={householdId}
+          inbox={researchInbox}
+          isLoading={researchLoading}
+          isOnline={isOnline}
+          onInboxChange={setResearchInbox}
+          onMarkSeen={() => void markResearchSeen()}
+          onOpenWine={onOpenWine}
+          onRefresh={() => void refreshResearchInbox()}
+        />
       </section>
 
       <datalist id="catalog-color-suggestions">

@@ -57,6 +57,8 @@ export interface WineFactSuggestions {
     vineyard: string | null
     grapeComposition: WineGrapeComposition[]
     grapeNote: string | null
+    sweetnessCategory: SweetnessCategory | null
+    alcoholPercent: number | null
   } | null
 }
 
@@ -331,6 +333,33 @@ export function parseWineFactSuggestions(
     throw new Error("Available wine fact suggestions need sources and values")
   }
 
+  const suggestedSweetness = values?.sweetness_category
+  if (
+    suggestedSweetness !== null &&
+    suggestedSweetness !== undefined &&
+    !SWEETNESS_CATEGORIES.includes(
+      suggestedSweetness as SweetnessCategory,
+    )
+  ) {
+    throw new Error("Suggested sweetness category is invalid")
+  }
+
+  const rawSuggestedAlcohol = values?.alcohol_percent
+  const suggestedAlcohol =
+    rawSuggestedAlcohol === null ||
+    rawSuggestedAlcohol === undefined ||
+    rawSuggestedAlcohol === ""
+      ? null
+      : Number(rawSuggestedAlcohol)
+  if (
+    suggestedAlcohol !== null &&
+    (!Number.isFinite(suggestedAlcohol) ||
+      suggestedAlcohol <= 0 ||
+      suggestedAlcohol > 30)
+  ) {
+    throw new Error("Suggested alcohol percentage is invalid")
+  }
+
   return {
     status,
     reason: optionalText(item.reason, "Wine fact suggestion reason"),
@@ -400,7 +429,84 @@ export function parseWineFactSuggestions(
               values.grape_note,
               "Suggested grape note",
             ),
+            sweetnessCategory:
+              (suggestedSweetness as SweetnessCategory | null | undefined) ??
+              null,
+            alcoholPercent: suggestedAlcohol,
           },
+  }
+}
+
+function mergeWineFactSuggestions(
+  reference: WineFactSuggestions,
+  researched: WineFactSuggestions,
+): WineFactSuggestions {
+  const available = [reference, researched].filter(
+    (suggestion) =>
+      suggestion.status === "available" && suggestion.values !== null,
+  )
+
+  if (available.length === 0) {
+    return {
+      reason:
+        [reference.reason, researched.reason].filter(Boolean).join(" · ") ||
+        "No reviewed fact suggestions are available",
+      sources: [],
+      status: "unavailable",
+      values: null,
+    }
+  }
+
+  const referenceValues = reference.values
+  const researchedValues = researched.values
+  const sourceKeys = new Set<string>()
+  const sources = [...reference.sources, ...researched.sources].filter(
+    (source) => {
+      const key = [
+        source.kind,
+        source.identifierScheme,
+        source.identifierValue,
+        source.url,
+        source.name,
+      ].join("|")
+      if (sourceKeys.has(key)) return false
+      sourceKeys.add(key)
+      return true
+    },
+  )
+
+  return {
+    reason: null,
+    sources,
+    status: "available",
+    values: {
+      alcoholPercent:
+        referenceValues?.alcoholPercent ??
+        researchedValues?.alcoholPercent ??
+        null,
+      classification:
+        referenceValues?.classification ??
+        researchedValues?.classification ??
+        null,
+      country:
+        referenceValues?.country ?? researchedValues?.country ?? null,
+      grapeComposition:
+        (referenceValues?.grapeComposition.length ?? 0) > 0
+          ? referenceValues?.grapeComposition ?? []
+          : researchedValues?.grapeComposition ?? [],
+      grapeNote:
+        referenceValues?.grapeNote ?? researchedValues?.grapeNote ?? null,
+      region:
+        referenceValues?.region ?? researchedValues?.region ?? null,
+      subregion:
+        referenceValues?.subregion ?? researchedValues?.subregion ?? null,
+      sweetnessCategory:
+        referenceValues?.sweetnessCategory ??
+        researchedValues?.sweetnessCategory ??
+        null,
+      vineyard:
+        referenceValues?.vineyard ?? researchedValues?.vineyard ?? null,
+    },
   }
 }
 
@@ -562,14 +668,18 @@ export async function getWineFactSuggestions(
   rpcClient?: RpcClient,
 ): Promise<WineFactSuggestions> {
   const client = rpcClient ?? (await defaultClient())
-  const { data, error } = await client.rpc(
-    "get_wine_fact_suggestions",
-    { p_wine_id: wineId },
+  const [referenceResult, researchedResult] = await Promise.all([
+    client.rpc("get_wine_fact_suggestions", { p_wine_id: wineId }),
+    client.rpc("get_researched_wine_fact_suggestions", {
+      p_wine_id: wineId,
+    }),
+  ])
+
+  if (referenceResult.error) throw new Error(referenceResult.error.message)
+  if (researchedResult.error) throw new Error(researchedResult.error.message)
+
+  return mergeWineFactSuggestions(
+    parseWineFactSuggestions(referenceResult.data),
+    parseWineFactSuggestions(researchedResult.data),
   )
-
-  if (error) {
-    throw new Error(error.message)
-  }
-
-  return parseWineFactSuggestions(data)
 }
