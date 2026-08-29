@@ -101,9 +101,32 @@ form can submit a direct HTTPS URL; it passes the same checks and automatically
 resumes the request. Adding or reactivating any compatible reviewed rule also
 resumes every affected request. Retiring a rule immediately prevents new
 research and publication from it while preserving historical provenance. Step
-0.4.17 audits unresolved high-impact requests and current cellar coverage
+0.4.20 audits unresolved high-impact requests and current cellar coverage
 before the v0.4 release; source rules and reviewed immutable knowledge versions
 remain continuously extensible after release.
+
+## Governance scheduled before v0.4 release
+
+Step 0.4.17 adds an explicit **Report an error / request review** path for a
+published fact or profile. A report is private to its submitter until processed,
+can include comments or proposed evidence, and joins an existing open case for
+the same canonical subject instead of starting duplicate research. Its state
+and outcome remain visible to the reporter. A report alone never edits,
+unpublishes, or lowers the canonical profile silently.
+
+Step 0.4.18 adds the human governance that follows a report. Trusted-curator
+eligibility and claim scope are explicit; reviews, disagreements, evidence, and
+publication decisions are attributable and auditable. An accepted correction
+creates a new immutable profile and knowledge version that supersedes the old
+one. The interface exposes the relevant before/after comparison and historical
+versions; published rows are never edited in place. The service publisher
+remains the only component allowed to activate a validated version.
+
+Step 0.4.19 keeps taste separate from facts. A member may privately shift
+canonical maturity guidance toward younger or older drinking, see the canonical
+and adjusted results, and reset the preference. The shift affects only that
+member's recommendations; it is not evidence, does not change the shared
+profile, and is not exposed to another account or household.
 
 The HTML extractor excludes scripts, styles, and off-screen hidden elements
 before the bounded text reaches the synthesis model. This protects research

@@ -10,7 +10,7 @@ crosses a milestone boundary.
 | Milestone | Promise | Status |
 |---|---|---|
 | `v0.3` | A cellar can live safely in CellarManager through daily manual use or guarded CSV import | Released (`v0.3.0`) |
-| `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable evidence | In progress (0.4.14 under implementation) |
+| `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable evidence | In progress (0.4.15 next) |
 | `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | Planned |
 | `v0.6` | Adding or identifying wine requires dramatically less typing | Planned |
 | `v0.7` | CellarManager explains what happened to the cellar and what the collection means over time | Planned |
@@ -94,7 +94,10 @@ unchanged.
 | 0.4.14 | Multi-source reviewed web research, advanced owner source suggestions, attributable draft fact/profile synthesis, owner notification/review/editing, and trusted shared publication |
 | 0.4.15 | Duplicate detection and explicit merge workflow |
 | 0.4.16 | CSV export with a documented portable format and optional round-trip compatibility |
-| 0.4.17 | v0.4 acceptance and release |
+| 0.4.17 | Published-profile error reports and review requests, with deduplicated cases, supporting comments or evidence, visible status, and notifications |
+| 0.4.18 | Shared-library governance and profile revision workflow: trusted-curator eligibility, explicit validation and disagreement rules, immutable profile history and comparison, supersession, and auditable publication |
+| 0.4.19 | Private member maturity calibration against canonical guidance, including a bounded younger/later shift, a visible explanation and reset, and strict separation from shared profiles |
+| 0.4.20 | v0.4 acceptance and release |
 
 Barcode scanning and lookup, photos, OCR, purchase cost, and valuation are not
 v0.4 work. Serving guidance and other fields may be retrieved in v0.4 when the
@@ -109,9 +112,23 @@ fact and profile coverage across affected wines and households. Step 0.4.14
 researches those demands from complementary evidence into attributable drafts
 that remain inactive until visible review and trusted publication. New subjects
 use generic source discovery rather than per-producer code; an advanced URL
-submission remains available when discovery misses a relevant page. Step 0.4.17 reviews remaining coverage and unresolved
-reasons as a release gate, while a new unknown producer continues to receive
-the safe broader place/vintage estimate immediately.
+submission remains available when discovery misses a relevant page. Step
+0.4.17 lets a user challenge published knowledge without changing or
+deactivating it silently. Step 0.4.18 turns an accepted correction into a new immutable,
+attributed version instead of editing history in place, and defines who may
+validate shared knowledge. Trust is explicit and auditable; account count or
+an unreviewed popularity vote is not evidence. A new unknown producer continues
+to receive the safe broader place/vintage estimate immediately.
+
+Canonical and personal guidance remain separate. Step 0.4.19 applies a private,
+bounded member preference only after the canonical maturity estimate has been
+calculated. The recommendation must show both the canonical result and the
+personal adjustment, while an explicit per-wine manual override remains the
+highest-priority local instruction. Neither the preference nor its resulting
+recommendation may alter shared knowledge or leak to another account or
+household. Step 0.4.20 audits unresolved high-impact requests, shared-profile
+revision readiness, personal-calibration behavior, and current cellar coverage
+before the v0.4 release.
 
 ## v0.5 — Shared-household collaboration
 
