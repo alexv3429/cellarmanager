@@ -31,6 +31,11 @@ style, label-alcohol, and certification facts without promoting them into
 shared truth. The catalog searches and filters those facts, distinguishes
 owner-data issues from exact missing profile layers, and prioritizes the
 highest-impact shared-library curation work without exposing household data.
+Eligible gaps can now enter a reviewed research workflow: CellarManager can
+compare several bounded source candidates, an owner can submit a missed URL as
+an advanced fallback, source pages are used transiently to prepare an
+attributed inactive draft, and only a server-side publisher can add an
+owner-reviewed fact or profile to versioned shared knowledge.
 
 ## v0.3 capabilities
 
@@ -97,7 +102,10 @@ Build with:
     npm run web:build
 
 `wrangler.jsonc` serves `apps/web/dist` through Cloudflare Workers Static
-Assets with SPA fallback.
+Assets with SPA fallback. It also binds Workers AI and schedules the reviewed
+enrichment worker. Deployment secrets and the source-rights boundary are
+documented in
+[`docs/reviewed-enrichment-research.md`](docs/reviewed-enrichment-research.md).
 
 The `v0.3.0` production build was smoke-tested before its annotated release tag
 was created. See `apps/web/README.md` for local development and production/PWA

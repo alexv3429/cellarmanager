@@ -1,8 +1,8 @@
 # Catalog coverage and curation demand
 
-Roadmap step 0.4.13 turns enrichment gaps into visible, prioritized work. It
-does not research the web, publish knowledge, or silently fill household facts;
-those review boundaries remain part of step 0.4.14.
+Roadmap step 0.4.13 turns enrichment gaps into visible, prioritized work. Step
+0.4.14 now consumes eligible items through a separate reviewed research
+lifecycle; neither step silently fills household facts.
 
 ## Coverage is reason-aware
 
@@ -60,9 +60,9 @@ instead of being copied into a mutable second source of truth. A resolved gap
 therefore disappears after facts are explicitly accepted or a reviewed
 knowledge version rebuilds the affected projections.
 
-## Step 0.4.14 hand-off
+## Reviewed-research hand-off
 
-The next step may consume the service queue to:
+Step 0.4.14 consumes an owner-selected queue item to:
 
 - research only allowlisted sources with suitable access and reuse terms;
 - retain URLs, retrieval time, scope, and the exact subject researched;
@@ -71,8 +71,17 @@ The next step may consume the service queue to:
 - publish shared profiles only through the trusted immutable knowledge-version
   workflow.
 
-Nothing in 0.4.13 authorizes hidden background knowledge publication or direct
-overwriting of household facts.
+The queue now provides separate **Show wines** and **Request research** actions.
+The research inbox shows each request, source, proposal, owner verdict, and
+publication status. An identity-blocked producer request offers reviewed LWIN
+producer identities independently of exact cuvee coverage; other identity
+gaps link to their representative wine's reference review. Either route
+resumes automatically after confirmation. Cellar-data issues never offer research. See
+[`reviewed-enrichment-research.md`](reviewed-enrichment-research.md) for source
+rights, canonical identity, worker, and publication boundaries.
+
+Nothing in either step authorizes hidden background knowledge publication or
+direct overwriting of household facts.
 
 ## Acceptance
 

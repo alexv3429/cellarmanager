@@ -18,8 +18,10 @@ Three data layers remain distinct:
 
 The 0.4.11 editor changes only the first layer. A household fact does not
 silently become shared truth and does not overwrite an active reviewed profile.
-Later web research may propose a sourced value, but 0.4.14 must show that draft
-for review before it can become trusted shared knowledge.
+Step 0.4.14 can now propose a sourced country, grape, sweetness, or alcohol
+value, but it shows the draft and source for review before trusted publication.
+Published research still fills only a suggestion: the owner explicitly chooses
+and saves any missing household fact.
 
 A confirmed LWIN match already preserves reviewed country, region, subregion,
 classification, site, and parcel values. Wine Detail exposes those available
@@ -88,8 +90,9 @@ required before apply. See
   and a prioritized coverage queue; see
   [`catalog-coverage-curation.md`](catalog-coverage-curation.md).
 - 0.4.14 turns allowlisted web findings for missing facts and profiles into
-  attributed drafts and requires visible review before trusted shared
-  publication.
+  attributed drafts, validates owner edits, and requires visible review before
+  trusted shared publication; see
+  [`reviewed-enrichment-research.md`](reviewed-enrichment-research.md).
 - 0.4.16 includes the fields in the documented portable CSV export.
 
 ## Acceptance
