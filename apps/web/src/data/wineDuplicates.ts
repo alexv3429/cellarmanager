@@ -2,7 +2,6 @@ import {
   getWineIdentityKey,
   type WineCatalogEntry,
 } from "./wineCatalog"
-import { supabase } from "./supabase"
 
 export interface WineDuplicateCandidate
   extends WineCatalogEntry {
@@ -349,6 +348,7 @@ export async function mergeWineDuplicates(
   targetWineId: string,
   resolution: WineMergeResolution,
 ): Promise<WineMergeResult> {
+  const { supabase } = await import("./supabase")
   const resolvedValues = Object.fromEntries(
     Object.entries(resolution).map(([field, value]) => [
       field === "formatMl" ? "format_ml" : field,
