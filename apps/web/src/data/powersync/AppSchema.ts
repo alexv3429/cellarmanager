@@ -41,6 +41,9 @@ const wines = new Table(
     format_ml: column.integer,
     wine_reference_id: column.text,
     wine_reference_type: column.text,
+    merged_into_wine_id: column.text,
+    merged_at: column.text,
+    merged_by: column.text,
     created_at: column.text
   },
   { indexes: {} }

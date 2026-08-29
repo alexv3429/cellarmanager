@@ -693,6 +693,312 @@
   padding-top: 12px;
 }
 
+.wine-duplicate-review {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.wine-duplicate-review > summary {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--text-h);
+  cursor: pointer;
+  list-style: none;
+}
+
+.wine-duplicate-review > summary::-webkit-details-marker {
+  display: none;
+}
+
+.wine-duplicate-review > summary > span:first-child {
+  display: grid;
+  gap: 3px;
+}
+
+.wine-duplicate-review > summary small {
+  color: var(--text);
+  font-weight: 400;
+}
+
+.wine-duplicate-review__chevron {
+  flex: 0 0 auto;
+  font-size: 20px;
+  transition: transform 150ms ease;
+}
+
+.wine-duplicate-review[open] .wine-duplicate-review__chevron {
+  transform: rotate(180deg);
+}
+
+.wine-duplicate-review__list {
+  display: grid;
+  gap: 14px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wine-duplicate-card {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface-muted);
+}
+
+.wine-duplicate-card__heading {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.wine-duplicate-card__heading > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.wine-duplicate-card__basis {
+  flex: 0 0 auto;
+  padding: 3px 8px;
+  border: 1px solid var(--accent-border);
+  border-radius: 999px;
+  color: var(--text-h);
+  background: var(--accent-bg);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.wine-duplicate-card__entries,
+.wine-duplicate-card__choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.wine-duplicate-card__entries article {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  overflow-wrap: anywhere;
+}
+
+.wine-duplicate-card__entries article.wine-duplicate-record--source {
+  border-color: color-mix(in srgb, var(--border) 35%, #a63d45);
+  background: color-mix(in srgb, var(--surface) 91%, #a63d45);
+}
+
+.wine-duplicate-card__entries article.wine-duplicate-record--target {
+  border-color: color-mix(in srgb, var(--border) 35%, #4f7a5a);
+  background: color-mix(in srgb, var(--surface) 91%, #4f7a5a);
+}
+
+.wine-duplicate-record__label {
+  width: fit-content;
+  padding: 2px 7px;
+  border: 1px solid currentcolor;
+  border-radius: 999px;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.wine-duplicate-record--source .wine-duplicate-record__label {
+  color: #a63d45;
+}
+
+.wine-duplicate-record--target .wine-duplicate-record__label {
+  color: #4f7a5a;
+}
+
+.wine-duplicate-record__positions,
+.wine-duplicate-card__confirmation ul {
+  display: grid;
+  gap: 2px;
+  margin: 4px 0 0;
+  padding-left: 20px;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.wine-duplicate-card__entries small {
+  color: var(--muted);
+}
+
+.wine-duplicate-diff {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.wine-duplicate-diff__heading {
+  display: grid;
+  gap: 3px;
+}
+
+.wine-duplicate-diff__heading h4,
+.wine-duplicate-diff__heading p {
+  margin: 0;
+}
+
+.wine-duplicate-diff__heading p,
+.wine-duplicate-card__same-values {
+  color: var(--text);
+}
+
+.wine-duplicate-diff__rows {
+  display: grid;
+  gap: 10px;
+}
+
+.wine-duplicate-diff__row {
+  display: grid;
+  grid-template-columns:
+    minmax(7rem, 0.65fr)
+    minmax(0, 1fr)
+    minmax(0, 1fr)
+    minmax(12rem, 1.2fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.wine-duplicate-diff__row > strong,
+.wine-duplicate-diff__row > del,
+.wine-duplicate-diff__row > ins {
+  min-width: 0;
+  padding: 10px;
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+}
+
+.wine-duplicate-diff__row > strong {
+  color: var(--text-h);
+}
+
+.wine-duplicate-diff__row > del,
+.wine-duplicate-diff__row > ins {
+  display: grid;
+  gap: 2px;
+  border: 1px solid transparent;
+  color: var(--text-h);
+  text-decoration: none;
+}
+
+.wine-duplicate-diff__row > del {
+  border-color: color-mix(in srgb, var(--border) 35%, #a63d45);
+  background: color-mix(in srgb, var(--surface) 88%, #a63d45);
+}
+
+.wine-duplicate-diff__row > ins {
+  border-color: color-mix(in srgb, var(--border) 35%, #4f7a5a);
+  background: color-mix(in srgb, var(--surface) 88%, #4f7a5a);
+}
+
+.wine-duplicate-diff__row small {
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.wine-duplicate-diff__resolution {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.app-shell__content .wine-duplicate-diff__resolution label {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.wine-duplicate-diff__resolution select,
+.wine-duplicate-diff__resolution input {
+  width: 100%;
+  min-width: 0;
+}
+
+.app-shell__content .wine-duplicate-card__choices label,
+.wine-duplicate-card__confirmation > label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.wine-duplicate-card__choices select {
+  width: 100%;
+  min-width: 0;
+}
+
+.wine-duplicate-card__confirmation {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-left: 3px solid var(--accent-border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.wine-duplicate-card__confirmation p {
+  margin: 0;
+}
+
+.wine-duplicate-card__confirmation > label {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+}
+
+.wine-duplicate-card__confirmation input {
+  width: auto;
+  min-height: auto;
+  margin-top: 4px;
+}
+
+.wine-duplicate-card > button {
+  justify-self: start;
+}
+
+@media (max-width: 700px) {
+  .wine-duplicate-card__heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .wine-duplicate-card__basis {
+    align-self: flex-start;
+  }
+
+  .wine-duplicate-card__entries,
+  .wine-duplicate-card__choices {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wine-duplicate-diff__row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wine-duplicate-diff__row > strong {
+    padding: 4px 0 0;
+  }
+}
+
 .app-shell__content .catalog-advanced-filters__grid label {
   display: grid;
   gap: 5px;

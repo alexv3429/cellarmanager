@@ -47,6 +47,7 @@ interface WineDetailViewProps {
   householdId: string
   isOnline: boolean
   onBack: () => void
+  onOpenMergedWine: (wineId: string) => void
   returnView: AppView
   userId: string
   wineId: string
@@ -76,6 +77,7 @@ const WINE_QUERY = `
     certifications,
     wine_reference_id,
     wine_reference_type,
+    merged_into_wine_id,
     format_ml
   from wines
   where household_id = ?
@@ -174,6 +176,7 @@ export function WineDetailView({
   householdId,
   isOnline,
   onBack,
+  onOpenMergedWine,
   returnView,
   userId,
   wineId,
@@ -215,6 +218,12 @@ export function WineDetailView({
   )
 
   const wine = wines[0]
+
+  useEffect(() => {
+    if (wine?.merged_into_wine_id) {
+      onOpenMergedWine(wine.merged_into_wine_id)
+    }
+  }, [onOpenMergedWine, wine?.merged_into_wine_id])
 
   const holdings = useMemo(
     () =>
@@ -788,6 +797,16 @@ export function WineDetailView({
         <h1>Wine not found</h1>
         <Notice role="alert" tone="warning">
           This wine is not available in the active household.
+        </Notice>
+      </main>
+    )
+  }
+
+  if (wine.merged_into_wine_id) {
+    return (
+      <main className="wine-detail-view">
+        <Notice>
+          This catalog entry was merged. Opening the active wine…
         </Notice>
       </main>
     )

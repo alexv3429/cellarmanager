@@ -122,6 +122,7 @@ const WINE_CATALOG_QUERY = `
     format_ml
   from wines
   where household_id = ?
+    and merged_into_wine_id is null
   order by producer, cuvee, vintage
 `
 

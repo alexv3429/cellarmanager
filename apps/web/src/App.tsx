@@ -153,6 +153,19 @@ function ReadyAuthenticatedApp({
     changeView("catalog")
   }
 
+  function replaceWineDetail(wineId: string) {
+    const historyState: WineDetailHistoryState = {
+      wineDetailReturnView,
+    }
+
+    window.history.replaceState(
+      historyState,
+      "",
+      getWineDetailPath(wineId),
+    )
+    setRoute({ view: "wine", wineId })
+  }
+
   const deviceRegistration = useRegisteredDevices(
     userId,
     initialSyncComplete,
@@ -250,6 +263,7 @@ function ReadyAuthenticatedApp({
           householdId={activeHouseholdId}
           isOnline={isOnline}
           onBack={leaveWineDetail}
+          onOpenMergedWine={replaceWineDetail}
           returnView={wineDetailReturnView}
           userId={userId}
           wineId={route.wineId}
