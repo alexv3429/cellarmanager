@@ -14,11 +14,25 @@ import {
   type MaturityVerdict,
   type WineMaturity,
 } from "../data/wineMaturity"
+import {
+  getProfileReviewInbox,
+  getWineProfileReviewTargets,
+  requestProfileReview,
+  type ProfileReviewCategory,
+  type ProfileReviewInbox as ReviewInbox,
+  type ProfileReviewTarget,
+} from "../data/profileReviews"
 import { Notice } from "./Notice"
 
 interface WineMaturityPanelProps {
+  householdId: string
   isOnline: boolean
   wineId: string
+}
+
+interface IssueReviewTarget {
+  label: string
+  profileId: string
 }
 
 function storagePurposeLabel(value: string): string {
@@ -71,6 +85,27 @@ function maturityLayerLabel(layer: string): string {
   }
 }
 
+function profileTypeLabel(profileType: string): string {
+  switch (profileType) {
+    case "place":
+      return "Place baseline"
+    case "place-adjustment":
+      return "Place refinement"
+    case "vintage":
+      return "Vintage"
+    case "producer-era":
+      return "Producer style"
+    case "producer-vintage-interaction":
+      return "Producer × vintage"
+    case "cuvee":
+      return "Cuvée"
+    case "release":
+      return "Exact vintage"
+    default:
+      return profileType.replaceAll("-", " ")
+  }
+}
+
 function yearInput(form: HTMLFormElement, name: string): number {
   const value = Number(new FormData(form).get(name))
 
@@ -82,6 +117,7 @@ function yearInput(form: HTMLFormElement, name: string): number {
 }
 
 export function WineMaturityPanel({
+  householdId,
   isOnline,
   wineId,
 }: WineMaturityPanelProps) {
@@ -90,6 +126,12 @@ export function WineMaturityPanel({
   const [busyAction, setBusyAction] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
+  const [profileReviewInbox, setProfileReviewInbox] =
+    useState<ReviewInbox | null>(null)
+  const [profileReviewTargets, setProfileReviewTargets] = useState<
+    ProfileReviewTarget[]
+  >([])
+  const [reviewTarget, setReviewTarget] = useState<IssueReviewTarget | null>(null)
 
   useEffect(() => {
     setResult(null)
@@ -129,6 +171,38 @@ export function WineMaturityPanel({
       cancelled = true
     }
   }, [isOnline, wineId])
+
+  useEffect(() => {
+    setProfileReviewInbox(null)
+    setProfileReviewTargets([])
+    setReviewTarget(null)
+    if (!isOnline) return
+
+    let cancelled = false
+    void Promise.all([
+      getProfileReviewInbox(householdId),
+      getWineProfileReviewTargets(wineId),
+    ])
+      .then(([inbox, targets]) => {
+        if (!cancelled) {
+          setProfileReviewInbox(inbox)
+          setProfileReviewTargets(targets)
+        }
+      })
+      .catch((caughtError: unknown) => {
+        if (!cancelled) {
+          setError(
+            caughtError instanceof Error
+              ? caughtError.message
+              : "Unable to load profile review requests",
+          )
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [householdId, isOnline, wineId])
 
   async function saveFeedback(verdict: MaturityVerdict) {
     const projectionId = result?.projection?.id
@@ -222,10 +296,78 @@ export function WineMaturityPanel({
     }
   }
 
+  async function submitProfileReview(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!isOnline || !reviewTarget?.profileId) return
+
+    const data = new FormData(event.currentTarget)
+    setBusyAction(`review:${reviewTarget.profileId}`)
+    setError(null)
+    setMessage(null)
+
+    try {
+      setProfileReviewInbox(
+        await requestProfileReview(
+          householdId,
+          wineId,
+          reviewTarget.profileId,
+          String(data.get("category")) as ProfileReviewCategory,
+          String(data.get("comment") ?? ""),
+          String(data.get("evidenceUrl") ?? ""),
+        ),
+      )
+      setReviewTarget(null)
+      setMessage(
+        "Your report was submitted. The published guidance remains unchanged while it is reviewed.",
+      )
+    } catch (caughtError: unknown) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to submit this profile review",
+      )
+    } finally {
+      setBusyAction(null)
+    }
+  }
+
   const projection = result?.projection ?? null
   const model = projection?.maturity ?? null
   const override = result?.override ?? null
   const displayedYears = override ?? model
+  const inlineProfileIds = new Set(
+    model?.contributions.flatMap((contribution) =>
+      contribution.profileId ? [contribution.profileId] : [],
+    ) ?? [],
+  )
+  const supplementalReviewTargets = profileReviewTargets.filter(
+    (target) => !inlineProfileIds.has(target.profileId),
+  )
+
+  function profileReviewAction(profileId: string, label: string) {
+    const existingReview = profileReviewInbox?.items.find(
+      (item) =>
+        item.profileId === profileId &&
+        item.wineId === wineId &&
+        (item.status === "open" || item.status === "reviewing"),
+    )
+
+    return existingReview ? (
+      <span className="wine-maturity__review-status">
+        {existingReview.status === "reviewing"
+          ? "Review in progress"
+          : "Review submitted"}
+      </span>
+    ) : (
+      <button
+        disabled={!isOnline || busyAction !== null}
+        onClick={() => setReviewTarget({ label, profileId })}
+        type="button"
+      >
+        Report an issue
+      </button>
+    )
+  }
 
   return (
     <section
@@ -342,10 +484,18 @@ export function WineMaturityPanel({
               <ol className="wine-maturity__contributions">
                 {model.contributions.map((contribution, index) => (
                   <li key={`${contribution.layer}:${contribution.label}:${index}`}>
-                    <strong>
-                      {maturityLayerLabel(contribution.layer)}: {contribution.label}
-                    </strong>
-                    <span>{contribution.rationale}</span>
+                    <div>
+                      <strong>
+                        {maturityLayerLabel(contribution.layer)}: {contribution.label}
+                      </strong>
+                      <span>{contribution.rationale}</span>
+                    </div>
+                    {contribution.profileId
+                      ? profileReviewAction(
+                          contribution.profileId,
+                          contribution.label,
+                        )
+                      : null}
                   </li>
                 ))}
               </ol>
@@ -356,6 +506,30 @@ export function WineMaturityPanel({
                 ))}
               </ul>
             ) : null}
+            {supplementalReviewTargets.length > 0 ? (
+              <div className="wine-maturity__linked-profiles">
+                <strong>Shared profiles used by this estimate</strong>
+                <p>
+                  These are the exact reviewed profiles recorded with this
+                  calculation, including older estimates whose explanation is
+                  shown as prose.
+                </p>
+                <ol className="wine-maturity__contributions">
+                  {supplementalReviewTargets.map((target) => (
+                    <li key={target.profileId}>
+                      <div>
+                        <strong>{target.subjectTitle}</strong>
+                        <span>{profileTypeLabel(target.profileType)}</span>
+                      </div>
+                      {profileReviewAction(
+                        target.profileId,
+                        target.subjectTitle,
+                      )}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            ) : null}
             {model.warnings.length > 0 ? (
               <>
                 <strong>Limits</strong>
@@ -365,6 +539,64 @@ export function WineMaturityPanel({
                   ))}
                 </ul>
               </>
+            ) : null}
+
+            {reviewTarget?.profileId ? (
+              <form
+                className="wine-maturity__review-form"
+                onSubmit={(event) => void submitProfileReview(event)}
+              >
+                <div>
+                  <strong>Report an issue with {reviewTarget.label}</strong>
+                  <p>
+                    This opens or joins a review of this exact shared profile.
+                    It does not alter your wine or the published guidance.
+                  </p>
+                </div>
+                <label>
+                  What needs review?
+                  <select defaultValue="drinking-window" name="category">
+                    <option value="drinking-window">Drinking window</option>
+                    <option value="wine-style">Wine style</option>
+                    <option value="wrong-identity">Wrong identity</option>
+                    <option value="evidence-problem">Evidence or source</option>
+                    <option value="other">Something else</option>
+                  </select>
+                </label>
+                <label>
+                  What seems wrong?
+                  <textarea
+                    minLength={10}
+                    name="comment"
+                    placeholder="Describe what you observed and what should be checked."
+                    required
+                    rows={4}
+                  />
+                </label>
+                <label>
+                  Supporting HTTPS link (optional)
+                  <input
+                    name="evidenceUrl"
+                    pattern="https://.*"
+                    placeholder="https://…"
+                    type="url"
+                  />
+                </label>
+                <div>
+                  <button disabled={!isOnline || busyAction !== null} type="submit">
+                    {busyAction === `review:${reviewTarget.profileId}`
+                      ? "Submitting…"
+                      : "Submit for review"}
+                  </button>
+                  <button
+                    disabled={busyAction !== null}
+                    onClick={() => setReviewTarget(null)}
+                    type="button"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
             ) : null}
           </details>
 

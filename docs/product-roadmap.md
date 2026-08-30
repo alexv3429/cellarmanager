@@ -10,7 +10,7 @@ crosses a milestone boundary.
 | Milestone | Promise | Status |
 |---|---|---|
 | `v0.3` | A cellar can live safely in CellarManager through daily manual use or guarded CSV import | Released (`v0.3.0`) |
-| `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable evidence | In progress (0.4.16 in review) |
+| `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable evidence | In progress (0.4.17 in review) |
 | `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | Planned |
 | `v0.6` | Adding or identifying wine requires dramatically less typing | Planned |
 | `v0.7` | CellarManager explains what happened to the cellar and what the collection means over time | Planned |
@@ -114,7 +114,11 @@ that remain inactive until visible review and trusted publication. New subjects
 use generic source discovery rather than per-producer code; an advanced URL
 submission remains available when discovery misses a relevant page. Step
 0.4.17 lets a user challenge published knowledge without changing or
-deactivating it silently. Step 0.4.18 turns an accepted correction into a new immutable,
+deactivating it silently. The implemented report follows the exact profile
+contribution used by a current recommendation, deduplicates a shared case by
+stable canonical subject, keeps every reporter's comments and evidence private,
+and exposes status notifications and the trusted outcome. Step 0.4.18 turns an
+accepted correction into a new immutable,
 attributed version instead of editing history in place, and defines who may
 validate shared knowledge. Trust is explicit and auditable; account count or
 an unreviewed popularity vote is not evidence. A new unknown producer continues

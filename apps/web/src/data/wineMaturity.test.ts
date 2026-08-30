@@ -34,6 +34,7 @@ function maturityResponse() {
             },
             label: "Languedoc red",
             layer: "region",
+            profile_id: "profile-region",
             rationale: "Reviewed regional baseline.",
           },
           {
@@ -99,11 +100,13 @@ describe("maturity RPC boundary", () => {
       {
         label: "Languedoc red",
         layer: "region",
+        profileId: "profile-region",
         rationale: "Reviewed regional baseline.",
       },
       {
         label: "Terrasses du Larzac",
         layer: "appellation",
+        profileId: null,
         rationale: "Reviewed appellation adjustment.",
       },
     ])

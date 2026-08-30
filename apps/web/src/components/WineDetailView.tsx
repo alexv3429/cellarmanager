@@ -1047,7 +1047,11 @@ export function WineDetailView({
 
       <WineFactsPanel isOnline={isOnline} wine={wine} />
 
-      <WineMaturityPanel isOnline={isOnline} wineId={wine.id} />
+      <WineMaturityPanel
+        householdId={householdId}
+        isOnline={isOnline}
+        wineId={wine.id}
+      />
 
       <WinePersonalGuidancePanel isOnline={isOnline} wineId={wine.id} />
 

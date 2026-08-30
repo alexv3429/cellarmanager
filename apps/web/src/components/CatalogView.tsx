@@ -46,6 +46,7 @@ import {
 } from "../data/enrichmentResearch"
 import { EnrichmentResearchInbox } from "./EnrichmentResearchInbox"
 import { Notice } from "./Notice"
+import { ProfileReviewInbox } from "./ProfileReviewInbox"
 import { WineDuplicateReview } from "./WineDuplicateReview"
 
 interface CatalogWineRow {
@@ -1222,6 +1223,12 @@ export function CatalogView({
           onMarkSeen={() => void markResearchSeen()}
           onOpenWine={onOpenWine}
           onRefresh={() => void refreshResearchInbox()}
+        />
+
+        <ProfileReviewInbox
+          householdId={householdId}
+          isOnline={isOnline}
+          onOpenWine={onOpenWine}
         />
       </section>
 
