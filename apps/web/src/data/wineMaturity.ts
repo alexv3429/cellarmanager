@@ -66,6 +66,7 @@ export interface MaturityRecommendation {
 export interface MaturityContribution {
   label: string
   layer: string
+  profileId: string | null
   rationale: string
 }
 
@@ -294,6 +295,10 @@ function parseContributions(value: unknown): MaturityContribution[] {
     return {
       label: text(contribution.label, "contribution label"),
       layer: text(contribution.layer, "contribution layer"),
+      profileId:
+        contribution.profile_id === undefined
+          ? null
+          : optionalText(contribution.profile_id, "contribution profile ID"),
       rationale: text(contribution.rationale, "contribution rationale"),
     }
   })

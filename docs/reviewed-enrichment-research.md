@@ -114,6 +114,14 @@ the same canonical subject instead of starting duplicate research. Its state
 and outcome remain visible to the reporter. A report alone never edits,
 unpublishes, or lowers the canonical profile silently.
 
+The implemented profile path starts from the exact reviewed contribution in a
+current maturity projection. A stable typed subject key deduplicates reports
+across immutable knowledge-version profile UUIDs and across accounts. The case
+is shared, but subscriptions and message threads remain private to each
+reporter. The Catalog inbox exposes only the current reporter's comments,
+evidence, notifications, and trusted outcome; see
+[`profile-review-requests.md`](profile-review-requests.md).
+
 Step 0.4.18 adds the human governance that follows a report. Trusted-curator
 eligibility and claim scope are explicit; reviews, disagreements, evidence, and
 publication decisions are attributable and auditable. An accepted correction

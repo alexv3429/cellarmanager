@@ -21,6 +21,7 @@ retains only the evidence needed to understand its released migration history.
 - [`rich-wine-facts.md`](rich-wine-facts.md) - household origin, composition, sweetness, alcohol, certification, editing, and provenance boundary
 - [`catalog-coverage-curation.md`](catalog-coverage-curation.md) - rich catalog filters, reason-aware fact/profile coverage, and privacy-bounded curation priority
 - [`reviewed-enrichment-research.md`](reviewed-enrichment-research.md) - allowlisted web research, attributed drafts, owner review, source rights, and trusted publication
+- [`profile-review-requests.md`](profile-review-requests.md) - deduplicated published-profile reports, private evidence threads, visible status, and immutable outcomes
 - [`wine-duplicate-merge.md`](wine-duplicate-merge.md) - conservative duplicate candidates, explicit owner merge, stock consolidation, and immutable audit history
 - [`v01-metadata-restoration.md`](v01-metadata-restoration.md) - exact-ID, preview-first restoration of safe archived facts and guidance
 - [`maturity-knowledge-v2.md`](maturity-knowledge-v2.md) - expanded exact-appellation maturity profiles, evidence inputs, safety boundary, and private aggregate coverage

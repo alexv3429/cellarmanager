@@ -1471,6 +1471,82 @@
   gap: 8px;
 }
 
+.profile-review-inbox {
+  margin-top: 12px;
+}
+
+.profile-review-card__thread,
+.profile-review-card__follow-up {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-muted);
+}
+
+.profile-review-card__thread > summary,
+.profile-review-card__follow-up > summary {
+  color: var(--text-h);
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.profile-review-card__thread[open],
+.profile-review-card__follow-up[open] {
+  display: grid;
+  gap: 10px;
+}
+
+.profile-review-card__thread ol {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.profile-review-card__thread li {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.profile-review-card__thread li > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.profile-review-card__thread a {
+  width: fit-content;
+  overflow-wrap: anywhere;
+}
+
+.profile-review-card__follow-up form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.7fr) auto;
+  gap: 10px;
+  align-items: end;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.profile-review-card__follow-up label {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.profile-review-card__follow-up textarea,
+.profile-review-card__follow-up input {
+  width: 100%;
+}
+
 .research-inbox-card__identity-action,
 .research-inbox-card__source-action {
   display: grid;
@@ -2136,13 +2212,93 @@
   padding-left: 22px;
 }
 
+.wine-maturity__contributions li {
+  display: grid;
+  gap: 7px;
+  padding-left: 2px;
+}
+
 .wine-maturity__contributions li > * {
   display: block;
 }
 
-.wine-maturity__contributions span {
+.wine-maturity__contributions li > div > span {
+  display: block;
   margin-top: 2px;
   color: var(--muted);
+}
+
+.wine-maturity__contributions button {
+  width: fit-content;
+  padding: 5px 9px;
+  font-size: 12px;
+}
+
+.wine-maturity__linked-profiles {
+  display: grid;
+  gap: 6px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.wine-maturity__linked-profiles > p {
+  margin: 0;
+}
+
+.wine-maturity__review-status {
+  width: fit-content;
+  padding: 3px 8px;
+  border: 1px solid var(--accent-border);
+  border-radius: 999px;
+  color: var(--text-h);
+  background: var(--accent-bg);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.app-shell__content .wine-maturity__review-form {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.55fr) minmax(260px, 1fr);
+  gap: 10px;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--accent-border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.wine-maturity__review-form > div:first-child,
+.wine-maturity__review-form label:nth-of-type(2),
+.wine-maturity__review-form > div:last-child {
+  grid-column: 1 / -1;
+}
+
+.wine-maturity__review-form > div:first-child {
+  display: grid;
+  gap: 3px;
+}
+
+.wine-maturity__review-form p {
+  margin: 0;
+}
+
+.wine-maturity__review-form label {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.wine-maturity__review-form input,
+.wine-maturity__review-form select,
+.wine-maturity__review-form textarea {
+  width: 100%;
+}
+
+.wine-maturity__review-form > div:last-child {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .wine-maturity__feedback {
@@ -2933,6 +3089,17 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .profile-review-card__follow-up form,
+  .app-shell__content .wine-maturity__review-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wine-maturity__review-form > div:first-child,
+  .wine-maturity__review-form label:nth-of-type(2),
+  .wine-maturity__review-form > div:last-child {
+    grid-column: auto;
+  }
+
   .app-shell__content .wine-serving__override form,
   .app-shell__content .wine-observation-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3000,6 +3167,8 @@
 
   .wine-maturity__feedback > div,
   .wine-maturity__feedback button,
+  .wine-maturity__review-form > div:last-child,
+  .wine-maturity__review-form > div:last-child button,
   .wine-maturity__override form > div,
   .wine-maturity__override form > div button {
     width: 100%;
