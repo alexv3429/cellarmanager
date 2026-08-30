@@ -123,12 +123,16 @@ evidence, notifications, and trusted outcome; see
 [`profile-review-requests.md`](profile-review-requests.md).
 
 Step 0.4.18 adds the human governance that follows a report. Trusted-curator
-eligibility and claim scope are explicit; reviews, disagreements, evidence, and
-publication decisions are attributable and auditable. An accepted correction
-creates a new immutable profile and knowledge version that supersedes the old
-one. The interface exposes the relevant before/after comparison and historical
-versions; published rows are never edited in place. The service publisher
-remains the only component allowed to activate a validated version.
+eligibility and profile scope are explicit, service-granted, and reversible;
+proposals, decisions, disagreements, evidence links, and publication are
+attributable and auditable. Any current curator disagreement blocks activation.
+An approved correction creates a new immutable profile and knowledge version
+that supersedes the old one. The interface exposes the red/green before/after
+comparison, decisions, and historical versions; published rows are never edited
+in place. Proposal URLs remain audit pointers until they independently pass the
+reviewed source-policy workflow. The scheduled service publisher remains the
+only component allowed to activate a validated version. See
+[`profile-revision-governance.md`](profile-revision-governance.md).
 
 Step 0.4.19 keeps taste separate from facts. A member may privately shift
 canonical maturity guidance toward younger or older drinking, see the canonical
@@ -174,9 +178,10 @@ remain active while producer or cuvee research is pending.
 
 `wrangler.jsonc` binds Cloudflare Workers AI as `AI`, serves the built PWA as
 `ASSETS`, and runs the research cycle every 15 minutes. Each cycle publishes up
-to two reviewed drafts and researches up to two queued subjects. Publication
-can continue with Supabase configured even if web research credentials are
-temporarily unavailable.
+to two approved profile revisions, publishes up to two reviewed research drafts,
+and researches up to two queued subjects. Publication can continue with
+Supabase configured even if web research credentials are temporarily
+unavailable.
 
 The deployed Worker requires these secrets or environment values:
 

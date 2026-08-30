@@ -37,6 +37,15 @@ export default {
             type: item?.publication_type ?? null,
           }))
           : [],
+        profileRevisionCount: result.profileRevisions?.count ?? 0,
+        profileRevisionOutcomes: Array.isArray(result.profileRevisions?.results)
+          ? result.profileRevisions.results.map((item) => ({
+            status: item?.status ?? "published",
+            sqlstate: item?.sqlstate ?? null,
+            error: item?.error ?? null,
+            revisionId: item?.revision_id ?? null,
+          }))
+          : [],
       });
     }));
   },

@@ -10,9 +10,10 @@ hierarchical contribution list. For those projections, the same panel lists
 the exact immutable profile links recorded with the calculation. Reports are
 therefore attached to canonical profiles, never inferred from explanation text.
 
-This workflow does not edit or withdraw published knowledge. Trusted profile
-validation, before/after comparison, supersession, and immutable publication
-belong to step 0.4.18.
+This workflow does not edit or withdraw published knowledge. Step 0.4.18 adds
+the separate trusted profile validation, before/after comparison, supersession,
+and immutable publication described in
+[`profile-revision-governance.md`](profile-revision-governance.md).
 
 ## User flow
 
@@ -60,10 +61,12 @@ privileges. Authenticated members use security-definer RPCs that verify:
 - an optional valid HTTPS evidence link.
 
 The browser may open a report, add to its own thread, read its own inbox, and
-mark notifications as seen. Only the trusted service role may move a case to
-`reviewing`, `resolved`, or `dismissed`. Status transitions notify every private
-subscriber, and closed cases are immutable. A later observation starts a new
-case, preserving the earlier outcome as history.
+mark notifications as seen. An explicitly eligible curator may move a case to
+`reviewing` by proposing a bounded revision or to `dismissed` with a documented
+no-change outcome. Only the trusted service role may publish the correction and
+resolve the case. Status transitions notify every private subscriber, and closed
+cases are immutable. A later observation starts a new case, preserving the
+earlier outcome as history.
 
 ## Validation
 

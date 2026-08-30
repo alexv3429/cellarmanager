@@ -10,11 +10,44 @@ import {
   isPublicResearchUrl,
   isRobotsAllowed,
   processResearchCase,
+  runResearchCycle,
   selectAllowedSearchResults,
   selectResearchSourceDiscoveries,
   sourceEntryCandidate,
   validateResearchProposal,
 } from "../../workers/researchWorker.mjs";
+
+test("the scheduled cycle publishes approved profile revisions without AI", async () => {
+  const calls = [];
+  const result = await runResearchCycle({
+    SUPABASE_SECRET_KEY: "service-key",
+    SUPABASE_URL: "https://example.supabase.co",
+  }, {
+    rpc: async (functionName, parameters) => {
+      calls.push({ functionName, parameters });
+      return functionName === "publish_approved_enrichment_profile_revisions"
+        ? {
+          status: "processed",
+          count: 1,
+          results: [{ revision_id: "revision-1", status: "published" }],
+        }
+        : [];
+    },
+  });
+
+  assert.deepEqual(calls, [
+    {
+      functionName: "publish_approved_enrichment_profile_revisions",
+      parameters: { p_limit: 2 },
+    },
+    {
+      functionName: "publish_reviewed_enrichment_research_drafts",
+      parameters: { p_limit: 2 },
+    },
+  ]);
+  assert.equal(result.status, "research-not-configured");
+  assert.equal(result.profileRevisions.results[0].revision_id, "revision-1");
+});
 
 const rule = {
   rule_id: "rule-1",

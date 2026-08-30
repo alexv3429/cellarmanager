@@ -10,7 +10,7 @@ crosses a milestone boundary.
 | Milestone | Promise | Status |
 |---|---|---|
 | `v0.3` | A cellar can live safely in CellarManager through daily manual use or guarded CSV import | Released (`v0.3.0`) |
-| `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable evidence | In progress (0.4.17 in review) |
+| `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable evidence | In progress (0.4.18 in review) |
 | `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | Planned |
 | `v0.6` | Adding or identifying wine requires dramatically less typing | Planned |
 | `v0.7` | CellarManager explains what happened to the cellar and what the collection means over time | Planned |
@@ -117,12 +117,14 @@ submission remains available when discovery misses a relevant page. Step
 deactivating it silently. The implemented report follows the exact profile
 contribution used by a current recommendation, deduplicates a shared case by
 stable canonical subject, keeps every reporter's comments and evidence private,
-and exposes status notifications and the trusted outcome. Step 0.4.18 turns an
-accepted correction into a new immutable,
-attributed version instead of editing history in place, and defines who may
-validate shared knowledge. Trust is explicit and auditable; account count or
-an unreviewed popularity vote is not evidence. A new unknown producer continues
-to receive the safe broader place/vintage estimate immediately.
+and exposes status notifications and the trusted outcome. Step 0.4.18 turns a
+documented correction into a structured proposal with a red/green comparison,
+attributable curator decisions, blocking disagreements, and a new immutable
+version instead of editing history in place. Curator eligibility is explicit,
+scoped, service-granted, reversible, and auditable; account count or an
+unreviewed popularity vote is not evidence. The trusted Worker independently
+revalidates and publishes an approved correction. A new unknown producer
+continues to receive the safe broader place/vintage estimate immediately.
 
 Canonical and personal guidance remain separate. Step 0.4.19 applies a private,
 bounded member preference only after the canonical maturity estimate has been
