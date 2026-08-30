@@ -15,6 +15,7 @@ describe("app navigation", () => {
     expect(getAppViewFromPathname("/pairing")).toBe("pairing")
     expect(getAppViewFromPathname("/activity")).toBe("activity")
     expect(getAppViewFromPathname("/catalog")).toBe("catalog")
+    expect(getAppViewFromPathname("/data")).toBe("import")
     expect(getAppViewFromPathname("/import")).toBe("import")
     expect(getAppViewFromPathname("/setup")).toBe("setup")
   })
@@ -23,6 +24,7 @@ describe("app navigation", () => {
     expect(getAppViewFromPathname("/activity/")).toBe("activity")
     expect(getAppViewFromPathname("/pairing/")).toBe("pairing")
     expect(getAppViewFromPathname("/catalog/")).toBe("catalog")
+    expect(getAppViewFromPathname("/data/")).toBe("import")
     expect(getAppViewFromPathname("/import/")).toBe("import")
     expect(getAppViewFromPathname("/setup/")).toBe("setup")
   })
@@ -72,7 +74,7 @@ describe("app navigation", () => {
     expect(getAppViewPath("pairing")).toBe("/pairing")
     expect(getAppViewPath("activity")).toBe("/activity")
     expect(getAppViewPath("catalog")).toBe("/catalog")
-    expect(getAppViewPath("import")).toBe("/import")
+    expect(getAppViewPath("import")).toBe("/data")
     expect(getAppViewPath("setup")).toBe("/setup")
   })
 
@@ -92,6 +94,9 @@ describe("app navigation", () => {
     expect(
       getAppRouteTitle({ view: "pairing", wineId: null }),
     ).toBe("Food pairing · CellarManager")
+    expect(
+      getAppRouteTitle({ view: "import", wineId: null }),
+    ).toBe("Cellar data · CellarManager")
     expect(
       getAppRouteTitle({ view: "wine", wineId: "wine-1" }),
     ).toBe("Wine details · CellarManager")

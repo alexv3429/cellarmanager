@@ -15,8 +15,10 @@
     "@powersync/react": "^2.0.0",
     "@powersync/web": "^2.1.0",
     "@supabase/supabase-js": "^2.112.0",
+    "read-excel-file": "^9.3.10",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "write-excel-file": "^4.1.1"
   },
   "devDependencies": {
     "@types/node": "^24.13.3",

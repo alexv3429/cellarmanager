@@ -25,7 +25,7 @@ const APP_VIEW_PATHS: Record<AppView, string> = {
   pairing: "/pairing",
   activity: "/activity",
   catalog: "/catalog",
-  import: "/import",
+  import: "/data",
   setup: "/setup",
 }
 
@@ -74,6 +74,7 @@ export function getAppRouteFromPathname(
       return { view: "activity", wineId: null }
     case "/catalog":
       return { view: "catalog", wineId: null }
+    case "/data":
     case "/import":
       return { view: "import", wineId: null }
     case "/setup":
@@ -98,7 +99,7 @@ export function getAppRouteTitle(route: AppRoute): string {
       : {
           activity: "Activity",
           catalog: "Catalog",
-          import: "Import",
+          import: "Cellar data",
           inventory: "Inventory",
           pairing: "Food pairing",
           setup: "Cellar setup",

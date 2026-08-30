@@ -296,7 +296,7 @@ export function AppShell({
           href={getAppViewPath("import")}
           onClick={(event) => navigate(event, "import")}
         >
-          Import
+          Data
         </a>
 
         <a

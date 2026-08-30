@@ -29,6 +29,7 @@ retains only the evidence needed to understand its released migration history.
 - [`adr/README.md`](adr/README.md) - released architecture and accepted v0.4 design decisions
 - [`activity-and-sync.md`](activity-and-sync.md) - recent inventory activity and synchronization-state UX
 - [`csv-ingestion.md`](csv-ingestion.md) - complete guarded CSV import contract
+- [`csv-export.md`](csv-export.md) - portable Excel/CSV cellar export and guarded round-trip boundary
 - [`pwa-mobile-accessibility.md`](pwa-mobile-accessibility.md) - install, phone interaction, and accessibility baseline
 - [`github-protection.md`](github-protection.md) - required `CI Gate` and branch protection
 

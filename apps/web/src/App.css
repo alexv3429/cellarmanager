@@ -4020,7 +4020,35 @@
   gap: 8px;
 }
 
+.import-view__intro--workflow {
+  margin-top: 8px;
+  padding-top: 22px;
+  border-top: 1px solid var(--border);
+}
+
+.import-view__mode-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: fit-content;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-muted);
+}
+
+.import-view__mode-switch button {
+  border-color: transparent;
+  background: transparent;
+}
+
+.import-view__mode-switch button[aria-pressed="true"] {
+  border-color: var(--accent-border);
+  background: var(--accent-bg);
+}
+
 .import-view__intro p,
+.csv-export-panel p,
 .import-file-panel p,
 .import-section-heading p,
 .import-delimiter-panel p,
@@ -4029,6 +4057,7 @@
 }
 
 .app-shell__content section.import-file-panel,
+.app-shell__content section.csv-export-panel,
 .app-shell__content section.import-delimiter-panel,
 .app-shell__content section.import-mapping-panel,
 .app-shell__content section.import-preview-panel,
@@ -4042,6 +4071,116 @@
   display: grid;
   gap: 16px;
   align-items: stretch;
+}
+
+.csv-export-panel {
+  border-color: color-mix(in srgb, var(--border) 78%, #4f7a5a);
+  background: color-mix(in srgb, var(--surface) 94%, #4f7a5a);
+}
+
+.csv-export-panel__heading {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.csv-export-panel__heading > div {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.csv-export-panel__summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.csv-export-panel__summary > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.csv-export-panel__summary dt {
+  font-size: 13px;
+}
+
+.csv-export-panel__summary dd {
+  margin: 0;
+  color: var(--text-h);
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+}
+
+.csv-export-panel__controls {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.app-shell__content section.csv-export-panel .csv-export-panel__controls label {
+  display: flex;
+  flex: 1 1 360px;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 0;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.csv-export-panel__controls input[type="checkbox"] {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  padding: 0;
+  margin-top: 3px;
+}
+
+.csv-export-panel__controls label > span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.csv-export-panel__controls small,
+.csv-export-panel__note {
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.csv-export-panel__actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.csv-export-panel__actions button {
+  border-color: var(--accent-border);
+  font-weight: 600;
+}
+
+.csv-export-panel__actions button:first-child {
+  background: var(--accent-bg);
+}
+
+.csv-export-panel__note {
+  font-size: 14px;
 }
 
 .import-result-panel {
@@ -5385,6 +5524,10 @@
 }
 
 @media (max-width: 900px) {
+  .csv-export-panel__summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .import-mapping-list,
   .import-preview-list {
     grid-template-columns: minmax(0, 1fr);
@@ -5456,6 +5599,21 @@
 }
 
 @media (max-width: 560px) {
+  .csv-export-panel__heading,
+  .csv-export-panel__controls {
+    display: grid;
+    align-items: stretch;
+  }
+
+  .csv-export-panel__actions {
+    display: grid;
+    width: 100%;
+  }
+
+  .csv-export-panel__actions button {
+    width: 100%;
+  }
+
   .app-shell__content section.import-preparation-summary-panel,
   .import-resolution-card > header {
     display: grid;
