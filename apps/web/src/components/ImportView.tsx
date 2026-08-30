@@ -66,6 +66,8 @@ import {
   formatWineVolume,
   type WineCatalogEntry,
 } from "../data/wineCatalog"
+import { inspectCellarManagerCsvVersion } from "../data/csvExport"
+import { CsvExportPanel } from "./CsvExportPanel"
 import { Notice } from "./Notice"
 
 const FILE_SIZE_LIMIT_BYTES = 20_000_000
@@ -74,6 +76,15 @@ const CLEANING_ROW_DISPLAY_LIMIT = 100
 const MATCHING_ROW_DISPLAY_LIMIT = 100
 const STORAGE_ROW_DISPLAY_LIMIT = 100
 const IMPORT_PREVIEW_ROW_DISPLAY_LIMIT = 100
+const XLSX_MIME_TYPE =
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+function isXlsxFile(file: File): boolean {
+  return (
+    file.type === XLSX_MIME_TYPE ||
+    file.name.toLocaleLowerCase().endsWith(".xlsx")
+  )
+}
 
 const WINE_CATALOG_QUERY = `
   select
@@ -302,7 +313,7 @@ function CompactImportPreviewCard({
             <dd>{result.existingWine?.id ?? "New or unresolved"}</dd>
           </div>
           <div>
-            <dt>CSV storage</dt>
+            <dt>Source storage</dt>
             <dd>
               {row.fields.cellar ?? "Empty"} / {row.fields.location ?? "Empty"}
             </dd>
@@ -403,6 +414,9 @@ export function ImportWorkspace({
   storageIsLoading,
   storageLocations,
 }: ImportWorkspaceProps) {
+  const [dataMode, setDataMode] = useState<
+    "export" | "import"
+  >("import")
   const latestFileSelection = useRef(0)
   const fileInput = useRef<HTMLInputElement>(null)
   const [fileInputKey, setFileInputKey] = useState(0)
@@ -828,6 +842,16 @@ export function ImportWorkspace({
       return
     }
 
+    const versionInspection =
+      inspectCellarManagerCsvVersion(nextDocument)
+
+    if (versionInspection.issue) {
+      setDocument(null)
+      setMapping([])
+      setFileError(versionInspection.issue)
+      return
+    }
+
     const nextMapping = nextDocument.header
       ? suggestCsvColumnMapping(
           nextDocument.header.values,
@@ -840,6 +864,7 @@ export function ImportWorkspace({
           !nextMapping.includes(definition.field),
       )?.field ?? ""
 
+    setFileError(null)
     setDocument(nextDocument)
     setMapping(nextMapping)
     setFieldDefaults({})
@@ -888,30 +913,49 @@ export function ImportWorkspace({
 
     if (file.size > FILE_SIZE_LIMIT_BYTES) {
       setFileError(
-        "Choose a CSV file smaller than 20 MB.",
+        "Choose a spreadsheet file smaller than 20 MB.",
       )
       return
     }
 
+    const fileIsXlsx = isXlsxFile(file)
+
     try {
       const bytes = await file.arrayBuffer()
-      const text = new TextDecoder("utf-8", {
-        fatal: true,
-      }).decode(bytes)
 
       if (latestFileSelection.current !== selectionId) {
         return
       }
 
+      if (fileIsXlsx) {
+        const { parseXlsxWorkbook } = await import(
+          "../data/xlsxTransfer"
+        )
+        const nextDocument = await parseXlsxWorkbook(bytes)
+
+        if (latestFileSelection.current !== selectionId) {
+          return
+        }
+
+        setSourceText(null)
+        applyDocument(nextDocument)
+        return
+      }
+
+      const text = new TextDecoder("utf-8", {
+        fatal: true,
+      }).decode(bytes)
       setSourceText(text)
       applyDocument(parseCsvText(text))
-    } catch {
+    } catch (caughtError: unknown) {
       if (latestFileSelection.current !== selectionId) {
         return
       }
 
       setFileError(
-        "Unable to read this file as UTF-8 CSV.",
+        fileIsXlsx && caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to read this file as UTF-8 CSV.",
       )
     }
   }
@@ -1257,7 +1301,7 @@ export function ImportWorkspace({
       const commitErrorMessage =
         error instanceof Error
           ? error.message
-          : "Unable to commit the CSV import"
+          : "Unable to commit the spreadsheet import"
 
       try {
         const receipt = await getCsvImportReceipt({
@@ -1391,7 +1435,7 @@ export function ImportWorkspace({
     ? {
         buttonLabel: "Complete column mapping first",
         message:
-          "Resolve every CSV structure and required mapping issue before cleaning.",
+          "Resolve every file-structure and required mapping issue before cleaning.",
       }
     : cleaningSummary.issueCount > 0
       ? {
@@ -1432,7 +1476,7 @@ export function ImportWorkspace({
                   ? {
                       buttonLabel: "Reconnect to continue",
                       message:
-                        "Reconnect to import. CSV import requires an online transaction; no bottles have been imported.",
+                        "Reconnect to import. Spreadsheet import requires an online transaction; no bottles have been imported.",
                     }
                   : !deviceId
                     ? {
@@ -1446,12 +1490,48 @@ export function ImportWorkspace({
   return (
     <main className="import-view">
       <div className="import-view__intro">
-        <h1>Import CSV</h1>
+        <h1>Cellar data</h1>
         <p>
-          Upload a CSV, map and normalize its values, then review
-          the planned wine, storage, and quantity outcome. No
-          bottles are imported during preparation. Creating a
-          destination in stage 8 is the only explicit setup write.
+          Import bottles from a spreadsheet or download a portable copy
+          of this cellar.
+        </p>
+      </div>
+
+      <div
+        aria-label="Cellar data action"
+        className="import-view__mode-switch"
+        role="group"
+      >
+        <button
+          aria-pressed={dataMode === "import"}
+          onClick={() => setDataMode("import")}
+          type="button"
+        >
+          Import file
+        </button>
+        <button
+          aria-pressed={dataMode === "export"}
+          onClick={() => setDataMode("export")}
+          type="button"
+        >
+          Export cellar
+        </button>
+      </div>
+
+      {dataMode === "export" ? (
+        <CsvExportPanel
+          householdId={householdId}
+          isOnline={isOnline}
+        />
+      ) : (
+        <>
+
+      <div className="import-view__intro import-view__intro--workflow">
+        <h2>Import bottles</h2>
+        <p>
+          Mapping and preparation do not change the cellar.
+          Creating a destination in stage 8 is the only explicit
+          setup write before final confirmation.
         </p>
       </div>
 
@@ -1461,7 +1541,7 @@ export function ImportWorkspace({
             <h2>Previous import awaiting verification</h2>
             <p>
               This device retained the exact receipt and row IDs
-              from an interrupted import. Do not upload the CSV
+              from an interrupted import. Do not upload the file
               again until this receipt is resolved.
             </p>
           </div>
@@ -1529,17 +1609,17 @@ export function ImportWorkspace({
         <div>
           <h2 id="import-file-heading">1. Choose a file</h2>
           <p>
-            UTF-8 CSV up to 20 MB. Comma, semicolon, and tab
-            delimiters are supported.
+            Excel (.xlsx) or UTF-8 CSV up to 20 MB. CSV files may use
+            comma, semicolon, or tab delimiters.
           </p>
         </div>
 
         {!fileName ? (
           <div className="import-file-picker">
-            <span>CSV file</span>
+            <span>Spreadsheet file</span>
             <input
-              accept=".csv,.tsv,text/csv,text/tab-separated-values"
-              aria-label="CSV file"
+              accept=".xlsx,.csv,.tsv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,text/tab-separated-values"
+              aria-label="Spreadsheet file"
               hidden
               key={fileInputKey}
               onChange={(event) => void selectFile(event)}
@@ -1550,7 +1630,7 @@ export function ImportWorkspace({
               onClick={() => fileInput.current?.click()}
               type="button"
             >
-              Choose CSV file
+              Choose file
             </button>
           </div>
         ) : null}
@@ -1619,7 +1699,7 @@ export function ImportWorkspace({
 
       {document && document.issues.length > 0 ? (
         <Notice role="alert" tone="error">
-          <strong>CSV structure needs attention</strong>
+          <strong>File structure needs attention</strong>
           <ul className="import-issue-list">
             {document.issues.map((parseIssue, index) => (
               <li key={`${parseIssue.code}:${index}`}>
@@ -1662,7 +1742,7 @@ export function ImportWorkspace({
           >
             <div>
               <h3 id="mapping-defaults-heading">
-                Values missing from the CSV
+                Values missing from the source file
               </h3>
               <p>
                 When every imported row has the same missing value,
@@ -1680,7 +1760,7 @@ export function ImportWorkspace({
                     {document.rows.length === 1 ? "row" : "rows"}
                   </strong>
                   <span>
-                    These values will be used wherever the CSV has
+                    These values will be used wherever the source file has
                     no mapped column.
                   </span>
                 </div>
@@ -1737,7 +1817,7 @@ export function ImportWorkspace({
                 <summary>Apply another value to every row</summary>
                 <p>
                   Optional: use this when another value is also
-                  absent from every row in the CSV.
+                  absent from every row in the source file.
                 </p>
                 {defaultAddControls}
               </details>
@@ -2036,7 +2116,7 @@ export function ImportWorkspace({
                 the import preview without changing the original
                 file. Use the controls above for supported
                 fallbacks; only the remaining values listed below
-                still need correction in the CSV.
+                still need correction in the source file.
               </p>
             </Notice>
           ) : (
@@ -2471,7 +2551,7 @@ export function ImportWorkspace({
                   <p>
                     Capacity is an advisory setup value. The
                     projected totals include current bottles plus
-                    every matched row in this CSV.
+                    every matched row in this file.
                   </p>
                 </Notice>
               ) : null}
@@ -2538,13 +2618,13 @@ export function ImportWorkspace({
 
                       <dl className="import-storage-card__values">
                         <div>
-                          <dt>CSV cellar</dt>
+                          <dt>Source cellar</dt>
                           <dd>
                             {result.row.fields.cellar ?? "Empty"}
                           </dd>
                         </div>
                         <div>
-                          <dt>CSV location</dt>
+                          <dt>Source location</dt>
                           <dd>
                             {result.row.fields.location ?? "Empty"}
                           </dd>
@@ -2571,7 +2651,7 @@ export function ImportWorkspace({
                           </div>
                           <span aria-hidden="true">+</span>
                           <div>
-                            <dt>This CSV</dt>
+                            <dt>This file</dt>
                             <dd>{result.importBottleCount}</dd>
                           </div>
                           <span aria-hidden="true">=</span>
@@ -2622,7 +2702,7 @@ export function ImportWorkspace({
               </h2>
               <p>
                 This first preview preserves the decisions found
-                from the CSV. Blocking rows are shown here and
+                from the source file. Blocking rows are shown here and
                 resolved explicitly in the next stage.
               </p>
             </div>
@@ -2667,7 +2747,7 @@ export function ImportWorkspace({
             </Notice>
           ) : (
             <Notice role="status" tone="success">
-              All rows were resolved directly from the CSV and
+              All rows were resolved directly from the source file and
               synchronized cellar data.
             </Notice>
           )}
@@ -2699,7 +2779,7 @@ export function ImportWorkspace({
                 8. Resolve import issues
               </h2>
               <p>
-                Choose only the decisions the CSV could not make
+                Choose only the decisions the source file could not make
                 safely. Selections update the second preview
                 without writing bottles. Creating a destination
                 explicitly saves only its cellar setup.
@@ -2721,7 +2801,7 @@ export function ImportWorkspace({
               <div>
                 <p>
                   Create a real cellar and its first location, then
-                  assign all {rowsNeedingStorage.length} storage-unresolved {rowsNeedingStorage.length === 1 ? "row" : "rows"} there. The setup is saved immediately even if you later cancel the CSV; bottles are added only after final confirmation.
+                  assign all {rowsNeedingStorage.length} storage-unresolved {rowsNeedingStorage.length === 1 ? "row" : "rows"} there. The setup is saved immediately even if you later cancel the import; bottles are added only after final confirmation.
                 </p>
                 <form onSubmit={(event) => void createDestinationForImport(event)}>
                   <label>
@@ -2932,7 +3012,7 @@ export function ImportWorkspace({
                           )}
                         </select>
                         <small>
-                          CSV value: {result.row.fields.cellar ?? "Empty"} / {result.row.fields.location ?? "Empty"}
+                          Source value: {result.row.fields.cellar ?? "Empty"} / {result.row.fields.location ?? "Empty"}
                         </small>
                       </label>
                     ) : null}
@@ -3143,7 +3223,7 @@ export function ImportWorkspace({
               Import complete
             </h2>
             <p>
-              The complete CSV batch was committed. Inventory and
+              The complete spreadsheet batch was committed. Inventory and
               catalog views will update as synchronization arrives.
             </p>
           </div>
@@ -3164,15 +3244,17 @@ export function ImportWorkspace({
             </div>
             <div>
               <dt>File</dt>
-              <dd>{fileName ?? "CSV import"}</dd>
+              <dd>{fileName ?? "Spreadsheet import"}</dd>
             </div>
           </dl>
 
           <button onClick={resetImport} type="button">
-            Import another CSV
+            Import another file
           </button>
         </section>
       ) : null}
+        </>
+      )}
     </main>
   )
 }

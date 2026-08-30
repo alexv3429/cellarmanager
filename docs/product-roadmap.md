@@ -10,7 +10,7 @@ crosses a milestone boundary.
 | Milestone | Promise | Status |
 |---|---|---|
 | `v0.3` | A cellar can live safely in CellarManager through daily manual use or guarded CSV import | Released (`v0.3.0`) |
-| `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable evidence | In progress (0.4.15 in review) |
+| `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable evidence | In progress (0.4.16 in review) |
 | `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | Planned |
 | `v0.6` | Adding or identifying wine requires dramatically less typing | Planned |
 | `v0.7` | CellarManager explains what happened to the cellar and what the collection means over time | Planned |
@@ -93,7 +93,7 @@ unchanged.
 | 0.4.13 | Rich catalog filtering/search, profile-coverage diagnostics, and a prioritized shared-knowledge curation queue |
 | 0.4.14 | Multi-source reviewed web research, advanced owner source suggestions, attributable draft fact/profile synthesis, owner notification/review/editing, and trusted shared publication |
 | 0.4.15 | Duplicate detection and explicit merge workflow |
-| 0.4.16 | CSV export with a documented portable format and optional round-trip compatibility |
+| 0.4.16 | Excel-first cellar export with a documented CSV alternative and guarded round-trip compatibility |
 | 0.4.17 | Published-profile error reports and review requests, with deduplicated cases, supporting comments or evidence, visible status, and notifications |
 | 0.4.18 | Shared-library governance and profile revision workflow: trusted-curator eligibility, explicit validation and disagreement rules, immutable profile history and comparison, supersession, and auditable publication |
 | 0.4.19 | Private member maturity calibration against canonical guidance, including a bounded younger/later shift, a visible explanation and reset, and strict separation from shared profiles |
