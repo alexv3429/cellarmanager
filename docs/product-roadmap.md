@@ -11,7 +11,7 @@ crosses a milestone boundary.
 |---|---|---|
 | `v0.3` | A cellar can live safely in CellarManager through daily manual use or guarded CSV import | Released (`v0.3.0`) |
 | `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable evidence | Released (`v0.4.0`) |
-| `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | Planned |
+| `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | In progress (`0.5.1`) |
 | `v0.6` | Adding or identifying wine requires dramatically less typing | Planned |
 | `v0.7` | CellarManager explains what happened to the cellar and what the collection means over time | Planned |
 | `v1.0` | A self-host can install, trust, upgrade, recover, and maintain CellarManager for years | Planned |
@@ -168,6 +168,17 @@ make incompatible changes while offline.
 | 0.5.10 | Ownership transfer and leaving a household |
 | 0.5.11 | Full membership security matrix |
 | 0.5.12 | v0.5 acceptance and release |
+
+Step 0.5.1 fixes the two-role contract before membership writes exist. Every
+owner and member may read the shared cellar, perform registered-device daily
+ADD/MOVE/REMOVE operations, use private preferences and authored notes, submit
+feedback, report shared-knowledge problems, and manage their own devices.
+Owners alone administer bulk imports, catalog and storage structure,
+household-wide guidance overrides, shared research decisions, memberships, and
+all household devices. A normal ADD may create its missing catalog row for a
+member; later edits and bulk creation remain administrative. The exact matrix
+and its server-side enforcement are documented in
+[`household-permissions.md`](household-permissions.md).
 
 ## v0.6 — Capture-assisted enrichment
 

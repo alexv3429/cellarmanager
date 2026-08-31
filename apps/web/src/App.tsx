@@ -24,6 +24,9 @@ import {
   resolveHouseholdGate,
 } from "./households/householdGate"
 import { useActiveHousehold } from "./households/useActiveHousehold"
+import type {
+  HouseholdOption,
+} from "./households/useActiveHousehold"
 import {
   getAppRouteFromPathname,
   getAppRouteTitle,
@@ -34,11 +37,6 @@ import {
   type AppView,
   type WineDetailHistoryState,
 } from "./navigation/appNavigation"
-
-type HouseholdOption = {
-  id: string
-  name: string
-}
 
 interface AuthenticatedAppProps {
   currentSyncError: string | null
@@ -71,6 +69,11 @@ function ReadyAuthenticatedApp({
   selectHousehold,
   userId,
 }: ReadyAuthenticatedAppProps) {
+  const activeHouseholdRole =
+    households.find(
+      (household) => household.id === activeHouseholdId,
+    )?.role ?? "member"
+
   const [route, setRoute] =
     useState<AppRoute>(() =>
       getAppRouteFromPathname(window.location.pathname),
@@ -174,6 +177,7 @@ function ReadyAuthenticatedApp({
   return (
     <AppShell
       activeHouseholdId={activeHouseholdId}
+      activeHouseholdRole={activeHouseholdRole}
       contentKey={
         route.view === "wine"
           ? `wine:${route.wineId}`

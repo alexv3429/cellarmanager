@@ -323,7 +323,7 @@ and capacity-warning plan. If synchronized data changes after the confirmation
 opens, the browser discards that confirmation and requires review again.
 
 The server treats the complete JSON payload as untrusted input. It revalidates
-authentication, household membership, device ownership, unique source records
+authentication, household ownership, device ownership, unique source records
 and operation IDs, requested create/reuse actions, wine identity, positive
 quantities, household destinations, and active cellar/location state. Each row
 then passes through the normal ADD inventory operation functions so catalog

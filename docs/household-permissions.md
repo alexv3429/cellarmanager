@@ -1,0 +1,67 @@
+# Household owner and member permissions
+
+Roadmap step 0.5.1 fixes the collaboration contract before invitations or
+membership-management operations are introduced. PostgreSQL membership remains
+the authority. Browser checks improve the interface, but they never replace
+RLS and security-definer RPC checks.
+
+## Roles
+
+Every membership has exactly one of two roles:
+
+- an **owner** administers shared household state and is responsible for
+  decisions that affect every member;
+- a **member** participates in normal cellar use without administering the
+  household.
+
+An owner is also a member for all read and daily-use purposes. Trusted shared
+knowledge curators are a separate, service-granted role: household ownership
+does not grant curator or publication authority.
+
+## Capability matrix
+
+| Capability | Owner | Member |
+|---|:---:|:---:|
+| Read the household cellar, catalog, activity, advice, and fellow memberships | Yes | Yes |
+| ADD, MOVE, and REMOVE bottles, including creating a wine during normal ADD | Yes | Yes |
+| Register and later manage the member's own devices | Yes | Yes |
+| Record and edit the member's own notes, feedback, pairing preferences, and private timing preference | Yes | Yes |
+| Report a possible problem in published shared knowledge | Yes | Yes |
+| Export readable household data | Yes | Yes |
+| Run a bulk spreadsheet import | Yes | No |
+| Edit or merge shared catalog entries and reviewed wine facts | Yes | No |
+| Create, rename, order, archive, or restore cellars and locations | Yes | No |
+| Set or clear household-wide maturity and serving overrides | Yes | No |
+| Request/review household research and decide reference matches | Yes | No |
+| Invite, change, revoke, or transfer members | Yes | No |
+| Manage every household device | Yes | No |
+
+Creating a wine through ADD is intentionally available to a member: adding a
+newly purchased bottle is normal cellar work. Editing existing shared metadata,
+merging rows, and importing many catalog rows are administrative actions and
+therefore remain owner-only.
+
+## Enforcement
+
+`household_members.role` is synchronized for offline presentation. The public
+`get_household_permissions` RPC exposes the same typed online contract while
+private role helpers give subsequent membership RPCs one canonical check.
+
+Direct browser writes to households, memberships, devices, wines, cellars,
+locations, holdings, and inventory journals remain denied. Daily inventory
+continues through registered-device operation RPCs. Owner-only RPCs check the
+role again on the server; knowing an object ID or manually calling an endpoint
+cannot promote a member.
+
+Account-private preferences remain private. Household-visible observations may
+be read by fellow members, but only their author may edit or delete them.
+Household-wide manual maturity and serving guidance is visibly distinct from
+both private preferences and the immutable canonical shared library.
+
+## Later v0.5 steps
+
+This step defines permissions but does not create membership mutations. Steps
+0.5.2 through 0.5.7 add the RPCs, invitations, switching, member UI, and device
+revocation on top of this contract. Ownership transfer and leaving are handled
+explicitly in 0.5.10 so no intermediate implementation can orphan a household.
+The full adversarial matrix remains the 0.5.11 release-hardening step.

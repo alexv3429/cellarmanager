@@ -106,7 +106,9 @@ An owner-adjusted first-assessment, best-period, suggested drink-by, optional st
 purpose, and note are stored separately from the model output. The application
 clearly prefers the adjustment while retaining the raw model, evidence, and
 feedback for inspection. Clearing the adjustment activates the current model
-again.
+again. Saving or clearing that household-wide adjustment requires the owner
+role; members retain feedback and private calibration without rewriting the
+shared household guidance.
 
 A separate account-private calibration may shift every canonical window by one
 to three whole years younger or later. It is applied only when the result is
