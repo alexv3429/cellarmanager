@@ -47,6 +47,7 @@ import {
 import { EnrichmentResearchInbox } from "./EnrichmentResearchInbox"
 import { Notice } from "./Notice"
 import { ProfileReviewInbox } from "./ProfileReviewInbox"
+import { ProfileGovernanceInbox } from "./ProfileGovernanceInbox"
 import { WineDuplicateReview } from "./WineDuplicateReview"
 
 interface CatalogWineRow {
@@ -1230,6 +1231,8 @@ export function CatalogView({
           isOnline={isOnline}
           onOpenWine={onOpenWine}
         />
+
+        <ProfileGovernanceInbox isOnline={isOnline} />
       </section>
 
       <WineDuplicateReview

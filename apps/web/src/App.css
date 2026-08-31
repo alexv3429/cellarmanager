@@ -1547,6 +1547,333 @@
   width: 100%;
 }
 
+.profile-governance-inbox {
+  margin-top: 12px;
+}
+
+.profile-governance-list {
+  display: grid;
+  gap: 16px;
+}
+
+.profile-governance-card {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-left: 4px solid #9a6a21;
+  border-radius: 11px;
+  background: var(--surface);
+}
+
+.profile-governance-card--resolved {
+  border-left-color: #4f7a5a;
+}
+
+.profile-governance-card--dismissed {
+  border-left-color: var(--border);
+}
+
+.profile-governance-card__heading,
+.profile-governance-revision > header {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.profile-governance-card__heading > div,
+.profile-governance-revision > header > div {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.profile-governance-card__heading h3,
+.profile-governance-card__heading p,
+.profile-governance-reports h4,
+.profile-governance-reports p,
+.profile-governance-diff h4 {
+  margin: 0;
+}
+
+.profile-governance-reports,
+.profile-governance-current,
+.profile-governance-revision,
+.profile-governance-editor,
+.profile-governance-decision,
+.profile-governance-dismissal,
+.profile-governance-history,
+.profile-governance-audit,
+.profile-governance-closed {
+  min-width: 0;
+  padding: 13px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-muted);
+}
+
+.profile-governance-current > summary,
+.profile-governance-editor > summary,
+.profile-governance-decision > summary,
+.profile-governance-dismissal > summary,
+.profile-governance-history > summary,
+.profile-governance-audit > summary,
+.profile-governance-closed > summary {
+  color: var(--text-h);
+  font-weight: 650;
+}
+
+.profile-governance-current[open],
+.profile-governance-editor[open],
+.profile-governance-decision[open],
+.profile-governance-dismissal[open],
+.profile-governance-history[open],
+.profile-governance-audit[open],
+.profile-governance-closed[open] {
+  display: grid;
+  gap: 12px;
+}
+
+.profile-governance-reports {
+  display: grid;
+  gap: 8px;
+}
+
+.profile-governance-reports > p {
+  color: var(--text);
+  font-size: 13px;
+}
+
+.profile-governance-reports ol,
+.profile-governance-decisions ol,
+.profile-governance-audit ol {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.profile-governance-reports li,
+.profile-governance-decisions li {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.profile-governance-reports li p,
+.profile-governance-decisions li p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.profile-governance-reports li > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.profile-governance-reports a,
+.profile-governance-sources a {
+  overflow-wrap: anywhere;
+}
+
+.profile-governance-current dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.profile-governance-current dl > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 9px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.profile-governance-current dt {
+  color: var(--text);
+  font-size: 12px;
+}
+
+.profile-governance-current dd {
+  margin: 0;
+  color: var(--text-h);
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+.profile-governance-status,
+.profile-governance-decision__verdict {
+  width: fit-content;
+  padding: 3px 8px;
+  border: 1px solid var(--accent-border);
+  border-radius: 999px;
+  color: var(--text-h);
+  background: var(--accent-bg);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.profile-governance-status--approved,
+.profile-governance-status--published,
+.profile-governance-decision__verdict--approve {
+  border-color: color-mix(in srgb, #4f7a5a 55%, var(--border));
+  background: color-mix(in srgb, var(--surface) 90%, #4f7a5a);
+}
+
+.profile-governance-status--disputed,
+.profile-governance-decision__verdict--disagree {
+  border-color: color-mix(in srgb, #a63d45 55%, var(--border));
+  background: color-mix(in srgb, var(--surface) 90%, #a63d45);
+}
+
+.profile-governance-revision {
+  display: grid;
+  gap: 12px;
+}
+
+.profile-governance-diff {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.profile-governance-diff__rows {
+  display: grid;
+  gap: 8px;
+}
+
+.profile-governance-diff__row {
+  display: grid;
+  grid-template-columns: minmax(9rem, 0.55fr) repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  align-items: stretch;
+}
+
+.profile-governance-diff__row > strong,
+.profile-governance-diff__row > del,
+.profile-governance-diff__row > ins {
+  min-width: 0;
+  padding: 9px;
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+}
+
+.profile-governance-diff__row > del,
+.profile-governance-diff__row > ins {
+  display: grid;
+  gap: 3px;
+  border: 1px solid transparent;
+  color: var(--text-h);
+  text-decoration: none;
+}
+
+.profile-governance-diff__row > del {
+  border-color: color-mix(in srgb, var(--border) 35%, #a63d45);
+  background: color-mix(in srgb, var(--surface) 88%, #a63d45);
+}
+
+.profile-governance-diff__row > ins {
+  border-color: color-mix(in srgb, var(--border) 35%, #4f7a5a);
+  background: color-mix(in srgb, var(--surface) 88%, #4f7a5a);
+}
+
+.profile-governance-diff__row small {
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.profile-governance-sources,
+.profile-governance-decisions {
+  display: grid;
+  gap: 7px;
+}
+
+.profile-governance-sources ul {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.profile-governance-editor form,
+.profile-governance-decision form,
+.profile-governance-dismissal form {
+  display: grid;
+  gap: 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.profile-governance-editor form > p {
+  margin: 0;
+  color: var(--text);
+}
+
+.profile-governance-editor label,
+.profile-governance-decision label,
+.profile-governance-dismissal label {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.profile-governance-editor input,
+.profile-governance-editor textarea,
+.profile-governance-decision select,
+.profile-governance-decision textarea,
+.profile-governance-dismissal input,
+.profile-governance-dismissal textarea {
+  width: 100%;
+}
+
+.profile-governance-editor__fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+}
+
+.profile-governance-editor button,
+.profile-governance-decision button,
+.profile-governance-dismissal button {
+  width: fit-content;
+}
+
+.profile-governance-history > div {
+  display: grid;
+  gap: 12px;
+}
+
+.profile-governance-audit li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.profile-governance-audit li:last-child {
+  border-bottom: 0;
+}
+
 .research-inbox-card__identity-action,
 .research-inbox-card__source-action {
   display: grid;
@@ -3094,6 +3421,10 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .profile-governance-diff__row {
+    grid-template-columns: minmax(7rem, 0.45fr) repeat(2, minmax(0, 1fr));
+  }
+
   .wine-maturity__review-form > div:first-child,
   .wine-maturity__review-form label:nth-of-type(2),
   .wine-maturity__review-form > div:last-child {
@@ -3133,6 +3464,17 @@
   .wine-observations__heading,
   .wine-observations__list li > header {
     display: grid;
+  }
+
+  .profile-governance-card__heading,
+  .profile-governance-revision > header,
+  .profile-governance-diff__row {
+    grid-template-columns: minmax(0, 1fr);
+    display: grid;
+  }
+
+  .profile-governance-diff__row > strong {
+    padding-bottom: 0;
   }
 
   .wine-facts__metadata,

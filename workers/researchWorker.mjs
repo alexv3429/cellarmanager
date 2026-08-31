@@ -985,20 +985,31 @@ export function researchConfiguration(env) {
   };
 }
 
-export async function runResearchCycle(env) {
+export async function runResearchCycle(env, dependencies = {}) {
   const configuration = researchConfiguration(env);
   if (!configuration.supabase) return { status: "not-configured", configuration };
 
-  const publications = await rpc(
-    env,
+  const runRpc = dependencies.rpc
+    ?? ((functionName, parameters) => rpc(env, functionName, parameters));
+
+  const profileRevisions = await runRpc(
+    "publish_approved_enrichment_profile_revisions",
+    { p_limit: 2 },
+  );
+  const publications = await runRpc(
     "publish_reviewed_enrichment_research_drafts",
     { p_limit: 2 },
   );
   if (!configuration.ai) {
-    return { status: "research-not-configured", configuration, publications };
+    return {
+      status: "research-not-configured",
+      configuration,
+      profileRevisions,
+      publications,
+    };
   }
 
-  const cases = await rpc(env, "claim_enrichment_research_cases", {
+  const cases = await runRpc("claim_enrichment_research_cases", {
     p_worker_id: "cloudflare-research-0.4.14",
     p_limit: 2,
     p_lease_seconds: 300,
@@ -1014,7 +1025,7 @@ export async function runResearchCycle(env) {
         subjectType: researchCase.subject_type,
       });
       const retryAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
-      results.push(await rpc(env, "complete_enrichment_research_case", {
+      results.push(await runRpc("complete_enrichment_research_case", {
         p_case_id: researchCase.case_id,
         p_lease_token: researchCase.lease_token,
         p_outcome: "retrying",
@@ -1026,6 +1037,7 @@ export async function runResearchCycle(env) {
   return {
     status: "processed",
     count: results.length,
+    profileRevisions,
     publications,
     results,
     caseStatusCounts: await researchCaseStatusCounts(env),
