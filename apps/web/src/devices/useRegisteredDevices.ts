@@ -57,6 +57,7 @@ export function useRegisteredDevices(
       select id, household_id, user_id, name
       from devices
       where user_id = ?
+        and revoked_at is null
       order by created_at
     `,
     [userId],

@@ -11,7 +11,7 @@ crosses a milestone boundary.
 |---|---|---|
 | `v0.3` | A cellar can live safely in CellarManager through daily manual use or guarded CSV import | Released (`v0.3.0`) |
 | `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable evidence | Released (`v0.4.0`) |
-| `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | In progress (`0.5.1`) |
+| `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | In progress (`0.5.2`) |
 | `v0.6` | Adding or identifying wine requires dramatically less typing | Planned |
 | `v0.7` | CellarManager explains what happened to the cellar and what the collection means over time | Planned |
 | `v1.0` | A self-host can install, trust, upgrade, recover, and maintain CellarManager for years | Planned |
@@ -179,6 +179,16 @@ all household devices. A normal ADD may create its missing catalog row for a
 member; later edits and bulk creation remain administrative. The exact matrix
 and its server-side enforcement are documented in
 [`household-permissions.md`](household-permissions.md).
+
+Step 0.5.2 adds the narrow server-side membership management boundary. Any
+current member can list fellow collaborators with a safe display label; owners
+can promote, demote, or revoke another membership through audited RPCs. Generic
+management cannot demote or remove the acting owner: ownership transfer and
+leaving remain explicit work in 0.5.10. Revocation immediately removes access,
+invalidates registered devices, and removes private per-household preferences
+while preserving immutable inventory history and household-visible authored
+knowledge. The invitation model and its user-facing workflow remain 0.5.3 and
+0.5.4 respectively.
 
 ## v0.6 — Capture-assisted enrichment
 
