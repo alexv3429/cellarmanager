@@ -123,7 +123,8 @@ const devices = new Table(
     user_id: column.text,
     name: column.text,
     created_at: column.text,
-    last_seen_at: column.text
+    last_seen_at: column.text,
+    revoked_at: column.text
   },
   { indexes: {} }
 );

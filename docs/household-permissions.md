@@ -58,10 +58,40 @@ be read by fellow members, but only their author may edit or delete them.
 Household-wide manual maturity and serving guidance is visibly distinct from
 both private preferences and the immutable canonical shared library.
 
+## Membership management RPCs
+
+Step 0.5.2 exposes three authenticated, server-authorized operations:
+
+- `get_household_members` lets any current member list current collaborators.
+  It returns membership identity, role, join time, email, and an optional
+  conventional display name; raw authentication metadata is never exposed.
+- `update_household_member_role` lets an owner promote or demote another
+  membership. Repeating the current role is idempotent.
+- `revoke_household_member` lets an owner revoke another membership. It does
+  not double as a leave or ownership-transfer operation.
+
+Role changes and revocations serialize per household and produce a private
+audit event with the actor, target, and before/after roles. Browser roles still
+have no direct `UPDATE` or `DELETE` privilege on `household_members`, and an
+unrelated account cannot enumerate a household by guessing its UUID.
+
+Revocation removes the membership row immediately. Registered devices are
+marked revoked rather than deleted because accepted inventory operations keep
+an immutable reference to them. A revoked device cannot authorize new journal
+rows or be silently reactivated if the account later rejoins. Personal pairing
+preferences and personal household observations are deleted; household-visible
+observations, shared serving guidance, and inventory history remain attributed
+and intact.
+
+There is deliberately no member-management screen yet. These RPCs are the
+trusted foundation used by the invitation and member-management workflows in
+later steps.
+
 ## Later v0.5 steps
 
-This step defines permissions but does not create membership mutations. Steps
-0.5.2 through 0.5.7 add the RPCs, invitations, switching, member UI, and device
-revocation on top of this contract. Ownership transfer and leaving are handled
-explicitly in 0.5.10 so no intermediate implementation can orphan a household.
-The full adversarial matrix remains the 0.5.11 release-hardening step.
+Step 0.5.2 creates safe management mutations but does not create memberships.
+Steps 0.5.3 through 0.5.7 add invitations, switching, member UI, and direct
+device management on top of this contract. Ownership transfer and leaving are
+handled explicitly in 0.5.10 so no intermediate implementation can orphan a
+household. The full adversarial matrix remains the 0.5.11 release-hardening
+step.
