@@ -11,7 +11,7 @@ crosses a milestone boundary.
 |---|---|---|
 | `v0.3` | A cellar can live safely in CellarManager through daily manual use or guarded CSV import | Released (`v0.3.0`) |
 | `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable evidence | Released (`v0.4.0`) |
-| `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | In progress (`0.5.2`) |
+| `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | In progress (`0.5.3`) |
 | `v0.6` | Adding or identifying wine requires dramatically less typing | Planned |
 | `v0.7` | CellarManager explains what happened to the cellar and what the collection means over time | Planned |
 | `v1.0` | A self-host can install, trust, upgrade, recover, and maintain CellarManager for years | Planned |
@@ -189,6 +189,18 @@ invalidates registered devices, and removes private per-household preferences
 while preserving immutable inventory history and household-visible authored
 knowledge. The invitation model and its user-facing workflow remain 0.5.3 and
 0.5.4 respectively.
+
+Step 0.5.3 adds the private durable invitation model. Recipient identity is
+email-normalized, raw bearer tokens are represented only by a SHA-256 digest,
+and validity is bounded to at most 30 days. Only one pending invitation may
+exist for the same household and recipient; replacement creates a new linked
+attempt while accepted, expired, revoked, and superseded records remain
+append-mostly history. Database guards bind acceptance to the matching
+authenticated email and exact membership and prohibit revival or identity,
+role, deadline, and token rewriting. No recipient email or token digest is
+public or synchronized offline. The RPC and interface workflow that creates,
+delivers, accepts, reissues, lists, and revokes these records remains step
+0.5.4.
 
 ## v0.6 — Capture-assisted enrichment
 
