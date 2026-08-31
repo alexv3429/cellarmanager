@@ -10,10 +10,12 @@ import {
   resolveActiveHouseholdId,
   saveActiveHouseholdId,
 } from "./activeHousehold"
+import type { HouseholdRole } from "./householdPermissions"
 
 export interface HouseholdOption {
   id: string
   name: string
+  role: HouseholdRole
 }
 
 function readInitialActiveHouseholdId(
@@ -36,7 +38,7 @@ export function useActiveHousehold(userId: string) {
     isLoading,
   } = useQuery<HouseholdOption>(
     `
-      select h.id, h.name
+      select h.id, h.name, hm.role
       from households h
       join household_members hm
         on hm.household_id = h.id

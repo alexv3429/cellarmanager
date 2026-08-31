@@ -14,16 +14,19 @@ import {
   getAppViewPath,
   type AppView,
 } from "../navigation/appNavigation"
+import {
+  getHouseholdRoleLabel,
+  type HouseholdRole,
+} from "../households/householdPermissions"
+import type {
+  HouseholdOption,
+} from "../households/useActiveHousehold"
 import { getSyncStatusPresentation } from "../data/syncStatusView"
 import { Notice } from "./Notice"
 
-interface HouseholdOption {
-  id: string
-  name: string
-}
-
 interface AppShellProps {
   activeHouseholdId: string
+  activeHouseholdRole: HouseholdRole
   children: ReactNode
   contentKey: string
   deviceRegistration: RegisteredDevicesState
@@ -62,6 +65,7 @@ function errorMessage(error: unknown): string | null {
 
 export function AppShell({
   activeHouseholdId,
+  activeHouseholdRole,
   children,
   contentKey,
   deviceRegistration,
@@ -223,7 +227,12 @@ export function AppShell({
 
         <div className="app-shell__account">
           <label className="app-shell__household">
-            <span>Household</span>
+            <span className="app-shell__household-label">
+              Household
+              <small>
+                {getHouseholdRoleLabel(activeHouseholdRole)}
+              </small>
+            </span>
             <select
               onChange={(event) =>
                 onSelectHousehold(event.target.value)

@@ -64,6 +64,9 @@ produces no estimate rather than a color-only guess.
 
 `wine_serving_overrides` stores a complete household adjustment separately.
 Clearing it immediately reveals the current reviewed estimate again.
+Because it changes guidance for every member, saving or clearing this override
+is owner-only under the final v0.5 permission model. Authored observations and
+account-private preferences remain available to every member.
 
 ## Connectivity and synchronization
 

@@ -186,6 +186,21 @@
   font-size: 14px;
 }
 
+.app-shell__household-label {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.app-shell__household-label small {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .app-shell__nav {
   display: flex;
   gap: 8px;
