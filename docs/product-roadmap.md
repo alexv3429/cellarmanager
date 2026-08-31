@@ -1,6 +1,6 @@
 # CellarManager product roadmap
 
-This is the canonical roadmap after the `v0.3.0` personal-production release.
+This is the canonical roadmap after the `v0.4.0` rich-library release.
 Completed milestone roadmaps and acceptance records remain historical evidence;
 when scope or sequencing changes, this file must be updated before implementation
 crosses a milestone boundary.
@@ -10,7 +10,7 @@ crosses a milestone boundary.
 | Milestone | Promise | Status |
 |---|---|---|
 | `v0.3` | A cellar can live safely in CellarManager through daily manual use or guarded CSV import | Released (`v0.3.0`) |
-| `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable evidence | In progress (0.4.18 in review) |
+| `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable evidence | Released (`v0.4.0`) |
 | `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | Planned |
 | `v0.6` | Adding or identifying wine requires dramatically less typing | Planned |
 | `v0.7` | CellarManager explains what happened to the cellar and what the collection means over time | Planned |
@@ -138,6 +138,15 @@ by another account or household member. Step 0.4.20 audits unresolved
 high-impact requests, shared-profile revision readiness,
 personal-calibration behavior, and current cellar coverage before the v0.4
 release.
+
+### Milestone conclusion
+
+All twenty steps are complete. The accepted application, immutable shared
+knowledge boundary, release metadata, and release notes define the `v0.4.0`
+rich-library baseline. The annotated release tag is created from protected
+`main` after the release pull request is merged. Ongoing profile research and
+revision continue through the reviewed workflow; they do not reopen the
+milestone or silently rewrite the released application contract.
 
 ## v0.5 — Shared-household collaboration
 

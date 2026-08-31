@@ -100,14 +100,14 @@ new code migration. When automatic discovery misses a page, the advanced owner
 form can submit a direct HTTPS URL; it passes the same checks and automatically
 resumes the request. Adding or reactivating any compatible reviewed rule also
 resumes every affected request. Retiring a rule immediately prevents new
-research and publication from it while preserving historical provenance. Step
-0.4.20 audits unresolved high-impact requests and current cellar coverage
-before the v0.4 release; source rules and reviewed immutable knowledge versions
-remain continuously extensible after release.
+research and publication from it while preserving historical provenance. The
+v0.4 acceptance pass audits unresolved high-impact requests and current cellar
+coverage. Source rules and reviewed immutable knowledge versions remain
+continuously extensible after release.
 
-## Governance scheduled before v0.4 release
+## Released governance and personal calibration
 
-Step 0.4.17 adds an explicit **Report an error / request review** path for a
+Step 0.4.17 added an explicit **Report an error / request review** path for a
 published fact or profile. A report is private to its submitter until processed,
 can include comments or proposed evidence, and joins an existing open case for
 the same canonical subject instead of starting duplicate research. Its state
@@ -122,7 +122,7 @@ reporter. The Catalog inbox exposes only the current reporter's comments,
 evidence, notifications, and trusted outcome; see
 [`profile-review-requests.md`](profile-review-requests.md).
 
-Step 0.4.18 adds the human governance that follows a report. Trusted-curator
+Step 0.4.18 added the human governance that follows a report. Trusted-curator
 eligibility and profile scope are explicit, service-granted, and reversible;
 proposals, decisions, disagreements, evidence links, and publication are
 attributable and auditable. Any current curator disagreement blocks activation.

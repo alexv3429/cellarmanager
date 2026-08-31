@@ -132,7 +132,7 @@ the compatible reviewed place and vintage layers. The wine remains valid cellar
 data and the missing producer layer is visible; it must not block an ADD or CSV
 import.
 
-The production feeding workflow should then:
+The released production feeding workflow:
 
 1. aggregate unresolved producer and cuvee identities as curation demand,
    prioritized by the number of affected wines and households;
@@ -151,8 +151,8 @@ same evidence and review gate. This preserves a useful broad estimate for a new
 producer while preventing an unverified web inference or one household's alias
 from silently becoming global truth.
 
-Step 0.4.10 makes those observations editable and adds serving guidance without
-changing this promotion boundary; see
+Those observations are editable and include serving guidance without changing
+this promotion boundary; see
 [`personal-observations-serving.md`](personal-observations-serving.md).
 
 Catalog data-quality diagnostics should distinguish missing knowledge from
@@ -175,9 +175,9 @@ The idempotent installer creates and atomically publishes the reviewed version.
 A `pg_cron` worker claims at most 100 maturity jobs each minute and writes the
 maturity and storage projections in one database transaction. Unsupported wines
 finish as `needs-review`; a calculation error retries with bounded attempts.
-The maturity-specific worker does not process pairing jobs. Step 0.4.9 adds a
-separate processor that reuses the reviewed structure and provenance without
-changing maturity advice; see
+The maturity-specific worker does not process pairing jobs. A separate pairing
+processor reuses the reviewed structure and provenance without changing
+maturity advice; see
 [`pairing-projections.md`](pairing-projections.md).
 
 Knowledge, jobs, evidence, projections, reviews, and overrides remain outside

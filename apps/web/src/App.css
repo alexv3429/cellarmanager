@@ -616,9 +616,10 @@
   min-width: 0;
 }
 
-.catalog-table td[data-label="Actions"] button {
-  margin-right: 6px;
-  margin-bottom: 6px;
+.catalog-table__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .catalog-wine-cuvee {
@@ -3968,9 +3969,15 @@
     align-items: center;
   }
 
-  .catalog-table td[data-label="Actions"] button {
-    margin-right: 8px;
-    margin-bottom: 4px;
+  .catalog-table__actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+  }
+
+  .catalog-table__actions button {
+    width: 100%;
   }
 
   /* Cellar setup */

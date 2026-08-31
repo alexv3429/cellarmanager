@@ -1,11 +1,14 @@
 import { researchConfiguration, runResearchCycle } from "./researchWorker.mjs";
 
+export const WORKER_VERSION = "0.4.0";
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (request.method === "GET" && url.pathname === "/api/research/status") {
       const configuration = researchConfiguration(env);
       return Response.json({
+        version: WORKER_VERSION,
         status: configuration.ai && configuration.supabase
           ? "ready"
           : "not-configured",

@@ -2,7 +2,7 @@
 
 CellarManager is a local-first wine cellar inventory application.
 
-**Current release: v0.3.0**
+**Current release: v0.4.0**
 
 ## Architecture
 
@@ -19,41 +19,34 @@ See [`docs/adr/001-v02-target-architecture.md`](docs/adr/001-v02-target-architec
 and [`docs/adr/002-inventory-operation-model.md`](docs/adr/002-inventory-operation-model.md)
 for the released application foundation. The accepted
 [`docs/adr/004-wine-reference-and-enrichment-evidence.md`](docs/adr/004-wine-reference-and-enrichment-evidence.md)
-defines the shared wine-reference and enrichment boundary for v0.4; its
-implementation follows the product roadmap below. The current v0.4 foundation
-includes an attributed LWIN snapshot, a conservative explicitly reviewed
-household matching workflow, versioned inference knowledge, and asynchronous
-maturity/storage projections for supported wines, reviewed dish profiles,
-explainable food-pairing suggestions from bottles physically in stock, and
-household-scoped observations and serving adjustments that never rewrite the
-shared library. Household wines can also retain structured origin, grape,
-style, label-alcohol, and certification facts without promoting them into
-shared truth. The catalog searches and filters those facts, distinguishes
-owner-data issues from exact missing profile layers, and prioritizes the
-highest-impact shared-library curation work without exposing household data.
-Eligible gaps can now enter a reviewed research workflow: CellarManager can
-compare several bounded source candidates, an owner can submit a missed URL as
-an advanced fallback, source pages are used transiently to prepare an
-attributed inactive draft, and only a server-side publisher can add an
-owner-reviewed fact or profile to versioned shared knowledge.
+defines the shared wine-reference and enrichment boundary implemented in v0.4.
+The released rich-library pipeline combines an attributed LWIN snapshot,
+conservative owner-reviewed matching, immutable versioned knowledge, and
+asynchronous maturity, storage, and pairing projections. Missing shared
+profiles can enter bounded multi-source research; source pages are used
+transiently to prepare an attributable inactive draft, and only trusted
+server-side publication can activate reviewed knowledge. Published-profile
+reports and governed revision proposals preserve history. Household notes,
+serving adjustments, rich wine facts, and private maturity calibration remain
+strictly separate from the canonical shared library.
 
-## v0.3 capabilities
+## v0.4 capabilities
 
-v0.3 is the personal-production baseline. It includes self-service
-authentication, household isolation, stable browser/device registration,
-URL-backed desktop and mobile navigation, inventory browsing and filtering,
-wine details, cellar/location setup, wine catalog management, activity and
-synchronization views, PostgreSQL-authoritative holdings, and offline-capable
-ADD, MOVE and REMOVE operations with idempotent replay.
+v0.4 retains the v0.3 personal-production and local-first inventory baseline,
+then adds explainable advice and a governed wine-knowledge lifecycle:
 
-The permanent CSV importer can parse, map, clean, preview, resolve, and
-transactionally commit reasonably messy cellar exports. It can match existing
-wines, reconcile storage and quantities, apply all-row defaults, normalize
-known values, and create an initial cellar/location when required.
+- maturity windows, urgency, storage purpose, and moving hints;
+- food-pairing suggestions ranked only from bottles currently in stock;
+- rich facts, personal observations, serving guidance, manual overrides, and a
+  bounded private younger/later preference;
+- reviewed LWIN matching, profile coverage diagnostics, multi-source research,
+  error reports, curator review, immutable revisions, and trusted publication;
+- conservative duplicate detection and explicit wine merging; and
+- Excel-first cellar export with CSV fallback and guarded round-trip import.
 
-The canonical [`docs/product-roadmap.md`](docs/product-roadmap.md) sequences the
-remaining rich-library and reviewed web enrichment, collaboration, photo/OCR/
-barcode capture, history/insight, and v1.0 reliability work. Full
+The canonical [`docs/product-roadmap.md`](docs/product-roadmap.md) now sequences
+shared-household collaboration, photo/OCR/barcode capture, history/insight,
+and v1.0 reliability work. Full
 internationalization and arbitrary graphical cellar layouts are explicitly
 post-v1.0 unless that roadmap is changed first.
 
@@ -86,6 +79,7 @@ Manage local Supabase from the repository root:
 ## Validation
 
     npm run repository:check
+    npm run release:check
     npm run lwin:test
     npm run supabase -- test db
     npm run web:ci
@@ -107,7 +101,7 @@ enrichment worker. Deployment secrets and the source-rights boundary are
 documented in
 [`docs/reviewed-enrichment-research.md`](docs/reviewed-enrichment-research.md).
 
-The `v0.3.0` production build was smoke-tested before its annotated release tag
+The `v0.4.0` production build was smoke-tested before its annotated release tag
 was created. See `apps/web/README.md` for local development and production/PWA
 testing commands.
 
@@ -116,11 +110,11 @@ testing commands.
 See `docs/README.md` for current architecture, roadmap, release, and historical
 migration evidence.
 
-Release notes: `docs/releases/v0.3.0.md`.
+Release notes: `docs/releases/v0.4.0.md`.
 
 Current product roadmap: `docs/product-roadmap.md`.
 
-Completed v0.3 delivery record: `docs/v03-roadmap.md`.
+v0.4 acceptance record: `docs/v04-acceptance.md`.
 
 ## License
 

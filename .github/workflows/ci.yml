@@ -37,6 +37,9 @@ jobs:
       - name: Check repository policy
         run: npm run repository:check
 
+      - name: Check release metadata
+        run: npm run release:check
+
       - name: Test the LWIN snapshot importer
         run: npm run lwin:test
 
