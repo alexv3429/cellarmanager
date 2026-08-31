@@ -23,8 +23,9 @@ The default workbook contains two portable-data worksheets:
 When the export is created online, it also contains a **Drinking windows**
 worksheet with one row per wine. This is a dated snapshot of the effective
 guidance currently shown in CellarManager: a personal window takes precedence
-over the model estimate. It includes first-trial, best-period, and drink-by
-years, the current status, provenance, confidence, and calculation date. The
+over a member calibration, which in turn takes precedence over the canonical
+model estimate. It includes first-trial, best-period, and drink-by years, the
+current status, explicit provenance, confidence, and calculation date. The
 snapshot is for reference and is not silently restored by spreadsheet import.
 An offline export remains available but explicitly omits this online-derived
 worksheet.
@@ -123,6 +124,8 @@ facts and confirmed reference identifiers. It does not duplicate:
 - derived storage, serving, or pairing recommendations;
 - shared research cases, evidence pages, or publication history;
 - personal observations or member-specific overrides;
+- the private calibration setting itself (only its explicitly labelled derived
+  maturity snapshot may appear);
 - activity history, devices, memberships, import receipts, or merge audit rows;
 - inactive empty cellar/location setup, capacity, order, or storage purpose.
 

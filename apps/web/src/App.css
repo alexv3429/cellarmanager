@@ -2421,6 +2421,7 @@
 }
 
 .wine-maturity__summary,
+.wine-maturity__calibration,
 .wine-maturity__storage,
 .wine-maturity__feedback,
 .wine-maturity__explanation,
@@ -2440,6 +2441,8 @@
 
 .wine-maturity__summary h3,
 .wine-maturity__summary p,
+.wine-maturity__calibration h3,
+.wine-maturity__calibration p,
 .wine-maturity__storage p,
 .wine-maturity__override p {
   margin: 0;
@@ -2450,6 +2453,7 @@
 }
 
 .wine-maturity__summary p,
+.wine-maturity__calibration p,
 .wine-maturity__override p {
   margin-top: 4px;
 }
@@ -2494,6 +2498,92 @@
   font-family: var(--heading);
   font-size: 24px;
   font-weight: 600;
+}
+
+.wine-maturity__calibration {
+  display: grid;
+  gap: 14px;
+}
+
+.wine-maturity__calibration > header {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.wine-maturity__calibration > header p {
+  margin-top: 4px;
+}
+
+.wine-maturity__calibration-comparison {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.wine-maturity__calibration-comparison > section {
+  display: grid;
+  gap: 9px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.wine-maturity__calibration-comparison > section:last-child {
+  border-color: var(--accent-border);
+  background: var(--accent-bg);
+}
+
+.wine-maturity__calibration-comparison dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.wine-maturity__calibration-comparison dl > div {
+  min-width: 0;
+}
+
+.wine-maturity__calibration-comparison dt {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.wine-maturity__calibration-comparison dd {
+  margin: 3px 0 0;
+  color: var(--text-h);
+  font-family: var(--heading);
+  font-size: 18px;
+  font-weight: 650;
+}
+
+.app-shell__content .wine-maturity__calibration form {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.wine-maturity__calibration form label {
+  display: grid;
+  gap: 5px;
+}
+
+.wine-maturity__calibration form select {
+  width: 100%;
+}
+
+.wine-maturity__calibration form > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .wine-maturity__storage {
@@ -3459,6 +3549,7 @@
   .wine-reference-review__heading,
   .wine-reference-current,
   .wine-maturity__summary,
+  .wine-maturity__calibration > header,
   .wine-maturity__feedback,
   .wine-serving__heading,
   .wine-observations__heading,
@@ -3491,6 +3582,9 @@
   }
 
   .wine-maturity__window,
+  .wine-maturity__calibration-comparison,
+  .wine-maturity__calibration-comparison dl,
+  .app-shell__content .wine-maturity__calibration form,
   .app-shell__content .wine-maturity__override form,
   .wine-serving__summary,
   .app-shell__content .wine-serving__override form,
@@ -3512,7 +3606,9 @@
   .wine-maturity__review-form > div:last-child,
   .wine-maturity__review-form > div:last-child button,
   .wine-maturity__override form > div,
-  .wine-maturity__override form > div button {
+  .wine-maturity__override form > div button,
+  .wine-maturity__calibration form > div,
+  .wine-maturity__calibration form > div button {
     width: 100%;
   }
 

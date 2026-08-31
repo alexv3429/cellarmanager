@@ -31,8 +31,10 @@ export interface MaturityOverviewItem {
   firstTrialYear: number | null
   headline: string | null
   isOverride: boolean
+  isPersonalized: boolean
   moveMessage: string | null
   moveNeeded: boolean
+  personalYearShift: number
   profileLayers: string[]
   profileWarnings: string[]
   projectionId: string | null
@@ -112,8 +114,19 @@ export interface WineMaturityFeedback {
   verdict: MaturityVerdict
 }
 
+export interface MemberMaturityCalibration {
+  updatedAt: string
+  yearShift: number
+}
+
+export interface WineMaturityCalibration extends MemberMaturityCalibration {
+  active: boolean
+  maturity: MaturityRecommendation | null
+}
+
 export interface WineMaturity {
   assessmentReason: MaturityAssessmentReason | null
+  calibration: WineMaturityCalibration | null
   demandStatus: string | null
   feedback: WineMaturityFeedback | null
   override: WineMaturityOverride | null
@@ -269,6 +282,17 @@ export function maturityAssessmentReasonMessage(
   }
 }
 
+export function maturityCalibrationLabel(yearShift: number): string {
+  if (yearShift === 0) {
+    return "Canonical timing"
+  }
+
+  const years = Math.abs(yearShift)
+  return `${years} ${years === 1 ? "year" : "years"} ${
+    yearShift < 0 ? "younger" : "later"
+  }`
+}
+
 function stringArray(value: unknown, field: string): string[] {
   if (!Array.isArray(value)) {
     throw new Error(`Invalid maturity response: ${field}`)
@@ -409,8 +433,16 @@ export function parseMaturityOverview(value: unknown): MaturityOverviewItem[] {
       firstTrialYear: optionalInteger(item.first_trial_year, "first trial year"),
       headline: optionalText(item.headline, "headline"),
       isOverride: boolean(item.is_override, "override flag"),
+      isPersonalized:
+        item.is_personalized === undefined
+          ? false
+          : boolean(item.is_personalized, "personalized flag"),
       moveMessage: optionalText(item.move_message, "move message"),
       moveNeeded: boolean(item.move_needed, "move-needed flag"),
+      personalYearShift:
+        item.personal_year_shift === undefined
+          ? 0
+          : integer(item.personal_year_shift, "personal year shift"),
       profileLayers: optionalStringArray(item.profile_layers, "profile layers"),
       profileWarnings: optionalStringArray(
         item.profile_warnings,
@@ -433,8 +465,23 @@ export function parseMaturityOverview(value: unknown): MaturityOverviewItem[] {
 
 export function parseWineMaturity(value: unknown): WineMaturity {
   const item = record(value, "wine maturity")
+  const rawCalibration = item.calibration
   const rawOverride = item.override
   const rawFeedback = item.feedback
+
+  let calibration: WineMaturityCalibration | null = null
+  if (rawCalibration !== null && rawCalibration !== undefined) {
+    const parsed = record(rawCalibration, "calibration")
+    calibration = {
+      active: boolean(parsed.active, "calibration active flag"),
+      maturity:
+        parsed.maturity === null
+          ? null
+          : parseRecommendation(parsed.maturity),
+      updatedAt: text(parsed.updated_at, "calibration updated time"),
+      yearShift: integer(parsed.year_shift, "calibration year shift"),
+    }
+  }
 
   let override: WineMaturityOverride | null = null
   if (rawOverride !== null) {
@@ -462,11 +509,32 @@ export function parseWineMaturity(value: unknown): WineMaturity {
 
   return {
     assessmentReason: optionalAssessmentReason(item.assessment_reason),
+    calibration,
     demandStatus: optionalText(item.demand_status, "demand status"),
     feedback,
     override,
     projection: parseProjection(item.projection),
     wineId: text(item.wine_id, "wine id"),
+  }
+}
+
+function parseMemberMaturityCalibration(
+  value: unknown,
+): MemberMaturityCalibration | null {
+  if (value === null) {
+    return null
+  }
+
+  const item = record(value, "member maturity calibration")
+  const yearShift = integer(item.year_shift, "calibration year shift")
+
+  if (yearShift < -3 || yearShift > 3 || yearShift === 0) {
+    throw new Error("Invalid maturity response: calibration year shift")
+  }
+
+  return {
+    updatedAt: text(item.updated_at, "calibration updated time"),
+    yearShift,
   }
 }
 
@@ -505,6 +573,49 @@ export async function getWineMaturity(
   return parseWineMaturity(
     await rpcResult("get_wine_maturity", { p_wine_id: wineId }, rpcClient),
   )
+}
+
+export async function getMemberMaturityCalibration(
+  rpcClient?: RpcClient,
+): Promise<MemberMaturityCalibration | null> {
+  return parseMemberMaturityCalibration(
+    await rpcResult("get_member_maturity_calibration", {}, rpcClient),
+  )
+}
+
+export async function setMemberMaturityCalibration(
+  yearShift: number,
+  rpcClient?: RpcClient,
+): Promise<MemberMaturityCalibration | null> {
+  if (!Number.isInteger(yearShift) || yearShift < -3 || yearShift > 3) {
+    throw new Error(
+      "Personal maturity timing must be between 3 years younger and 3 years later",
+    )
+  }
+
+  return parseMemberMaturityCalibration(
+    await rpcResult(
+      "set_member_maturity_calibration",
+      { p_year_shift: yearShift },
+      rpcClient,
+    ),
+  )
+}
+
+export async function clearMemberMaturityCalibration(
+  rpcClient?: RpcClient,
+): Promise<null> {
+  const result = await rpcResult(
+    "clear_member_maturity_calibration",
+    {},
+    rpcClient,
+  )
+
+  if (result !== null) {
+    throw new Error("Invalid maturity response: cleared calibration")
+  }
+
+  return null
 }
 
 export async function reviewWineMaturity(

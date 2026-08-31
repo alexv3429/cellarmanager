@@ -71,8 +71,10 @@ const sourceMaturity: MaturityOverviewItem = {
   firstTrialYear: 2027,
   headline: "Hold",
   isOverride: false,
+  isPersonalized: false,
   moveMessage: null,
   moveNeeded: false,
+  personalYearShift: 0,
   profileLayers: ["place", "vintage"],
   profileWarnings: [],
   projectionId: "projection-a",
@@ -173,6 +175,30 @@ describe("Excel cellar transfer", () => {
 
     expect(row).toContain("Personal window")
     expect(row?.[11]).toBeNull()
+  })
+
+  it("labels privately calibrated guidance without treating it as a manual window", async () => {
+    const records = createCsvExportRecords(
+      [sourceWine],
+      [sourceHolding],
+      sourceLocations,
+      false,
+    )
+    const blob = await buildPortableXlsxExport(records, [
+      {
+        ...sourceMaturity,
+        drinkByYear: 2033,
+        isPersonalized: true,
+        personalYearShift: -2,
+      },
+    ])
+    const sheets = await readXlsxFile(await blob.arrayBuffer())
+    const row = sheets.find(
+      (sheet) => sheet.sheet === "Drinking windows",
+    )?.data[1]
+
+    expect(row).toContain("Personal timing (2 years younger)")
+    expect(row).not.toContain("Personal window")
   })
 
   it("chooses the worksheet with recognized cellar columns", async () => {

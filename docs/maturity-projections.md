@@ -108,6 +108,15 @@ clearly prefers the adjustment while retaining the raw model, evidence, and
 feedback for inspection. Clearing the adjustment activates the current model
 again.
 
+A separate account-private calibration may shift every canonical window by one
+to three whole years younger or later. It is applied only when the result is
+read, so the canonical projection and provenance remain unchanged. Wine Detail
+shows the canonical and personal dates together; Catalog state and urgency use
+the personal dates for that member. A per-wine manual window still has higher
+priority. Storage guidance stays canonical unless its existing explicit
+per-wine storage override is set. See
+[`personal-maturity-calibration.md`](personal-maturity-calibration.md).
+
 ## Growing the shared knowledge library
 
 The hierarchical engine and the process that feeds it are separate trust

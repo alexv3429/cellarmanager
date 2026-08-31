@@ -128,13 +128,16 @@ continues to receive the safe broader place/vintage estimate immediately.
 
 Canonical and personal guidance remain separate. Step 0.4.19 applies a private,
 bounded member preference only after the canonical maturity estimate has been
-calculated. The recommendation must show both the canonical result and the
-personal adjustment, while an explicit per-wine manual override remains the
-highest-priority local instruction. Neither the preference nor its resulting
-recommendation may alter shared knowledge or leak to another account or
-household. Step 0.4.20 audits unresolved high-impact requests, shared-profile
-revision readiness, personal-calibration behavior, and current cellar coverage
-before the v0.4 release.
+calculated. The implemented whole-year shift is limited to three years younger
+or later and preserves the canonical window shape. Wine Detail shows both
+results and an immediate reset; Catalog ordering/status and online maturity
+exports use the effective private dates. An explicit per-wine manual override
+remains the highest-priority local instruction. The preference lives only in a
+non-exposed account-private table: it cannot alter shared knowledge or be read
+by another account or household member. Step 0.4.20 audits unresolved
+high-impact requests, shared-profile revision readiness,
+personal-calibration behavior, and current cellar coverage before the v0.4
+release.
 
 ## v0.5 — Shared-household collaboration
 

@@ -1,17 +1,21 @@
 import { describe, expect, it, vi } from "vitest"
 
 import {
+  clearMemberMaturityCalibration,
+  getMemberMaturityCalibration,
   getHouseholdMaturityOverview,
   maturityAssessmentReasonLabel,
   maturityAssessmentReasonMessage,
   parseWineMaturity,
   reviewWineMaturity,
+  setMemberMaturityCalibration,
   setWineMaturityOverride,
 } from "./wineMaturity"
 
 function maturityResponse() {
   return {
     assessment_reason: null,
+    calibration: null,
     demand_status: "completed",
     feedback: null,
     override: null,
@@ -128,6 +132,37 @@ describe("maturity RPC boundary", () => {
     ).toEqual([])
   })
 
+  it("keeps canonical and private calibrated guidance separate", () => {
+    const response = maturityResponse()
+    const result = parseWineMaturity({
+      ...response,
+      calibration: {
+        active: true,
+        maturity: {
+          ...response.projection.maturity,
+          best_end_year: 2029,
+          best_start_year: 2023,
+          drink_by_year: 2035,
+          first_trial_year: 2020,
+          headline: "Your timing: Likely ready",
+          message: "Your private timing preference places this wine inside its likely best period.",
+        },
+        updated_at: "2026-08-31T12:00:00Z",
+        year_shift: -2,
+      },
+    })
+
+    expect(result.projection?.maturity.firstTrialYear).toBe(2022)
+    expect(result.calibration).toMatchObject({
+      active: true,
+      maturity: {
+        drinkByYear: 2035,
+        firstTrialYear: 2020,
+      },
+      yearShift: -2,
+    })
+  })
+
   it("loads the compact household overview", async () => {
     const rpc = vi.fn().mockResolvedValue({
       data: [
@@ -223,6 +258,61 @@ describe("maturity RPC boundary", () => {
         p_verdict: "useful",
       },
     )
+  })
+
+  it("saves, reads, and resets the private account calibration", async () => {
+    const rpc = vi
+      .fn()
+      .mockResolvedValueOnce({
+        data: {
+          updated_at: "2026-08-31T12:00:00Z",
+          year_shift: -2,
+        },
+        error: null,
+      })
+      .mockResolvedValueOnce({
+        data: {
+          updated_at: "2026-08-31T12:00:00Z",
+          year_shift: -2,
+        },
+        error: null,
+      })
+      .mockResolvedValueOnce({ data: null, error: null })
+
+    await expect(
+      setMemberMaturityCalibration(-2, { rpc }),
+    ).resolves.toMatchObject({ yearShift: -2 })
+    await expect(
+      getMemberMaturityCalibration({ rpc }),
+    ).resolves.toMatchObject({ yearShift: -2 })
+    await expect(
+      clearMemberMaturityCalibration({ rpc }),
+    ).resolves.toBeNull()
+
+    expect(rpc).toHaveBeenNthCalledWith(
+      1,
+      "set_member_maturity_calibration",
+      { p_year_shift: -2 },
+    )
+    expect(rpc).toHaveBeenNthCalledWith(
+      2,
+      "get_member_maturity_calibration",
+      {},
+    )
+    expect(rpc).toHaveBeenNthCalledWith(
+      3,
+      "clear_member_maturity_calibration",
+      {},
+    )
+  })
+
+  it("rejects an out-of-range personal calibration before calling the server", async () => {
+    const rpc = vi.fn()
+
+    await expect(
+      setMemberMaturityCalibration(4, { rpc }),
+    ).rejects.toThrow("between 3 years younger and 3 years later")
+    expect(rpc).not.toHaveBeenCalled()
   })
 
   it("rejects an impossible manual window before calling the server", async () => {
