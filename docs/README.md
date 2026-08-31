@@ -23,6 +23,7 @@ retains only the evidence needed to understand its released migration history.
 - [`reviewed-enrichment-research.md`](reviewed-enrichment-research.md) - allowlisted web research, attributed drafts, owner review, source rights, and trusted publication
 - [`profile-review-requests.md`](profile-review-requests.md) - deduplicated published-profile reports, private evidence threads, visible status, and immutable outcomes
 - [`profile-revision-governance.md`](profile-revision-governance.md) - scoped curator eligibility, structured diffs, disagreement rules, immutable supersession, and trusted publication
+- [`personal-maturity-calibration.md`](personal-maturity-calibration.md) - private account timing preference, canonical comparison, reset, and manual-window precedence
 - [`wine-duplicate-merge.md`](wine-duplicate-merge.md) - conservative duplicate candidates, explicit owner merge, stock consolidation, and immutable audit history
 - [`v01-metadata-restoration.md`](v01-metadata-restoration.md) - exact-ID, preview-first restoration of safe archived facts and guidance
 - [`maturity-knowledge-v2.md`](maturity-knowledge-v2.md) - expanded exact-appellation maturity profiles, evidence inputs, safety boundary, and private aggregate coverage

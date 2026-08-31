@@ -6,11 +6,15 @@ import {
 } from "../data/cellarSetupView"
 import type { LocationStoragePurpose } from "../data/cellarSetup"
 import {
+  clearMemberMaturityCalibration,
   clearWineMaturityOverride,
   getWineMaturity,
+  maturityCalibrationLabel,
   maturityAssessmentReasonMessage,
   reviewWineMaturity,
+  setMemberMaturityCalibration,
   setWineMaturityOverride,
+  type MaturityRecommendation,
   type MaturityVerdict,
   type WineMaturity,
 } from "../data/wineMaturity"
@@ -33,6 +37,38 @@ interface WineMaturityPanelProps {
 interface IssueReviewTarget {
   label: string
   profileId: string
+}
+
+const MATURITY_CALIBRATION_OPTIONS = [-3, -2, -1, 0, 1, 2, 3] as const
+
+function MaturityComparisonColumn({
+  label,
+  recommendation,
+}: {
+  label: string
+  recommendation: MaturityRecommendation
+}) {
+  return (
+    <section>
+      <strong>{label}</strong>
+      <dl>
+        <div>
+          <dt>First assessment</dt>
+          <dd>{recommendation.firstTrialYear}</dd>
+        </div>
+        <div>
+          <dt>Best period</dt>
+          <dd>
+            {recommendation.bestStartYear}–{recommendation.bestEndYear}
+          </dd>
+        </div>
+        <div>
+          <dt>Drink by</dt>
+          <dd>{recommendation.drinkByYear}</dd>
+        </div>
+      </dl>
+    </section>
+  )
 }
 
 function storagePurposeLabel(value: string): string {
@@ -296,6 +332,64 @@ export function WineMaturityPanel({
     }
   }
 
+  async function saveCalibration(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!isOnline) {
+      return
+    }
+
+    const yearShift = Number(
+      new FormData(event.currentTarget).get("yearShift"),
+    )
+    setBusyAction("calibration")
+    setError(null)
+    setMessage(null)
+
+    try {
+      await setMemberMaturityCalibration(yearShift)
+      setResult(await getWineMaturity(wineId))
+      setMessage(
+        yearShift === 0
+          ? "Your recommendations now use canonical timing."
+          : `Your private ${maturityCalibrationLabel(
+              yearShift,
+            ).toLowerCase()} preference now applies to every assessed wine.`,
+      )
+    } catch (caughtError: unknown) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to save your timing preference",
+      )
+    } finally {
+      setBusyAction(null)
+    }
+  }
+
+  async function clearCalibration() {
+    if (!isOnline) {
+      return
+    }
+
+    setBusyAction("clear-calibration")
+    setError(null)
+    setMessage(null)
+
+    try {
+      await clearMemberMaturityCalibration()
+      setResult(await getWineMaturity(wineId))
+      setMessage("Your recommendations now use canonical timing.")
+    } catch (caughtError: unknown) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to reset your timing preference",
+      )
+    } finally {
+      setBusyAction(null)
+    }
+  }
+
   async function submitProfileReview(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!isOnline || !reviewTarget?.profileId) return
@@ -333,8 +427,13 @@ export function WineMaturityPanel({
 
   const projection = result?.projection ?? null
   const model = projection?.maturity ?? null
+  const calibration = result?.calibration ?? null
+  const personalizedModel = calibration?.maturity ?? null
+  const activePersonalizedModel =
+    calibration?.active && personalizedModel ? personalizedModel : null
   const override = result?.override ?? null
-  const displayedYears = override ?? model
+  const displayedRecommendation = activePersonalizedModel ?? model
+  const displayedYears = override ?? displayedRecommendation
   const inlineProfileIds = new Set(
     model?.contributions.flatMap((contribution) =>
       contribution.profileId ? [contribution.profileId] : [],
@@ -378,8 +477,8 @@ export function WineMaturityPanel({
         <div>
           <h2 id="wine-maturity-heading">When to drink</h2>
           <p>
-            A conservative estimate from reviewed place and vintage profiles,
-            kept separate from your own adjustments.
+            Canonical guidance from reviewed profiles, with private preferences
+            and manual windows kept visibly separate.
           </p>
         </div>
       </div>
@@ -417,18 +516,30 @@ export function WineMaturityPanel({
 
       {projection && model && displayedYears ? (
         <>
-          <div className={`wine-maturity__summary wine-maturity__summary--${model.state}`}>
+          <div className={`wine-maturity__summary wine-maturity__summary--${displayedRecommendation?.state ?? model.state}`}>
             <div>
               <span className="wine-maturity__badge">
-                {override ? "Owner-adjusted" : model.stateLabel}
+                {override
+                  ? "Manual window"
+                  : activePersonalizedModel
+                    ? "Personal timing"
+                    : model.stateLabel}
               </span>
-              <h3>{override ? "Your maturity window" : model.headline}</h3>
-              <p>{override?.note ?? model.message}</p>
+              <h3>
+                {override
+                  ? "Your maturity window"
+                  : displayedRecommendation?.headline ?? model.headline}
+              </h3>
+              <p>
+                {override?.note ??
+                  displayedRecommendation?.message ??
+                  model.message}
+              </p>
             </div>
             <span className="wine-maturity__confidence">
               {override
                 ? "Owner estimate"
-                : `${model.confidenceLabel[0]?.toUpperCase()}${model.confidenceLabel.slice(1)} confidence`}
+                : `${model.confidenceLabel[0]?.toUpperCase()}${model.confidenceLabel.slice(1)} canonical confidence`}
             </span>
           </div>
 
@@ -449,6 +560,91 @@ export function WineMaturityPanel({
             </div>
           </dl>
 
+          <section
+            aria-labelledby="maturity-calibration-heading"
+            className="wine-maturity__calibration"
+          >
+            <header>
+              <div>
+                <h3 id="maturity-calibration-heading">
+                  Your timing preference
+                </h3>
+                <p>
+                  Shift every canonical drinking window for your account only.
+                  Shared profiles and other members remain unchanged.
+                </p>
+              </div>
+              <span className="wine-maturity__confidence">
+                {maturityCalibrationLabel(calibration?.yearShift ?? 0)}
+              </span>
+            </header>
+
+            {calibration && personalizedModel ? (
+              <div className="wine-maturity__calibration-comparison">
+                <MaturityComparisonColumn
+                  label="Canonical guidance"
+                  recommendation={model}
+                />
+                <MaturityComparisonColumn
+                  label={`Your private view · ${maturityCalibrationLabel(
+                    calibration.yearShift,
+                  )}`}
+                  recommendation={personalizedModel}
+                />
+              </div>
+            ) : null}
+
+            {calibration && override ? (
+              <Notice tone="warning">
+                This preference still applies to your other wines, but this
+                wine's manual window takes priority.
+              </Notice>
+            ) : null}
+
+            <form
+              key={calibration?.updatedAt ?? "canonical"}
+              onSubmit={(event) => void saveCalibration(event)}
+            >
+              <label>
+                I generally prefer wines
+                <select
+                  defaultValue={calibration?.yearShift ?? 0}
+                  disabled={!isOnline || busyAction !== null}
+                  name="yearShift"
+                >
+                  {MATURITY_CALIBRATION_OPTIONS.map((yearShift) => (
+                    <option key={yearShift} value={yearShift}>
+                      {yearShift === 0
+                        ? "At canonical timing"
+                        : maturityCalibrationLabel(yearShift)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div>
+                <button
+                  disabled={!isOnline || busyAction !== null}
+                  type="submit"
+                >
+                  {busyAction === "calibration"
+                    ? "Saving…"
+                    : "Save preference"}
+                </button>
+                {calibration ? (
+                  <button
+                    disabled={!isOnline || busyAction !== null}
+                    onClick={() => void clearCalibration()}
+                    type="button"
+                  >
+                    {busyAction === "clear-calibration"
+                      ? "Resetting…"
+                      : "Reset to canonical"}
+                  </button>
+                ) : null}
+              </div>
+            </form>
+          </section>
+
           {projection.storage ? (
             <div className="wine-maturity__storage">
               <div>
@@ -464,6 +660,12 @@ export function WineMaturityPanel({
                   ? "Your location preference overrides the model purpose."
                   : projection.storage.message}
               </p>
+              {activePersonalizedModel ? (
+                <small>
+                  Storage guidance remains canonical; your private timing
+                  preference changes drinking dates and catalog urgency only.
+                </small>
+              ) : null}
               {projection.storage.move.needed && !override?.storagePurpose ? (
                 <span
                   className={`wine-maturity__move wine-maturity__move--${projection.storage.move.possible ? "possible" : "blocked"}`}

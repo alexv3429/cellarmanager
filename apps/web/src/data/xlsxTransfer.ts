@@ -21,6 +21,7 @@ import {
   type CsvIngestionDocument,
 } from "./csvIngestion"
 import {
+  maturityCalibrationLabel,
   maturityAssessmentReasonLabel,
   type MaturityOverviewItem,
 } from "./wineMaturity"
@@ -276,6 +277,10 @@ function maturityTable(
         maturity?.drinkByYear ?? null,
         maturity?.isOverride
           ? "Personal window"
+          : maturity?.isPersonalized
+            ? `Personal timing (${maturityCalibrationLabel(
+                maturity.personalYearShift,
+              ).toLowerCase()})`
           : maturity?.state
             ? "CellarManager estimate"
             : null,

@@ -32,6 +32,7 @@ import {
 } from "../data/wineCatalogMutations"
 import {
   getHouseholdMaturityOverview,
+  maturityCalibrationLabel,
   maturityAssessmentReasonLabel,
   type MaturityOverviewItem,
   type MaturityState,
@@ -1355,6 +1356,11 @@ export function CatalogView({
                           {maturity.stateLabel}
                           {maturity.drinkByYear
                             ? ` · by ${maturity.drinkByYear}`
+                            : ""}
+                          {maturity.isPersonalized
+                            ? ` · ${maturityCalibrationLabel(
+                                maturity.personalYearShift,
+                              ).toLowerCase()} for you`
                             : ""}
                           {maturity.moveNeeded
                             ? " · move suggested"
