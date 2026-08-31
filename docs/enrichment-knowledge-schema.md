@@ -96,8 +96,9 @@ visibility.
 
 An observation must belong to the same household as both the wine and its
 author. This prevents one household's experience from becoming global truth or
-leaking to another household. Step 0.4.10 will add the reviewed mutation and
-editing workflows; 0.4.6 grants browser users no direct write access.
+leaking to another household. The narrow mutation and editing workflows added
+in 0.4.10 preserve that boundary; browser users still have no direct table
+write access.
 
 ## Recommendation projections
 
@@ -139,7 +140,7 @@ enabled, and the migration created no knowledge version, observation, or
 projection data. The owner then confirmed that the deployed Inventory, Catalog,
 and Cellar Setup continued to work normally.
 
-## Implemented extensions and next step
+## Implemented extensions
 
 - 0.4.7 publishes reviewed knowledge versions and runs the asynchronous demand
   and job infrastructure documented in

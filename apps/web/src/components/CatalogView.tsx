@@ -1485,7 +1485,7 @@ export function CatalogView({
 
                 <td data-label="Actions">
                   {isEditing ? (
-                    <>
+                    <div className="catalog-table__actions">
                       <button
                         disabled={!isOnline || isSaving}
                         onClick={() =>
@@ -1503,9 +1503,9 @@ export function CatalogView({
                       >
                         Cancel
                       </button>
-                    </>
+                    </div>
                   ) : (
-                    <>
+                    <div className="catalog-table__actions">
                       <button
                         onClick={() =>
                           onOpenWine(wine.id)
@@ -1532,7 +1532,7 @@ export function CatalogView({
                       >
                         Edit
                       </button>
-                    </>
+                    </div>
                   )}
                 </td>
               </tr>

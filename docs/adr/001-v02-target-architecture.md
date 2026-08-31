@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-08-03
-- Implemented: v0.2.0; current through v0.3.0
+- Implemented: v0.2.0; current through v0.4.0
 
 ## Context
 

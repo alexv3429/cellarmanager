@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-08-20
+- Implemented: v0.4.0
 
 ## Context
 

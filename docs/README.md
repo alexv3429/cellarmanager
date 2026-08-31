@@ -3,10 +3,10 @@
 The repository documentation describes the current local-first application and
 retains only the evidence needed to understand its released migration history.
 
-## Current product and active design
+## Released v0.4 product and active design
 
 - [`../README.md`](../README.md) - application, development, validation, and deployment overview
-- [`product-roadmap.md`](product-roadmap.md) - canonical v0.4-to-v1.0 product sequence
+- [`product-roadmap.md`](product-roadmap.md) - canonical v0.5-to-v1.0 product sequence
 - [`wine-reference-validation.md`](wine-reference-validation.md) - LWIN coverage, conservative matching, and fallback evidence for v0.4
 - [`wine-reference-schema.md`](wine-reference-schema.md) - shared producer, product, release, package, alias, and identifier model
 - [`lwin-reference-snapshots.md`](lwin-reference-snapshots.md) - attributed LWIN7 snapshot import, atomic refresh, and missing-ID demands
@@ -24,6 +24,7 @@ retains only the evidence needed to understand its released migration history.
 - [`profile-review-requests.md`](profile-review-requests.md) - deduplicated published-profile reports, private evidence threads, visible status, and immutable outcomes
 - [`profile-revision-governance.md`](profile-revision-governance.md) - scoped curator eligibility, structured diffs, disagreement rules, immutable supersession, and trusted publication
 - [`personal-maturity-calibration.md`](personal-maturity-calibration.md) - private account timing preference, canonical comparison, reset, and manual-window precedence
+- [`v04-acceptance.md`](v04-acceptance.md) - final rich-library production acceptance and release gates
 - [`wine-duplicate-merge.md`](wine-duplicate-merge.md) - conservative duplicate candidates, explicit owner merge, stock consolidation, and immutable audit history
 - [`v01-metadata-restoration.md`](v01-metadata-restoration.md) - exact-ID, preview-first restoration of safe archived facts and guidance
 - [`maturity-knowledge-v2.md`](maturity-knowledge-v2.md) - expanded exact-appellation maturity profiles, evidence inputs, safety boundary, and private aggregate coverage
@@ -43,6 +44,7 @@ retains only the evidence needed to understand its released migration history.
 
 ## Released history and migration evidence
 
+- [`releases/v0.4.0.md`](releases/v0.4.0.md) - reviewed rich-library release
 - [`releases/v0.3.0.md`](releases/v0.3.0.md) - personal-production baseline release
 - [`releases/v0.2.0.md`](releases/v0.2.0.md) - first local-first release
 - [`adr/003-v01-data-migration.md`](adr/003-v01-data-migration.md) - historical one-off migration decision
@@ -50,6 +52,6 @@ retains only the evidence needed to understand its released migration history.
 - [`v01-production-acceptance.md`](v01-production-acceptance.md) - production migration acceptance
 
 The accepted v0.1 FastAPI/SQLite runtime and migration implementation are not
-part of active development or CI. The `v0.1.0`, `v0.2.0`, and `v0.3.0` Git tags
-preserve the released history if inspection is ever required. New product
-development belongs in `apps/web/` and `supabase/`.
+part of active development or CI. The `v0.1.0`, `v0.2.0`, `v0.3.0`, and
+`v0.4.0` Git tags preserve the released history if inspection is ever required.
+New product development belongs in `apps/web/`, `workers/`, and `supabase/`.
