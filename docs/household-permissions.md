@@ -87,11 +87,39 @@ There is deliberately no member-management screen yet. These RPCs are the
 trusted foundation used by the invitation and member-management workflows in
 later steps.
 
+## Durable invitations
+
+Step 0.5.3 gives invitations their own private lifecycle instead of treating an
+authentication email as the invitation itself. Each attempt records the
+household, normalized recipient email, least-privileged `member` role,
+inviting owner, deadline, and terminal outcome. A recipient may have only one
+pending invitation per household, while accepted, expired, revoked, and
+superseded attempts remain as durable history.
+
+Invitation links are bearer credentials. CellarManager never stores their raw
+secret: the private record contains only a SHA-256 digest used for token lookup
+by the later acceptance workflow. The record is not public,
+is not synchronized through PowerSync, and grants no direct browser table
+access. Its maximum validity is 30 days; the workflow will use a shorter
+default and may replace an attempt with a new token without rewriting the old
+record.
+
+The database enforces an append-mostly lifecycle. Only a current owner can
+create, revoke, or supersede an invitation. Acceptance must occur before the
+deadline, by an authenticated account whose normalized email matches the
+recipient, and alongside the exact new household membership. A pending record
+can make one terminal transition and can never be revived or edited into a
+different recipient, household, deadline, role, or token.
+
+This step intentionally exposes no invitation RPC or interface. Step 0.5.4
+adds the narrow invite, list, accept, reissue, and revoke operations on top of
+this model and is responsible for delivering or sharing the one-time raw link.
+
 ## Later v0.5 steps
 
-Step 0.5.2 creates safe management mutations but does not create memberships.
-Steps 0.5.3 through 0.5.7 add invitations, switching, member UI, and direct
-device management on top of this contract. Ownership transfer and leaving are
-handled explicitly in 0.5.10 so no intermediate implementation can orphan a
-household. The full adversarial matrix remains the 0.5.11 release-hardening
-step.
+Step 0.5.2 creates safe management mutations, and step 0.5.3 defines durable
+invitation state without yet creating memberships. Steps 0.5.4 through 0.5.7
+add the invitation workflow, switching, member UI, and direct device
+management on top of this contract. Ownership transfer and leaving are handled
+explicitly in 0.5.10 so no intermediate implementation can orphan a household.
+The full adversarial matrix remains the 0.5.11 release-hardening step.
