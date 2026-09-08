@@ -17,6 +17,16 @@ type AuthMode =
   | "forgot-password"
   | "resend-confirmation"
 
+interface LoginFormProps {
+  invitationContext?: {
+    accountExists: boolean
+    email: string
+    emailHint: string
+    expiresAt: string
+    householdName: string
+  }
+}
+
 function getAuthModeTitle(mode: AuthMode): string {
   if (mode === "sign-up") {
     return "Create account"
@@ -36,6 +46,7 @@ function getAuthModeTitle(mode: AuthMode): string {
 function getSubmitLabel(
   mode: AuthMode,
   isSubmitting: boolean,
+  isInvitation = false,
 ): string {
   if (isSubmitting) {
     if (mode === "sign-up") {
@@ -54,7 +65,9 @@ function getSubmitLabel(
   }
 
   if (mode === "sign-up") {
-    return "Create account"
+    return isInvitation
+      ? "Create account and continue"
+      : "Create account"
   }
 
   if (mode === "forgot-password") {
@@ -74,11 +87,21 @@ function getAuthErrorMessage(error: unknown): string {
     : "Unable to complete authentication"
 }
 
-export function LoginForm() {
+export function LoginForm({
+  invitationContext,
+}: LoginFormProps = {}) {
   const [mode, setMode] =
-    useState<AuthMode>("sign-in")
+    useState<AuthMode>(() =>
+      invitationContext?.accountExists
+        ? "sign-in"
+        : invitationContext
+          ? "sign-up"
+          : "sign-in",
+    )
 
-  const [email, setEmail] = useState("")
+  const [email, setEmail] = useState(
+    () => invitationContext?.email ?? "",
+  )
   const [password, setPassword] = useState("")
 
   const [error, setError] =
@@ -88,6 +111,9 @@ export function LoginForm() {
     useState<string | null>(null)
 
   const [isSubmitting, setIsSubmitting] =
+    useState(false)
+
+  const [isAwaitingInvitationConfirmation, setIsAwaitingInvitationConfirmation] =
     useState(false)
 
   function changeMode(nextMode: AuthMode) {
@@ -190,6 +216,15 @@ export function LoginForm() {
         data.session !== null,
       )
 
+      if (
+        invitationContext &&
+        data.session === null
+      ) {
+        setPassword("")
+        setIsAwaitingInvitationConfirmation(true)
+        return
+      }
+
       setMode(success.nextMode)
 
       if (success.clearPassword) {
@@ -204,13 +239,127 @@ export function LoginForm() {
     }
   }
 
+  if (
+    invitationContext &&
+    isAwaitingInvitationConfirmation
+  ) {
+    return (
+      <main className="standalone-page invitation-auth">
+        <p className="invitation-auth__eyebrow">
+          Invitation to {invitationContext.householdName}
+        </p>
+        <h1>Check your email</h1>
+
+        <ol
+          aria-label="Joining progress"
+          className="invitation-auth__steps"
+        >
+          <li className="invitation-auth__step--complete">
+            <span>1</span>
+            Account created
+          </li>
+          <li aria-current="step">
+            <span>2</span>
+            Confirm email
+          </li>
+          <li>
+            <span>3</span>
+            Join household
+          </li>
+        </ol>
+
+        <Notice role="status" tone="success">
+          We sent a confirmation link to {email.trim()}.
+          Open it in this browser to return here and finish
+          joining {invitationContext.householdName}. Check your
+          Spam folder if it does not arrive.
+        </Notice>
+
+        <p>
+          CellarManager has remembered this private invitation;
+          you will not need to copy its link again on this browser.
+        </p>
+
+        <div className="invitation-auth__waiting-actions">
+          <button
+            onClick={() => {
+              setIsAwaitingInvitationConfirmation(false)
+              changeMode("sign-in")
+            }}
+            type="button"
+          >
+            I already confirmed my account
+          </button>
+          <button
+            onClick={() => {
+              setIsAwaitingInvitationConfirmation(false)
+              changeMode("resend-confirmation")
+            }}
+            type="button"
+          >
+            Send the email again
+          </button>
+        </div>
+      </main>
+    )
+  }
+
   return (
-    <main className="standalone-page">
-      <h1>CellarManager</h1>
-      <p>Local-first wine cellar inventory.</p>
+    <main
+      className={`standalone-page${invitationContext ? " invitation-auth" : ""}`}
+    >
+      {invitationContext ? (
+        <>
+          <p className="invitation-auth__eyebrow">
+            Household invitation
+          </p>
+          <h1>Join {invitationContext.householdName}</h1>
+          <p>
+            Create your account, confirm your email, then approve
+            joining the shared cellar.
+          </p>
+          <ol
+            aria-label="Joining progress"
+            className="invitation-auth__steps"
+          >
+            <li aria-current="step">
+              <span>1</span>
+              {mode === "sign-in"
+                ? "Sign in"
+                : "Create account"}
+            </li>
+            <li>
+              <span>2</span>
+              {mode === "sign-in"
+                ? "Verify invitation"
+                : "Confirm email"}
+            </li>
+            <li>
+              <span>3</span>
+              Join household
+            </li>
+          </ol>
+          <p className="invitation-auth__expiry">
+            Private invitation · Valid until {new Date(
+              invitationContext.expiresAt,
+            ).toLocaleString()}
+          </p>
+        </>
+      ) : (
+        <>
+          <h1>CellarManager</h1>
+          <p>Local-first wine cellar inventory.</p>
+        </>
+      )}
 
       <form onSubmit={handleSubmit}>
-        <h2>{getAuthModeTitle(mode)}</h2>
+        <h2>
+          {invitationContext && mode === "sign-up"
+            ? "Create your CellarManager account"
+            : invitationContext && mode === "sign-in"
+              ? "Sign in to continue"
+              : getAuthModeTitle(mode)}
+        </h2>
 
         {mode === "forgot-password" ? (
           <p>
@@ -233,10 +382,16 @@ export function LoginForm() {
             onChange={(event) =>
               setEmail(event.target.value)
             }
+            readOnly={invitationContext !== undefined}
             required
             type="email"
             value={email}
           />
+          {invitationContext ? (
+            <small>
+              This address comes from the private invitation link.
+            </small>
+          ) : null}
         </label>
 
         {mode === "sign-in" || mode === "sign-up" ? (
@@ -264,7 +419,11 @@ export function LoginForm() {
           disabled={isSubmitting}
           type="submit"
         >
-          {getSubmitLabel(mode, isSubmitting)}
+          {getSubmitLabel(
+            mode,
+            isSubmitting,
+            invitationContext !== undefined,
+          )}
         </button>
 
         {mode === "sign-in" ? (
@@ -305,7 +464,9 @@ export function LoginForm() {
 
       <p className="standalone-page__mode-switch">
         {mode === "sign-in"
-          ? "New to CellarManager?"
+          ? invitationContext
+            ? "Need a CellarManager account?"
+            : "New to CellarManager?"
           : mode === "sign-up"
             ? "Already have an account?"
             : null}
@@ -322,9 +483,13 @@ export function LoginForm() {
           type="button"
         >
           {mode === "sign-in"
-            ? "Create account"
+            ? invitationContext
+              ? "Create one to join"
+              : "Create account"
             : mode === "sign-up"
-              ? "Sign in"
+              ? invitationContext
+                ? "Sign in instead"
+                : "Sign in"
               : "Back to sign in"}
         </button>
       </p>

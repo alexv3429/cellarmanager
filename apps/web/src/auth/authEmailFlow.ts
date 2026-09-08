@@ -1,3 +1,5 @@
+import { getSecureApplicationUrl } from "./secureApplicationUrl"
+
 export type AuthEmailRequest =
   | "password-reset"
   | "signup-confirmation"
@@ -25,7 +27,7 @@ export function getAuthEmailRedirectTo(
     )
   }
 
-  return origin.origin
+  return new URL(getSecureApplicationUrl(origin.href) ?? origin.href).origin
 }
 
 export function getAuthEmailRequestMessage(

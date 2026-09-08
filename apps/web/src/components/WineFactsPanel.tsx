@@ -14,6 +14,7 @@ import {
 import { Notice } from "./Notice"
 
 interface WineFactsPanelProps {
+  canManageCellar?: boolean
   isOnline: boolean
   wine: WineFactsSource & {
     id: string
@@ -34,6 +35,7 @@ function alcoholLabel(value: number): string {
 }
 
 export function WineFactsPanel({
+  canManageCellar = false,
   isOnline,
   wine,
 }: WineFactsPanelProps) {
@@ -81,7 +83,7 @@ export function WineFactsPanel({
     setSuggestions(null)
     setSuggestionError(null)
 
-    if (!isOnline) {
+    if (!isOnline || !canManageCellar) {
       return
     }
 
@@ -106,10 +108,10 @@ export function WineFactsPanel({
     return () => {
       cancelled = true
     }
-  }, [isOnline, wine.id, wine.wine_reference_id])
+  }, [canManageCellar, isOnline, wine.id, wine.wine_reference_id])
 
   function startEditing(fillMissingSuggestions = false) {
-    if (!parsed.facts) {
+    if (!canManageCellar || !parsed.facts) {
       return
     }
 
@@ -178,6 +180,7 @@ export function WineFactsPanel({
 
   async function saveFacts(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (!canManageCellar) return
     setError(null)
     setMessage(null)
 
@@ -240,7 +243,7 @@ export function WineFactsPanel({
           </p>
         </div>
 
-        {!isEditing ? (
+        {canManageCellar && !isEditing ? (
           <button
             disabled={!isOnline || facts === null}
             onClick={() => startEditing(false)}
@@ -339,7 +342,7 @@ export function WineFactsPanel({
             </small>
           </div>
 
-          {!isEditing ? (
+          {canManageCellar && !isEditing ? (
             <button
               disabled={!isOnline}
               onClick={() => startEditing(true)}
@@ -357,7 +360,7 @@ export function WineFactsPanel({
         </aside>
       ) : null}
 
-      {isEditing ? (
+      {canManageCellar && isEditing ? (
         <form
           className="wine-facts__form"
           onSubmit={(event) => void saveFacts(event)}

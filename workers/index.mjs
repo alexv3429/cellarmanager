@@ -1,10 +1,14 @@
 import { researchConfiguration, runResearchCycle } from "./researchWorker.mjs";
+import { handleInvitationEmail } from "./invitationEmail.mjs";
 
-export const WORKER_VERSION = "0.4.0";
+const WORKER_VERSION = "0.4.0";
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (url.pathname === "/api/household-invitations/email") {
+      return handleInvitationEmail(request, env);
+    }
     if (request.method === "GET" && url.pathname === "/api/research/status") {
       const configuration = researchConfiguration(env);
       return Response.json({

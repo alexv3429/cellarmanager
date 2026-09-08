@@ -180,6 +180,38 @@
   align-items: flex-end;
 }
 
+.app-shell__account-link,
+.button-link {
+  box-sizing: border-box;
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-h);
+  background: var(--bg);
+  text-decoration: none;
+  touch-action: manipulation;
+}
+
+.app-shell__account-link:hover,
+.button-link:hover {
+  border-color: var(--accent-border);
+}
+
+.app-shell__account-link:focus-visible,
+.button-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.app-shell__account-link[aria-current="page"] {
+  border-color: var(--accent-border);
+  background: var(--accent-bg);
+}
+
 .app-shell__household {
   display: grid;
   gap: 4px;
@@ -553,6 +585,284 @@
 
 .standalone-page > button {
   justify-self: start;
+}
+
+.invitation-entry {
+  width: min(100%, 640px);
+}
+
+.invitation-auth {
+  width: min(100%, 680px);
+}
+
+.invitation-auth__eyebrow {
+  margin: 0 0 -12px;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.invitation-auth__steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.invitation-auth__steps li {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-muted);
+  background: var(--surface);
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.invitation-auth__steps li > span {
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-weight: 700;
+}
+
+.invitation-auth__steps li[aria-current="step"] {
+  border-color: var(--accent-border);
+  color: var(--text-h);
+  background: var(--accent-bg);
+}
+
+.invitation-auth__steps .invitation-auth__step--complete {
+  border-color: #4f7a5a;
+  color: var(--text-h);
+  background: color-mix(in srgb, var(--surface) 90%, #4f7a5a);
+}
+
+.invitation-auth__expiry {
+  margin: -8px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.invitation-auth form label small {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.invitation-auth__waiting-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.invitation-entry__summary {
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.invitation-entry__summary h2,
+.invitation-entry__summary p,
+.invitation-entry__summary dl,
+.invitation-entry__summary dd {
+  margin: 0;
+}
+
+.invitation-entry__summary dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.invitation-entry__summary dl > div {
+  display: grid;
+  gap: 3px;
+}
+
+.invitation-entry__summary dt {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.invitation-entry__summary dd {
+  color: var(--text-h);
+  overflow-wrap: anywhere;
+}
+
+.invitation-entry__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.app-shell__content .household-invitations__share,
+.app-shell__content .household-invitations__history {
+  display: grid;
+  gap: 14px;
+  align-items: initial;
+}
+
+.household-invitations > header {
+  display: grid;
+  gap: 8px;
+}
+
+.app-shell__content .household-invitations__form {
+  display: grid;
+  gap: 12px;
+  align-items: start;
+}
+
+.app-shell__content .household-invitations__form label {
+  display: grid;
+  gap: 6px;
+  max-width: 520px;
+}
+
+.household-invitations__form input {
+  width: 100%;
+}
+
+.household-invitations__form p {
+  margin: 0;
+}
+
+.household-invitations__share-actions > button {
+  flex: 0 1 auto;
+}
+
+.household-invitations > header p,
+.household-invitations__share p,
+.household-invitations__section-heading p {
+  margin: 0;
+}
+
+.app-shell__content .household-invitations__share label {
+  display: grid;
+  gap: 5px;
+}
+
+.household-invitations__share input {
+  width: 100%;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+}
+
+.household-invitations__share-actions,
+.household-invitations__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.household-invitations__section-heading {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.household-invitations__section-heading > div {
+  display: grid;
+  gap: 5px;
+}
+
+.household-invitations__list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.household-invitations__list > li {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.household-invitations__list > li > div:first-child {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 4px 8px;
+  align-items: center;
+  min-width: 0;
+}
+
+.household-invitations__list strong,
+.household-invitations__list small {
+  grid-column: 1 / -1;
+  overflow-wrap: anywhere;
+}
+
+.household-invitations__list small {
+  color: var(--text-muted);
+}
+
+.household-invitations__status {
+  width: fit-content;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-h);
+  background: var(--surface-muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.household-invitations__status--pending {
+  border-color: #9a6a22;
+  background: color-mix(in srgb, var(--surface) 88%, #c68a2c);
+}
+
+.household-invitations__status--accepted {
+  border-color: #4f7a5a;
+  background: color-mix(in srgb, var(--surface) 90%, #4f7a5a);
+}
+
+@media (max-width: 720px) {
+  .invitation-auth__steps {
+    grid-template-columns: 1fr;
+  }
+
+  .invitation-entry__summary dl {
+    grid-template-columns: 1fr;
+  }
+
+  .household-invitations__section-heading,
+  .household-invitations__list > li {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .household-invitations__actions > button {
+    flex: 1 1 180px;
+  }
+
+  .household-invitations__share-actions > button {
+    flex: 1 1 230px;
+  }
 }
 
 @media (max-width: 720px) {
@@ -7012,4 +7322,36 @@
   .pairing-result-card__feedback button {
     width: 100%;
   }
+}
+/* A single, read-only cellar browser for household Members. */
+.member-cellar { display: grid; gap: 1rem; }
+.member-cellar > header { display: grid; gap: .5rem; }
+.member-cellar__filters {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.member-cellar__filters > label { display: grid; gap: .4rem; min-width: 0; align-content: start; }
+.member-cellar__filters input, .member-cellar__filters select { width: 100%; min-width: 0; box-sizing: border-box; }
+.member-cellar__filters .member-cellar__checkbox {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  grid-column: 1 / -1;
+}
+.member-cellar__checkbox input[type="checkbox"] {
+  flex: 0 0 auto;
+  width: 1.1rem;
+  height: 1.1rem;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+}
+.member-cellar__wines { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.member-cellar__wine { background: var(--surface); border: 1px solid var(--border); border-radius: 1rem; padding: 1.25rem; min-width: 0; overflow-wrap: anywhere; }
+.member-cellar__wine h2 { font-size: 1.2rem; margin: 0; }
+.member-cellar__wine p { margin: .5rem 0; }
+.member-cellar__wine ul { padding-left: 1.25rem; }
+@media (max-width: 640px) {
+  .member-cellar__filters, .member-cellar__wines { grid-template-columns: minmax(0, 1fr); }
 }

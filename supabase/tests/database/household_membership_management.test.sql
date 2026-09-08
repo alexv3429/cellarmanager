@@ -496,7 +496,7 @@ select throws_ok(
 set local request.jwt.claim.sub =
     '00000000-0000-4000-8000-000000000003';
 
-select lives_ok(
+select throws_ok(
     $test$
         select *
         from public.apply_inventory_operation(
@@ -512,8 +512,27 @@ select lives_ok(
             null
         )
     $test$,
-    'An active member device can still create ordinary inventory history'
+    '42501',
+    'Household owner permission is required',
+    'An active device does not give a Member permission to change stock'
 );
+
+-- Preserve the original revocation regression for history accepted before
+-- read-only Member permissions existed. This fixture is rolled back below.
+reset role;
+insert into public.inventory_operations (
+    id, household_id, device_id, user_id, operation_type, wine_id,
+    source_location_id, destination_location_id, quantity, status, created_at_client
+) values (
+    '00000000-0000-4000-8000-000000009701',
+    '00000000-0000-4000-8000-000000000100',
+    '00000000-0000-4000-8000-000000000301',
+    '00000000-0000-4000-8000-000000000003', 'MOVE',
+    '00000000-0000-4000-8000-000000000110',
+    '00000000-0000-4000-8000-000000000121',
+    '00000000-0000-4000-8000-000000000122', 1, 'ACCEPTED', '2026-09-01T08:00:00Z'
+);
+set local role authenticated;
 
 set local request.jwt.claim.sub =
     '00000000-0000-4000-8000-000000000001';
@@ -681,8 +700,8 @@ select throws_ok(
         )
     $test$,
     '42501',
-    'Device registration is no longer active',
-    'Rejoining cannot replay work through the old revoked device'
+    'Household owner permission is required',
+    'Rejoining as a Member cannot replay inventory work'
 );
 
 select throws_ok(

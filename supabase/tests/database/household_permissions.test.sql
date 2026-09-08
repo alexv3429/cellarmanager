@@ -105,7 +105,7 @@ select is(
 select ok(
     (
         select
-            permissions.can_manage_inventory
+            not permissions.can_manage_inventory
             and permissions.can_manage_own_devices
             and not permissions.can_import_inventory
             and not permissions.can_manage_catalog
@@ -165,7 +165,7 @@ select lives_ok(
     'A member can register their own device'
 );
 
-select lives_ok(
+select throws_ok(
     $test$
         select *
         from public.apply_add_inventory_operation(
@@ -185,7 +185,9 @@ select lives_ok(
             '2026-08-31T12:00:00Z'
         )
     $test$,
-    'A member can add a bottle and create its catalog row through daily inventory'
+    '42501',
+    'Household owner permission is required',
+    'A member cannot create a wine through daily inventory'
 );
 
 select is(
@@ -197,8 +199,8 @@ select is(
           and wine.household_id =
             '00000000-0000-4000-8000-000000000100'
     ),
-    1::bigint,
-    'The member ADD created exactly one household wine'
+    0::bigint,
+    'The denied member ADD did not create a wine'
 );
 
 select lives_ok(

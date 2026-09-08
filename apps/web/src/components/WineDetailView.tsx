@@ -43,6 +43,7 @@ import { WineMaturityPanel } from "./WineMaturityPanel"
 import { WinePersonalGuidancePanel } from "./WinePersonalGuidancePanel"
 
 interface WineDetailViewProps {
+  canManageCellar: boolean
   deviceRegistration: RegisteredDevicesState
   householdId: string
   isOnline: boolean
@@ -160,6 +161,10 @@ function locationLabel(
 
 function returnViewLabel(view: AppView): string {
   switch (view) {
+    case "cellar":
+      return "cellar"
+    case "pairing":
+      return "pairing"
     case "activity":
       return "activity"
     case "inventory":
@@ -172,6 +177,7 @@ function returnViewLabel(view: AppView): string {
 }
 
 export function WineDetailView({
+  canManageCellar,
   deviceRegistration,
   householdId,
   isOnline,
@@ -230,11 +236,12 @@ export function WineDetailView({
       projectHoldings({
         holdings: authoritativeHoldings,
         locations,
-        operations: pendingOperations,
+        operations: canManageCellar ? pendingOperations : [],
         wines: wine ? [wine] : [],
       }),
     [
       authoritativeHoldings,
+      canManageCellar,
       locations,
       pendingOperations,
       wine,
@@ -317,7 +324,7 @@ export function WineDetailView({
   }, [activeAction, holdings])
 
   function startEditing() {
-    if (!wine) {
+    if (!canManageCellar || !wine) {
       return
     }
 
@@ -338,6 +345,7 @@ export function WineDetailView({
     event: FormEvent<HTMLFormElement>,
   ) {
     event.preventDefault()
+    if (!canManageCellar) return
     setEditMessage(null)
     setEditError(null)
 
@@ -383,6 +391,7 @@ export function WineDetailView({
     action: InventoryHoldingAction,
     defaultDestinationId: string,
   ) {
+    if (!canManageCellar) return
     const nextAction = toggleInventoryHoldingAction(
       activeAction,
       holdingId,
@@ -404,6 +413,7 @@ export function WineDetailView({
     quantity: number,
     destinationLocationId: string,
   ) {
+    if (!canManageCellar) return
     setOperationMessage(null)
     setOperationError(null)
 
@@ -459,6 +469,7 @@ export function WineDetailView({
     quantity: number,
     destinationLocationId: string,
   ) {
+    if (!canManageCellar) return
     setOperationMessage(null)
     setOperationError(null)
 
@@ -516,6 +527,7 @@ export function WineDetailView({
     quantity: number,
     selectedReason: RemoveReason,
   ) {
+    if (!canManageCellar) return
     setOperationMessage(null)
     setOperationError(null)
 
@@ -561,7 +573,7 @@ export function WineDetailView({
     holding: ProjectedHolding | null,
     destinations: WineDetailLocation[],
   ) {
-    if (activeAction?.holdingId !== actionOwnerId) {
+    if (!canManageCellar || activeAction?.holdingId !== actionOwnerId) {
       return null
     }
 
@@ -890,7 +902,7 @@ export function WineDetailView({
             <p>Identity and metadata synchronized for this wine.</p>
           </div>
 
-          {!isEditing ? (
+          {canManageCellar && !isEditing ? (
             <button
               disabled={!isOnline}
               onClick={startEditing}
@@ -906,7 +918,7 @@ export function WineDetailView({
           ) : null}
         </div>
 
-        {isEditing ? (
+        {canManageCellar && isEditing ? (
           <form
             className="wine-detail-edit-form"
             onSubmit={(event) => void saveWine(event)}
@@ -1037,7 +1049,7 @@ export function WineDetailView({
           </dl>
         )}
 
-        {!isEditing ? (
+        {canManageCellar && !isEditing ? (
           <WineReferenceMatchReview
             isOnline={isOnline}
             wine={wine}
@@ -1045,15 +1057,16 @@ export function WineDetailView({
         ) : null}
       </section>
 
-      <WineFactsPanel isOnline={isOnline} wine={wine} />
+      <WineFactsPanel canManageCellar={canManageCellar} isOnline={isOnline} wine={wine} />
 
       <WineMaturityPanel
+        canManageCellar={canManageCellar}
         householdId={householdId}
         isOnline={isOnline}
         wineId={wine.id}
       />
 
-      <WinePersonalGuidancePanel isOnline={isOnline} wineId={wine.id} />
+      <WinePersonalGuidancePanel canManageCellar={canManageCellar} isOnline={isOnline} wineId={wine.id} />
 
       <section
         aria-labelledby="wine-stock-heading"
@@ -1063,12 +1076,11 @@ export function WineDetailView({
           <div>
             <h2 id="wine-stock-heading">Stock positions</h2>
             <p>
-              Projected local stock, including queued offline
-              operations.
+              {canManageCellar ? "Projected local stock, including queued offline operations." : "Synchronized bottle quantities and storage locations. Only an Owner can add, move, or remove bottles."}
             </p>
           </div>
 
-          <button
+          {canManageCellar ? <button
             aria-controls={`wine-action-${DETAIL_ADD_ACTION_ID}`}
             aria-expanded={
               activeAction?.holdingId ===
@@ -1090,17 +1102,17 @@ export function WineDetailView({
             type="button"
           >
             Add bottles
-          </button>
+          </button> : null}
         </div>
 
-        {!deviceId && locations.length > 0 ? (
+        {canManageCellar && !deviceId && locations.length > 0 ? (
           <Notice tone="warning">
             Inventory actions will be available when device
             registration finishes.
           </Notice>
         ) : null}
 
-        {locations.length === 0 ? (
+        {canManageCellar && locations.length === 0 ? (
           <Notice tone="warning">
             Create a cellar location before adding bottles.
           </Notice>
@@ -1138,7 +1150,7 @@ export function WineDetailView({
                   <div className="wine-detail-position__summary">
                     <div>
                       <h3>{currentLocationLabel}</h3>
-                      <small>Revision {holding.revision}</small>
+                      {canManageCellar ? <small>Revision {holding.revision}</small> : null}
                     </div>
                     <div className="wine-detail-position__quantity">
                       <strong>{holding.quantity}</strong>
@@ -1154,7 +1166,7 @@ export function WineDetailView({
                     </div>
                   </div>
 
-                  <div
+                  {canManageCellar ? <div
                     aria-label={`Actions for ${currentLocationLabel}`}
                     className="inventory-action-picker"
                     role="group"
@@ -1229,7 +1241,7 @@ export function WineDetailView({
                     >
                       Consume/remove
                     </button>
-                  </div>
+                  </div> : null}
 
                   {renderActionPanel(
                     holding.id,

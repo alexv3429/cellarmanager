@@ -4,7 +4,7 @@ import {
   createInventoryOperationQueue,
 } from "./inventoryOperations"
 
-function createQueue() {
+function createQueue(role: string | null = "owner") {
   const execute = vi.fn(
     async (
       _sql: string,
@@ -13,6 +13,7 @@ function createQueue() {
   )
 
   const queue = createInventoryOperationQueue({
+    getRole: async () => role,
     execute,
     createOperationId: () => "operation-1",
     now: () => new Date("2026-08-05T20:00:00Z"),
@@ -30,6 +31,24 @@ const commonInput = {
 }
 
 describe("inventory operation queue", () => {
+  it.each(["member", null, "unknown"])("refuses every stock operation for role %s without a local write", async (role) => {
+    const { execute, queue } = createQueue(role)
+    await expect(queue.queueAdd({ ...commonInput, destinationLocationId: "location-a" })).rejects.toThrow("Only a household Owner")
+    await expect(queue.queueMove({ ...commonInput, sourceLocationId: "location-a", destinationLocationId: "location-b" })).rejects.toThrow("Only a household Owner")
+    await expect(queue.queueRemove({ ...commonInput, sourceLocationId: "location-a", removeReason: "DRANK" })).rejects.toThrow("Only a household Owner")
+    await expect(queue.queueAdd({ ...commonInput, destinationLocationId: "location-a", wineProducer: "New", wineCuvee: "Wine", wineVintage: 2024, wineColor: "red", wineFormatMl: 750 })).rejects.toThrow("Only a household Owner")
+    expect(execute).not.toHaveBeenCalled()
+  })
+
+  it("rechecks the role for each operation after a demotion", async () => {
+    const getRole = vi.fn().mockResolvedValueOnce("owner").mockResolvedValue("member")
+    const execute = vi.fn()
+    const queue = createInventoryOperationQueue({ getRole, execute, createOperationId: () => "op", now: () => new Date() })
+    await queue.queueAdd({ ...commonInput, destinationLocationId: "location-a" })
+    await expect(queue.queueRemove({ ...commonInput, sourceLocationId: "location-a", removeReason: "DRANK" })).rejects.toThrow("Only a household Owner")
+    expect(getRole).toHaveBeenLastCalledWith(commonInput.householdId, commonInput.userId)
+    expect(execute).toHaveBeenCalledTimes(1)
+  })
   it("queues an add without a source", async () => {
     const { execute, queue } = createQueue()
 

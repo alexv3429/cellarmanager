@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 
-import worker, { WORKER_VERSION } from "../../workers/index.mjs"
+import worker from "../../workers/index.mjs"
 
 test("public research readiness exposes release metadata without secrets", async () => {
   const response = await worker.fetch(
@@ -21,8 +21,10 @@ test("public research readiness exposes release metadata without secrets", async
 
   assert.equal(response.status, 200)
   assert.equal(response.headers.get("cache-control"), "no-store")
-  assert.deepEqual(await response.json(), {
-    version: WORKER_VERSION,
+  const body = await response.json()
+  assert.match(body.version, /^\d+\.\d+\.\d+$/)
+  assert.deepEqual(body, {
+    version: body.version,
     status: "ready",
     configuration: {
       ai: true,

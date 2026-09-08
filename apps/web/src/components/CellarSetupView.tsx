@@ -74,6 +74,25 @@ function formValue(
 }
 
 export function CellarSetupView({
+  canManageCellarSetup,
+  ...props
+}: CellarSetupViewProps & { canManageCellarSetup: boolean }) {
+  if (!canManageCellarSetup) {
+    return (
+      <main className="cellar-setup-view">
+        <h1>Cellar setup</h1>
+        <Notice role="status">
+          Only a household Owner can change cellars and locations.
+          You can still add, move, and remove bottles from Inventory.
+        </Notice>
+      </main>
+    )
+  }
+
+  return <OwnerCellarSetupView {...props} />
+}
+
+function OwnerCellarSetupView({
   householdId,
   isOnline,
 }: CellarSetupViewProps) {

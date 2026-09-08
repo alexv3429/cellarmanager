@@ -29,6 +29,7 @@ import {
 import { Notice } from "./Notice"
 
 interface WineMaturityPanelProps {
+  canManageCellar?: boolean
   householdId: string
   isOnline: boolean
   wineId: string
@@ -153,6 +154,7 @@ function yearInput(form: HTMLFormElement, name: string): number {
 }
 
 export function WineMaturityPanel({
+  canManageCellar = false,
   householdId,
   isOnline,
   wineId,
@@ -268,6 +270,7 @@ export function WineMaturityPanel({
 
   async function saveOverride(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (!canManageCellar) return
     if (!isOnline) {
       return
     }
@@ -310,6 +313,7 @@ export function WineMaturityPanel({
   }
 
   async function clearOverride() {
+    if (!canManageCellar) return
     if (!isOnline) {
       return
     }
@@ -823,7 +827,7 @@ export function WineMaturityPanel({
             </div>
           </div>
 
-          <details className="wine-maturity__override">
+          {canManageCellar ? <details className="wine-maturity__override">
             <summary>{override ? "Edit your window" : "Adjust this window"}</summary>
             <p>
               Your values take priority in the app; the original model and its
@@ -912,7 +916,7 @@ export function WineMaturityPanel({
                 ) : null}
               </div>
             </form>
-          </details>
+          </details> : null}
         </>
       ) : null}
     </section>

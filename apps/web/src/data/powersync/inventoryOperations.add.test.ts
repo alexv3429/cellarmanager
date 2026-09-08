@@ -14,6 +14,7 @@ describe("new-wine ADD queue", () => {
     )
 
     const queue = createInventoryOperationQueue({
+      getRole: async () => "owner",
       execute,
       createOperationId: () => "operation-new-wine",
       now: () => new Date("2026-08-07T14:30:00Z"),
@@ -66,6 +67,7 @@ describe("new-wine ADD queue", () => {
     )
 
     const queue = createInventoryOperationQueue({
+      getRole: async () => "owner",
       execute,
       createOperationId: () => "operation-new-wine",
       now: () => new Date("2026-08-07T14:30:00Z"),

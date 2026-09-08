@@ -7,9 +7,12 @@ import { useSession } from "./auth/useSession"
 import { AppShell } from "./components/AppShell"
 import { ActivityView } from "./components/ActivityView"
 import { CatalogView } from "./components/CatalogView"
+import { MemberCellarView } from "./components/MemberCellarView"
 import { CellarSetupView } from "./components/CellarSetupView"
 import { HoldingsView } from "./components/HoldingsView"
 import { ImportView } from "./components/ImportView"
+import { HouseholdInvitationsView } from "./components/HouseholdInvitationsView"
+import { InvitationEntryView } from "./components/InvitationEntryView"
 import { LoginForm } from "./components/LoginForm"
 import { OnboardingView } from "./components/OnboardingView"
 import { PairingView } from "./components/PairingView"
@@ -24,11 +27,18 @@ import {
   resolveHouseholdGate,
 } from "./households/householdGate"
 import { useActiveHousehold } from "./households/useActiveHousehold"
+import { getHouseholdPermissions } from "./households/householdPermissions"
 import type {
   HouseholdOption,
 } from "./households/useActiveHousehold"
 import {
+  captureHouseholdInvitationToken,
+  clearHouseholdInvitationToken,
+  getInvitationUrlWithoutSecret,
+} from "./households/invitationToken"
+import {
   getAppRouteFromPathname,
+  getAppRouteForRole,
   getAppRouteTitle,
   getAppViewPath,
   getWineDetailPath,
@@ -73,17 +83,35 @@ function ReadyAuthenticatedApp({
     households.find(
       (household) => household.id === activeHouseholdId,
     )?.role ?? "member"
+  const activeHouseholdName =
+    households.find(
+      (household) => household.id === activeHouseholdId,
+    )?.name ?? "this household"
+  const permissions = getHouseholdPermissions(activeHouseholdRole)
 
-  const [route, setRoute] =
+  const [requestedRoute, setRoute] =
     useState<AppRoute>(() =>
       getAppRouteFromPathname(window.location.pathname),
     )
 
-  const [wineDetailReturnView, setWineDetailReturnView] =
+  const route = getAppRouteForRole(requestedRoute, activeHouseholdRole)
+  const [requestedReturnView, setWineDetailReturnView] =
     useState<AppView>(() =>
       getWineDetailReturnView(window.history.state) ??
       "catalog",
     )
+  const wineDetailReturnView = getAppRouteForRole(
+    { view: requestedReturnView, wineId: null }, activeHouseholdRole,
+  ).view as AppView
+
+  useEffect(() => {
+    if (route.view !== "wine") {
+      const path = getAppViewPath(route.view)
+      if (window.location.pathname !== path) {
+        window.history.replaceState(window.history.state, "", path + window.location.search + window.location.hash)
+      }
+    }
+  }, [route.view, requestedRoute.view, activeHouseholdRole])
   const [hasMountedPairing, setHasMountedPairing] =
     useState(
       () =>
@@ -120,13 +148,14 @@ function ReadyAuthenticatedApp({
   }, [route.view])
 
   function changeView(nextView: AppView) {
-    const nextPath = getAppViewPath(nextView)
+    const nextRoute = getAppRouteForRole({ view: nextView, wineId: null }, activeHouseholdRole)
+    const nextPath = getAppViewPath(nextRoute.view as AppView)
 
     if (window.location.pathname !== nextPath) {
       window.history.pushState(null, "", nextPath)
     }
 
-    setRoute({ view: nextView, wineId: null })
+    setRoute(nextRoute)
   }
 
   function openWineDetail(
@@ -199,6 +228,16 @@ function ReadyAuthenticatedApp({
           : route.view
       }
     >
+      {!permissions.canManageInventory && (route.view === "cellar" || (route.view === "wine" && wineDetailReturnView === "cellar")) ? (
+        <div hidden={route.view !== "cellar"}>
+        <MemberCellarView
+          householdId={activeHouseholdId}
+          isOnline={isOnline}
+          key={activeHouseholdId}
+          onOpenWine={(wineId) => openWineDetail(wineId, "cellar")}
+        />
+        </div>
+      ) : null}
       {route.view === "inventory" ? (
         <HoldingsView
           deviceRegistration={deviceRegistration}
@@ -243,6 +282,7 @@ function ReadyAuthenticatedApp({
 
       {route.view === "setup" ? (
         <CellarSetupView
+          canManageCellarSetup={permissions.canManageCellarSetup}
           householdId={activeHouseholdId}
           isOnline={isOnline}
         />
@@ -250,6 +290,7 @@ function ReadyAuthenticatedApp({
 
       {route.view === "import" ? (
         <ImportView
+          canImportInventory={permissions.canImportInventory}
           deviceId={
             deviceRegistration.deviceIdByHousehold[
               activeHouseholdId
@@ -261,8 +302,27 @@ function ReadyAuthenticatedApp({
         />
       ) : null}
 
+      {route.view === "invite" ? (
+        activeHouseholdRole === "owner" ? (
+          <HouseholdInvitationsView
+            householdId={activeHouseholdId}
+            householdName={activeHouseholdName}
+            isOnline={isOnline}
+          />
+        ) : (
+          <main>
+            <h1>Household invitations</h1>
+            <Notice role="status" tone="warning">
+              Only a household Owner can invite members.
+            </Notice>
+          </main>
+        )
+      ) : null}
+
       {route.view === "wine" ? (
         <WineDetailView
+          canManageCellar={permissions.canManageInventory}
+          key={`${activeHouseholdId}:${activeHouseholdRole}:${route.wineId}`}
           deviceRegistration={deviceRegistration}
           householdId={activeHouseholdId}
           isOnline={isOnline}
@@ -391,6 +451,27 @@ export default function App() {
     error: sessionError,
   } = useSession()
 
+  const [invitationToken, setInvitationToken] =
+    useState<string | null>(() => {
+      const token = captureHouseholdInvitationToken(
+        window.location.href,
+        window.localStorage,
+      )
+      const safeUrl = getInvitationUrlWithoutSecret(
+        window.location.href,
+      )
+
+      if (safeUrl) {
+        window.history.replaceState(
+          window.history.state,
+          "",
+          safeUrl,
+        )
+      }
+
+      return token
+    })
+
   const [syncError, setSyncError] =
     useState<string | null>(null)
 
@@ -491,6 +572,29 @@ export default function App() {
           link.
         </Notice>
       </main>
+    )
+  }
+
+  if (invitationToken) {
+    return (
+      <InvitationEntryView
+        hasAuthenticatedSession={session !== null}
+        isOnline={isOnline}
+        onCompleteInvitation={() => {
+          clearHouseholdInvitationToken(
+            window.localStorage,
+          )
+        }}
+        onDismissInvitation={() => {
+          clearHouseholdInvitationToken(
+            window.localStorage,
+          )
+          setInvitationToken(null)
+        }}
+        onSignOut={signOutAndClearLocalData}
+        token={invitationToken}
+        userId={userId}
+      />
     )
   }
 
