@@ -48,57 +48,44 @@ export function useActiveHousehold(userId: string) {
     [userId],
   )
 
-  const [activeHouseholdId, setActiveHouseholdId] =
-    useState<string | null>(() =>
-      readInitialActiveHouseholdId(userId),
-    )
+  const [selection, setSelection] = useState(() => ({
+    userId,
+    householdId: readInitialActiveHouseholdId(userId),
+  }))
 
   const [selectionError, setSelectionError] =
     useState<string | null>(null)
+  const [selectionNotice, setSelectionNotice] = useState<string | null>(null)
+
+  // A stored ID is a preference, never proof of membership. Resolve during
+  // render so removed memberships cannot remain mounted for one more effect.
+  const preferredId = selection.userId === userId ? selection.householdId : null
+  const activeHouseholdId = householdsError ? null : resolveActiveHouseholdId(
+    preferredId,
+    households.map((household) => household.id),
+  )
+  const activeHouseholdName = households.find((household) => household.id === activeHouseholdId)?.name
 
   useEffect(() => {
-    if (isLoading) {
-      return
-    }
-
-    try {
-      const storedHouseholdId =
-        readActiveHouseholdId(
-          window.localStorage,
-          userId,
-        )
-
-      const resolvedHouseholdId =
-        resolveActiveHouseholdId(
-          storedHouseholdId,
-          households.map((household) => household.id),
-        )
-
-      setActiveHouseholdId(resolvedHouseholdId)
-      setSelectionError(null)
-
-      if (resolvedHouseholdId) {
-        saveActiveHouseholdId(
-          window.localStorage,
-          userId,
-          resolvedHouseholdId,
-        )
+    if (!activeHouseholdId || isLoading) return
+    if (preferredId !== activeHouseholdId) {
+      if (preferredId) {
+        setSelectionNotice(`Your previous household is no longer available. You are now viewing ${activeHouseholdName}.`)
       }
-    } catch (error: unknown) {
-      setActiveHouseholdId(
-        households[0]?.id ?? null,
-      )
-      setSelectionError(
-        error instanceof Error
-          ? error.message
-          : "Unable to restore household selection",
-      )
+      setSelection({ userId, householdId: activeHouseholdId })
     }
-  }, [households, isLoading, userId])
+    try {
+      saveActiveHouseholdId(window.localStorage, userId, activeHouseholdId)
+      setSelectionError(null)
+    } catch {
+      setSelectionError("You can switch households, but this browser could not remember your selection for next time.")
+    }
+  }, [activeHouseholdId, activeHouseholdName, isLoading, preferredId, userId])
 
   const selectHousehold = useCallback(
     (householdId: string) => {
       if (
+        householdsError ||
         !households.some(
           (household) => household.id === householdId,
         )
@@ -106,37 +93,23 @@ export function useActiveHousehold(userId: string) {
         setSelectionError(
           "Selected household is not available",
         )
-        return
+        return false
       }
-
-      try {
-        saveActiveHouseholdId(
-          window.localStorage,
-          userId,
-          householdId,
-        )
-
-        setActiveHouseholdId(householdId)
-        setSelectionError(null)
-      } catch (error: unknown) {
-        setSelectionError(
-          error instanceof Error
-            ? error.message
-            : "Unable to save household selection",
-        )
-      }
+      setSelection({ userId, householdId })
+      setSelectionNotice(null)
+      return true
     },
-    [households, userId],
+    [households, householdsError, userId],
   )
 
   return {
     activeHouseholdId,
     households,
-    error:
-      selectionError ??
-      (householdsError
+    error: householdsError
         ? String(householdsError)
-        : null),
+        : null,
+    selectionWarning: selectionError,
+    selectionNotice,
     isLoading,
     selectHousehold,
   }

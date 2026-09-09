@@ -8,6 +8,7 @@ retains only the evidence needed to understand its released migration history.
 - [`../README.md`](../README.md) - application, development, validation, and deployment overview
 - [`product-roadmap.md`](product-roadmap.md) - canonical v0.5-to-v1.0 product sequence
 - [`household-permissions.md`](household-permissions.md) - final owner/member capability and enforcement contract for v0.5
+- [`household-switching.md`](household-switching.md) - multi-household selection, isolation, and 0.5.5 acceptance checklist
 - [`wine-reference-validation.md`](wine-reference-validation.md) - LWIN coverage, conservative matching, and fallback evidence for v0.4
 - [`wine-reference-schema.md`](wine-reference-schema.md) - shared producer, product, release, package, alias, and identifier model
 - [`lwin-reference-snapshots.md`](lwin-reference-snapshots.md) - attributed LWIN7 snapshot import, atomic refresh, and missing-ID demands

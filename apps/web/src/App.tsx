@@ -1,5 +1,5 @@
 import { useStatus } from "@powersync/react"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import "./App.css"
 import { signOutAndClearLocalData } from "./auth/signOut"
@@ -27,6 +27,12 @@ import {
   resolveHouseholdGate,
 } from "./households/householdGate"
 import { useActiveHousehold } from "./households/useActiveHousehold"
+import {
+  getHouseholdRoute,
+  householdHistoryState,
+  householdHomeRoute,
+  isOtherHouseholdHistory,
+} from "./households/householdNavigation"
 import { getHouseholdPermissions } from "./households/householdPermissions"
 import type {
   HouseholdOption,
@@ -37,7 +43,6 @@ import {
   getInvitationUrlWithoutSecret,
 } from "./households/invitationToken"
 import {
-  getAppRouteFromPathname,
   getAppRouteForRole,
   getAppRouteTitle,
   getAppViewPath,
@@ -45,7 +50,6 @@ import {
   getWineDetailReturnView,
   type AppRoute,
   type AppView,
-  type WineDetailHistoryState,
 } from "./navigation/appNavigation"
 
 interface AuthenticatedAppProps {
@@ -60,11 +64,13 @@ interface ReadyAuthenticatedAppProps {
   activeHouseholdId: string
   currentSyncError: string | null
   householdError: string | null
+  selectionWarning: string | null
+  selectionNotice: string | null
   households: HouseholdOption[]
   initialSyncComplete: boolean
   isOfflineAccess: boolean
   isOnline: boolean
-  selectHousehold: (householdId: string) => void
+  selectHousehold: (householdId: string) => boolean
   userId: string
 }
 
@@ -72,6 +78,8 @@ function ReadyAuthenticatedApp({
   activeHouseholdId,
   currentSyncError,
   householdError,
+  selectionWarning,
+  selectionNotice,
   households,
   initialSyncComplete,
   isOfflineAccess,
@@ -79,6 +87,11 @@ function ReadyAuthenticatedApp({
   selectHousehold,
   userId,
 }: ReadyAuthenticatedAppProps) {
+  const workspaceActive = useRef(true)
+  useEffect(() => {
+    workspaceActive.current = true
+    return () => { workspaceActive.current = false }
+  }, [])
   const activeHouseholdRole =
     households.find(
       (household) => household.id === activeHouseholdId,
@@ -91,13 +104,13 @@ function ReadyAuthenticatedApp({
 
   const [requestedRoute, setRoute] =
     useState<AppRoute>(() =>
-      getAppRouteFromPathname(window.location.pathname),
+      getHouseholdRoute(window.location.pathname, window.history.state, activeHouseholdId, activeHouseholdRole),
     )
 
   const route = getAppRouteForRole(requestedRoute, activeHouseholdRole)
   const [requestedReturnView, setWineDetailReturnView] =
     useState<AppView>(() =>
-      getWineDetailReturnView(window.history.state) ??
+      (!isOtherHouseholdHistory(window.history.state, activeHouseholdId) && getWineDetailReturnView(window.history.state)) ||
       "catalog",
     )
   const wineDetailReturnView = getAppRouteForRole(
@@ -105,30 +118,37 @@ function ReadyAuthenticatedApp({
   ).view as AppView
 
   useEffect(() => {
-    if (route.view !== "wine") {
-      const path = getAppViewPath(route.view)
-      if (window.location.pathname !== path) {
-        window.history.replaceState(window.history.state, "", path + window.location.search + window.location.hash)
-      }
-    }
-  }, [route.view, requestedRoute.view, activeHouseholdRole])
+    const path = route.view === "wine" ? getWineDetailPath(route.wineId) : getAppViewPath(route.view)
+    const foreign = isOtherHouseholdHistory(window.history.state, activeHouseholdId)
+    // Only an in-app wine navigation has a known Back destination. A fresh
+    // deep link falls back to the catalog instead of leaving the app.
+    const hasReturnView = !foreign && getWineDetailReturnView(window.history.state) !== null
+    window.history.replaceState(
+      householdHistoryState(activeHouseholdId, route.view === "wine" && hasReturnView ? wineDetailReturnView : undefined),
+      "",
+      path + (foreign ? "" : window.location.search + window.location.hash),
+    )
+  }, [activeHouseholdId, route.view, route.wineId, wineDetailReturnView])
   const [hasMountedPairing, setHasMountedPairing] =
     useState(
       () =>
         route.view === "pairing" ||
-        getWineDetailReturnView(window.history.state) ===
-          "pairing",
+        (!isOtherHouseholdHistory(window.history.state, activeHouseholdId) &&
+          getWineDetailReturnView(window.history.state) === "pairing"),
     )
 
   useEffect(() => {
     function handlePopState() {
-      setRoute(
-        getAppRouteFromPathname(window.location.pathname),
-      )
+      const foreign = isOtherHouseholdHistory(window.history.state, activeHouseholdId)
+      const nextRoute = getHouseholdRoute(window.location.pathname, window.history.state, activeHouseholdId, activeHouseholdRole)
+      const returnView = (!foreign && getWineDetailReturnView(window.history.state)) || "catalog"
+      setRoute(nextRoute)
       setWineDetailReturnView(
-        getWineDetailReturnView(window.history.state) ??
-          "catalog",
+        returnView,
       )
+      // Even if the visible route stays the same, normalize a foreign history
+      // entry now; a dependency-based effect would not run in that case.
+      if (foreign) window.history.replaceState(householdHistoryState(activeHouseholdId), "", getAppViewPath(nextRoute.view as AppView))
     }
 
     window.addEventListener("popstate", handlePopState)
@@ -139,7 +159,7 @@ function ReadyAuthenticatedApp({
         handlePopState,
       )
     }
-  }, [])
+  }, [activeHouseholdId, activeHouseholdRole])
 
   useEffect(() => {
     if (route.view === "pairing") {
@@ -148,11 +168,12 @@ function ReadyAuthenticatedApp({
   }, [route.view])
 
   function changeView(nextView: AppView) {
+    if (!workspaceActive.current) return
     const nextRoute = getAppRouteForRole({ view: nextView, wineId: null }, activeHouseholdRole)
     const nextPath = getAppViewPath(nextRoute.view as AppView)
 
     if (window.location.pathname !== nextPath) {
-      window.history.pushState(null, "", nextPath)
+      window.history.pushState(householdHistoryState(activeHouseholdId), "", nextPath)
     }
 
     setRoute(nextRoute)
@@ -162,9 +183,8 @@ function ReadyAuthenticatedApp({
     wineId: string,
     returnView: AppView,
   ) {
-    const historyState: WineDetailHistoryState = {
-      wineDetailReturnView: returnView,
-    }
+    if (!workspaceActive.current) return
+    const historyState = householdHistoryState(activeHouseholdId, returnView)
 
     window.history.pushState(
       historyState,
@@ -177,6 +197,7 @@ function ReadyAuthenticatedApp({
   }
 
   function leaveWineDetail() {
+    if (!workspaceActive.current) return
     if (getWineDetailReturnView(window.history.state)) {
       window.history.back()
       return
@@ -186,9 +207,8 @@ function ReadyAuthenticatedApp({
   }
 
   function replaceWineDetail(wineId: string) {
-    const historyState: WineDetailHistoryState = {
-      wineDetailReturnView,
-    }
+    if (!workspaceActive.current) return
+    const historyState = householdHistoryState(activeHouseholdId, wineDetailReturnView)
 
     window.history.replaceState(
       historyState,
@@ -203,6 +223,13 @@ function ReadyAuthenticatedApp({
     initialSyncComplete,
   )
 
+  function switchHousehold(householdId: string) {
+    const target = households.find((household) => household.id === householdId)
+    if (!target || householdId === activeHouseholdId || !selectHousehold(householdId)) return
+    const nextRoute = householdHomeRoute(target.role)
+    window.history.replaceState(householdHistoryState(householdId), "", getAppViewPath(nextRoute.view as AppView))
+  }
+
   return (
     <AppShell
       activeHouseholdId={activeHouseholdId}
@@ -214,13 +241,15 @@ function ReadyAuthenticatedApp({
       }
       deviceRegistration={deviceRegistration}
       householdError={householdError}
+      selectionNotice={selectionNotice}
+      selectionWarning={selectionWarning}
       households={households}
       isOfflineAccess={isOfflineAccess}
       isOnline={isOnline}
-      onSelectHousehold={selectHousehold}
+      onSelectHousehold={switchHousehold}
       onSignOut={signOutAndClearLocalData}
       onViewChange={changeView}
-      pageTitle={getAppRouteTitle(route)}
+      pageTitle={getAppRouteTitle(route).replace(" · CellarManager", ` · ${activeHouseholdName} · CellarManager`)}
       syncError={currentSyncError}
       view={
         route.view === "wine"
@@ -350,6 +379,8 @@ function AuthenticatedApp({
     activeHouseholdId,
     households,
     error: householdError,
+    selectionWarning,
+    selectionNotice,
     isLoading: householdsLoading,
     selectHousehold,
   } = useActiveHousehold(userId)
@@ -424,9 +455,12 @@ function AuthenticatedApp({
 
   return (
     <ReadyAuthenticatedApp
+      key={`${activeHouseholdId}:${households.find((household) => household.id === activeHouseholdId)?.role}`}
       activeHouseholdId={activeHouseholdId}
       currentSyncError={currentSyncError}
       householdError={householdError}
+      selectionWarning={selectionWarning}
+      selectionNotice={selectionNotice}
       households={households}
       initialSyncComplete={
         powerSyncStatus.hasSynced === true
