@@ -3,10 +3,18 @@
   "name": "cellarmanager",
   "main": "./workers/index.mjs",
   "compatibility_date": "2026-08-27",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "SMTP_USER": "cellarmanager.auth@gmail.com"
+  },
+  "secrets": {
+    "required": ["SMTP_PASSWORD", "SUPABASE_URL", "SUPABASE_SECRET_KEY"]
+  },
   "assets": {
     "binding": "ASSETS",
     "directory": "./apps/web/dist",
-    "not_found_handling": "single-page-application"
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
   },
   "ai": {
     "binding": "AI"

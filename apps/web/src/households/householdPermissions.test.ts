@@ -6,14 +6,14 @@ import {
 } from "./householdPermissions"
 
 describe("household permission model", () => {
-  it("keeps daily inventory and own-device work available to members", () => {
+  it("keeps member device access without shared cellar management", () => {
     expect(getHouseholdPermissions("member")).toEqual({
       canImportInventory: false,
       canManageCatalog: false,
       canManageCellarSetup: false,
       canManageHouseholdDevices: false,
       canManageHouseholdGuidance: false,
-      canManageInventory: true,
+      canManageInventory: false,
       canManageMembers: false,
       canManageOwnDevices: true,
       canManageSharedKnowledge: false,

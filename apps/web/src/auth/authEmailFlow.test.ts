@@ -27,6 +27,20 @@ class MemoryStorage {
 }
 
 describe("authentication email redirects", () => {
+  it("upgrades public HTTP origins without trusting lookalike localhost names", () => {
+    for (const host of ["cellar.trycloudflare.com", "cellar.workers.dev", "localhost.example.com", "192.168.1.10"]) {
+      expect(getAuthEmailRedirectTo(`http://${host}/invite?secret=discard#also-discard`))
+        .toBe(`https://${host}`)
+    }
+  })
+
+  it("keeps local development loopback URLs usable", () => {
+    for (const host of ["localhost", "127.0.0.1", "[::1]"]) {
+      expect(getAuthEmailRedirectTo(`http://${host}:8796/invite`))
+        .toBe(`http://${host}:8796`)
+    }
+  })
+
   it("uses only the deployed application origin", () => {
     expect(
       getAuthEmailRedirectTo(

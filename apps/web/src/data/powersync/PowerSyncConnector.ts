@@ -8,6 +8,13 @@ import {
 import { environment } from "../env"
 import { supabase } from "../supabase"
 
+function uploadError(prefix: string, error: { code?: string; message: string }): Error {
+  if (error.code === "42501" && error.message === "Household owner permission is required") {
+    return new Error("Only an Owner can upload bottle changes. Your queued changes have been kept locally and were not applied. Ask an Owner to review your access.")
+  }
+  return new Error(`${prefix}: ${error.message}`)
+}
+
 function requireString(
   data: Record<string, unknown>,
   field: string,
@@ -216,9 +223,7 @@ export class PowerSyncConnector implements PowerSyncBackendConnector {
         )
 
         if (error) {
-          throw new Error(
-            `Inventory ADD upload failed: ${error.message}`,
-          )
+          throw uploadError("Inventory ADD upload failed", error)
         }
 
         continue
@@ -250,9 +255,7 @@ export class PowerSyncConnector implements PowerSyncBackendConnector {
       )
 
       if (error) {
-        throw new Error(
-          `Inventory operation upload failed: ${error.message}`,
-        )
+        throw uploadError("Inventory operation upload failed", error)
       }
     }
 

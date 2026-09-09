@@ -16,6 +16,7 @@ import {
 } from "../navigation/appNavigation"
 import {
   getHouseholdRoleLabel,
+  getHouseholdPermissions,
   type HouseholdRole,
 } from "../households/householdPermissions"
 import type {
@@ -80,6 +81,7 @@ export function AppShell({
   syncError,
   view,
 }: AppShellProps) {
+  const permissions = getHouseholdPermissions(activeHouseholdRole)
   const status = useStatus()
   const {
     data: pendingOperationCounts,
@@ -250,6 +252,17 @@ export function AppShell({
             </select>
           </label>
 
+          {activeHouseholdRole === "owner" ? (
+            <a
+              aria-current={view === "invite" ? "page" : undefined}
+              className="app-shell__account-link"
+              href={getAppViewPath("invite")}
+              onClick={(event) => navigate(event, "invite")}
+            >
+              Invite member
+            </a>
+          ) : null}
+
           <button
             onClick={() => void signOut()}
             title={
@@ -269,11 +282,11 @@ export function AppShell({
         className="app-shell__nav"
       >
         <a
-          aria-current={view === "inventory" ? "page" : undefined}
-          href={getAppViewPath("inventory")}
-          onClick={(event) => navigate(event, "inventory")}
+          aria-current={view === "inventory" || view === "cellar" ? "page" : undefined}
+          href={getAppViewPath(permissions.canManageInventory ? "inventory" : "cellar")}
+          onClick={(event) => navigate(event, permissions.canManageInventory ? "inventory" : "cellar")}
         >
-          Inventory
+          {permissions.canManageInventory ? "Inventory" : "Cellar"}
         </a>
 
         <a
@@ -292,13 +305,13 @@ export function AppShell({
           Activity
         </a>
 
-        <a
+        {permissions.canManageCatalog ? <a
           aria-current={view === "catalog" ? "page" : undefined}
           href={getAppViewPath("catalog")}
           onClick={(event) => navigate(event, "catalog")}
         >
           Catalog
-        </a>
+        </a> : null}
 
         <a
           aria-current={view === "import" ? "page" : undefined}
@@ -308,13 +321,15 @@ export function AppShell({
           Data
         </a>
 
-        <a
-          aria-current={view === "setup" ? "page" : undefined}
-          href={getAppViewPath("setup")}
-          onClick={(event) => navigate(event, "setup")}
-        >
-          Cellar setup
-        </a>
+        {permissions.canManageCellarSetup ? (
+          <a
+            aria-current={view === "setup" ? "page" : undefined}
+            href={getAppViewPath("setup")}
+            onClick={(event) => navigate(event, "setup")}
+          >
+            Cellar setup
+          </a>
+        ) : null}
       </nav>
 
       {householdError ||

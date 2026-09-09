@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   getAppRouteFromPathname,
+  getAppRouteForRole,
   getAppRouteTitle,
   getAppViewFromPathname,
   getAppViewPath,
@@ -10,6 +11,24 @@ import {
 } from "./appNavigation"
 
 describe("app navigation", () => {
+  it.each(["/", "/catalog", "/catalog/", "/cellar", "/cellar/"])("resolves %s to the Member cellar on refresh or history navigation", (path) => {
+    expect(getAppRouteForRole(getAppRouteFromPathname(path), "member")).toEqual({ view: "cellar", wineId: null })
+  })
+
+  it("resolves Owner and Member switches without retaining a management route", () => {
+    const ownerRoute = getAppRouteFromPathname("/catalog")
+    const memberRoute = getAppRouteForRole(ownerRoute, "member")
+    expect(getAppRouteForRole(memberRoute, "owner")).toEqual({ view: "inventory", wineId: null })
+    expect(getAppRouteForRole(ownerRoute, "owner")).toEqual(ownerRoute)
+    expect(getAppViewPath("cellar")).toBe("/cellar")
+    expect(getAppRouteTitle(memberRoute)).toBe("Cellar · CellarManager")
+    expect(getWineDetailReturnView({ wineDetailReturnView: "cellar" })).toBe("cellar")
+  })
+
+  it.each(["/wines/test-wine", "/pairing", "/data", "/activity"])("keeps Member read-only deep links for %s", (path) => {
+    const route = getAppRouteFromPathname(path)
+    expect(getAppRouteForRole(route, "member")).toEqual(route)
+  })
   it("maps application paths to views", () => {
     expect(getAppViewFromPathname("/")).toBe("inventory")
     expect(getAppViewFromPathname("/pairing")).toBe("pairing")
@@ -17,6 +36,7 @@ describe("app navigation", () => {
     expect(getAppViewFromPathname("/catalog")).toBe("catalog")
     expect(getAppViewFromPathname("/data")).toBe("import")
     expect(getAppViewFromPathname("/import")).toBe("import")
+    expect(getAppViewFromPathname("/invite")).toBe("invite")
     expect(getAppViewFromPathname("/setup")).toBe("setup")
   })
 
@@ -26,6 +46,7 @@ describe("app navigation", () => {
     expect(getAppViewFromPathname("/catalog/")).toBe("catalog")
     expect(getAppViewFromPathname("/data/")).toBe("import")
     expect(getAppViewFromPathname("/import/")).toBe("import")
+    expect(getAppViewFromPathname("/invite/")).toBe("invite")
     expect(getAppViewFromPathname("/setup/")).toBe("setup")
   })
 
@@ -75,6 +96,7 @@ describe("app navigation", () => {
     expect(getAppViewPath("activity")).toBe("/activity")
     expect(getAppViewPath("catalog")).toBe("/catalog")
     expect(getAppViewPath("import")).toBe("/data")
+    expect(getAppViewPath("invite")).toBe("/invite")
     expect(getAppViewPath("setup")).toBe("/setup")
   })
 
@@ -97,6 +119,9 @@ describe("app navigation", () => {
     expect(
       getAppRouteTitle({ view: "import", wineId: null }),
     ).toBe("Cellar data · CellarManager")
+    expect(
+      getAppRouteTitle({ view: "invite", wineId: null }),
+    ).toBe("Household invitations · CellarManager")
     expect(
       getAppRouteTitle({ view: "wine", wineId: "wine-1" }),
     ).toBe("Wine details · CellarManager")

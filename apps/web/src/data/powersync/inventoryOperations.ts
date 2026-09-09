@@ -63,6 +63,7 @@ type ExecuteSql = (
 ) => Promise<unknown>
 
 interface QueueDependencies {
+  getRole: (householdId: string, userId: string) => Promise<string | null>
   execute: ExecuteSql
   createOperationId: () => string
   now: () => Date
@@ -260,6 +261,12 @@ export function createInventoryOperationQueue(
   ): Promise<string> {
     validatePositiveQuantity(input.quantity)
     validateOperationShape(input)
+
+    // Fail closed using the synchronized membership, including offline. The
+    // server independently rechecks the current role when this is uploaded.
+    if (await dependencies.getRole(input.householdId, input.userId) !== "owner") {
+      throw new Error("Only a household Owner can add, move, or remove bottles")
+    }
 
     const operationId =
       dependencies.createOperationId()
@@ -466,6 +473,13 @@ export function createInventoryOperationQueue(
 
 const inventoryOperationQueue =
   createInventoryOperationQueue({
+    getRole: async (householdId, userId) => {
+      const member = await powerSyncDatabase.getOptional<{ role: string }>(
+        "select role from household_members where household_id = ? and user_id = ?",
+        [householdId, userId],
+      )
+      return member?.role ?? null
+    },
     execute: (sql, parameters) =>
       powerSyncDatabase.execute(sql, parameters),
     createOperationId: () => crypto.randomUUID(),

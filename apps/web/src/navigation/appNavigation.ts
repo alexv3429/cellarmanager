@@ -1,9 +1,11 @@
 export type AppView =
+  | "cellar"
   | "inventory"
   | "pairing"
   | "activity"
   | "catalog"
   | "import"
+  | "invite"
   | "setup"
 
 export type AppRoute =
@@ -21,11 +23,13 @@ export interface WineDetailHistoryState {
 }
 
 const APP_VIEW_PATHS: Record<AppView, string> = {
+  cellar: "/cellar",
   inventory: "/",
   pairing: "/pairing",
   activity: "/activity",
   catalog: "/catalog",
   import: "/data",
+  invite: "/invite",
   setup: "/setup",
 }
 
@@ -68,6 +72,8 @@ export function getAppRouteFromPathname(
   }
 
   switch (normalizedPathname) {
+    case "/cellar":
+      return { view: "cellar", wineId: null }
     case "/pairing":
       return { view: "pairing", wineId: null }
     case "/activity":
@@ -77,6 +83,8 @@ export function getAppRouteFromPathname(
     case "/data":
     case "/import":
       return { view: "import", wineId: null }
+    case "/invite":
+      return { view: "invite", wineId: null }
     case "/setup":
       return { view: "setup", wineId: null }
     default:
@@ -99,7 +107,9 @@ export function getAppRouteTitle(route: AppRoute): string {
       : {
           activity: "Activity",
           catalog: "Catalog",
+          cellar: "Cellar",
           import: "Cellar data",
+          invite: "Household invitations",
           inventory: "Inventory",
           pairing: "Food pairing",
           setup: "Cellar setup",
@@ -122,11 +132,28 @@ export function getWineDetailReturnView(
   const returnView = historyState.wineDetailReturnView
 
   return returnView === "inventory" ||
+    returnView === "cellar" ||
     returnView === "pairing" ||
     returnView === "activity" ||
     returnView === "catalog" ||
     returnView === "import" ||
+    returnView === "invite" ||
     returnView === "setup"
     ? returnView
     : null
+}
+
+// Resolve on every render as well as navigation: a role change must never
+// leave a previously mounted management screen accessible to a Member.
+export function getAppRouteForRole(
+  route: AppRoute,
+  role: "owner" | "member",
+): AppRoute {
+  if (role === "member" && (route.view === "inventory" || route.view === "catalog")) {
+    return { view: "cellar", wineId: null }
+  }
+  if (role === "owner" && route.view === "cellar") {
+    return { view: "inventory", wineId: null }
+  }
+  return route
 }

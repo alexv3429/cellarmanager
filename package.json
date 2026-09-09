@@ -18,18 +18,22 @@
     "enrichment:review": "node scripts/enrichment/provider_review.mjs",
     "enrichment:inference": "node scripts/enrichment/inference_poc.mjs",
     "enrichment:test": "node --test scripts/enrichment/*.test.mjs",
+    "invitations:test": "node --test scripts/invitations/*.test.mjs",
     "web:dev": "npm run dev --workspace @cellarmanager/web",
     "web:lint": "npm run lint --workspace @cellarmanager/web",
     "web:test": "npm run test --workspace @cellarmanager/web",
     "web:build": "npm run build --workspace @cellarmanager/web",
     "web:ci": "npm run web:lint && npm run web:test && npm run web:build",
-    "ci": "npm run repository:check && npm run release:check && npm run v01:test && npm run lwin:test && npm run enrichment:test && npm run web:ci",
+    "ci": "npm run repository:check && npm run release:check && npm run v01:test && npm run lwin:test && npm run enrichment:test && npm run invitations:test && npm run web:ci",
     "audit": "npm audit --omit=dev --audit-level=high",
     "supabase": "supabase"
   },
   "devDependencies": {
     "@excel.js/exceljs": "^0.12.0",
     "supabase": "^2.111.0",
-    "wrangler": "^4.119.0"
+    "wrangler": "^4.129.1"
+  },
+  "dependencies": {
+    "nodemailer": "^10.0.1"
   }
 }

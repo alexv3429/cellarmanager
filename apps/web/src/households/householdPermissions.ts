@@ -23,7 +23,7 @@ export function getHouseholdPermissions(
     canManageCellarSetup: isOwner,
     canManageHouseholdDevices: isOwner,
     canManageHouseholdGuidance: isOwner,
-    canManageInventory: true,
+    canManageInventory: isOwner,
     canManageMembers: isOwner,
     canManageOwnDevices: true,
     canManageSharedKnowledge: isOwner,

@@ -351,6 +351,30 @@ function CompactImportPreviewCard({
 }
 
 export function ImportView({
+  canImportInventory,
+  ...props
+}: ImportViewProps & { canImportInventory: boolean }) {
+  if (!canImportInventory) {
+    return (
+      <main className="import-view">
+        <div className="import-view__intro">
+          <h1>Cellar data</h1>
+          <p>Download a portable copy of this shared cellar.</p>
+        </div>
+        <Notice role="status">
+          Spreadsheet imports are reserved for household Owners.
+          As a Member, you can export the cellar and browse wines,
+          quantities, and locations in Cellar.
+        </Notice>
+        <CsvExportPanel householdId={props.householdId} isOnline={props.isOnline} />
+      </main>
+    )
+  }
+
+  return <OwnerImportView {...props} />
+}
+
+function OwnerImportView({
   deviceId,
   householdId,
   isOnline,

@@ -219,4 +219,18 @@ describe("PowerSync inventory upload", () => {
     expect(supabaseMocks.rpc).toHaveBeenCalledTimes(2)
     expect(complete).toHaveBeenCalledTimes(1)
   })
+
+  it.each(["ADD", "MOVE", "REMOVE"])("preserves a %s denied after an Owner demotion without silently acknowledging it", async (operationType) => {
+    supabaseMocks.rpc.mockResolvedValue({ data: null, error: { code: "42501", message: "Household owner permission is required" } })
+    const { database, complete } = createDatabase([putOperation("old-queued-op", {
+      ...commonData, operation_type: operationType,
+      source_location_id: operationType === "ADD" ? null : "location-a",
+      destination_location_id: operationType === "REMOVE" ? null : "location-b",
+      remove_reason: operationType === "REMOVE" ? "DRANK" : null,
+      ...(operationType === "ADD" ? { wine_producer: "Queued wine", wine_cuvee: "Before demotion", wine_vintage: 2024, wine_color: "red", wine_format_ml: 750 } : {}),
+    })])
+    await expect(new PowerSyncConnector().uploadData(database)).rejects.toThrow("Your queued changes have been kept locally and were not applied")
+    expect(complete).not.toHaveBeenCalled()
+    expect(supabaseMocks.rpc).toHaveBeenCalledTimes(1)
+  })
 })

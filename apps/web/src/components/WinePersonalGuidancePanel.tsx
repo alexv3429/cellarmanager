@@ -17,6 +17,7 @@ import {
 import { Notice } from "./Notice"
 
 interface WinePersonalGuidancePanelProps {
+  canManageCellar?: boolean
   isOnline: boolean
   wineId: string
 }
@@ -122,6 +123,7 @@ function ratingSummary(observation: WineObservation): string[] {
 }
 
 export function WinePersonalGuidancePanel({
+  canManageCellar = false,
   isOnline,
   wineId,
 }: WinePersonalGuidancePanelProps) {
@@ -277,6 +279,7 @@ export function WinePersonalGuidancePanel({
 
   async function submitServingOverride(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (!canManageCellar) return
     if (!isOnline) {
       return
     }
@@ -310,6 +313,7 @@ export function WinePersonalGuidancePanel({
   }
 
   async function clearServingOverride() {
+    if (!canManageCellar) return
     if (!isOnline) {
       return
     }
@@ -447,7 +451,7 @@ export function WinePersonalGuidancePanel({
               </Notice>
             )}
 
-            <details className="wine-serving__override" key={override?.updatedAt ?? "model"}>
+            {canManageCellar ? <details className="wine-serving__override" key={override?.updatedAt ?? "model"}>
               <summary>
                 {override ? "Edit your serving guidance" : "Adjust serving guidance"}
               </summary>
@@ -541,7 +545,7 @@ export function WinePersonalGuidancePanel({
                   ) : null}
                 </div>
               </form>
-            </details>
+            </details> : null}
           </div>
 
           <div className="wine-observations">

@@ -43,6 +43,9 @@ jobs:
       - name: Test the LWIN snapshot importer
         run: npm run lwin:test
 
+      - name: Test invitation email delivery
+        run: npm run invitations:test
+
       - name: Lint, test, and build the web application
         run: npm run web:ci
 

@@ -11,7 +11,7 @@ crosses a milestone boundary.
 |---|---|---|
 | `v0.3` | A cellar can live safely in CellarManager through daily manual use or guarded CSV import | Released (`v0.3.0`) |
 | `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable evidence | Released (`v0.4.0`) |
-| `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | In progress (`0.5.3`) |
+| `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | In progress (`0.5.4`) |
 | `v0.6` | Adding or identifying wine requires dramatically less typing | Planned |
 | `v0.7` | CellarManager explains what happened to the cellar and what the collection means over time | Planned |
 | `v1.0` | A self-host can install, trust, upgrade, recover, and maintain CellarManager for years | Planned |
@@ -169,14 +169,15 @@ make incompatible changes while offline.
 | 0.5.11 | Full membership security matrix |
 | 0.5.12 | v0.5 acceptance and release |
 
-Step 0.5.1 fixes the two-role contract before membership writes exist. Every
-owner and member may read the shared cellar, perform registered-device daily
-ADD/MOVE/REMOVE operations, use private preferences and authored notes, submit
-feedback, report shared-knowledge problems, and manage their own devices.
-Owners alone administer bulk imports, catalog and storage structure,
-household-wide guidance overrides, shared research decisions, memberships, and
-all household devices. A normal ADD may create its missing catalog row for a
-member; later edits and bulk creation remain administrative. The exact matrix
+Step 0.5.1 introduced the two-role contract, refined during 0.5.4 validation:
+every owner and member may read the shared cellar, use private preferences and
+authored notes, submit feedback, report shared-knowledge problems, and manage
+their own devices. Owners alone perform ADD/MOVE/REMOVE operations and manage
+imports, catalog and storage structure, household-wide guidance overrides,
+shared research decisions, memberships, and all household devices. Members
+have one read-only Cellar browser instead of separate Inventory and Catalog
+menus; Owners retain both management screens. A future visual cellar-layout
+view must also be readable by Members without granting setup edits. The exact matrix
 and its server-side enforcement are documented in
 [`household-permissions.md`](household-permissions.md).
 
@@ -198,9 +199,21 @@ attempt while accepted, expired, revoked, and superseded records remain
 append-mostly history. Database guards bind acceptance to the matching
 authenticated email and exact membership and prohibit revival or identity,
 role, deadline, and token rewriting. No recipient email or token digest is
-public or synchronized offline. The RPC and interface workflow that creates,
-delivers, accepts, reissues, lists, and revokes these records remains step
-0.5.4.
+public or synchronized offline.
+
+Step 0.5.4 adds the audited workflow on top of that durable model. An owner
+creates a seven-day Member invitation and chooses email delivery from the trusted
+Worker or copies its private link for another messaging app. Email delivery is
+owner-authorized, rate-limited, and tracked separately from acceptance. The
+raw secret is returned once, lives in the URL fragment so it is not
+sent in an HTTP path or query, and is never recoverable from invitation
+history. An owner can cancel a live invitation or replace it with a new link;
+replacement immediately invalidates the previous link. A recipient can preview
+the household before authentication, must sign in with the exact invited email,
+and explicitly accepts before the membership is created. Acceptance is
+idempotent and every creation, acceptance, replacement, and cancellation is
+attributed in the private membership audit. Full current-member administration
+remains step 0.5.6.
 
 ## v0.6 — Capture-assisted enrichment
 
