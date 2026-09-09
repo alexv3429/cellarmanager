@@ -11,7 +11,7 @@ crosses a milestone boundary.
 |---|---|---|
 | `v0.3` | A cellar can live safely in CellarManager through daily manual use or guarded CSV import | Released (`v0.3.0`) |
 | `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable evidence | Released (`v0.4.0`) |
-| `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | In progress (`0.5.5`) |
+| `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | In progress (`0.5.6`) |
 | `v0.6` | Adding or identifying wine requires dramatically less typing | Planned |
 | `v0.7` | CellarManager explains what happened to the cellar and what the collection means over time | Planned |
 | `v1.0` | A self-host can install, trust, upgrade, recover, and maintain CellarManager for years | Planned |
@@ -212,8 +212,8 @@ replacement immediately invalidates the previous link. A recipient can preview
 the household before authentication, must sign in with the exact invited email,
 and explicitly accepts before the membership is created. Acceptance is
 idempotent and every creation, acceptance, replacement, and cancellation is
-attributed in the private membership audit. Full current-member administration
-remains step 0.5.6.
+attributed in the private membership audit. Current-member administration is
+provided by step 0.5.6 below.
 
 Step 0.5.5 makes multi-household switching explicit. The header identifies the
 current collection and role, and offers a role-labelled selector only when
@@ -231,6 +231,20 @@ selected membership closes its workspace and explains any available fallback.
 Offline switching uses only locally synchronized memberships, subject to
 server-side permission checks after reconnection. No new migration is needed.
 See [`household-switching.md`](household-switching.md) for the acceptance checklist.
+
+Step 0.5.6 adds **Members** in the account header and a `/members` directory for
+the current household. Everyone can read current collaborators; Owners can
+invite people, promote/demote another membership, or remove its access through
+the existing audited RPCs. Each change requires confirmation with the target
+identity and consequences, including deletion of household-private notes and
+preferences on removal. The directory is online-only and is not persisted in
+browser storage. The UI rechecks actor and target before submitting a change,
+then reloads actual server state; uncertain responses never cause automatic
+write retries. Offline transitions, household switches, and role changes clear
+the directory and any confirmation, ignoring stale responses. Owners cannot
+change their own role or remove themselves here; the explicit ownership-transfer
+and leaving workflow remains 0.5.10. No migration is required. See
+[`household-members.md`](household-members.md) for scope and safe validation.
 
 ## v0.6 — Capture-assisted enrichment
 

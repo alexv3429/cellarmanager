@@ -90,6 +90,7 @@ describe("owner-only management views", () => {
     expect(html.includes('href="/"')).toBe(role === "owner")
     expect(html).toContain("Shared inventory")
     expect(html.includes('href="/setup"')).toBe(role === "owner")
-    expect(html.includes('href="/invite"')).toBe(role === "owner")
+    expect(html).toContain('href="/members"')
+    expect(html).not.toContain('href="/invite"')
   })
 })

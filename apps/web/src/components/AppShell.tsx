@@ -239,16 +239,14 @@ export function AppShell({
           <HouseholdSwitcher activeHouseholdId={activeHouseholdId} households={households}
             isOnline={isOnline} pendingOperationCount={pendingOperationCount} onSelectHousehold={onSelectHousehold} />
 
-          {activeHouseholdRole === "owner" ? (
-            <a
-              aria-current={view === "invite" ? "page" : undefined}
-              className="app-shell__account-link"
-              href={getAppViewPath("invite")}
-              onClick={(event) => navigate(event, "invite")}
-            >
-              Invite member
-            </a>
-          ) : null}
+          <a
+            aria-current={view === "members" ? "page" : undefined}
+            className="app-shell__account-link"
+            href={getAppViewPath("members")}
+            onClick={(event) => navigate(event, "members")}
+          >
+            Members
+          </a>
 
           <button
             onClick={() => void signOut()}

@@ -23,6 +23,7 @@ interface HouseholdInvitationsViewProps {
   householdId: string
   householdName: string
   isOnline: boolean
+  onBackToMembers?: () => void
 }
 
 interface ShareableInvitation extends CreatedHouseholdInvitation {
@@ -66,6 +67,7 @@ export function HouseholdInvitationsView({
   householdId,
   householdName,
   isOnline,
+  onBackToMembers,
 }: HouseholdInvitationsViewProps) {
   const [email, setEmail] = useState("")
   const [invitations, setInvitations] = useState<
@@ -227,11 +229,12 @@ export function HouseholdInvitationsView({
   return (
     <main className="household-invitations">
       <header>
+        {onBackToMembers ? <div><button onClick={onBackToMembers} type="button">Back to members</button></div> : null}
         <h1>Invite a household member</h1>
         <p>
-          Invite someone to view and update {householdName}.
-          Every invitation grants the Member role; owner controls
-          remain private.
+          Invite someone to browse {householdName} with read-only Member access.
+          Only Owners can change stock or shared settings. You can grant Owner
+          access from Members after they join.
         </p>
       </header>
 
