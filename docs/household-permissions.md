@@ -104,9 +104,11 @@ preferences and personal household observations are deleted; household-visible
 observations, shared serving guidance, and inventory history remain attributed
 and intact.
 
-There is deliberately no member-management screen yet. These RPCs are the
-trusted foundation used by the invitation and member-management workflows in
-later steps.
+Step 0.5.6 exposes these RPCs through **Members** in the account header. The
+online-only directory is readable by every current member; only Owners can
+manage another membership. Confirmations explain role changes and removal,
+and no generic control changes the acting Owner's own membership. See
+[`household-members.md`](household-members.md) for the interface and safeguards.
 
 ## Durable invitations
 
@@ -183,8 +185,9 @@ account, expired link, cancelled link, replaced link, or malformed token cannot
 create access.
 
 The owner invitation screen shows durable status and deadlines but never a
-stored secret. It deliberately does not list or modify current memberships;
-the complete member-management interface remains step 0.5.6.
+stored secret. **Members → Invite member** opens it, and **Back to members**
+returns to current collaborators. Invitation history and current memberships
+remain separate: cancelling an invitation is not revoking someone's access.
 
 ### Invitation email delivery
 
@@ -219,9 +222,10 @@ Before production rollout, apply the invitation migrations and
 Worker has all three required secrets. Supabase Auth's custom SMTP settings do
 not automatically configure the Worker's separate invitation-email transport.
 
-For preview validation, always share the HTTPS tunnel URL. A temporary tunnel
-can expire before an invitation does; issue a replacement link from the new
-preview instead of reusing an expired hostname. The Auth confirmation allowlist
+For preview validation, prefer the HTTPS Cloudflare branch preview URL, which
+does not depend on the developer machine staying awake. When a temporary tunnel
+is needed, it can expire before an invitation does; issue a replacement link
+from the new preview instead of reusing an expired hostname. The Auth confirmation allowlist
 can still send a new user to the production application. After confirming the
 email, reopen the original live preview invitation to explicitly join there.
 Do not allow every `trycloudflare.com` hostname as an Auth redirect.
@@ -236,8 +240,8 @@ and remain subject to database permission checks. See
 [`household-switching.md`](household-switching.md) for details and acceptance.
 
 Steps 0.5.2 through 0.5.4 create safe membership mutations, durable invitation
-state, and the invitation workflow. Steps 0.5.5 through 0.5.7 add switching,
-the complete member UI, and direct device management on top of this contract.
+state, and the invitation workflow. Steps 0.5.5 and 0.5.6 add switching and the
+member-management UI. Direct device management follows in 0.5.7.
 Ownership transfer and leaving are handled
 explicitly in 0.5.10 so no intermediate implementation can orphan a household.
 The full adversarial matrix remains the 0.5.11 release-hardening step.

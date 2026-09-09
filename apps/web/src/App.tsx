@@ -12,6 +12,7 @@ import { CellarSetupView } from "./components/CellarSetupView"
 import { HoldingsView } from "./components/HoldingsView"
 import { ImportView } from "./components/ImportView"
 import { HouseholdInvitationsView } from "./components/HouseholdInvitationsView"
+import { HouseholdMembersView } from "./components/HouseholdMembersView"
 import { InvitationEntryView } from "./components/InvitationEntryView"
 import { LoginForm } from "./components/LoginForm"
 import { OnboardingView } from "./components/OnboardingView"
@@ -331,12 +332,18 @@ function ReadyAuthenticatedApp({
         />
       ) : null}
 
+      {route.view === "members" ? (
+        <HouseholdMembersView householdId={activeHouseholdId} householdName={activeHouseholdName}
+          userId={userId} role={activeHouseholdRole} isOnline={isOnline} onInvite={() => changeView("invite")} />
+      ) : null}
+
       {route.view === "invite" ? (
         activeHouseholdRole === "owner" ? (
           <HouseholdInvitationsView
             householdId={activeHouseholdId}
             householdName={activeHouseholdName}
             isOnline={isOnline}
+            onBackToMembers={() => changeView("members")}
           />
         ) : (
           <main>
@@ -344,6 +351,7 @@ function ReadyAuthenticatedApp({
             <Notice role="status" tone="warning">
               Only a household Owner can invite members.
             </Notice>
+            <button onClick={() => changeView("members")} type="button">View members</button>
           </main>
         )
       ) : null}

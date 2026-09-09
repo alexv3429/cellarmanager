@@ -754,6 +754,124 @@
   gap: 10px;
 }
 
+.household-members__heading,
+.household-members__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.household-members__heading {
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.household-members__heading > div,
+.household-members__person {
+  min-width: 0;
+}
+
+.household-members__heading p,
+.household-members__roles p {
+  margin: 0;
+}
+
+.household-members__roles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.household-members__roles p {
+  display: grid;
+  gap: 4px;
+  padding: 16px;
+  border-radius: 10px;
+  background: var(--surface-muted);
+}
+
+.household-members__list {
+  display: grid;
+  gap: 12px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.household-members__list > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.household-members__person {
+  display: grid;
+  gap: 4px;
+  overflow-wrap: anywhere;
+}
+
+.household-members__person > div {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.household-members__person small {
+  color: var(--text-muted);
+}
+
+.household-members__badge {
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 12px;
+  background: var(--surface-muted);
+}
+
+.household-members__confirmation {
+  grid-column: 1 / -1;
+  padding: 18px;
+  border: 1px solid var(--accent-border);
+  border-radius: 10px;
+  background: var(--accent-bg);
+  overflow-wrap: anywhere;
+}
+
+.household-members__confirmation:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.household-members__confirmation p {
+  margin: 12px 0;
+}
+
+.household-members__actions button {
+  min-height: 44px;
+}
+
+@media (max-width: 720px) {
+  .household-members__roles,
+  .household-members__list > li {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .household-members__heading > .household-members__actions {
+    width: 100%;
+  }
+
+  .household-members__actions button {
+    flex: 1 1 auto;
+  }
+}
+
 .app-shell__content .household-invitations__share,
 .app-shell__content .household-invitations__history {
   display: grid;

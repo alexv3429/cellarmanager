@@ -6,6 +6,7 @@ export type AppView =
   | "catalog"
   | "import"
   | "invite"
+  | "members"
   | "setup"
 
 export type AppRoute =
@@ -30,6 +31,7 @@ const APP_VIEW_PATHS: Record<AppView, string> = {
   catalog: "/catalog",
   import: "/data",
   invite: "/invite",
+  members: "/members",
   setup: "/setup",
 }
 
@@ -85,6 +87,8 @@ export function getAppRouteFromPathname(
       return { view: "import", wineId: null }
     case "/invite":
       return { view: "invite", wineId: null }
+    case "/members":
+      return { view: "members", wineId: null }
     case "/setup":
       return { view: "setup", wineId: null }
     default:
@@ -110,6 +114,7 @@ export function getAppRouteTitle(route: AppRoute): string {
           cellar: "Cellar",
           import: "Cellar data",
           invite: "Household invitations",
+          members: "Household members",
           inventory: "Inventory",
           pairing: "Food pairing",
           setup: "Cellar setup",
@@ -138,6 +143,7 @@ export function getWineDetailReturnView(
     returnView === "catalog" ||
     returnView === "import" ||
     returnView === "invite" ||
+    returnView === "members" ||
     returnView === "setup"
     ? returnView
     : null

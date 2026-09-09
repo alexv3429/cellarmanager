@@ -55,6 +55,7 @@ vi.mock("./components/PairingView", () => ({ PairingView: (props: Parameters<typ
 vi.mock("./components/ImportView", () => ({ ImportView: (props: Parameters<typeof StatefulScreen>[0]) => <StatefulScreen {...props} kind="import" /> }))
 vi.mock("./components/CellarSetupView", () => ({ CellarSetupView: (props: Parameters<typeof StatefulScreen>[0]) => <StatefulScreen {...props} kind="setup" /> }))
 vi.mock("./components/HouseholdInvitationsView", () => ({ HouseholdInvitationsView: (props: Parameters<typeof StatefulScreen>[0]) => <StatefulScreen {...props} kind="invite" /> }))
+vi.mock("./components/HouseholdMembersView", () => ({ HouseholdMembersView: (props: Parameters<typeof StatefulScreen>[0]) => <StatefulScreen {...props} kind="members" /> }))
 vi.mock("./components/ActivityView", () => ({ ActivityView: (props: Parameters<typeof StatefulScreen>[0]) => <StatefulScreen {...props} kind="activity" /> }))
 vi.mock("./components/MemberCellarView", () => ({ MemberCellarView: ({ householdId }: { householdId: string }) => <h1>Read-only cellar in {householdId}</h1> }))
 vi.mock("./components/WineDetailView", () => ({ WineDetailView: ({ householdId, wineId, onBack, onOpenMergedWine }: {
@@ -143,7 +144,7 @@ describe("multi-household workspace isolation", () => {
     expect(container.querySelector('nav a[href="/catalog"]')).not.toBeNull()
   })
 
-  it.each(["/catalog", "/pairing", "/data", "/setup", "/invite", "/activity"])("resets mounted %s forms even when both roles are owner", async (path) => {
+  it.each(["/catalog", "/pairing", "/data", "/setup", "/invite", "/activity", "/members"])("resets mounted %s forms even when both roles are owner", async (path) => {
     state.households = households.map((household) => ({ ...household, role: "owner" }))
     history.replaceState(null, "", path)
     await render()
