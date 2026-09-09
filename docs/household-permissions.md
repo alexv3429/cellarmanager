@@ -241,7 +241,12 @@ and remain subject to database permission checks. See
 
 Steps 0.5.2 through 0.5.4 create safe membership mutations, durable invitation
 state, and the invitation workflow. Steps 0.5.5 and 0.5.6 add switching and the
-member-management UI. Direct device management follows in 0.5.7.
+member-management UI. Step 0.5.7 adds online device-registration management:
+Owners list, rename, and revoke all registrations in their active household;
+Members see and manage only their own in this directory. Direct table writes
+remain denied. Revocation is not authentication-session termination, remote
+erasure, or a ban on registering another browser. See
+[`household-devices.md`](household-devices.md) for the exact boundary.
 Ownership transfer and leaving are handled
 explicitly in 0.5.10 so no intermediate implementation can orphan a household.
 The full adversarial matrix remains the 0.5.11 release-hardening step.

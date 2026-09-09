@@ -28,6 +28,7 @@ vi.mock("./auth/useSession", () => ({ useSession: () => ({
 vi.mock("./auth/signOut", () => ({ signOutAndClearLocalData: vi.fn() }))
 vi.mock("./data/powersync/connection", () => ({ setPowerSyncAccess: async ({ onLocalReady }: { onLocalReady?: () => void }) => { onLocalReady?.() } }))
 vi.mock("./devices/useRegisteredDevices", () => ({ useRegisteredDevices: () => ({
+  expectedDeviceIds: { a: "device-a", b: "device-b" }, revokedHouseholdIds: [], markRevoked: vi.fn(),
   deviceIdByHousehold: { a: "device-a", b: "device-b" }, error: null, isLoading: false,
   isReady: true, isRegistering: false, retryRegistration: vi.fn(),
 }) }))

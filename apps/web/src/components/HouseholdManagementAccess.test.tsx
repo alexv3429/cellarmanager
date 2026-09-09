@@ -79,7 +79,7 @@ describe("owner-only management views", () => {
         isOfflineAccess={false} isOnline onSelectHousehold={vi.fn()}
         onSignOut={async () => {}} onViewChange={vi.fn()} pageTitle="Inventory"
         syncError={null} view="inventory"
-        deviceRegistration={{ deviceIdByHousehold: {}, error: null, isLoading: false,
+        deviceRegistration={{ expectedDeviceIds: {}, revokedHouseholdIds: [], markRevoked: vi.fn(), deviceIdByHousehold: {}, error: null, isLoading: false,
           isReady: true, isRegistering: false, retryRegistration: vi.fn() }}>
         <p>Shared inventory</p>
       </AppShell>,
@@ -91,6 +91,7 @@ describe("owner-only management views", () => {
     expect(html).toContain("Shared inventory")
     expect(html.includes('href="/setup"')).toBe(role === "owner")
     expect(html).toContain('href="/members"')
+    expect(html).toContain('href="/devices"')
     expect(html).not.toContain('href="/invite"')
   })
 })

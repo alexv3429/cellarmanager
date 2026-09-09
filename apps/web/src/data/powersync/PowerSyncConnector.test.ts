@@ -71,6 +71,15 @@ const commonData = {
 }
 
 describe("PowerSync inventory upload", () => {
+  it("preserves an upload rejected for device revocation and its original device ID", async () => {
+    supabaseMocks.rpc.mockResolvedValue({ data: null, error: { code: "42501", message: "Device registration is no longer active" } })
+    const { database, complete } = createDatabase([putOperation("revoked-op", {
+      ...commonData, operation_type: "MOVE", source_location_id: "location-a", destination_location_id: "location-b", remove_reason: null,
+    })])
+    await expect(new PowerSyncConnector().uploadData(database)).rejects.toThrow("This device registration was revoked")
+    expect(complete).not.toHaveBeenCalled()
+    expect(supabaseMocks.rpc).toHaveBeenCalledWith("apply_inventory_operation", expect.objectContaining({ p_device_id: commonData.device_id }))
+  })
   beforeEach(() => {
     supabaseMocks.rpc.mockReset()
   })

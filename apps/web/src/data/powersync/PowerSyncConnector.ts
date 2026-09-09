@@ -9,6 +9,9 @@ import { environment } from "../env"
 import { supabase } from "../supabase"
 
 function uploadError(prefix: string, error: { code?: string; message: string }): Error {
+  if (error.code === "42501" && error.message === "Device registration is no longer active") {
+    return new Error("This device registration was revoked. Your queued changes have been kept locally and were not applied. Review Devices; changes are not moved to another registration.")
+  }
   if (error.code === "42501" && error.message === "Household owner permission is required") {
     return new Error("Only an Owner can upload bottle changes. Your queued changes have been kept locally and were not applied. Ask an Owner to review your access.")
   }

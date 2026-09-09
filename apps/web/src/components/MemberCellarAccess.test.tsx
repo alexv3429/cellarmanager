@@ -50,7 +50,7 @@ describe("Member cellar access", () => {
       : sql.includes("from locations l") ? [{ id: "location", household_id: "household", cellar_id: "cellar", cellar_name: "Main cellar", code: "A1" }]
       : [], isLoading: false, error: null }))
     const html = renderToStaticMarkup(<WineDetailView canManageCellar={canManageCellar}
-      deviceRegistration={{ deviceIdByHousehold: { household: "device" }, error: null, isLoading: false,
+      deviceRegistration={{ expectedDeviceIds: {}, revokedHouseholdIds: [], markRevoked: vi.fn(), deviceIdByHousehold: { household: "device" }, error: null, isLoading: false,
         isReady: true, isRegistering: false, retryRegistration: vi.fn() }}
       householdId="household" isOnline onBack={vi.fn()} onOpenMergedWine={vi.fn()}
       returnView="cellar" userId="member" wineId={wine.id} />)

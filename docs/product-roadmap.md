@@ -11,7 +11,7 @@ crosses a milestone boundary.
 |---|---|---|
 | `v0.3` | A cellar can live safely in CellarManager through daily manual use or guarded CSV import | Released (`v0.3.0`) |
 | `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable evidence | Released (`v0.4.0`) |
-| `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | In progress (`0.5.6`) |
+| `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | In progress (`0.5.7`) |
 | `v0.6` | Adding or identifying wine requires dramatically less typing | Planned |
 | `v0.7` | CellarManager explains what happened to the cellar and what the collection means over time | Planned |
 | `v1.0` | A self-host can install, trust, upgrade, recover, and maintain CellarManager for years | Planned |
@@ -167,7 +167,8 @@ make incompatible changes while offline.
 | 0.5.9 | Conflict and rejected-operation UX |
 | 0.5.10 | Ownership transfer and leaving a household |
 | 0.5.11 | Full membership security matrix |
-| 0.5.12 | v0.5 acceptance and release |
+| 0.5.12 | Account & profile settings: own display name and password change, with verified authentication flows |
+| 0.5.13 | v0.5 acceptance and release |
 
 Step 0.5.1 introduced the two-role contract, refined during 0.5.4 validation:
 every owner and member may read the shared cellar, use private preferences and
@@ -245,6 +246,22 @@ the directory and any confirmation, ignoring stale responses. Owners cannot
 change their own role or remove themselves here; the explicit ownership-transfer
 and leaving workflow remains 0.5.10. No migration is required. See
 [`household-members.md`](household-members.md) for scope and safe validation.
+
+Step 0.5.7 adds **Devices** in the account header and `/devices`. Owners manage
+all household browser registrations; Members manage their own. Online rename
+and irreversible revocation use narrow server-authorized RPCs with private audit
+events. Revocation prevents further inventory uploads under that ID, preserves
+accepted history and queued local operations, and never silently rotates or
+reactivates the browser identity. This is **not** session logout or remote data
+erasure; membership removal remains the access-control workflow. See
+[`household-devices.md`](household-devices.md) for migration, limits and validation.
+
+Basic **Account & profile** settings are explicitly scheduled in **0.5.12**, before
+the release gate now numbered **0.5.13**. Each user edits their own display name
+and changes their own password through verified authentication; Owners manage
+membership, not other users' credentials. Stable account UUIDs remain authoritative
+and email remains the display fallback. Broader account/household deletion,
+privacy and lifecycle workflows remain in **1.0.8**. Steps 0.5.8–0.5.11 are unchanged.
 
 ## v0.6 — Capture-assisted enrichment
 

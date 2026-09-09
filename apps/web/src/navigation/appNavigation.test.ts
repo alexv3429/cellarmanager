@@ -25,12 +25,13 @@ describe("app navigation", () => {
     expect(getWineDetailReturnView({ wineDetailReturnView: "cellar" })).toBe("cellar")
   })
 
-  it.each(["/wines/test-wine", "/pairing", "/data", "/activity", "/members"])("keeps Member read-only deep links for %s", (path) => {
+  it.each(["/wines/test-wine", "/pairing", "/data", "/activity", "/members", "/devices"])("keeps Member read-only deep links for %s", (path) => {
     const route = getAppRouteFromPathname(path)
     expect(getAppRouteForRole(route, "member")).toEqual(route)
   })
   it("maps application paths to views", () => {
     expect(getAppViewFromPathname("/members")).toBe("members")
+    expect(getAppViewFromPathname("/devices")).toBe("devices")
     expect(getAppViewFromPathname("/")).toBe("inventory")
     expect(getAppViewFromPathname("/pairing")).toBe("pairing")
     expect(getAppViewFromPathname("/activity")).toBe("activity")
@@ -43,6 +44,7 @@ describe("app navigation", () => {
 
   it("accepts trailing slashes", () => {
     expect(getAppViewFromPathname("/members/")).toBe("members")
+    expect(getAppViewFromPathname("/devices/")).toBe("devices")
     expect(getAppViewFromPathname("/activity/")).toBe("activity")
     expect(getAppViewFromPathname("/pairing/")).toBe("pairing")
     expect(getAppViewFromPathname("/catalog/")).toBe("catalog")
@@ -94,6 +96,7 @@ describe("app navigation", () => {
 
   it("maps views to canonical paths", () => {
     expect(getAppViewPath("members")).toBe("/members")
+    expect(getAppViewPath("devices")).toBe("/devices")
     expect(getAppViewPath("inventory")).toBe("/")
     expect(getAppViewPath("pairing")).toBe("/pairing")
     expect(getAppViewPath("activity")).toBe("/activity")
@@ -111,6 +114,7 @@ describe("app navigation", () => {
 
   it("provides route-specific document titles", () => {
     expect(getAppRouteTitle({ view: "members", wineId: null })).toBe("Household members · CellarManager")
+    expect(getAppRouteTitle({ view: "devices", wineId: null })).toBe("Devices · CellarManager")
     expect(
       getAppRouteTitle({ view: "inventory", wineId: null }),
     ).toBe("Inventory · CellarManager")
@@ -133,6 +137,7 @@ describe("app navigation", () => {
 
   it("restores safe wine detail return destinations", () => {
     expect(getWineDetailReturnView({ wineDetailReturnView: "members" })).toBe("members")
+    expect(getWineDetailReturnView({ wineDetailReturnView: "devices" })).toBe("devices")
     expect(
       getWineDetailReturnView({
         wineDetailReturnView: "inventory",

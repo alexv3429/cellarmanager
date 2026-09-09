@@ -13,6 +13,7 @@ import { HoldingsView } from "./components/HoldingsView"
 import { ImportView } from "./components/ImportView"
 import { HouseholdInvitationsView } from "./components/HouseholdInvitationsView"
 import { HouseholdMembersView } from "./components/HouseholdMembersView"
+import { HouseholdDevicesView } from "./components/HouseholdDevicesView"
 import { InvitationEntryView } from "./components/InvitationEntryView"
 import { LoginForm } from "./components/LoginForm"
 import { OnboardingView } from "./components/OnboardingView"
@@ -335,6 +336,13 @@ function ReadyAuthenticatedApp({
       {route.view === "members" ? (
         <HouseholdMembersView householdId={activeHouseholdId} householdName={activeHouseholdName}
           userId={userId} role={activeHouseholdRole} isOnline={isOnline} onInvite={() => changeView("invite")} />
+      ) : null}
+
+      {route.view === "devices" ? (
+        <HouseholdDevicesView householdId={activeHouseholdId} householdName={activeHouseholdName}
+          userId={userId} role={activeHouseholdRole} isOnline={isOnline}
+          currentDeviceId={deviceRegistration.expectedDeviceIds[activeHouseholdId] ?? null}
+          onRevoked={deviceRegistration.markRevoked} />
       ) : null}
 
       {route.view === "invite" ? (
