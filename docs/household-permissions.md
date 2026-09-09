@@ -228,6 +228,13 @@ Do not allow every `trycloudflare.com` hostname as an Auth redirect.
 
 ## Later v0.5 steps
 
+Step 0.5.5 adds explicit, role-labelled household switching with confirmation and
+full workspace isolation across household or role changes. Persisted selection
+and browser history are navigation preferences, not authority. Only synchronized
+memberships can be selected, and offline uploads retain their original household
+and remain subject to database permission checks. See
+[`household-switching.md`](household-switching.md) for details and acceptance.
+
 Steps 0.5.2 through 0.5.4 create safe membership mutations, durable invitation
 state, and the invitation workflow. Steps 0.5.5 through 0.5.7 add switching,
 the complete member UI, and direct device management on top of this contract.

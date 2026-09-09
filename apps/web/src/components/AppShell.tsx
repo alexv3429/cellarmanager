@@ -15,7 +15,6 @@ import {
   type AppView,
 } from "../navigation/appNavigation"
 import {
-  getHouseholdRoleLabel,
   getHouseholdPermissions,
   type HouseholdRole,
 } from "../households/householdPermissions"
@@ -24,6 +23,7 @@ import type {
 } from "../households/useActiveHousehold"
 import { getSyncStatusPresentation } from "../data/syncStatusView"
 import { Notice } from "./Notice"
+import { HouseholdSwitcher } from "./HouseholdSwitcher"
 
 interface AppShellProps {
   activeHouseholdId: string
@@ -32,6 +32,8 @@ interface AppShellProps {
   contentKey: string
   deviceRegistration: RegisteredDevicesState
   householdError: string | null
+  selectionNotice?: string | null
+  selectionWarning?: string | null
   households: HouseholdOption[]
   isOfflineAccess: boolean
   isOnline: boolean
@@ -71,6 +73,8 @@ export function AppShell({
   contentKey,
   deviceRegistration,
   householdError,
+  selectionNotice,
+  selectionWarning,
   households,
   isOfflineAccess,
   isOnline,
@@ -94,7 +98,7 @@ export function AppShell({
   const [signOutError, setSignOutError] =
     useState<string | null>(null)
   const contentRef = useRef<HTMLDivElement>(null)
-  const previousContentKey = useRef(contentKey)
+  const previousContentKey = useRef<string | null>(null)
 
   useEffect(() => {
     document.title = pageTitle
@@ -105,7 +109,11 @@ export function AppShell({
 
     previousContentKey.current = contentKey
 
+    const focusedElement = document.activeElement
     const animationFrame = window.requestAnimationFrame(() => {
+      // Do not steal focus if the user already opened or cancelled a switch
+      // while the route's animation frame was waiting to run.
+      if (document.activeElement !== focusedElement) return
       window.scrollTo({ left: 0, top: 0 })
       contentRef.current?.focus({ preventScroll: true })
     })
@@ -228,29 +236,8 @@ export function AppShell({
         </div>
 
         <div className="app-shell__account">
-          <label className="app-shell__household">
-            <span className="app-shell__household-label">
-              Household
-              <small>
-                {getHouseholdRoleLabel(activeHouseholdRole)}
-              </small>
-            </span>
-            <select
-              onChange={(event) =>
-                onSelectHousehold(event.target.value)
-              }
-              value={activeHouseholdId}
-            >
-              {households.map((household) => (
-                <option
-                  key={household.id}
-                  value={household.id}
-                >
-                  {household.name}
-                </option>
-              ))}
-            </select>
-          </label>
+          <HouseholdSwitcher activeHouseholdId={activeHouseholdId} households={households}
+            isOnline={isOnline} pendingOperationCount={pendingOperationCount} onSelectHousehold={onSelectHousehold} />
 
           {activeHouseholdRole === "owner" ? (
             <a
@@ -333,10 +320,14 @@ export function AppShell({
       </nav>
 
       {householdError ||
+      selectionNotice ||
+      selectionWarning ||
       effectiveSyncError ||
       signOutError ||
       deviceRegistration.error ? (
         <div className="app-shell__alerts">
+          {selectionNotice ? <Notice role="status" tone="warning">{selectionNotice}</Notice> : null}
+          {selectionWarning ? <Notice role="status" tone="warning">{selectionWarning}</Notice> : null}
           {householdError ? (
             <Notice role="alert" tone="error">
               {householdError}

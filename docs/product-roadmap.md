@@ -11,7 +11,7 @@ crosses a milestone boundary.
 |---|---|---|
 | `v0.3` | A cellar can live safely in CellarManager through daily manual use or guarded CSV import | Released (`v0.3.0`) |
 | `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable evidence | Released (`v0.4.0`) |
-| `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | In progress (`0.5.4`) |
+| `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | In progress (`0.5.5`) |
 | `v0.6` | Adding or identifying wine requires dramatically less typing | Planned |
 | `v0.7` | CellarManager explains what happened to the cellar and what the collection means over time | Planned |
 | `v1.0` | A self-host can install, trust, upgrade, recover, and maintain CellarManager for years | Planned |
@@ -214,6 +214,23 @@ and explicitly accepts before the membership is created. Acceptance is
 idempotent and every creation, acceptance, replacement, and cancellation is
 attributed in the private membership audit. Full current-member administration
 remains step 0.5.6.
+
+Step 0.5.5 makes multi-household switching explicit. The header identifies the
+current collection and role, and offers a role-labelled selector only when
+more than one synchronized membership is available. Switching asks for
+confirmation, warns that unfinished forms and filters reset, and explains that
+saved/queued changes remain bound to their original household. The destination
+opens on its role-appropriate home screen. Every household/role transition
+remounts the workspace, preventing form, pairing, import, and selection state
+from crossing the boundary. Browser Back/Forward does not implicitly switch
+households; older history entries from a different household return to the
+current household's home. The selection is remembered per account on this
+browser, with a non-blocking warning if browser storage is unavailable. Stored
+IDs are never accepted without a current synchronized membership; losing the
+selected membership closes its workspace and explains any available fallback.
+Offline switching uses only locally synchronized memberships, subject to
+server-side permission checks after reconnection. No new migration is needed.
+See [`household-switching.md`](household-switching.md) for the acceptance checklist.
 
 ## v0.6 — Capture-assisted enrichment
 

@@ -15,9 +15,9 @@
     "@powersync/react": "^2.0.0",
     "@powersync/web": "^2.1.0",
     "@supabase/supabase-js": "^2.112.0",
-    "read-excel-file": "^9.3.10",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "read-excel-file": "^9.3.10",
     "write-excel-file": "^4.1.1"
   },
   "devDependencies": {
@@ -26,6 +26,7 @@
     "@types/react-dom": "^19.2.3",
     "@vite-pwa/assets-generator": "^1.0.2",
     "@vitejs/plugin-react": "^6.0.4",
+    "jsdom": "^30.0.1",
     "oxlint": "^1.75.0",
     "typescript": "~7.0.2",
     "vite": "^8.2.0",
