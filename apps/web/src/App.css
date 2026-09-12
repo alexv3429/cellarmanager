@@ -7516,3 +7516,26 @@
 @media (max-width: 640px) {
   .member-cellar__filters, .member-cellar__wines { grid-template-columns: minmax(0, 1fr); }
 }
+.household-devices { display: grid; gap: 1rem; }
+.household-devices__heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
+.household-devices__heading h1, .household-devices__identity h3 { margin: 0; }
+.household-devices__list { list-style: none; padding: 0; margin: 0; display: grid; gap: 1rem; }
+.household-devices__list > li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1rem; border: 1px solid var(--border-color, #bbaaa666); border-radius: 1rem; padding: 1.25rem; }
+.household-devices__identity { min-width: 0; overflow-wrap: anywhere; }
+.household-devices__identity p { margin: .5rem 0; }
+.household-devices__identity dl { display: flex; flex-wrap: wrap; gap: .75rem 2rem; margin: 1rem 0; }
+.household-devices__identity dt, .household-devices__identity small { font-size: .85rem; opacity: .8; }
+.household-devices__identity dd { margin: .2rem 0 0; }
+.household-devices__badges { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .5rem; }
+.household-devices__badges span { border: 1px solid currentColor; border-radius: 2rem; font-size: .8rem; padding: .15rem .65rem; }
+.household-devices__actions { display: flex; flex-wrap: wrap; align-items: flex-start; gap: .65rem; }
+.household-devices__actions button, .household-devices__heading button { min-height: 44px; }
+.household-devices__confirmation { grid-column: 1 / -1; border-top: 1px solid #bbaaa666; padding-top: 1rem; display: grid; gap: .75rem; min-width: 0; }
+.household-devices__confirmation h3, .household-devices__confirmation p { margin: 0; }
+.household-devices__confirmation label { display: grid; gap: .4rem; max-width: 32rem; }
+.household-devices__confirmation input { width: 100%; min-width: 0; box-sizing: border-box; }
+.household-devices__history summary { cursor: pointer; font-weight: 600; padding: .75rem 0; }
+@media (max-width: 640px) {
+  .household-devices__list > li { grid-template-columns: minmax(0, 1fr); padding: 1rem; }
+  .household-devices__actions > button { flex: 1 1 auto; }
+}

@@ -64,6 +64,7 @@ type ExecuteSql = (
 
 interface QueueDependencies {
   getRole: (householdId: string, userId: string) => Promise<string | null>
+  isDeviceActive: (householdId: string, userId: string, deviceId: string) => Promise<boolean>
   execute: ExecuteSql
   createOperationId: () => string
   now: () => Date
@@ -266,6 +267,9 @@ export function createInventoryOperationQueue(
     // server independently rechecks the current role when this is uploaded.
     if (await dependencies.getRole(input.householdId, input.userId) !== "owner") {
       throw new Error("Only a household Owner can add, move, or remove bottles")
+    }
+    if (!await dependencies.isDeviceActive(input.householdId, input.userId, input.deviceId)) {
+      throw new Error("This browser registration is not active. Review Devices before making bottle changes.")
     }
 
     const operationId =
@@ -473,6 +477,10 @@ export function createInventoryOperationQueue(
 
 const inventoryOperationQueue =
   createInventoryOperationQueue({
+    isDeviceActive: async (householdId, userId, deviceId) => !!await powerSyncDatabase.getOptional(
+      "select id from devices where id = ? and household_id = ? and user_id = ? and revoked_at is null",
+      [deviceId, householdId, userId],
+    ),
     getRole: async (householdId, userId) => {
       const member = await powerSyncDatabase.getOptional<{ role: string }>(
         "select role from household_members where household_id = ? and user_id = ?",

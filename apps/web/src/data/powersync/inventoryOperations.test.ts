@@ -4,7 +4,7 @@ import {
   createInventoryOperationQueue,
 } from "./inventoryOperations"
 
-function createQueue(role: string | null = "owner") {
+function createQueue(role: string | null = "owner", deviceActive = true) {
   const execute = vi.fn(
     async (
       _sql: string,
@@ -14,6 +14,7 @@ function createQueue(role: string | null = "owner") {
 
   const queue = createInventoryOperationQueue({
     getRole: async () => role,
+    isDeviceActive: async () => deviceActive,
     execute,
     createOperationId: () => "operation-1",
     now: () => new Date("2026-08-05T20:00:00Z"),
@@ -31,6 +32,13 @@ const commonInput = {
 }
 
 describe("inventory operation queue", () => {
+  it("refuses all new local stock changes under a missing or revoked registration", async () => {
+    const { execute, queue } = createQueue("owner", false)
+    await expect(queue.queueAdd({ ...commonInput, destinationLocationId: "b" })).rejects.toThrow("registration is not active")
+    await expect(queue.queueMove({ ...commonInput, sourceLocationId: "a", destinationLocationId: "b" })).rejects.toThrow("registration is not active")
+    await expect(queue.queueRemove({ ...commonInput, sourceLocationId: "a", removeReason: "DRANK" })).rejects.toThrow("registration is not active")
+    expect(execute).not.toHaveBeenCalled()
+  })
   it.each(["member", null, "unknown"])("refuses every stock operation for role %s without a local write", async (role) => {
     const { execute, queue } = createQueue(role)
     await expect(queue.queueAdd({ ...commonInput, destinationLocationId: "location-a" })).rejects.toThrow("Only a household Owner")
@@ -43,7 +51,7 @@ describe("inventory operation queue", () => {
   it("rechecks the role for each operation after a demotion", async () => {
     const getRole = vi.fn().mockResolvedValueOnce("owner").mockResolvedValue("member")
     const execute = vi.fn()
-    const queue = createInventoryOperationQueue({ getRole, execute, createOperationId: () => "op", now: () => new Date() })
+    const queue = createInventoryOperationQueue({ getRole, execute, isDeviceActive: async () => true, createOperationId: () => "op", now: () => new Date() })
     await queue.queueAdd({ ...commonInput, destinationLocationId: "location-a" })
     await expect(queue.queueRemove({ ...commonInput, sourceLocationId: "location-a", removeReason: "DRANK" })).rejects.toThrow("Only a household Owner")
     expect(getRole).toHaveBeenLastCalledWith(commonInput.householdId, commonInput.userId)

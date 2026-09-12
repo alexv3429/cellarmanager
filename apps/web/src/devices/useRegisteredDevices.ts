@@ -22,6 +22,7 @@ interface DeviceRow {
   household_id: string
   user_id: string
   name: string
+  revoked_at: string | null
 }
 
 function getErrorMessage(error: unknown): string {
@@ -54,10 +55,9 @@ export function useRegisteredDevices(
     isLoading: devicesLoading,
   } = useQuery<DeviceRow>(
     `
-      select id, household_id, user_id, name
+      select id, household_id, user_id, name, revoked_at
       from devices
       where user_id = ?
-        and revoked_at is null
       order by created_at
     `,
     [userId],
@@ -73,6 +73,10 @@ export function useRegisteredDevices(
     useState<string | null>(null)
 
   const [retryToken, setRetryToken] = useState(0)
+  const [knownRevokedIds, setKnownRevokedIds] = useState<Set<string>>(() => new Set())
+  const markRevoked = useCallback((deviceId: string) => {
+    setKnownRevokedIds((current) => current.has(deviceId) ? current : new Set([...current, deviceId]))
+  }, [])
 
   const inFlightHouseholds = useRef(new Set<string>())
   const remotelyRegisteredHouseholds = useRef(new Set<string>())
@@ -108,7 +112,7 @@ export function useRegisteredDevices(
       const householdId = membership.household_id
       const deviceId = expectedDeviceIds[householdId]
 
-      if (!deviceId) {
+      if (!deviceId || knownRevokedIds.has(deviceId)) {
         continue
       }
 
@@ -152,6 +156,7 @@ export function useRegisteredDevices(
           )
 
           if (error) {
+            if (error.code === "55000") { markRevoked(deviceId); return }
             throw new Error(
               `Device registration failed: ${error.message}`,
             )
@@ -184,6 +189,8 @@ export function useRegisteredDevices(
     memberships,
     retryToken,
     userId,
+    knownRevokedIds,
+    markRevoked,
   ])
 
   const deviceIdByHousehold = useMemo(() => {
@@ -201,7 +208,9 @@ export function useRegisteredDevices(
         (device) =>
           device.id === expectedDeviceId &&
           device.household_id === householdId &&
-          device.user_id === userId,
+          device.user_id === userId &&
+          device.revoked_at === null &&
+          !knownRevokedIds.has(device.id),
       )
 
       if (synchronizedDevice) {
@@ -211,7 +220,13 @@ export function useRegisteredDevices(
     }
 
     return synchronizedDeviceIds
-  }, [devices, expectedDeviceIds, memberships, userId])
+  }, [devices, expectedDeviceIds, memberships, userId, knownRevokedIds])
+
+  const revokedHouseholdIds = memberships.filter((membership) => {
+    const id = expectedDeviceIds[membership.household_id]
+    return !!id && (knownRevokedIds.has(id) || devices.some((device) =>
+      device.id === id && device.user_id === userId && device.household_id === membership.household_id && device.revoked_at !== null))
+  }).map((membership) => membership.household_id)
 
   const retryRegistration = useCallback(() => {
     remotelyRegisteredHouseholds.current.clear()
@@ -258,6 +273,9 @@ export function useRegisteredDevices(
 
   return {
     deviceIdByHousehold,
+    expectedDeviceIds,
+    revokedHouseholdIds,
+    markRevoked,
     error:
       registrationError ??
       queryError ??

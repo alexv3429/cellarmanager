@@ -184,7 +184,10 @@ export function AppShell({
     onViewChange(nextView)
   }
 
-  const deviceStatus = deviceRegistration.isReady
+  const deviceRevoked = deviceRegistration.revokedHouseholdIds.includes(activeHouseholdId)
+  const deviceStatus = deviceRevoked
+    ? "Revoked for this household"
+    : deviceRegistration.deviceIdByHousehold[activeHouseholdId]
     ? "Ready"
     : deviceRegistration.isRegistering
       ? "Registering…"
@@ -247,6 +250,9 @@ export function AppShell({
           >
             Members
           </a>
+
+          <a aria-current={view === "devices" ? "page" : undefined} className="app-shell__account-link"
+            href={getAppViewPath("devices")} onClick={(event) => navigate(event, "devices")}>Devices</a>
 
           <button
             onClick={() => void signOut()}
@@ -322,8 +328,9 @@ export function AppShell({
       selectionWarning ||
       effectiveSyncError ||
       signOutError ||
-      deviceRegistration.error ? (
+      deviceRegistration.error || deviceRevoked ? (
         <div className="app-shell__alerts">
+          {deviceRevoked ? <Notice role="status" tone="warning">This browser’s registration was revoked for this household. Bottle changes are unavailable here; reading is still allowed. Queued changes are kept locally and are not transferred to a new registration. Open Devices to review its status.</Notice> : null}
           {selectionNotice ? <Notice role="status" tone="warning">{selectionNotice}</Notice> : null}
           {selectionWarning ? <Notice role="status" tone="warning">{selectionWarning}</Notice> : null}
           {householdError ? (
