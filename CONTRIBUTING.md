@@ -20,6 +20,7 @@ git switch -c codex/short-description
 npm run repository:check
 npm run web:ci
 npm run supabase -- test db  # when database behavior is in scope
+npm run inventory:acceptance  # when stock, upload, or device authorization changes
 git diff --check
 git add <intended-files>
 git commit
@@ -28,6 +29,12 @@ git push -u origin HEAD
 
 Open a ready pull request and wait for **CI Gate**. Do not merge while it is
 pending or failing. Keep the branch current when GitHub requests it.
+
+The inventory acceptance suite requires the local Supabase Docker stack with
+current migrations. It copies schema only into an isolated temporary database,
+runs simultaneous authenticated transactions against synthetic fixtures, then
+removes that database. It does not use linked production credentials or existing
+cellar data. See [`docs/multi-device-inventory-acceptance.md`](docs/multi-device-inventory-acceptance.md).
 
 ## Dependency changes
 

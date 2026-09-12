@@ -108,6 +108,8 @@ try {
     "npm run lwin:test",
     "npm run web:ci",
     "npm run supabase -- test db",
+    "npm run inventory:test",
+    "npm run inventory:acceptance",
   ]) {
     if (!workflow.includes(required)) {
       errors.push(`CI workflow is missing: ${required}`)
