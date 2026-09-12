@@ -43,3 +43,23 @@ household's count of pending inventory operations. It distinguishes:
 
 The header state is informational. Retry behavior remains automatic, and the
 existing safeguard still prevents signing out while offline.
+
+## Concurrent changes and retry
+
+Two offline devices can each show a locally queued change to the same bottle.
+Only the server's accepted result is authoritative. When one device takes the
+last bottle first, the conflicting operation receives a terminal rejection; it
+does not remove another bottle or prevent a later valid operation from uploading.
+Once the holdings and terminal journal synchronize, rejected optimistic effects
+disappear from both devices' projections.
+
+A lost response can cause an upload batch to replay already accepted operations.
+The connector keeps the original UUID, originating device and payload, and the
+server returns the stored receipt without applying the stock effect again.
+Device revocation denies new operations under that registration; an exact retry
+of an already accepted operation can still return its immutable receipt.
+Authorization errors preserve the local queue instead of pretending it synced.
+
+Step 0.5.8's automated coverage and safe manual checklist are documented in
+[`multi-device-inventory-acceptance.md`](multi-device-inventory-acceptance.md).
+Improved conflict and rejected-operation recovery controls belong to **0.5.9**.

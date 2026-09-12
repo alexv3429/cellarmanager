@@ -11,6 +11,7 @@ retains only the evidence needed to understand its released migration history.
 - [`household-switching.md`](household-switching.md) - multi-household selection, isolation, and 0.5.5 acceptance checklist
 - [`household-members.md`](household-members.md) - current collaborators, role changes, access removal, and 0.5.6 validation
 - [`household-devices.md`](household-devices.md) - browser registrations, revocation limits, and 0.5.7 validation
+- [`multi-device-inventory-acceptance.md`](multi-device-inventory-acceptance.md) - concurrent stock acceptance, isolated fixtures, and safe two-device validation
 - [`wine-reference-validation.md`](wine-reference-validation.md) - LWIN coverage, conservative matching, and fallback evidence for v0.4
 - [`wine-reference-schema.md`](wine-reference-schema.md) - shared producer, product, release, package, alias, and identifier model
 - [`lwin-reference-snapshots.md`](lwin-reference-snapshots.md) - attributed LWIN7 snapshot import, atomic refresh, and missing-ID demands

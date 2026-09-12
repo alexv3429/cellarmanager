@@ -201,4 +201,47 @@ describe("optimistic inventory projection", () => {
       },
     ])
   })
+
+  it.each(["MOVE", "REMOVE"] as const)("converges two offline views after %s wins a last-bottle conflict", (winner) => {
+    const before = [holding("location-a", "A", 1)]
+    const move = operation({ id: "phone-move" })
+    const remove = operation({ id: "desktop-remove", operation_type: "REMOVE", destination_location_id: null })
+    const phone = projectHoldings({ holdings: before, locations, operations: [move] })
+    const desktop = projectHoldings({ holdings: before, locations, operations: [remove] })
+    expect(phone.find((position) => position.location_id === "location-b")?.quantity).toBe(1)
+    expect(desktop.reduce((total, position) => total + position.quantity, 0)).toBe(0)
+
+    // A synchronized snapshot contains authoritative holdings and the terminal
+    // journal, not a reconstruction from each device's optimistic quantities.
+    const committed = winner === "MOVE"
+      ? [holding("location-a", "A", 0), holding("location-b", "B", 1)]
+      : [holding("location-a", "A", 0)]
+    const terminal = [move, remove].map((op) => ({
+      ...op, status: op.operation_type === winner ? "ACCEPTED" : "REJECTED",
+    }))
+    const phoneAfter = projectHoldings({ holdings: committed, locations, operations: terminal })
+    const desktopAfter = projectHoldings({ holdings: committed, locations, operations: [...terminal].reverse() })
+    expect(phoneAfter).toEqual(desktopAfter)
+    expect(phoneAfter.reduce((total, position) => total + position.quantity, 0)).toBe(winner === "MOVE" ? 1 : 0)
+    expect(phoneAfter.every((position) => position.pending_delta === 0 && position.pending_operation_count === 0)).toBe(true)
+    expect(projectHoldings({ holdings: committed, locations, operations: terminal })).toEqual(phoneAfter)
+  })
+
+  it("removes a new-wine optimistic placeholder when the server reuses an existing identity", () => {
+    const add = operation({
+      id: "offline-add", household_id: "household-1", operation_type: "ADD", wine_id: "temporary-wine",
+      wine_producer: "Domaine Test", wine_cuvee: "Cuvée Test", wine_vintage: 2020,
+      wine_color: "red", wine_format_ml: 750, source_location_id: null,
+      destination_location_id: "location-a", quantity: 2,
+    })
+    const offline = projectHoldings({ holdings: [], locations, operations: [add] })
+    expect(offline).toMatchObject([{ wine_id: "temporary-wine", quantity: 2, pending_operation_count: 1 }])
+
+    const synchronized = projectHoldings({
+      holdings: [holding("location-a", "A", 5)], locations,
+      operations: [{ ...add, wine_id: "wine-1", status: "ACCEPTED" }],
+    })
+    expect(synchronized).toMatchObject([{ wine_id: "wine-1", quantity: 5, pending_operation_count: 0 }])
+    expect(synchronized).toHaveLength(1)
+  })
 })

@@ -242,4 +242,61 @@ describe("PowerSync inventory upload", () => {
     expect(complete).not.toHaveBeenCalled()
     expect(supabaseMocks.rpc).toHaveBeenCalledTimes(1)
   })
+
+  it("continues past a terminal stock rejection and acknowledges the whole uploaded batch", async () => {
+    const receipt = (id: string, status: string, code: string | null) => ({
+      data: [{ operation_id: id, operation_status: status, operation_error_code: code }],
+      error: null,
+    })
+    supabaseMocks.rpc
+      .mockResolvedValueOnce(receipt("last-bottle", "REJECTED", "INSUFFICIENT_STOCK"))
+      .mockResolvedValueOnce(receipt("unrelated-move", "ACCEPTED", null))
+    const { database, complete } = createDatabase([
+      putOperation("last-bottle", {
+        ...commonData, operation_type: "REMOVE", source_location_id: "location-a",
+        destination_location_id: null, remove_reason: "DRANK",
+      }),
+      putOperation("unrelated-move", {
+        ...commonData, wine_id: "wine-2", operation_type: "MOVE",
+        source_location_id: "location-b", destination_location_id: "location-c", remove_reason: null,
+      }),
+    ])
+
+    await new PowerSyncConnector().uploadData(database)
+
+    expect(supabaseMocks.rpc.mock.calls.map(([, args]) => args.p_operation_id))
+      .toEqual(["last-bottle", "unrelated-move"])
+    expect(complete).toHaveBeenCalledTimes(1)
+  })
+
+  it("replays an interrupted partial batch with identical UUIDs and payloads before uploading the remaining operation", async () => {
+    const accepted = { data: [{ operation_status: "ACCEPTED" }], error: null }
+    // The second request may have committed, but its response was lost. The
+    // real database acceptance suite separately proves replay is idempotent.
+    supabaseMocks.rpc
+      .mockResolvedValueOnce(accepted)
+      .mockRejectedValueOnce(new TypeError("Failed to fetch"))
+      .mockResolvedValue(accepted)
+    const crud = ["first", "lost-response", "remaining"].map((id) => putOperation(id, {
+      ...commonData, operation_type: "MOVE", source_location_id: "location-a",
+      destination_location_id: "location-b", remove_reason: null,
+    }))
+    const original = structuredClone(crud)
+    const { database, complete } = createDatabase(crud)
+    const connector = new PowerSyncConnector()
+
+    await expect(connector.uploadData(database)).rejects.toThrow("Failed to fetch")
+    expect(complete).not.toHaveBeenCalled()
+    expect(supabaseMocks.rpc).toHaveBeenCalledTimes(2)
+
+    await connector.uploadData(database)
+
+    const calls = supabaseMocks.rpc.mock.calls
+    expect(calls.map(([, args]) => args.p_operation_id))
+      .toEqual(["first", "lost-response", "first", "lost-response", "remaining"])
+    expect(calls[2]).toEqual(calls[0])
+    expect(calls[3]).toEqual(calls[1])
+    expect(crud).toEqual(original)
+    expect(complete).toHaveBeenCalledTimes(1)
+  })
 })

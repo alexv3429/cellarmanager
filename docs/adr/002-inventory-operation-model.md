@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-08-03
-- Implemented: v0.2.0; current through v0.4.0
+- Implemented: v0.2.0; acceptance extended in v0.5 step 0.5.8
 
 ## Context
 
@@ -47,4 +47,10 @@ and make the authoritative cellar unknowable.
 
 The Supabase pgTAP suite covers operation validation, idempotency, holdings, and
 security. Web tests cover optimistic projection, upload/replay, and state
-presentation. See [`../activity-and-sync.md`](../activity-and-sync.md).
+presentation. Step 0.5.8 adds independent PostgreSQL sessions competing behind a
+verified lock barrier, with both connection orders, terminal journal replay, and
+authorized read convergence. It also tests partial-batch upload retry and local
+projection convergence from synchronized snapshots. These are boundary tests,
+not a claim of live PowerSync/browser transport acceptance. See
+[`../multi-device-inventory-acceptance.md`](../multi-device-inventory-acceptance.md)
+and [`../activity-and-sync.md`](../activity-and-sync.md).

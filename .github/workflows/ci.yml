@@ -74,6 +74,12 @@ jobs:
       - name: Run Supabase database tests
         run: npm run supabase -- test db
 
+      - name: Check inventory acceptance safeguards
+        run: npm run inventory:test
+
+      - name: Run concurrent multi-device inventory acceptance
+        run: npm run inventory:acceptance
+
   dependency-audit:
     name: Dependency audit
     runs-on: ubuntu-latest
