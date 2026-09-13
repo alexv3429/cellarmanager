@@ -68,7 +68,7 @@ describe("inventory activity projection", () => {
 
     expect(items).toMatchObject([
       {
-        actionLabel: "Added",
+        actionLabel: "Requested: add",
         destinationLabel: "Main / A1",
         quantityLabel: "2 bottles",
         sourceLabel: null,
@@ -86,7 +86,7 @@ describe("inventory activity projection", () => {
         statusTone: "success",
       },
       {
-        actionLabel: "Removed",
+        actionLabel: "Not applied: remove",
         destinationLabel: null,
         reasonLabel: "Drank",
         sourceLabel: "Garage / B2",

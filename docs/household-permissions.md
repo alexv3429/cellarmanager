@@ -71,7 +71,11 @@ write. Stock RPCs recheck current Owner membership under the same household
 lock as role changes, including the legacy ADD overload. A demoted Owner's
 previously queued operation cannot change stock: upload remains blocked with
 an explicit permission error and is not silently discarded or transferred to
-another user. The fuller rejected-operation recovery interface is step 0.5.9.
+another user. Step 0.5.9 lets the originating author explicitly review and stop
+their old queued request online without granting stock-write permission. The
+server first preserves any already-accepted/rejected receipt; an unprocessed
+request is retained privately and its UUID cannot subsequently affect stock.
+See [`inventory-conflict-recovery.md`](inventory-conflict-recovery.md).
 The Member browser uses synchronized stock, not those unaccepted pending writes.
 
 Account-private preferences remain private. Household-visible observations may

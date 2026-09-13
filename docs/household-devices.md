@@ -44,8 +44,11 @@ the database remains authoritative when offline data is stale.
 Unsent writes stay queued with their original household/user/device/operation IDs.
 They are not acknowledged, discarded, or reattributed after rejection. The sync
 error explains the revocation. A denied operation can block the shared upload
-queue, including later operations for another household; resolution is the
-explicit rejected-operation UX in **0.5.9**, not a silent bypass here. Review unsent
+queue, including later operations for another household. **0.5.9** adds explicit
+online review in Activity: an author can stop their own queued request after the
+server checks whether it was already accepted. Accepted stock is never undone;
+the original ID and request are retained. See
+[`inventory-conflict-recovery.md`](inventory-conflict-recovery.md). Review unsent
 work before clearing storage or signing out. Do not test revocation on a browser
 with real pending work.
 

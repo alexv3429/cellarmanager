@@ -7,13 +7,14 @@ import {
 
 import { environment } from "../env"
 import { supabase } from "../supabase"
+import { matchesReviewedInventoryRequest } from "../inventoryRecovery"
 
 function uploadError(prefix: string, error: { code?: string; message: string }): Error {
   if (error.code === "42501" && error.message === "Device registration is no longer active") {
-    return new Error("This device registration was revoked. Your queued changes have been kept locally and were not applied. Review Devices; changes are not moved to another registration.")
+    return new Error("This device registration was revoked. The blocked request remains queued. Open Activity to review this browser’s queue and stop a request explicitly. Earlier requests in the batch may already be accepted; registrations are never silently replaced.")
   }
   if (error.code === "42501" && error.message === "Household owner permission is required") {
-    return new Error("Only an Owner can upload bottle changes. Your queued changes have been kept locally and were not applied. Ask an Owner to review your access.")
+    return new Error("Only an Owner can upload bottle changes. The blocked request remains queued. Ask an Owner to review your access, or open Activity to stop your request explicitly. Earlier requests in the batch may already be accepted.")
   }
   return new Error(`${prefix}: ${error.message}`)
 }
@@ -132,6 +133,16 @@ export class PowerSyncConnector implements PowerSyncBackendConnector {
 
       const data: Record<string, unknown> =
         operation.opData ?? {}
+
+      // A narrowly verified server receipt lets a reviewed request leave the
+      // queue even if the author lost Owner access since it was accepted.
+      // This local-only record is written only after explicit server review.
+      const reviewed = await database.getOptional<{ status: string; request: string }>(
+        `select status, request from inventory_upload_receipts where id = ? and household_id = ? and user_id = ? and device_id = ?`,
+        [operation.id, data.household_id, data.user_id, data.device_id],
+      )
+      if (reviewed && ["ACCEPTED", "REJECTED", "STOPPED"].includes(reviewed.status) &&
+        matchesReviewedInventoryRequest(reviewed.request, operation.id, data)) continue
 
       const operationType = requireString(
         data,
