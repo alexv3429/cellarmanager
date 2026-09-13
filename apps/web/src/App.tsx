@@ -9,6 +9,7 @@ import { ActivityView } from "./components/ActivityView"
 import { CatalogView } from "./components/CatalogView"
 import { MemberCellarView } from "./components/MemberCellarView"
 import { CellarSetupView } from "./components/CellarSetupView"
+import { InventoryQueueReview } from "./components/InventoryQueueReview"
 import { HoldingsView } from "./components/HoldingsView"
 import { ImportView } from "./components/ImportView"
 import { HouseholdInvitationsView } from "./components/HouseholdInvitationsView"
@@ -283,6 +284,8 @@ function ReadyAuthenticatedApp({
       {route.view === "activity" ? (
         <ActivityView
           householdId={activeHouseholdId}
+          userId={userId}
+          isOnline={isOnline}
           onOpenWine={(wineId) =>
             openWineDetail(wineId, "activity")
           }
@@ -433,6 +436,7 @@ function AuthenticatedApp({
             householdError ??
             "Unable to load household data"}
         </Notice>
+        <InventoryQueueReview userId={userId} householdId={null} isOnline={isOnline} onlyWhenQueued />
       </main>
     )
   }
@@ -451,10 +455,13 @@ function AuthenticatedApp({
 
   if (householdGate === "onboarding") {
     return (
-      <OnboardingView
-        isOnline={isOnline}
-        onSignOut={signOutAndClearLocalData}
-      />
+      <>
+        <InventoryQueueReview userId={userId} householdId={null} isOnline={isOnline} onlyWhenQueued />
+        <OnboardingView
+          isOnline={isOnline}
+          onSignOut={signOutAndClearLocalData}
+        />
+      </>
     )
   }
 

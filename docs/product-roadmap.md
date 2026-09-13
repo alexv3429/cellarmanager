@@ -11,7 +11,7 @@ crosses a milestone boundary.
 |---|---|---|
 | `v0.3` | A cellar can live safely in CellarManager through daily manual use or guarded CSV import | Released (`v0.3.0`) |
 | `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable evidence | Released (`v0.4.0`) |
-| `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | In progress (`0.5.8`) |
+| `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | In progress (`0.5.9`) |
 | `v0.6` | Adding or identifying wine requires dramatically less typing | Planned |
 | `v0.7` | CellarManager explains what happened to the cellar and what the collection means over time | Planned |
 | `v1.0` | A self-host can install, trust, upgrade, recover, and maintain CellarManager for years | Planned |
@@ -271,8 +271,19 @@ terminal rejections, and convergence after synchronized snapshots. There is no n
 screen or migration. This is not a live PowerSync/browser transport test; the
 separate safe two-device checklist and exact automated boundaries are documented in
 [`multi-device-inventory-acceptance.md`](multi-device-inventory-acceptance.md).
-Conflict explanation and rejected-operation recovery UX remain **0.5.9**; the
+Conflict explanation and rejected-operation recovery UX are described below; the
 full membership security matrix remains **0.5.11**.
+
+Step 0.5.9 explains rejected stock requests in plain language and links to the
+wine's current stock before a separately confirmed new change. A browser-wide
+queue review also covers uploads blocked by revoked devices or changed access,
+including work from another household. The originating user can explicitly stop
+a queued request online: a server-side cancellation record serializes with stock
+acceptance, returns an existing receipt if already processed, and prevents a
+stopped UUID from later changing stock. The original request is retained privately;
+accepted inventory history is never undone, edited, or silently reattributed.
+See [`inventory-conflict-recovery.md`](inventory-conflict-recovery.md) for the
+additive migration, private history, and safe acceptance checklist.
 
 ## v0.6 — Capture-assisted enrichment
 

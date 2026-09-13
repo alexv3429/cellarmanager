@@ -51,6 +51,7 @@ function createDatabase(
   }
 
   const database = {
+    getOptional: vi.fn(async () => null),
     getNextCrudTransaction: vi.fn(
       async () => transaction,
     ),
@@ -63,6 +64,7 @@ function createDatabase(
 }
 
 const commonData = {
+  user_id: "user-1",
   household_id: "household-1",
   device_id: "device-1",
   wine_id: "wine-1",
@@ -71,6 +73,24 @@ const commonData = {
 }
 
 describe("PowerSync inventory upload", () => {
+  it.each(["ACCEPTED", "REJECTED", "STOPPED"])("acknowledges a reviewed %s request without retrying its stock RPC", async (status) => {
+    const data = { ...commonData, operation_type: "REMOVE", source_location_id: "a", destination_location_id: null, remove_reason: "DRANK" }
+    const { database, complete } = createDatabase([putOperation("reviewed", data), putOperation("next", { ...data, household_id: "other-household" })])
+    vi.mocked(database.getOptional).mockResolvedValueOnce({ status, request: JSON.stringify({ id: "reviewed", ...data }) })
+    supabaseMocks.rpc.mockResolvedValue({ data: null, error: null })
+    await new PowerSyncConnector().uploadData(database)
+    expect(supabaseMocks.rpc).toHaveBeenCalledExactlyOnceWith("apply_inventory_operation", expect.objectContaining({ p_operation_id: "next", p_household_id: "other-household" }))
+    expect(complete).toHaveBeenCalledTimes(1)
+  })
+  it.each(["changed payload", "nonterminal", "corrupt cache"])("does not skip a request with %s", async (kind) => {
+    const data = { ...commonData, operation_type: "REMOVE", source_location_id: "a", destination_location_id: null, remove_reason: "DRANK" }
+    const { database, complete } = createDatabase([putOperation("reviewed", data)])
+    vi.mocked(database.getOptional).mockResolvedValueOnce({ status: kind === "nonterminal" ? "PENDING" : "STOPPED",
+      request: kind === "corrupt cache" ? "invalid" : JSON.stringify({ id: "reviewed", ...data, quantity: kind === "changed payload" ? 2 : 1 }) })
+    supabaseMocks.rpc.mockResolvedValue({ data: null, error: { message: "Upload unavailable" } })
+    await expect(new PowerSyncConnector().uploadData(database)).rejects.toThrow("Upload unavailable")
+    expect(supabaseMocks.rpc).toHaveBeenCalledTimes(1); expect(complete).not.toHaveBeenCalled()
+  })
   it("preserves an upload rejected for device revocation and its original device ID", async () => {
     supabaseMocks.rpc.mockResolvedValue({ data: null, error: { code: "42501", message: "Device registration is no longer active" } })
     const { database, complete } = createDatabase([putOperation("revoked-op", {
@@ -238,7 +258,7 @@ describe("PowerSync inventory upload", () => {
       remove_reason: operationType === "REMOVE" ? "DRANK" : null,
       ...(operationType === "ADD" ? { wine_producer: "Queued wine", wine_cuvee: "Before demotion", wine_vintage: 2024, wine_color: "red", wine_format_ml: 750 } : {}),
     })])
-    await expect(new PowerSyncConnector().uploadData(database)).rejects.toThrow("Your queued changes have been kept locally and were not applied")
+    await expect(new PowerSyncConnector().uploadData(database)).rejects.toThrow("The blocked request remains queued")
     expect(complete).not.toHaveBeenCalled()
     expect(supabaseMocks.rpc).toHaveBeenCalledTimes(1)
   })

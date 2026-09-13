@@ -1,9 +1,8 @@
 # Activity and synchronization UX
 
-Roadmap step 0.3.15 makes the existing local-first inventory journal visible
-to the user and replaces the ambiguous connection label with an explicit
-synchronization state. It does not change the inventory-operation or database
-contracts.
+Activity exposes the local-first inventory journal and explicit synchronization
+state introduced in 0.3.15. Step 0.5.9 adds plain-language rejection explanations
+and explicit recovery for the signed-in account's blocked browser uploads.
 
 ## Activity
 
@@ -62,4 +61,9 @@ Authorization errors preserve the local queue instead of pretending it synced.
 
 Step 0.5.8's automated coverage and safe manual checklist are documented in
 [`multi-device-inventory-acceptance.md`](multi-device-inventory-acceptance.md).
-Improved conflict and rejected-operation recovery controls belong to **0.5.9**.
+Step 0.5.9 adds **Review current stock** for terminal rejections, and a separate
+**Queued on this browser** review across households. A confirmed online stop
+checks for an already-processed receipt first, never undoes accepted stock, and
+retains the original request privately. See
+[`inventory-conflict-recovery.md`](inventory-conflict-recovery.md) for deployment,
+permission boundaries, synchronization limits and the safe acceptance checklist.
