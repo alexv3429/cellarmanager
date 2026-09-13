@@ -11,9 +11,13 @@ import {
   type InventoryActivityRow,
 } from "../data/activityView"
 import { Notice } from "./Notice"
+import { describeInventoryRejection } from "../data/inventoryRecovery"
+import { InventoryQueueReview } from "./InventoryQueueReview"
 
 interface ActivityViewProps {
   householdId: string
+  userId: string
+  isOnline: boolean
   onOpenWine: (wineId: string) => void
 }
 
@@ -88,6 +92,8 @@ function activityMovement(item: InventoryActivityItem): string {
 
 export function ActivityView({
   householdId,
+  userId,
+  isOnline,
   onOpenWine,
 }: ActivityViewProps) {
   const {
@@ -139,6 +145,8 @@ export function ActivityView({
         </div>
       </div>
 
+      <InventoryQueueReview householdId={householdId} userId={userId} isOnline={isOnline} />
+
       {error ? (
         <Notice role="alert" tone="error">
           Unable to load activity: {String(error)}
@@ -173,9 +181,8 @@ export function ActivityView({
             {summary.pendingCount} local {summary.pendingCount === 1 ? "change is" : "changes are"} waiting for server confirmation
           </strong>
           <p>
-            Inventory already includes these optimistic changes.
-            They will retry automatically when synchronization is
-            available.
+            These are not yet confirmed stock changes. Temporary connection failures retry automatically.
+            If an upload is blocked by access or registration changes, review this browser’s queue above.
           </p>
         </Notice>
       ) : null}
@@ -186,10 +193,10 @@ export function ActivityView({
             {summary.rejectedCount} {summary.rejectedCount === 1 ? "change was" : "changes were"} rejected
           </strong>
           <p>
-            The server explanation is shown on each rejected
-            activity card. Rejected changes are not included in
-            authoritative holdings.
+            These are historical rejections, not changes still waiting to upload.
+            They did not change stock. Review the explanation and current stock before making a separate new request.
           </p>
+          <button type="button" onClick={() => { setStatus("REJECTED"); setOperationType("ALL"); setSearch("") }}>Show rejected changes</button>
         </Notice>
       ) : null}
 
@@ -333,17 +340,18 @@ export function ActivityView({
             ) : null}
 
             {item.status === "REJECTED" ? (
-              <div
-                className="activity-card__error"
-                role="alert"
-              >
-                <strong>
-                  {item.error_code ?? "Server rejection"}
-                </strong>
-                <span>
-                  {item.error_message ??
-                    "The server rejected this inventory change."}
-                </span>
+              <div className="activity-card__error">
+                <strong>{describeInventoryRejection(item.error_code).title}</strong>
+                <p>{describeInventoryRejection(item.error_code).explanation}</p>
+                <p><strong>No stock change was applied by this request.</strong> {describeInventoryRejection(item.error_code).nextStep}</p>
+                {item.catalog_wine_id ? <button type="button" onClick={() => onOpenWine(item.catalog_wine_id as string)}>
+                  Review current stock
+                </button> : <p>The wine is not available in the synchronized catalog yet. Wait for synchronization or ask an Owner to review the catalog.</p>}
+                <details><summary>Show technical details</summary><dl>
+                  <div><dt>Request ID</dt><dd>{item.id}</dd></div>
+                  <div><dt>Server code</dt><dd>{item.error_code ?? "Not provided"}</dd></div>
+                  <div><dt>Server message</dt><dd>{item.error_message ?? "Not provided"}</dd></div>
+                </dl></details>
               </div>
             ) : null}
           </li>

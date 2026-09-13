@@ -7005,6 +7005,35 @@
   color: var(--text-h);
 }
 
+.activity-card__error { gap: 10px; }
+.activity-card__error p { margin: 0; }
+.activity-card__error > button { justify-self: start; }
+.activity-card__error details { margin-top: 6px; }
+.activity-card__error summary,
+.inventory-queue-review__history > summary { cursor: pointer; font-weight: 600; }
+.activity-card__error dl { display: grid; gap: 8px; margin-bottom: 0; }
+.activity-card__error dd { margin: 0; overflow-wrap: anywhere; }
+.activity-card__error dt { font-size: 13px; }
+.inventory-queue-review,
+.app-shell__content .inventory-queue-review { display: grid; gap: 14px; min-width: 0; }
+.inventory-queue-review__heading { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; }
+.inventory-queue-review h2,
+.inventory-queue-review h3,
+.inventory-queue-review p { margin: 0; }
+.inventory-queue-review h3 { font-size: 17px; }
+.inventory-queue-review__heading p { margin-top: 6px; }
+.inventory-queue-review__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.inventory-queue-review__list > li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 14px;
+  border: 1px solid var(--border); padding: 16px; border-radius: 10px; background: var(--surface); }
+.inventory-queue-review__list > li > div:first-child { display: grid; gap: 6px; min-width: 0; overflow-wrap: anywhere; }
+.inventory-queue-review small { display: block; overflow-wrap: anywhere; }
+.inventory-queue-review__confirmation { grid-column: 1 / -1; display: grid; gap: 12px; padding: 16px;
+  border: 1px solid var(--accent-border); border-radius: 10px; background: var(--surface-raised, var(--surface)); }
+.inventory-recovery-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.inventory-queue-review__history { padding-top: 12px; border-top: 1px solid var(--border); }
+.inventory-queue-review__history[open] > * + * { margin-top: 12px; }
+.inventory-queue-review__history li { margin-bottom: 12px; overflow-wrap: anywhere; }
+
 @media (max-width: 820px) {
   .app-shell__content .activity-filters {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -7017,6 +7046,10 @@
 }
 
 @media (max-width: 560px) {
+  .inventory-queue-review__heading { align-items: start; }
+  .inventory-queue-review__list > li { grid-template-columns: minmax(0, 1fr); padding: 12px; }
+  .inventory-queue-review__confirmation { padding: 12px; }
+  .inventory-recovery-actions > button { flex: 1 1 12rem; }
   .activity-heading {
     margin-top: 22px;
   }

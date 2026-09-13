@@ -104,6 +104,14 @@ data. There is no new interface to find in 0.5.8.
 
 Do not claim this manual checklist passed unless it was actually performed.
 
+## Extension in 0.5.9
+
+The suite now runs **16** scenarios: the original 12 above plus stop-vs-MOVE and
+stop-vs-new-wine-ADD in both lock orders. If upload wins, its stock and original
+receipt remain; if stopping wins, retry returns `USER_CANCELLED`, creates no wine
+or stock journal row, and leaves stock unchanged. Both receipts replay unchanged.
+See [`inventory-conflict-recovery.md`](inventory-conflict-recovery.md).
+
 ## Implementation validation — 2026-09-12
 
 - `npm run ci`: passed, including 463 web tests and the production build.

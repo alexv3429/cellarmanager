@@ -102,7 +102,8 @@ function statusPresentation(status: ActivityStatus): {
   }
 }
 
-function operationLabel(operationType: ActivityOperationType): string {
+function operationLabel(operationType: ActivityOperationType, status: ActivityStatus): string {
+  if (status !== "ACCEPTED") return `${status === "REJECTED" ? "Not applied:" : "Requested:"} ${operationType === "ADD" ? "add" : operationType === "MOVE" ? "move" : "remove"}`
   switch (operationType) {
     case "ADD":
       return "Added"
@@ -147,7 +148,7 @@ export function buildInventoryActivity(
 
     return {
       ...row,
-      actionLabel: operationLabel(row.operation_type),
+      actionLabel: operationLabel(row.operation_type, row.status),
       destinationLabel: locationLabel(
         row.destination_cellar_name,
         row.destination_code,

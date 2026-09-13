@@ -48,7 +48,9 @@ function operation(f, actorIndex, type, options = {}) {
     type === "ADD" ? null : options.source ?? f.a,
     type === "REMOVE" ? null : options.destination ?? f.b,
     options.quantity ?? 1, timestamp, type === "REMOVE" ? "DRANK" : null]
-  return { id, sql: asUser(actor, `SELECT json_build_object('pid', pg_backend_pid(), 'receipt', row_to_json(r))
+  const request = { id, household_id: f.household, user_id: actor.user, device_id: actor.device, operation_type: type,
+    wine_id: f.wine, source_location_id: args[5], destination_location_id: args[6], quantity: args[7], created_at_client: timestamp, remove_reason: args[9] }
+  return { id, request, sql: asUser(actor, `SELECT json_build_object('pid', pg_backend_pid(), 'receipt', row_to_json(r))
     FROM public.apply_inventory_operation(${args.map(quote).join(",")}) r;`) }
 }
 
@@ -57,7 +59,10 @@ function newWine(f, actorIndex, quantity) {
   const id = randomUUID()
   const args = [id, f.household, actor.device, randomUUID(), "Synthetic New Domaine", "Shared identity", 2021,
     "red", "Morgon", "Beaujolais", 750, f.a, quantity, timestamp]
-  return { id, sql: asUser(actor, `SELECT json_build_object('pid', pg_backend_pid(), 'receipt', row_to_json(r))
+  const request = { id, household_id: f.household, user_id: actor.user, device_id: actor.device, operation_type: "ADD",
+    wine_id: args[3], source_location_id: null, destination_location_id: f.a, quantity, created_at_client: timestamp, remove_reason: null,
+    wine_producer: args[4], wine_cuvee: args[5], wine_vintage: args[6], wine_color: args[7], wine_appellation: args[8], wine_area: args[9], wine_format_ml: args[10] }
+  return { id, request, sql: asUser(actor, `SELECT json_build_object('pid', pg_backend_pid(), 'receipt', row_to_json(r))
     FROM public.apply_add_inventory_operation(${args.map(quote).join(",")}) r;`) }
 }
 
@@ -103,6 +108,33 @@ const interrupt = () => { void db.close().finally(() => process.exit(130)) }
 process.once("SIGINT", interrupt)
 process.once("SIGTERM", interrupt)
 try {
+  for (const type of ["MOVE", "new-wine ADD"]) {
+    for (const stopFirst of [true, false]) {
+      await check(`stop serializes with ${type} (${stopFirst ? "stop" : "upload"} first)`, async () => {
+        const f = await fixture(2)
+        const op = type === "MOVE" ? operation(f, 0, "MOVE") : newWine(f, 0, 1)
+        const stop = { sql: asUser(f.actors[0], `SELECT json_build_object('pid', pg_backend_pid(), 'receipt',
+          public.stop_inventory_upload('${op.id}', ${quote(JSON.stringify(op.request))}::jsonb));`) }
+        const results = receipts(await race(f, stopFirst ? [stop, op] : [op, stop]))
+        const upload = results[stopFirst ? 1 : 0], stopped = results[stopFirst ? 0 : 1]
+        assert.equal(stopped.status, stopFirst ? "STOPPED" : "ACCEPTED")
+        assert.equal(upload.operation_status, stopFirst ? "REJECTED" : "ACCEPTED")
+        assert.equal(upload.operation_error_code, stopFirst ? "USER_CANCELLED" : null)
+        const snapshot = JSON.parse(await db.query(`SELECT json_build_object(
+          'journal', (SELECT count(*) FROM public.inventory_operations WHERE household_id = '${f.household}'),
+          'stopped', (SELECT count(*) FROM private.stopped_inventory_uploads WHERE household_id = '${f.household}'),
+          'wines', (SELECT count(*) FROM public.wines WHERE household_id = '${f.household}'),
+          'bottles', (SELECT sum(quantity) FROM public.holdings WHERE household_id = '${f.household}'));`))
+        assert.deepEqual(snapshot, { journal: stopFirst ? 0 : 1, stopped: stopFirst ? 1 : 0,
+          wines: !stopFirst && type === "new-wine ADD" ? 2 : 1, bottles: !stopFirst && type === "new-wine ADD" ? 3 : 2 })
+        if (type === "MOVE") await stock(f, stopFirst ? 2 : 1, stopFirst ? 0 : 1, stopFirst ? 0 : 1)
+        const beforeRetry = await assertConvergedReads(f)
+        assert.deepEqual(JSON.parse(await db.query(op.sql)).receipt, upload)
+        assert.deepEqual(JSON.parse(await db.query(stop.sql)).receipt, stopped)
+        assert.equal(await assertConvergedReads(f), beforeRetry, "Repeated stop/upload never rewrites accepted history or stock")
+      })
+    }
+  }
   for (const reversed of [false, true]) {
     await check(`two offline devices remove the last bottle (${reversed ? "phone" : "desktop"} reconnects first)`, async () => {
       const f = await fixture()
@@ -184,6 +216,12 @@ try {
     assert.deepEqual(JSON.parse(await db.query(sql)), { wines: 1, bottles: 5, journal: 2, identities: 1 })
     const beforeRetry = await assertConvergedReads(f)
     receipts(await race(f, ops))
+    assert.equal(await assertConvergedReads(f), beforeRetry)
+    for (const [index, op] of ops.entries()) {
+      const result = JSON.parse(await db.query(asUser(f.actors[index === 0 ? 0 : 2],
+        `SELECT public.stop_inventory_upload('${op.id}', ${quote(JSON.stringify(op.request))}::jsonb);`)))
+      assert.equal(result.status, "ACCEPTED", "Recovery recognizes an ADD resolved to an existing canonical wine")
+    }
     assert.equal(await assertConvergedReads(f), beforeRetry)
   })
 

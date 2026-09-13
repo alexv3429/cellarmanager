@@ -342,6 +342,7 @@ export function AppShell({
           {effectiveSyncError ? (
             <Notice role="alert" tone="error">
               Synchronization paused: {effectiveSyncError}
+              <p><button type="button" onClick={() => onViewChange("activity")}>Review this browser’s queue</button></p>
             </Notice>
           ) : null}
 

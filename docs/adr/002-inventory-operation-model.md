@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-08-03
-- Implemented: v0.2.0; acceptance extended in v0.5 step 0.5.8
+- Implemented: v0.2.0; acceptance extended in 0.5.8 and explicit upload recovery in 0.5.9
 
 ## Context
 
@@ -23,6 +23,10 @@ and make the authoritative cellar unknowable.
   acceptance determines the synchronized result.
 - Current inventory is read from holdings. Historical journals explain changes;
   they are not replayed to reconstruct migrated or imported current stock.
+- An author may explicitly stop an unprocessed queued request online. A private
+  immutable stop record, serialized with stock acceptance, prevents that UUID
+  from later changing stock. Already accepted/rejected receipts remain unchanged;
+  stopping never reverses stock or creates a phantom new-wine journal entry.
 
 ## Alternatives considered
 
@@ -54,3 +58,9 @@ projection convergence from synchronized snapshots. These are boundary tests,
 not a claim of live PowerSync/browser transport acceptance. See
 [`../multi-device-inventory-acceptance.md`](../multi-device-inventory-acceptance.md)
 and [`../activity-and-sync.md`](../activity-and-sync.md).
+
+Step 0.5.9 adds stop/upload races in both orders (existing and new wines), scoped
+private receipts and exact-payload local acknowledgment. See
+[`../inventory-conflict-recovery.md`](../inventory-conflict-recovery.md) for the
+recovery and synchronization contract. No request is silently reassigned,
+discarded or retried under a new identity.

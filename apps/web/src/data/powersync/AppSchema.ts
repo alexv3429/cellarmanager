@@ -129,6 +129,17 @@ const devices = new Table(
   { indexes: {} }
 );
 
+// Confirmed server receipts for explicitly reviewed uploads. Local-only: writing
+// one must not enqueue another upload or alter the authoritative stock journal.
+const inventory_upload_receipts = new Table({
+  household_id: column.text,
+  user_id: column.text,
+  device_id: column.text,
+  status: column.text,
+  request: column.text,
+  recorded_at: column.text,
+}, { localOnly: true });
+
 export const AppSchema = new Schema({
   households,
   household_members,
@@ -137,6 +148,7 @@ export const AppSchema = new Schema({
   locations,
   holdings,
   inventory_operations,
+  inventory_upload_receipts,
   devices
 });
 
