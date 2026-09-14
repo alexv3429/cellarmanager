@@ -45,7 +45,8 @@ Automated regression tests exercise the real React App, selection hook, shell,
 switcher, and History API with synthetic child screens and memberships. jsdom is
 a development-only test dependency. Existing database authorization and queue
 tests remain authoritative for server enforcement; this step does not replace
-the full 0.5.8/0.5.11 concurrency and security acceptance suites.
+the [inventory concurrency](multi-device-inventory-acceptance.md) and
+[membership security](membership-security-matrix.md) acceptance suites.
 
 ## Manual acceptance (desktop and phone)
 

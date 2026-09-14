@@ -80,6 +80,9 @@ jobs:
       - name: Run concurrent multi-device inventory acceptance
         run: npm run inventory:acceptance
 
+      - name: Run concurrent invitation and membership acceptance
+        run: npm run membership:acceptance
+
   dependency-audit:
     name: Dependency audit
     runs-on: ubuntu-latest
