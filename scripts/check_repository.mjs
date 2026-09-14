@@ -110,6 +110,7 @@ try {
     "npm run supabase -- test db",
     "npm run inventory:test",
     "npm run inventory:acceptance",
+    "npm run membership:acceptance",
   ]) {
     if (!workflow.includes(required)) {
       errors.push(`CI workflow is missing: ${required}`)

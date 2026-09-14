@@ -151,6 +151,39 @@ describe("PowerSync account isolation", () => {
     expect(databaseMocks.connect).toHaveBeenCalledTimes(1)
   })
 
+  it.each([true, false])("does not expose another account's cache if cleanup fails (online: %s)", async (online) => {
+    const { setPowerSyncAccess } = await loadConnection()
+    await setPowerSyncAccess({ userId: "owner", connectToBackend: false })
+    const ready = vi.fn()
+    databaseMocks.disconnectAndClear.mockRejectedValueOnce(new Error("cleanup blocked"))
+    await expect(setPowerSyncAccess({ userId: "member", connectToBackend: online, onLocalReady: ready }))
+      .rejects.toThrow("cleanup blocked")
+    expect(ready).not.toHaveBeenCalled()
+    expect(databaseMocks.connect).not.toHaveBeenCalled()
+    expect(readDatabaseOwner(window.localStorage)).toBe("owner")
+    await setPowerSyncAccess({ userId: "member", connectToBackend: online, onLocalReady: ready })
+    expect(databaseMocks.disconnectAndClear).toHaveBeenCalledTimes(2)
+    expect(ready).toHaveBeenCalledTimes(1)
+    expect(readDatabaseOwner(window.localStorage)).toBe("member")
+  })
+
+  it("waits for old-account cleanup before declaring the next account locally ready", async () => {
+    const { setPowerSyncAccess } = await loadConnection()
+    await setPowerSyncAccess({ userId: "owner", connectToBackend: false })
+    let finishCleanup!: () => void
+    databaseMocks.disconnectAndClear.mockImplementationOnce(() => new Promise<void>((resolve) => { finishCleanup = resolve }))
+    const ready = vi.fn()
+    const switching = setPowerSyncAccess({ userId: "member", connectToBackend: true, onLocalReady: ready })
+    await vi.waitFor(() => expect(databaseMocks.disconnectAndClear).toHaveBeenCalledTimes(1))
+    expect(ready).not.toHaveBeenCalled()
+    expect(readDatabaseOwner(window.localStorage)).toBe("owner")
+    finishCleanup()
+    await switching
+    expect(ready).toHaveBeenCalledTimes(1)
+    expect(ready.mock.invocationCallOrder[0]).toBeLessThan(databaseMocks.connect.mock.invocationCallOrder[0])
+    expect(readDatabaseOwner(window.localStorage)).toBe("member")
+  })
+
   it("clears ownership and browser identities after successful sign out", async () => {
     const {
       clearPowerSyncForSignOut,

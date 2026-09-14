@@ -70,3 +70,9 @@ already-accepted stock stays applied; requests authorized after demotion or
 departure are denied. They retain their original author/device/UUID for the
 existing explicit recovery flow. See
 [`../household-ownership-lifecycle.md`](../household-ownership-lifecycle.md).
+
+Step 0.5.11 applies the same household-first lock order to invitation mutations
+and verifies acceptance against cancellation/replacement and current-owner
+changes in independent sessions. This fixes an inverse row/household lock order
+without weakening stock or membership authority. See
+[`../membership-security-matrix.md`](../membership-security-matrix.md).

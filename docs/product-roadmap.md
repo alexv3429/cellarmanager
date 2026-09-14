@@ -11,7 +11,7 @@ crosses a milestone boundary.
 |---|---|---|
 | `v0.3` | A cellar can live safely in CellarManager through daily manual use or guarded CSV import | Released (`v0.3.0`) |
 | `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable evidence | Released (`v0.4.0`) |
-| `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | In progress (`0.5.10`) |
+| `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | In progress (`0.5.11`) |
 | `v0.6` | Adding or identifying wine requires dramatically less typing | Planned |
 | `v0.7` | CellarManager explains what happened to the cellar and what the collection means over time | Planned |
 | `v1.0` | A self-host can install, trust, upgrade, recover, and maintain CellarManager for years | Planned |
@@ -271,8 +271,8 @@ terminal rejections, and convergence after synchronized snapshots. There is no n
 screen or migration. This is not a live PowerSync/browser transport test; the
 separate safe two-device checklist and exact automated boundaries are documented in
 [`multi-device-inventory-acceptance.md`](multi-device-inventory-acceptance.md).
-Conflict explanation and rejected-operation recovery UX are described below; the
-full membership security matrix remains **0.5.11**.
+Conflict explanation and rejected-operation recovery UX and the 0.5.11 membership
+security matrix are described below.
 
 Step 0.5.9 explains rejected stock requests in plain language and links to the
 wine's current stock before a separately confirmed new change. A browser-wide
@@ -295,6 +295,16 @@ Verified responses restrict the current workspace before replication catches up;
 uncertain responses use read-only reconciliation rather than automatic retries.
 See [ownership and leaving](household-ownership-lifecycle.md) for the additive
 migration, automated race coverage and disposable-household acceptance plan.
+
+Step 0.5.11 adds a CI-gated cross-role, cross-household matrix spanning current,
+demoted, revoked and departed users, pending invitees, unrelated Owners, private
+data and service-only authority. Independent-session invitation races exposed
+and now prevent an accept/cancel deadlock: all invitation mutations lock the
+household first and recheck authority after waiting. Account-switch regressions
+also fail closed when clearing the previous local database fails. No new screen
+or permission model is introduced. See
+[membership security acceptance](membership-security-matrix.md) for the
+function-only migration and the remaining hosted 0.5.13 release checks.
 
 ## v0.6 — Capture-assisted enrichment
 

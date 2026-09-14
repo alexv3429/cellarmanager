@@ -259,4 +259,9 @@ remain. Exact membership IDs prevent stale requests from affecting a rejoined
 account. Stock, membership and device changes share the same household lock.
 See [ownership and leaving](household-ownership-lifecycle.md) for private-data
 cleanup, response-loss recovery, the additive migration and safe acceptance.
-The full adversarial matrix remains the 0.5.11 release-hardening step.
+Step 0.5.11 adds the cross-role/household security matrix and invitation race
+acceptance. Invitation mutations now take the household lock before the
+invitation row lock and recheck Owner authority after waiting. This closes the
+accept/cancel deadlock without changing roles or granting new browser access.
+See [security acceptance](membership-security-matrix.md) for coverage, the
+function-only migration and the remaining hosted 0.5.13 validation boundary.

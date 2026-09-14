@@ -21,6 +21,7 @@
     "invitations:test": "node --test scripts/invitations/*.test.mjs",
     "inventory:test": "node --test scripts/inventory/*.test.mjs",
     "inventory:acceptance": "node scripts/inventory/concurrent_acceptance.mjs",
+    "membership:acceptance": "node scripts/invitations/concurrent_acceptance.mjs",
     "web:dev": "npm run dev --workspace @cellarmanager/web",
     "web:lint": "npm run lint --workspace @cellarmanager/web",
     "web:test": "npm run test --workspace @cellarmanager/web",
