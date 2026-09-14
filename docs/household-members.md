@@ -16,8 +16,10 @@ Back/Forward, under the household isolation rules introduced in 0.5.5.
   identifies the target and explains the consequences. **Cancel** or Escape
   returns focus to the initiating button without sending a mutation.
 - Members have no invitation, role-change, or removal controls.
-- No self-demotion or self-removal is offered. Leaving and ownership transfer
-  remain the explicit 0.5.10 workflow, not a workaround through generic controls.
+- Generic role/removal controls never target yourself. **Your access** now
+  provides the explicit 0.5.10 ownership-transfer and leaving workflow, with
+  separate confirmations and last-Owner protection. See
+  [ownership and leaving](household-ownership-lifecycle.md).
 
 The existing server contract permits several Owners. Promoting someone lets
 them manage stock, shared settings, and other people's access—including the
@@ -66,7 +68,9 @@ populate or submit a mutation against the new household.
 
 ## Verification and manual acceptance
 
-No new migration, permission grant, or production database change is needed.
+The original 0.5.6 directory requires no new migration. The **Your access**
+actions added in 0.5.10 require the additive migration documented in
+[ownership and leaving](household-ownership-lifecycle.md).
 Tests cover typed RPC payloads/receipts, role visibility, cancellation and focus,
 promotion/demotion/removal, stale identity/role checks, dropped responses,
 failed reloads, offline transitions, and household isolation. Existing local
@@ -84,7 +88,8 @@ On desktop and phone:
    only for a disposable test membership whose private notes/preferences may
    be deleted. Reinvite it if you need to verify rejoining.
 4. Sign in as Member: the same directory is readable, with only a refresh
-   action. There must be no invitation or access-editing controls.
+   action and their own **Your access → Leave household** option. There must
+   be no invitation or controls for changing other people's access.
 5. Check **Invite member → Back to members**, refresh, and browser navigation.
 6. Go offline: member management should clearly ask to reconnect, with no
    queued changes. Reconnect and verify the current list reloads.

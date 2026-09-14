@@ -26,6 +26,7 @@ import {
   setPowerSyncAccess,
 } from "./data/powersync/connection"
 import { useRegisteredDevices } from "./devices/useRegisteredDevices"
+import type { OwnHouseholdAccess } from "./data/householdLifecycle"
 import {
   resolveHouseholdGate,
 } from "./households/householdGate"
@@ -64,6 +65,7 @@ interface AuthenticatedAppProps {
 }
 
 interface ReadyAuthenticatedAppProps {
+  onAccessChanged: (access: OwnHouseholdAccess) => void
   activeHouseholdId: string
   currentSyncError: string | null
   householdError: string | null
@@ -78,6 +80,7 @@ interface ReadyAuthenticatedAppProps {
 }
 
 function ReadyAuthenticatedApp({
+  onAccessChanged,
   activeHouseholdId,
   currentSyncError,
   householdError,
@@ -338,7 +341,7 @@ function ReadyAuthenticatedApp({
 
       {route.view === "members" ? (
         <HouseholdMembersView householdId={activeHouseholdId} householdName={activeHouseholdName}
-          userId={userId} role={activeHouseholdRole} isOnline={isOnline} onInvite={() => changeView("invite")} />
+          userId={userId} role={activeHouseholdRole} isOnline={isOnline} onInvite={() => changeView("invite")} onAccessChanged={onAccessChanged} />
       ) : null}
 
       {route.view === "devices" ? (
@@ -402,6 +405,7 @@ function AuthenticatedApp({
     selectionNotice,
     isLoading: householdsLoading,
     selectHousehold,
+    applyOwnAccess,
   } = useActiveHousehold(userId)
 
   const householdGate = resolveHouseholdGate({
@@ -456,6 +460,7 @@ function AuthenticatedApp({
   if (householdGate === "onboarding") {
     return (
       <>
+        {selectionNotice ? <Notice role="status">{selectionNotice}</Notice> : null}
         <InventoryQueueReview userId={userId} householdId={null} isOnline={isOnline} onlyWhenQueued />
         <OnboardingView
           isOnline={isOnline}
@@ -478,6 +483,7 @@ function AuthenticatedApp({
 
   return (
     <ReadyAuthenticatedApp
+      onAccessChanged={applyOwnAccess}
       key={`${activeHouseholdId}:${households.find((household) => household.id === activeHouseholdId)?.role}`}
       activeHouseholdId={activeHouseholdId}
       currentSyncError={currentSyncError}

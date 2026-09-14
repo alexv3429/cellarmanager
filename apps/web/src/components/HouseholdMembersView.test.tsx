@@ -21,7 +21,7 @@ let database: HouseholdMember[]
 let root: Root
 let container: HTMLDivElement
 const onInvite = vi.fn()
-const props = { householdId: "household-a", householdName: "Family cellar", userId: "self", role: "owner" as const, isOnline: true, onInvite }
+const props = { householdId: "household-a", householdName: "Family cellar", userId: "self", role: "owner" as const, isOnline: true, onInvite, onAccessChanged: vi.fn() }
 
 beforeEach(() => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true)
@@ -59,7 +59,7 @@ describe("household members UI", () => {
     await render()
     expect(container.textContent).toContain("3 people with access")
     expect(container.textContent).toContain("alice@example.test")
-    expect(container.textContent).toContain("Your own Owner role cannot be changed here")
+    expect(container.textContent).toContain("use Your access below")
     expect(container.querySelector('[aria-label="Remove access: Current Owner"]')).toBeNull()
     await click("Invite member")
     expect(onInvite).toHaveBeenCalledOnce()
@@ -118,7 +118,7 @@ describe("household members UI", () => {
     await render({ role: "member" })
     expect(container.textContent).toContain("Alice")
     expect(container.textContent).toContain("Only Owners can invite")
-    expect([...container.querySelectorAll("button")].map((node) => node.textContent)).toEqual(["Refresh members"])
+    expect([...container.querySelectorAll("button")].map((node) => node.textContent)).toEqual(["Refresh members", "Review leaving household"])
     expect(updateRole).not.toHaveBeenCalled()
   })
 

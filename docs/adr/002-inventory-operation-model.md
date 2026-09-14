@@ -64,3 +64,9 @@ private receipts and exact-payload local acknowledgment. See
 [`../inventory-conflict-recovery.md`](../inventory-conflict-recovery.md) for the
 recovery and synchronization contract. No request is silently reassigned,
 discarded or retried under a new identity.
+
+Step 0.5.10 verifies ownership transfer and departure against the same lock:
+already-accepted stock stays applied; requests authorized after demotion or
+departure are denied. They retain their original author/device/UUID for the
+existing explicit recovery flow. See
+[`../household-ownership-lifecycle.md`](../household-ownership-lifecycle.md).

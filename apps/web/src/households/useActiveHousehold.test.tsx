@@ -15,8 +15,8 @@ function Probe({ userId = "user-a" }: { userId?: string }) {
   return <p>{current.activeHouseholdId ?? "no household"}</p>
 }
 const households: HouseholdOption[] = [
-  { id: "a", name: "My collection", role: "owner" },
-  { id: "b", name: "Friends", role: "member" },
+  { id: "a", membershipId: "ma", name: "My collection", role: "owner" },
+  { id: "b", membershipId: "mb", name: "Friends", role: "member" },
 ]
 beforeEach(() => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true)
@@ -35,6 +35,48 @@ afterEach(async () => {
 async function render(userId?: string) { await act(async () => root.render(<Probe userId={userId} />)) }
 
 describe("live household selection", () => {
+  it("expires a receipt when replication already caught up before the response", async () => {
+    query.data = [{ ...households[0], role: "member" }, households[1]]
+    await render()
+    await act(async () => current.applyOwnAccess({ householdId: "a", membershipId: "ma", userId: "user-a", role: "member" }))
+    query.data = households
+    await render()
+    expect(current.households[0].role).toBe("owner")
+  })
+  it("reduces Owner controls immediately until the synchronized role catches up", async () => {
+    await render()
+    await act(async () => current.applyOwnAccess({ householdId: "a", membershipId: "ma", userId: "user-a", role: "member" }))
+    expect(current.households[0].role).toBe("member")
+    query.data = [...households]
+    await render()
+    expect(current.households[0].role).toBe("member")
+    query.data = [{ ...households[0], role: "member" }, households[1]]
+    await render()
+    query.data = households // A later authorized promotion is synchronized normally.
+    await render()
+    expect(current.households[0].role).toBe("owner")
+  })
+  it("hides a departed household before replication, permits a new membership, never grants an absent household", async () => {
+    await render()
+    await act(async () => current.applyOwnAccess({ householdId: "a", membershipId: "ma", userId: "user-a", role: null }))
+    expect(current.activeHouseholdId).toBe("b")
+    expect(current.households.map((h) => h.id)).toEqual(["b"])
+    expect(current.selectHousehold("a")).toBe(false)
+    query.data = [{ ...households[0], membershipId: "new-membership", role: "member" }, households[1]]
+    await render()
+    expect(current.households[0].role).toBe("member")
+    await act(async () => current.applyOwnAccess({ householdId: "absent", membershipId: "x", userId: "user-a", role: "owner" }))
+    expect(current.households.map((h) => h.id)).toEqual(["a", "b"])
+  })
+  it("can lose its final household and ignores another account's receipt", async () => {
+    query.data = [households[0]]
+    await render()
+    await act(async () => current.applyOwnAccess({ householdId: "a", membershipId: "ma", userId: "other", role: null }))
+    expect(current.activeHouseholdId).toBe("a")
+    await act(async () => current.applyOwnAccess({ householdId: "a", membershipId: "ma", userId: "user-a", role: null }))
+    expect(current.activeHouseholdId).toBeNull()
+    expect(current.selectionNotice).toContain("You left")
+  })
   it("switches, survives query refresh, and restores on remount", async () => {
     await render()
     await act(async () => { expect(current.selectHousehold("b")).toBe(true) })
