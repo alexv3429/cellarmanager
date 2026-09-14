@@ -11,7 +11,7 @@ crosses a milestone boundary.
 |---|---|---|
 | `v0.3` | A cellar can live safely in CellarManager through daily manual use or guarded CSV import | Released (`v0.3.0`) |
 | `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable evidence | Released (`v0.4.0`) |
-| `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | In progress (`0.5.9`) |
+| `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | In progress (`0.5.10`) |
 | `v0.6` | Adding or identifying wine requires dramatically less typing | Planned |
 | `v0.7` | CellarManager explains what happened to the cellar and what the collection means over time | Planned |
 | `v1.0` | A self-host can install, trust, upgrade, recover, and maintain CellarManager for years | Planned |
@@ -284,6 +284,17 @@ stopped UUID from later changing stock. The original request is retained private
 accepted inventory history is never undone, edited, or silently reattributed.
 See [`inventory-conflict-recovery.md`](inventory-conflict-recovery.md) for the
 additive migration, private history, and safe acceptance checklist.
+
+Step 0.5.10 adds **Members → Your access**, with a separately confirmed
+ownership transfer and departure. Transfer atomically makes an existing
+collaborator Owner and keeps the actor as a Member. Leaving cannot remove the
+last Owner; it revokes only the caller's household access/devices and removes
+household-private notes/preferences, preserving shared stock and history.
+Both paths serialize with inventory uploads and use exact membership identities.
+Verified responses restrict the current workspace before replication catches up;
+uncertain responses use read-only reconciliation rather than automatic retries.
+See [ownership and leaving](household-ownership-lifecycle.md) for the additive
+migration, automated race coverage and disposable-household acceptance plan.
 
 ## v0.6 — Capture-assisted enrichment
 

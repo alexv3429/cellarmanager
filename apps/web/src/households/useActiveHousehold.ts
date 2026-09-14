@@ -2,6 +2,7 @@ import { useQuery } from "@powersync/react"
 import {
   useCallback,
   useEffect,
+  useMemo,
   useState,
 } from "react"
 
@@ -11,9 +12,11 @@ import {
   saveActiveHouseholdId,
 } from "./activeHousehold"
 import type { HouseholdRole } from "./householdPermissions"
+import type { OwnHouseholdAccess } from "../data/householdLifecycle"
 
 export interface HouseholdOption {
   id: string
+  membershipId?: string
   name: string
   role: HouseholdRole
 }
@@ -33,12 +36,12 @@ function readInitialActiveHouseholdId(
 
 export function useActiveHousehold(userId: string) {
   const {
-    data: households,
+    data: synchronizedHouseholds,
     error: householdsError,
     isLoading,
   } = useQuery<HouseholdOption>(
     `
-      select h.id, h.name, hm.role
+      select h.id, h.name, hm.role, hm.id as membershipId
       from households h
       join household_members hm
         on hm.household_id = h.id
@@ -47,6 +50,30 @@ export function useActiveHousehold(userId: string) {
     `,
     [userId],
   )
+
+  // Server-confirmed reductions apply before replication, never grant access.
+  // Scope by both account and membership generation, so rejoining is distinct.
+  const [restrictions, setRestrictions] = useState<OwnHouseholdAccess[]>([])
+  const households = useMemo(() => synchronizedHouseholds.flatMap((household) => {
+    const restriction = restrictions.find((entry) => entry.userId === userId && entry.householdId === household.id && entry.membershipId === household.membershipId)
+    if (restriction?.role === null) return []
+    return [{ ...household, role: restriction?.role === "member" ? "member" as const : household.role }]
+  }), [synchronizedHouseholds, restrictions, userId])
+  useEffect(() => {
+    if (isLoading || householdsError) return
+    setRestrictions((current) => {
+      const pending = current.filter((entry) => entry.userId === userId && synchronizedHouseholds.some((household) =>
+        household.id === entry.householdId && household.membershipId === entry.membershipId && household.role !== entry.role))
+      return pending.length === current.length ? current : pending
+    })
+  }, [synchronizedHouseholds, isLoading, householdsError, userId, restrictions])
+  const applyOwnAccess = useCallback((access: OwnHouseholdAccess) => {
+    if (access.userId !== userId) return
+    setRestrictions((current) => [...current.filter((entry) => entry.householdId !== access.householdId || entry.userId !== userId),
+      ...(access.role === "owner" ? [] : [access])])
+    setSelectionNotice(access.role === null ? "You left the household. Your account and the shared cellar are unchanged."
+      : access.role === "member" ? "You now have read-only Member access. Your private notes and preferences are preserved." : null)
+  }, [userId])
 
   const [selection, setSelection] = useState(() => ({
     userId,
@@ -112,5 +139,6 @@ export function useActiveHousehold(userId: string) {
     selectionNotice,
     isLoading,
     selectHousehold,
+    applyOwnAccess,
   }
 }

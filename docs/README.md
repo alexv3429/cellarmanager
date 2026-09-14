@@ -10,6 +10,7 @@ retains only the evidence needed to understand its released migration history.
 - [`household-permissions.md`](household-permissions.md) - final owner/member capability and enforcement contract for v0.5
 - [`household-switching.md`](household-switching.md) - multi-household selection, isolation, and 0.5.5 acceptance checklist
 - [`household-members.md`](household-members.md) - current collaborators, role changes, access removal, and 0.5.6 validation
+- [`household-ownership-lifecycle.md`](household-ownership-lifecycle.md) - transfer ownership, leave safely, and 0.5.10 validation
 - [`household-devices.md`](household-devices.md) - browser registrations, revocation limits, and 0.5.7 validation
 - [`multi-device-inventory-acceptance.md`](multi-device-inventory-acceptance.md) - concurrent stock acceptance, isolated fixtures, and safe two-device validation
 - [`inventory-conflict-recovery.md`](inventory-conflict-recovery.md) - rejected changes, explicit browser-queue recovery, and private stop receipts

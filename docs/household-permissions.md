@@ -35,6 +35,8 @@ does not grant curator or publication authority.
 | Request/review household research and decide reference matches | Yes | No |
 | Invite, change, revoke, or transfer members | Yes | No |
 | Manage every household device | Yes | No |
+| Leave own household | If another Owner remains | Yes |
+| Transfer own ownership, remaining a Member | Yes | No |
 
 All stock changes are Owner-only, including creating a wine through ADD.
 Multiple Owners can manage a shared cellar; the Member role is a reader, not
@@ -251,6 +253,10 @@ Members see and manage only their own in this directory. Direct table writes
 remain denied. Revocation is not authentication-session termination, remote
 erasure, or a ban on registering another browser. See
 [`household-devices.md`](household-devices.md) for the exact boundary.
-Ownership transfer and leaving are handled
-explicitly in 0.5.10 so no intermediate implementation can orphan a household.
+Step 0.5.10 adds **Members → Your access**: atomic transfer to an existing
+collaborator while remaining a Member, and self-only leaving if an Owner will
+remain. Exact membership IDs prevent stale requests from affecting a rejoined
+account. Stock, membership and device changes share the same household lock.
+See [ownership and leaving](household-ownership-lifecycle.md) for private-data
+cleanup, response-loss recovery, the additive migration and safe acceptance.
 The full adversarial matrix remains the 0.5.11 release-hardening step.

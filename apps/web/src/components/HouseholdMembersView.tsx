@@ -8,6 +8,8 @@ import {
 } from "../data/householdMembers"
 import { getHouseholdRoleLabel, type HouseholdRole } from "../households/householdPermissions"
 import { Notice } from "./Notice"
+import { HouseholdLifecycle } from "./HouseholdLifecycle"
+import type { OwnHouseholdAccess } from "../data/householdLifecycle"
 
 interface HouseholdMembersViewProps {
   householdId: string
@@ -16,6 +18,7 @@ interface HouseholdMembersViewProps {
   role: HouseholdRole
   isOnline: boolean
   onInvite: () => void
+  onAccessChanged: (access: OwnHouseholdAccess) => void
 }
 
 type MemberAction = { member: HouseholdMember; kind: "owner" | "member" | "remove" }
@@ -35,7 +38,7 @@ export function HouseholdMembersView(props: HouseholdMembersViewProps) {
   return <MembersWorkspace key={`${props.householdId}:${props.userId}:${props.role}:${props.isOnline}`} {...props} />
 }
 
-function MembersWorkspace({ householdId, householdName, userId, role, isOnline, onInvite }: HouseholdMembersViewProps) {
+function MembersWorkspace({ householdId, householdName, userId, role, isOnline, onInvite, onAccessChanged }: HouseholdMembersViewProps) {
   const [members, setMembers] = useState<HouseholdMember[]>([])
   const [phase, setPhase] = useState<"loading" | "ready" | "error">("loading")
   const [action, setAction] = useState<MemberAction | null>(null)
@@ -188,7 +191,7 @@ function MembersWorkspace({ householdId, householdName, userId, role, isOnline, 
                         <div><strong>{label}</strong>{isSelf ? <span className="household-members__badge">You</span> : null}<span className="household-members__badge">{getHouseholdRoleLabel(member.role)}</span></div>
                         {member.email && member.displayName ? <span>{member.email}</span> : null}
                         <small>Joined {new Date(member.joinedAt).toLocaleDateString()}</small>
-                        {isSelf && canManage ? <small>Your own Owner role cannot be changed here. Leaving and ownership transfer will have a separate workflow.</small> : null}
+                        {isSelf ? <small>To transfer ownership or leave, use Your access below.</small> : null}
                       </div>
                       {canManage && !isSelf ? (
                         <div className="household-members__actions">
@@ -221,6 +224,8 @@ function MembersWorkspace({ householdId, householdName, userId, role, isOnline, 
                   )
                 })}
               </ul>
+              {self ? <HouseholdLifecycle key={`${self.id}:${self.role}`} householdId={householdId} householdName={householdName}
+                self={self} members={members} disabled={busy} onAccessChanged={onAccessChanged} /> : null}
             </>
           ) : null}
         </>

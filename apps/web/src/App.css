@@ -857,6 +857,42 @@
   min-height: 44px;
 }
 
+.app-shell__content section.household-lifecycle {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.app-shell__content section.household-lifecycle label {
+  flex: 0 0 auto;
+}
+
+.household-lifecycle__choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 16px;
+}
+.household-lifecycle__choices[hidden] { display: none; }
+
+.household-lifecycle__choices > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  overflow-wrap: anywhere;
+}
+
+.household-lifecycle__choices h3,
+.household-lifecycle__choices p { margin: 0; }
+.household-lifecycle select { width: 100%; min-width: 0; font-size: 16px; }
+.household-lifecycle button { min-height: 44px; max-width: 100%; white-space: normal; }
+
 @media (max-width: 720px) {
   .household-members__roles,
   .household-members__list > li {

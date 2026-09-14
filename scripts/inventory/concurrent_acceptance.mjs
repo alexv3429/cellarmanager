@@ -108,6 +108,66 @@ const interrupt = () => { void db.close().finally(() => process.exit(130)) }
 process.once("SIGINT", interrupt)
 process.once("SIGTERM", interrupt)
 try {
+  const membership = (f, actorIndex) => `(SELECT id FROM public.household_members WHERE household_id = '${f.household}' AND user_id = '${f.actors[actorIndex].user}')`
+  const departure = (f, actorIndex, memberId, role) => ({ sql: asUser(f.actors[actorIndex],
+    `SELECT public.leave_household('${f.household}', '${memberId}', '${role}');`) })
+  for (const reverse of [false, true]) {
+    await check(`simultaneous Owner departures retain one Owner (${reverse ? "second" : "first"} Owner first)`, async () => {
+      const f = await fixture(2)
+      const ids = await Promise.all([0, 2].map((index) => db.query(`SELECT ${membership(f, index)};`)))
+      const departures = [departure(f, 0, ids[0], "owner"), departure(f, 2, ids[1], "owner")]
+      const results = await race(f, reverse ? departures.reverse() : departures)
+      assert.equal(results[0].status, "fulfilled")
+      assert.equal(results[1].status, "rejected")
+      assert.match(results[1].reason.message, /must retain at least one Owner/)
+      assert.equal(await db.query(`SELECT count(*) FROM public.household_members WHERE household_id = '${f.household}' AND role = 'owner';`), "1")
+      await stock(f, 2, 0, 0)
+    })
+  }
+  for (const transferFirst of [true, false]) {
+    await check(`transfer competes with successor departure (${transferFirst ? "transfer" : "departure"} first)`, async () => {
+      const f = await fixture(2)
+      const ids = await Promise.all([0, 3].map((index) => db.query(`SELECT ${membership(f, index)};`)))
+      const transfer = { sql: asUser(f.actors[0], `SELECT public.transfer_household_ownership('${f.household}', '${ids[0]}', '${ids[1]}', 'member');`) }
+      const leave = departure(f, 3, ids[1], "member")
+      const results = await race(f, transferFirst ? [transfer, leave] : [leave, transfer])
+      assert.equal(results[0].status, "fulfilled")
+      assert.equal(results[1].status, "rejected")
+      assert.match(results[1].reason.message, transferFirst ? /membership changed/ : /Choose another current household member/)
+      assert.equal(await db.query(`SELECT role FROM public.household_members WHERE id = '${ids[0]}';`), transferFirst ? "member" : "owner")
+      await stock(f, 2, 0, 0)
+    })
+  }
+  for (const kind of ["transfer", "leave"]) {
+    for (const type of ["MOVE", "new-wine ADD"]) {
+      for (const lifecycleFirst of [true, false]) {
+        await check(`${kind} serializes with ${type} (${lifecycleFirst ? kind : "upload"} first)`, async () => {
+          const f = await fixture(2)
+          const ids = await Promise.all([0, 3].map((index) => db.query(`SELECT ${membership(f, index)};`)))
+          const lifecycle = kind === "leave" ? departure(f, 0, ids[0], "owner") : { sql: asUser(f.actors[0],
+            `SELECT public.transfer_household_ownership('${f.household}', '${ids[0]}', '${ids[1]}', 'member');`) }
+          const upload = type === "MOVE" ? operation(f, 0, "MOVE") : newWine(f, 0, 1)
+          const results = await race(f, lifecycleFirst ? [lifecycle, upload] : [upload, lifecycle])
+          assert.equal(results[lifecycleFirst ? 0 : 1].status, "fulfilled")
+          assert.equal(results[lifecycleFirst ? 1 : 0].status, lifecycleFirst ? "rejected" : "fulfilled")
+          if (lifecycleFirst) {
+            assert.match(results[1].reason.message, kind === "transfer" ? /owner permission/ : /not a member/)
+            await stock(f, 2, 0, 0)
+          } else {
+            assert.equal(JSON.parse(results[0].value).receipt.operation_status, "ACCEPTED")
+            if (type === "MOVE") await stock(f, 1, 1, 1)
+          }
+          const snapshot = JSON.parse(await db.query(`SELECT json_build_object(
+            'journal', (SELECT count(*) FROM public.inventory_operations WHERE household_id = '${f.household}'),
+            'wines', (SELECT count(*) FROM public.wines WHERE household_id = '${f.household}'),
+            'bottles', (SELECT sum(quantity) FROM public.holdings WHERE household_id = '${f.household}'));`))
+          assert.deepEqual(snapshot, { journal: lifecycleFirst ? 0 : 1,
+            wines: !lifecycleFirst && type === "new-wine ADD" ? 2 : 1,
+            bottles: !lifecycleFirst && type === "new-wine ADD" ? 3 : 2 })
+        })
+      }
+    }
+  }
   for (const type of ["MOVE", "new-wine ADD"]) {
     for (const stopFirst of [true, false]) {
       await check(`stop serializes with ${type} (${stopFirst ? "stop" : "upload"} first)`, async () => {
