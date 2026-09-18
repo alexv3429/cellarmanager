@@ -24,6 +24,7 @@ import type {
 import { getSyncStatusPresentation } from "../data/syncStatusView"
 import { Notice } from "./Notice"
 import { HouseholdSwitcher } from "./HouseholdSwitcher"
+import { AccountLink } from "./AccountNavigation"
 
 interface AppShellProps {
   activeHouseholdId: string
@@ -239,6 +240,7 @@ export function AppShell({
         </div>
 
         <div className="app-shell__account">
+          <AccountLink />
           <HouseholdSwitcher activeHouseholdId={activeHouseholdId} households={households}
             isOnline={isOnline} pendingOperationCount={pendingOperationCount} onSelectHousehold={onSelectHousehold} />
 

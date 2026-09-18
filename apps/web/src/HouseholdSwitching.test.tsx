@@ -3,12 +3,14 @@ import { act, useState } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import App from "./App"
+import { AccountBackLink } from "./components/AccountNavigation"
 import { readActiveHouseholdId, saveActiveHouseholdId } from "./households/activeHousehold"
 import type { HouseholdOption } from "./households/useActiveHousehold"
 
 const state = vi.hoisted(() => ({
   households: [] as HouseholdOption[],
   online: true,
+  prepareLocal: true,
   session: { user: { id: "test-user" } },
   queued: [{ household_id: "a", status: "PENDING", quantity: 2 }],
   lateNavigation: null as (() => void) | null,
@@ -26,7 +28,7 @@ vi.mock("./auth/useSession", () => ({ useSession: () => ({
   isOfflineAccess: !state.online, isPasswordRecovery: false, error: null,
 }) }))
 vi.mock("./auth/signOut", () => ({ signOutAndClearLocalData: vi.fn() }))
-vi.mock("./data/powersync/connection", () => ({ setPowerSyncAccess: async ({ onLocalReady }: { onLocalReady?: () => void }) => { onLocalReady?.() } }))
+vi.mock("./data/powersync/connection", () => ({ setPowerSyncAccess: async ({ onLocalReady }: { onLocalReady?: () => void }) => { if (state.prepareLocal) onLocalReady?.() } }))
 vi.mock("./devices/useRegisteredDevices", () => ({ useRegisteredDevices: () => ({
   expectedDeviceIds: { a: "device-a", b: "device-b" }, revokedHouseholdIds: [], markRevoked: vi.fn(),
   deviceIdByHousehold: { a: "device-a", b: "device-b" }, error: null, isLoading: false,
@@ -68,6 +70,7 @@ vi.mock("./components/InvitationEntryView", () => ({ InvitationEntryView: () => 
 vi.mock("./components/LoginForm", () => ({ LoginForm: () => null }))
 vi.mock("./components/ResetPasswordForm", () => ({ ResetPasswordForm: () => null }))
 vi.mock("./components/OnboardingView", () => ({ OnboardingView: () => <h1>Set up your cellar</h1> }))
+vi.mock("./components/AccountView", () => ({ AccountView: ({ userId }: { userId: string }) => <main><AccountBackLink /><h1>Account for {userId}</h1></main> }))
 
 let root: Root
 let container: HTMLDivElement
@@ -82,6 +85,7 @@ beforeEach(() => {
   history.replaceState(null, "", "/")
   state.households = [...households]
   state.online = true
+  state.prepareLocal = true
   state.lateNavigation = null
   state.queued = [{ household_id: "a", status: "PENDING", quantity: 2 }]
   container = document.createElement("div")
@@ -110,6 +114,36 @@ async function choose(householdId: string) {
 async function switchTo(householdId: string) { await choose(householdId); await button("Switch household") }
 
 describe("multi-household workspace isolation", () => {
+  it.each(["owner", "member"] as const)("opens account settings for %s and supports browser Back/Forward", async (role) => {
+    state.households = [{ ...households[0], role }]
+    await render()
+    const previousPath = location.pathname
+    await act(async () => container.querySelector<HTMLAnchorElement>('a[href="/account"]')!.click())
+    expect(location.pathname).toBe("/account")
+    expect(container.textContent).toContain("Account for test-user")
+    for (const direction of ["back", "forward"] as const) {
+      await act(async () => {
+        const popped = new Promise<void>((resolve) => window.addEventListener("popstate", () => resolve(), { once: true }))
+        history[direction]()
+        await popped
+      })
+      expect(location.pathname).toBe(direction === "back" ? previousPath : "/account")
+    }
+    await act(async () => container.querySelector<HTMLAnchorElement>('a[href="/"]')!.click())
+    expect(location.pathname).toBe(previousPath)
+    expect(container.textContent).not.toContain("Account for test-user")
+  })
+
+  it("loads /account directly without household or prepared local data", async () => {
+    history.replaceState(null, "", "/account")
+    state.prepareLocal = false
+    state.households = []
+    await render()
+    expect(container.textContent).toContain("Account for test-user")
+    expect(location.pathname).toBe("/account")
+    expect(container.textContent).not.toContain("Preparing local cellar data")
+  })
+
   it("requires confirmation and cancellation keeps unfinished work", async () => {
     await render()
     await button("Prepare draft")

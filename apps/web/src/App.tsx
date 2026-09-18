@@ -5,6 +5,8 @@ import "./App.css"
 import { signOutAndClearLocalData } from "./auth/signOut"
 import { useSession } from "./auth/useSession"
 import { AppShell } from "./components/AppShell"
+import { useAccountRoute } from "./navigation/useAccountRoute"
+import { AccountView } from "./components/AccountView"
 import { ActivityView } from "./components/ActivityView"
 import { CatalogView } from "./components/CatalogView"
 import { MemberCellarView } from "./components/MemberCellarView"
@@ -503,6 +505,7 @@ function AuthenticatedApp({
 }
 
 export default function App() {
+  const isAccountRoute = useAccountRoute()
   const {
     session,
     userId,
@@ -663,6 +666,10 @@ export default function App() {
 
   if (!userId) {
     return <LoginForm />
+  }
+
+  if (isAccountRoute) {
+    return <AccountView key={userId} userId={userId} isOnline={isOnline && session !== null} />
   }
 
   if (preparedUserId !== userId) {

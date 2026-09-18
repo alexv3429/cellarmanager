@@ -11,7 +11,7 @@ crosses a milestone boundary.
 |---|---|---|
 | `v0.3` | A cellar can live safely in CellarManager through daily manual use or guarded CSV import | Released (`v0.3.0`) |
 | `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable evidence | Released (`v0.4.0`) |
-| `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | In progress (`0.5.11`) |
+| `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | In progress (`0.5.12`) |
 | `v0.6` | Adding or identifying wine requires dramatically less typing | Planned |
 | `v0.7` | CellarManager explains what happened to the cellar and what the collection means over time | Planned |
 | `v1.0` | A self-host can install, trust, upgrade, recover, and maintain CellarManager for years | Planned |
@@ -256,12 +256,21 @@ reactivates the browser identity. This is **not** session logout or remote data
 erasure; membership removal remains the access-control workflow. See
 [`household-devices.md`](household-devices.md) for migration, limits and validation.
 
-Basic **Account & profile** settings are explicitly scheduled in **0.5.12**, before
+Basic **Account & profile** settings are implemented in **0.5.12**, before
 the release gate now numbered **0.5.13**. Each user edits their own display name
 and changes their own password through verified authentication; Owners manage
 membership, not other users' credentials. Stable account UUIDs remain authoritative
 and email remains the display fallback. Broader account/household deletion,
 privacy and lifecycle workflows remain in **1.0.8**.
+
+The **Account** header link opens `/account`, independently of household selection
+and local synchronization, including before initial cellar setup. Display names
+use the existing Auth presentation metadata read by the Members directory;
+clearing a name restores the email fallback. Password changes reuse the
+email-verified recovery flow and existing SMTP configuration, not an Owner-facing
+credential editor. Both actions require online account verification, are never
+queued offline, and introduce no database migration. See
+[account settings](account-settings.md) for boundaries and acceptance checks.
 
 Step 0.5.8 adds a CI-gated concurrent inventory acceptance suite using independent
 PostgreSQL sessions and isolated synthetic data. It covers competing stock

@@ -1,0 +1,77 @@
+.account-page {
+  box-sizing: border-box;
+  display: grid;
+  align-content: start;
+  gap: 24px;
+  width: min(100%, 800px);
+  margin: 0 auto;
+  padding: 32px 24px 48px;
+  overflow-wrap: anywhere;
+}
+
+.account-page > .app-shell__account-link {
+  justify-self: start;
+}
+
+.account-page h1 {
+  margin: 0 0 12px;
+  font-size: clamp(30px, 5vw, 40px);
+  line-height: 1.15;
+}
+
+.account-page__card {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.account-page__card h2 {
+  margin: 0 0 4px;
+}
+
+.account-page__form {
+  display: grid;
+  gap: 12px;
+  margin-top: 6px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.account-page__field {
+  display: grid;
+  gap: 8px;
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+.account-page input {
+  width: 100%;
+  min-width: 0;
+}
+
+.account-page input[readonly] {
+  color: var(--text);
+  background: var(--surface-muted);
+  font-weight: 400;
+}
+
+.account-page__card button {
+  justify-self: start;
+  max-width: 100%;
+  border-color: var(--accent-border);
+}
+
+.account-page__card p {
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 480px) {
+  .account-page { gap: 20px; padding: 20px 16px 32px; }
+  .account-page__card { padding: 18px; }
+  .account-page__card button { width: 100%; }
+}

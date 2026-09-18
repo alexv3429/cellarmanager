@@ -25,6 +25,8 @@ does not grant curator or publication authority.
 | Read the household cellar, catalog, activity, advice, and fellow memberships | Yes | Yes |
 | ADD, MOVE, and REMOVE bottles, including creating a wine during normal ADD | Yes | No |
 | Register and later manage the member's own devices | Yes | Yes |
+| Edit own display name and request own email-verified password change | Yes | Yes |
+| Change another account's profile or credentials | No | No |
 | Record and edit the member's own notes, feedback, pairing preferences, and private timing preference | Yes | Yes |
 | Report a possible problem in published shared knowledge | Yes | Yes |
 | Export readable household data | Yes | Yes |
@@ -41,6 +43,11 @@ does not grant curator or publication authority.
 All stock changes are Owner-only, including creating a wine through ADD.
 Multiple Owners can manage a shared cellar; the Member role is a reader, not
 a co-manager.
+
+**Account** settings belong to the signed-in account, not the selected household.
+They are also available without a household. Display names are presentation
+metadata only; UUID-based ownership and authorization do not trust names or
+editable Auth user metadata. See [`account-settings.md`](account-settings.md).
 
 ## Enforcement
 
