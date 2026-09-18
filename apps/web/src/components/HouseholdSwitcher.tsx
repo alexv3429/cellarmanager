@@ -54,7 +54,7 @@ export function HouseholdSwitcher({ activeHouseholdId, households, isOnline, pen
       ) : <small>A household is your shared collection, including all its storage cellars.</small>}
       {target ? (
         <div aria-labelledby={`${id}-title`} className="household-switcher__confirmation" ref={confirmation} role="region" tabIndex={-1}
-          onKeyDown={(event) => { if (event.key === "Escape") { event.preventDefault(); cancel() } }}>
+          onKeyDown={(event) => { if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); cancel() } }}>
           <strong id={`${id}-title`}>Switch to {target.name}?</strong>
           <p>{getHouseholdRoleLabel(target.role)} · {target.role === "owner" ? "You can manage this collection." : "You can browse this cellar, but cannot change its wines or stock."}</p>
           <p>Open forms and filters will reset. Save any unfinished edits before switching.</p>

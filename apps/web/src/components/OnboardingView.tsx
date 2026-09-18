@@ -2,6 +2,7 @@ import { type FormEvent, useState } from "react"
 
 import { createFirstHousehold } from "../data/onboarding"
 import { Notice } from "./Notice"
+import { AccountLink } from "./AccountNavigation"
 
 interface OnboardingViewProps {
   isOnline: boolean
@@ -89,6 +90,7 @@ export function OnboardingView({
 
   return (
     <main className="standalone-page">
+      <AccountLink />
       <h1>Set up your cellar</h1>
 
       <p>

@@ -74,19 +74,19 @@
 }
 
 .app-shell__header {
-  display: flex;
-  gap: 24px;
-  align-items: flex-start;
-  justify-content: space-between;
-  padding:
-    20px max(24px, env(safe-area-inset-right)) 20px
-    max(24px, env(safe-area-inset-left));
-  border-bottom: 1px solid var(--border);
+  position: relative;
+  z-index: 30;
 }
 
-.app-shell__identity {
+.app-shell__toolbar {
+  box-sizing: border-box;
   display: grid;
-  gap: 4px;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 20px;
+  width: min(100%, 1280px);
+  margin: 0 auto;
+  padding: 20px 24px 12px;
   min-width: 0;
 }
 
@@ -98,86 +98,152 @@
 }
 
 .app-shell__sync {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 8px;
-  width: fit-content;
-  max-width: min(100%, 46rem);
-  padding: 7px 10px;
-  border: 1px solid var(--border);
-  border-radius: 9px;
-  background: var(--surface);
-  font-size: 14px;
-}
-
-.app-shell__sync > span:last-child {
-  display: grid;
-  gap: 1px;
-}
-
-.app-shell__sync strong {
-  color: var(--text-h);
-}
-
-.app-shell__sync small,
-.app-shell__device-status {
-  color: var(--text);
-  font-size: 13px;
-  overflow-wrap: anywhere;
+  justify-self: start;
 }
 
 .app-shell__sync-dot {
-  width: 9px;
-  height: 9px;
-  margin-top: 6px;
+  flex: 0 0 8px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: var(--text);
-}
-
-.app-shell__sync--success {
-  border-color: #4f7a5a;
-  background: color-mix(in srgb, var(--surface) 90%, #4f7a5a);
 }
 
 .app-shell__sync--success .app-shell__sync-dot {
   background: #4f7a5a;
 }
 
-.app-shell__sync--info {
-  border-color: var(--accent-border);
-  background: var(--accent-bg);
-}
-
 .app-shell__sync--info .app-shell__sync-dot {
   background: var(--accent);
-}
-
-.app-shell__sync--warning {
-  border-color: #9a6a22;
-  background: color-mix(in srgb, var(--surface) 88%, #c68a2c);
 }
 
 .app-shell__sync--warning .app-shell__sync-dot {
   background: #c68a2c;
 }
 
-.app-shell__sync--error {
-  border-color: #a63d45;
-  background: color-mix(in srgb, var(--surface) 88%, #a63d45);
-}
-
 .app-shell__sync--error .app-shell__sync-dot {
   background: #a63d45;
 }
 
-.app-shell__offline-note {
+.shell-disclosure {
+  position: relative;
+  min-width: 0;
+}
+
+.app-shell .shell-disclosure__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  text-align: left;
   font-size: 14px;
 }
 
-.app-shell__account {
-  display: flex;
+.app-shell .shell-disclosure__trigger[aria-expanded="true"] {
+  border-color: var(--accent-border);
+  background: var(--accent-bg);
+}
+
+.shell-disclosure__chevron {
+  flex: 0 0 auto;
+  line-height: 1;
+  transition: transform .15s;
+}
+
+[aria-expanded="true"] > .shell-disclosure__chevron {
+  transform: rotate(180deg);
+}
+
+.shell-disclosure__panel {
+  position: absolute;
+  z-index: 40;
+  right: 0;
+  top: calc(100% + 8px);
+  box-sizing: border-box;
+  display: grid;
   gap: 12px;
-  align-items: flex-end;
+  width: min(380px, calc(100vw - 32px));
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+  max-height: min(650px, 75svh);
+  overflow-y: auto;
+}
+
+.app-shell__sync .shell-disclosure__panel {
+  right: auto;
+  left: 0;
+}
+
+.app-shell__sync .shell-disclosure__trigger {
+  padding: 7px 8px;
+  border-color: transparent;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.app-shell__household {
+  justify-self: end;
+  width: min(100%, 360px);
+}
+
+.app-shell__household-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.app-shell__role {
+  flex: 0 0 auto;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: var(--surface-muted);
+  font-size: 12px;
+  color: var(--text);
+}
+
+.shell-disclosure__panel .household-switcher {
+  width: 100%;
+}
+
+.app-shell__settings .shell-disclosure__panel {
+  width: min(260px, calc(100vw - 32px));
+  padding: 12px;
+}
+
+.app-shell__settings-links {
+  display: grid;
+  gap: 4px;
+}
+
+.app-shell__settings-label {
+  padding: 8px 12px 2px;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.app-shell__settings-links .app-shell__account-link {
+  justify-content: start;
+  border-color: transparent;
+  background: transparent;
+}
+
+.app-shell .app-shell__sign-out {
+  margin-top: 8px;
+  border: 0;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  text-align: left;
+  white-space: nowrap;
 }
 
 .app-shell__account-link,
@@ -276,13 +342,17 @@
 }
 
 .app-shell__nav {
-  display: flex;
-  gap: 8px;
-  padding:
-    12px max(24px, env(safe-area-inset-right)) 12px
-    max(24px, env(safe-area-inset-left));
-  overflow-x: auto;
   border-bottom: 1px solid var(--border);
+}
+
+.app-shell__nav-items {
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: min(100%, 1280px);
+  margin: 0 auto;
+  padding: 0 24px 12px;
 }
 
 .app-shell__nav a {
@@ -292,6 +362,9 @@
   padding: 7px 12px;
   text-decoration: none;
   touch-action: manipulation;
+  border-color: transparent;
+  background: transparent;
+  font-size: 15px;
 }
 
 .app-shell__nav a[aria-current="page"] {
@@ -438,26 +511,37 @@
 }
 
 @media (max-width: 720px) {
-  .app-shell__header {
-    flex-direction: column;
-    gap: 16px;
-    padding:
-      max(16px, env(safe-area-inset-top))
-      max(16px, env(safe-area-inset-right)) 16px
-      max(16px, env(safe-area-inset-left));
+  .app-shell__toolbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px 12px;
+    padding: max(12px, env(safe-area-inset-top)) 16px 12px;
   }
 
-  .app-shell__identity {
-    width: 100%;
+  .app-shell__brand {
+    font-size: 21px;
   }
 
-  .app-shell__account {
-    width: 100%;
-    flex-wrap: wrap;
+  .app-shell__sync {
+    justify-self: end;
+    max-width: 140px;
+  }
+
+  .app-shell__sync .shell-disclosure__panel {
+    right: 0;
+    left: auto;
+  }
+
+  .app-shell__household {
+    justify-self: stretch;
+    width: auto;
+  }
+
+  .app-shell__household .shell-disclosure__panel {
+    left: 0;
+    right: auto;
   }
 
   .household-switcher {
-    flex: 1 1 100%;
     width: 100%;
   }
 
@@ -465,11 +549,14 @@
     position: sticky;
     z-index: 20;
     top: 0;
+  }
+
+  .app-shell__nav-items {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 4px;
     padding:
-      10px max(16px, env(safe-area-inset-right)) 10px
+      0 max(16px, env(safe-area-inset-right)) 12px
       max(16px, env(safe-area-inset-left));
     overflow-x: visible;
   }
@@ -481,7 +568,7 @@
     font-size: clamp(12px, 3.4vw, 14px);
     line-height: 1.15;
     text-align: center;
-    overflow-wrap: anywhere;
+    overflow-wrap: normal;
     white-space: normal;
   }
 
@@ -525,7 +612,7 @@
 }
 
 @media (max-width: 360px) {
-  .app-shell__nav {
+  .app-shell__nav-items {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
@@ -781,6 +868,16 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
+}
+
+.household-members__role-help summary {
+  align-content: center;
+  color: var(--text-h);
+  font-size: 14px;
+}
+
+.household-members__role-help[open] > .household-members__roles {
+  margin-top: 8px;
 }
 
 .household-members__roles p {

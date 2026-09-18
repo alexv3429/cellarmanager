@@ -12,6 +12,7 @@ retains only the evidence needed to understand its released migration history.
 - [`household-members.md`](household-members.md) - current collaborators, role changes, access removal, and 0.5.6 validation
 - [`household-ownership-lifecycle.md`](household-ownership-lifecycle.md) - transfer ownership, leave safely, and 0.5.10 validation
 - [`membership-security-matrix.md`](membership-security-matrix.md) - 0.5.11 cross-role security gates, invitation races, and rollout boundaries
+- [`account-settings.md`](account-settings.md) - 0.5.12 own display name, email-verified password recovery, and validation
 - [`household-devices.md`](household-devices.md) - browser registrations, revocation limits, and 0.5.7 validation
 - [`multi-device-inventory-acceptance.md`](multi-device-inventory-acceptance.md) - concurrent stock acceptance, isolated fixtures, and safe two-device validation
 - [`inventory-conflict-recovery.md`](inventory-conflict-recovery.md) - rejected changes, explicit browser-queue recovery, and private stop receipts

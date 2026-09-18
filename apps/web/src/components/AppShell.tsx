@@ -16,6 +16,7 @@ import {
 } from "../navigation/appNavigation"
 import {
   getHouseholdPermissions,
+  getHouseholdRoleLabel,
   type HouseholdRole,
 } from "../households/householdPermissions"
 import type {
@@ -24,6 +25,8 @@ import type {
 import { getSyncStatusPresentation } from "../data/syncStatusView"
 import { Notice } from "./Notice"
 import { HouseholdSwitcher } from "./HouseholdSwitcher"
+import { AccountLink } from "./AccountNavigation"
+import { ShellDisclosure } from "./ShellDisclosure"
 
 interface AppShellProps {
   activeHouseholdId: string
@@ -97,6 +100,7 @@ export function AppShell({
 
   const [signOutError, setSignOutError] =
     useState<string | null>(null)
+  const [openPanel, setOpenPanel] = useState<"household" | "settings" | "sync" | null>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const previousContentKey = useRef<string | null>(null)
 
@@ -108,6 +112,7 @@ export function AppShell({
     }
 
     previousContentKey.current = contentKey
+    setOpenPanel(null)
 
     const focusedElement = document.activeElement
     const animationFrame = window.requestAnimationFrame(() => {
@@ -145,6 +150,7 @@ export function AppShell({
     : null
 
   async function signOut() {
+    setOpenPanel(null)
     setSignOutError(null)
 
     if (!isOnline) {
@@ -181,6 +187,7 @@ export function AppShell({
     }
 
     event.preventDefault()
+    setOpenPanel(null)
     onViewChange(nextView)
   }
 
@@ -194,6 +201,7 @@ export function AppShell({
       : deviceRegistration.isLoading
         ? "Waiting for synchronized data…"
         : "Not ready"
+  const activeHouseholdName = households.find((household) => household.id === activeHouseholdId)?.name ?? "Your household"
 
   return (
     <div className="app-shell">
@@ -202,69 +210,41 @@ export function AppShell({
       </a>
 
       <header className="app-shell__header">
-        <div className="app-shell__identity">
-          <div className="app-shell__brand">
-            CellarManager
-          </div>
+        <div className="app-shell__toolbar">
+          <div className="app-shell__brand">CellarManager</div>
+          <ShellDisclosure className={`app-shell__sync app-shell__sync--${syncPresentation.tone}`}
+            accessibleLabel={`Sync: ${syncPresentation.label}`} open={openPanel === "sync"}
+            onToggle={() => setOpenPanel(openPanel === "sync" ? null : "sync")} onClose={() => setOpenPanel(null)}
+            label={<><span aria-hidden="true" className="app-shell__sync-dot" /><span aria-live="polite">{syncPresentation.label}</span></>}>
+            <strong>Sync &amp; this device</strong>
+            <p>{syncPresentation.detail}</p>
+            <p>Device: {deviceStatus}</p>
+            {lastSyncLabel ? <small>{lastSyncLabel}</small> : null}
+            {isOfflineAccess ? <p>Local access only · authentication will refresh after reconnection.</p> : null}
+            <a className="app-shell__account-link" href={getAppViewPath("activity")} onClick={(event) => navigate(event, "activity")}>View activity &amp; queued changes</a>
+          </ShellDisclosure>
 
-          <div
-            aria-live="polite"
-            className={`app-shell__sync app-shell__sync--${syncPresentation.tone}`}
-            role="status"
-            title={lastSyncLabel ?? undefined}
-          >
-            <span aria-hidden="true" className="app-shell__sync-dot" />
-            <span>
-              <strong>{syncPresentation.label}</strong>
-              <small>{syncPresentation.detail}</small>
-            </span>
-          </div>
+          <ShellDisclosure className="app-shell__household" accessibleLabel={`Household: ${activeHouseholdName} · ${getHouseholdRoleLabel(activeHouseholdRole)}`}
+            open={openPanel === "household"} onToggle={() => setOpenPanel(openPanel === "household" ? null : "household")} onClose={() => setOpenPanel(null)}
+            label={<><span className="app-shell__household-name" title={activeHouseholdName}>{activeHouseholdName}</span><span className="app-shell__role">{getHouseholdRoleLabel(activeHouseholdRole)}</span></>}>
+            <HouseholdSwitcher activeHouseholdId={activeHouseholdId} households={households}
+              isOnline={isOnline} pendingOperationCount={pendingOperationCount}
+              onSelectHousehold={(id) => { setOpenPanel(null); onSelectHousehold(id) }} />
+          </ShellDisclosure>
 
-          <div className="app-shell__device-status">
-            Device: {deviceStatus}
-            {lastSyncLabel ? (
-              <>
-                <span aria-hidden="true"> · </span>
-                {lastSyncLabel}
-              </>
-            ) : null}
-          </div>
-
-          {isOfflineAccess ? (
-            <p className="app-shell__offline-note">
-              Local access only · authentication will refresh
-              after reconnection
-            </p>
-          ) : null}
-        </div>
-
-        <div className="app-shell__account">
-          <HouseholdSwitcher activeHouseholdId={activeHouseholdId} households={households}
-            isOnline={isOnline} pendingOperationCount={pendingOperationCount} onSelectHousehold={onSelectHousehold} />
-
-          <a
-            aria-current={view === "members" ? "page" : undefined}
-            className="app-shell__account-link"
-            href={getAppViewPath("members")}
-            onClick={(event) => navigate(event, "members")}
-          >
-            Members
-          </a>
-
-          <a aria-current={view === "devices" ? "page" : undefined} className="app-shell__account-link"
-            href={getAppViewPath("devices")} onClick={(event) => navigate(event, "devices")}>Devices</a>
-
-          <button
-            onClick={() => void signOut()}
-            title={
-              isOnline
-                ? undefined
-                : "Reconnect before signing out"
-            }
-            type="button"
-          >
-            Sign out
-          </button>
+          <ShellDisclosure className="app-shell__settings" accessibleLabel="Settings" label="Settings" open={openPanel === "settings"}
+            onToggle={() => setOpenPanel(openPanel === "settings" ? null : "settings")} onClose={() => setOpenPanel(null)}>
+            <nav aria-label="Settings" className="app-shell__settings-links">
+              <span className="app-shell__settings-label">Personal</span>
+              <AccountLink />
+              <span className="app-shell__settings-label">This household</span>
+              <a aria-current={view === "members" ? "page" : undefined} className="app-shell__account-link"
+                href={getAppViewPath("members")} onClick={(event) => navigate(event, "members")}>Members</a>
+              <a aria-current={view === "devices" ? "page" : undefined} className="app-shell__account-link"
+                href={getAppViewPath("devices")} onClick={(event) => navigate(event, "devices")}>Devices</a>
+              <button className="app-shell__sign-out" onClick={() => void signOut()} title={isOnline ? undefined : "Reconnect before signing out"} type="button">Sign out</button>
+            </nav>
+          </ShellDisclosure>
         </div>
       </header>
 
@@ -272,6 +252,7 @@ export function AppShell({
         aria-label="Primary"
         className="app-shell__nav"
       >
+        <div className="app-shell__nav-items">
         <a
           aria-current={view === "inventory" || view === "cellar" ? "page" : undefined}
           href={getAppViewPath(permissions.canManageInventory ? "inventory" : "cellar")}
@@ -321,6 +302,7 @@ export function AppShell({
             Cellar setup
           </a>
         ) : null}
+        </div>
       </nav>
 
       {householdError ||

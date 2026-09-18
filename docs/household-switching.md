@@ -6,7 +6,9 @@ Member in another. Switching households does not sign out or change memberships.
 
 ## User-facing behavior
 
-- The header shows the current household, role, and what that role permits.
+- The compact header shows the current household and role. Click its name to
+  open the household selector and role explanation. Switching still requires
+  explicit confirmation; closing the panel never switches households.
 - With multiple synchronized memberships, **Switch household** offers the
   available names and roles. Identical names include a short ID for distinction.
 - Selecting another household opens an inline confirmation. **Stay here** or

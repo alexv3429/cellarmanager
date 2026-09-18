@@ -29,6 +29,21 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals())
 
 describe("owner-only management views", () => {
+  it("keeps sync and revoked-device warnings visible while header panels are closed", () => {
+    const html = renderToStaticMarkup(<AppShell activeHouseholdId="household" activeHouseholdRole="member"
+      contentKey="cellar" householdError={null} households={[{ id: "household", name: "Shared cellar", role: "member" }]}
+      isOfflineAccess={false} isOnline onSelectHousehold={vi.fn()} onSignOut={async () => {}}
+      onViewChange={vi.fn()} pageTitle="Cellar" syncError="Connection interrupted" view="cellar"
+      deviceRegistration={{ expectedDeviceIds: {}, revokedHouseholdIds: ["household"], markRevoked: vi.fn(), deviceIdByHousehold: {},
+        error: null, isLoading: false, isReady: false, isRegistering: false, retryRegistration: vi.fn() }}>
+      <p>Shared cellar</p>
+    </AppShell>)
+    expect(html).not.toContain('class="shell-disclosure__panel"')
+    expect(html).toContain("Synchronization paused: Connection interrupted")
+    expect(html).toContain("registration was revoked for this household")
+    expect(html).toContain("Review this browser’s queue")
+  })
+
   it.each([true, false])("members get export only (online: %s), without restoring an owner's import", (isOnline) => {
     const permissions = getHouseholdPermissions("member")
     const html = renderToStaticMarkup(
@@ -90,8 +105,9 @@ describe("owner-only management views", () => {
     expect(html.includes('href="/"')).toBe(role === "owner")
     expect(html).toContain("Shared inventory")
     expect(html.includes('href="/setup"')).toBe(role === "owner")
-    expect(html).toContain('href="/members"')
-    expect(html).toContain('href="/devices"')
+    expect(html).toContain('aria-label="Settings" aria-expanded="false"')
+    // Interactive secondary navigation for both roles is covered in
+    // HouseholdSwitching.test.tsx; it is not mounted until Settings is opened.
     expect(html).not.toContain('href="/invite"')
   })
 })
