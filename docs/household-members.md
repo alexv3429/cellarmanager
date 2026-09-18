@@ -1,6 +1,6 @@
 # Household members — 0.5.6
 
-Open **Members** in the account header to see who currently has access to the
+Open **Settings → Members** in the application header to see who currently has access to the
 selected household. The `/members` URL works on refresh and with browser
 Back/Forward, under the household isolation rules introduced in 0.5.5.
 

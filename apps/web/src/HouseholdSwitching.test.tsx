@@ -100,11 +100,12 @@ afterEach(async () => {
 })
 async function render() { await act(async () => root.render(<App />)) }
 async function button(label: string) {
-  const element = [...container.querySelectorAll("button")].find((node) => node.textContent === label)
+  const element = [...container.querySelectorAll("button")].find((node) => (node.getAttribute("aria-label") ?? node.textContent) === label)
   expect(element, label).toBeDefined()
   await act(async () => element!.click())
 }
 async function choose(householdId: string) {
+  if (!container.querySelector(".household-switcher select")) await openHousehold()
   const select = container.querySelector<HTMLSelectElement>(".household-switcher select")!
   await act(async () => {
     select.value = householdId
@@ -112,12 +113,18 @@ async function choose(householdId: string) {
   })
 }
 async function switchTo(householdId: string) { await choose(householdId); await button("Switch household") }
+async function openHousehold() {
+  await act(async () => container.querySelector<HTMLButtonElement>(".app-shell__household > button")!.click())
+}
 
 describe("multi-household workspace isolation", () => {
   it.each(["owner", "member"] as const)("opens account settings for %s and supports browser Back/Forward", async (role) => {
     state.households = [{ ...households[0], role }]
     await render()
     const previousPath = location.pathname
+    await button("Settings")
+    expect(container.querySelector('a[href="/members"]')).not.toBeNull()
+    expect(container.querySelector('a[href="/devices"]')).not.toBeNull()
     await act(async () => container.querySelector<HTMLAnchorElement>('a[href="/account"]')!.click())
     expect(location.pathname).toBe("/account")
     expect(container.textContent).toContain("Account for test-user")
@@ -172,7 +179,10 @@ describe("multi-household workspace isolation", () => {
     expect(document.title).toContain("Friends’ collection")
     expect(readActiveHouseholdId(localStorage, "test-user")).toBe("b")
     expect(state.queued).toEqual(originalQueue)
-    if (!online) expect(container.textContent).toContain("only households already synchronized")
+    if (!online) {
+      await openHousehold()
+      expect(container.textContent).toContain("only households already synchronized")
+    }
     await switchTo("a")
     expect(container.querySelector("input")?.value).toBe("")
     expect(location.pathname).toBe("/")
@@ -269,8 +279,52 @@ describe("multi-household workspace isolation", () => {
   it("shows no redundant selector for a single household", async () => {
     state.households = [households[0]]
     await render()
+    await openHousehold()
     expect(container.querySelector(".household-switcher select")).toBeNull()
     expect(container.textContent).toContain("including all its storage cellars")
+  })
+
+  it("keeps secondary controls collapsed, opens only one panel and restores focus with Escape", async () => {
+    await render()
+    expect(container.querySelector('a[href="/account"]')).toBeNull()
+    expect(container.querySelector(".household-switcher")).toBeNull()
+    await button("Settings")
+    expect(container.querySelector('a[href="/members"]')).not.toBeNull()
+    expect(container.querySelector('a[href="/devices"]')).not.toBeNull()
+    const account = container.querySelector<HTMLAnchorElement>('a[href="/account"]')!
+    await act(async () => {
+      account.focus()
+      account.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }))
+    })
+    expect(container.querySelector('a[href="/account"]')).toBeNull()
+    expect(document.activeElement?.getAttribute("aria-label")).toBe("Settings")
+    await button("Settings")
+    await openHousehold()
+    expect(container.querySelector('a[href="/account"]')).toBeNull()
+    expect(container.querySelectorAll(".shell-disclosure__panel")).toHaveLength(1)
+    await act(async () => document.body.dispatchEvent(new Event("pointerdown", { bubbles: true })))
+    expect(container.querySelector(".shell-disclosure__panel")).toBeNull()
+  })
+
+  it("cancels a household confirmation first, then closes the panel on a second Escape", async () => {
+    await render()
+    await choose("b")
+    await act(async () => document.activeElement!.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true })))
+    expect(container.textContent).not.toContain("Switch to Friends’ collection?")
+    expect(document.activeElement?.tagName).toBe("SELECT")
+    await act(async () => document.activeElement!.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true })))
+    expect(container.querySelector(".household-switcher")).toBeNull()
+    expect(document.activeElement?.getAttribute("aria-label")).toContain("Household: My collection")
+    expect(readActiveHouseholdId(localStorage, "test-user")).not.toBe("b")
+  })
+
+  it("closes Settings on navigation and retains primary links for everyday use", async () => {
+    await render()
+    await button("Settings")
+    await act(async () => container.querySelector<HTMLAnchorElement>('a[href="/members"]')!.click())
+    expect(container.textContent).toContain("members in a")
+    expect(container.querySelector(".shell-disclosure__panel")).toBeNull()
+    expect(container.querySelectorAll('nav[aria-label="Primary"] a')).toHaveLength(6)
   })
 
   it("does not confirm a destination that lost membership while confirmation was open", async () => {

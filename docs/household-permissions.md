@@ -117,7 +117,7 @@ preferences and personal household observations are deleted; household-visible
 observations, shared serving guidance, and inventory history remain attributed
 and intact.
 
-Step 0.5.6 exposes these RPCs through **Members** in the account header. The
+Step 0.5.6 exposes these RPCs through **Settings → Members** in the application header. The
 online-only directory is readable by every current member; only Owners can
 manage another membership. Confirmations explain role changes and removal,
 and no generic control changes the acting Owner's own membership. See

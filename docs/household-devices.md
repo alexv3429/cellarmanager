@@ -1,6 +1,6 @@
 # Household devices — 0.5.7
 
-**Devices** in the account header opens `/devices`, with refresh and browser
+**Settings → Devices** in the application header opens `/devices`, with refresh and browser
 Back/Forward support. Each browser profile has a separate registration for each
 household. This is a stock-operation identity, **not a login session** or hardware
 identifier. Clearing storage or signing out and signing in can produce another

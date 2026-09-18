@@ -263,7 +263,7 @@ membership, not other users' credentials. Stable account UUIDs remain authoritat
 and email remains the display fallback. Broader account/household deletion,
 privacy and lifecycle workflows remain in **1.0.8**.
 
-The **Account** header link opens `/account`, independently of household selection
+The **Settings → Account** header link opens `/account`, independently of household selection
 and local synchronization, including before initial cellar setup. Display names
 use the existing Auth presentation metadata read by the Members directory;
 clearing a name restores the email fallback. Password changes reuse the
@@ -271,6 +271,13 @@ email-verified recovery flow and existing SMTP configuration, not an Owner-facin
 credential editor. Both actions require online account verification, are never
 queued offline, and introduce no database migration. See
 [account settings](account-settings.md) for boundaries and acceptance checks.
+
+The shared shell uses a compact, content-aligned header: household selection,
+sync details and Settings are explicit disclosures. Account, Members, Devices and
+Sign out are grouped in Settings; primary navigation stays visible, including on
+phones. Sync errors, access changes and device-revocation alerts stay outside the
+collapsed panels. Panels support Escape, focus return, outside-click dismissal
+and one-open-at-a-time behavior without shifting the page content.
 
 Step 0.5.8 adds a CI-gated concurrent inventory acceptance suite using independent
 PostgreSQL sessions and isolated synthetic data. It covers competing stock

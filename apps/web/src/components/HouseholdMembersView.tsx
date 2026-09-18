@@ -167,10 +167,13 @@ function MembersWorkspace({ householdId, householdName, userId, role, isOnline, 
         </div>
       </header>
 
-      <div className="household-members__roles">
+      <details className="household-members__role-help">
+        <summary>What can Owners and Members do?</summary>
+        <div className="household-members__roles">
         <p><strong>Owner</strong><span>Manages wines, stock, cellar setup, and who has access. A household can have several Owners.</span></p>
         <p><strong>Member</strong><span>Browses the shared cellar and keeps personal notes and preferences. Cannot change stock or shared settings.</span></p>
-      </div>
+        </div>
+      </details>
 
       {!isOnline ? <Notice role="status" tone="warning">Reconnect to view the current member list or manage access. Membership changes are never queued offline.</Notice> : (
         <>

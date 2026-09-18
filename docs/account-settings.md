@@ -2,7 +2,7 @@
 
 ## User experience
 
-Open **Account** in the application header or on the initial cellar-setup screen.
+Open **Settings → Account** in the application header, or **Account** on the initial cellar-setup screen.
 The `/account` route is independent of household membership and local database
 readiness. Owners and Members have the same controls, for their own account only.
 Refresh, browser Back/Forward and **Back to cellar** are supported. Returning to
