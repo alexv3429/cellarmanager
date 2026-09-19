@@ -116,8 +116,8 @@ export const CSV_IMPORT_FIELD_DEFINITIONS: readonly CsvImportFieldDefinition[] =
 ]
 
 const aliases: Record<CsvImportField, readonly string[]> = {
-  appellation: ["appellation", "designation", "aoc"],
-  area: ["area", "region", "wine region", "zone"],
+  appellation: ["appellation", "appelation", "designation", "aoc"],
+  area: ["area", "region", "wine region", "zone", "vignoble"],
   cellar: [
     "cellar",
     "cellar name",
@@ -125,7 +125,7 @@ const aliases: Record<CsvImportField, readonly string[]> = {
     "storage",
     "storage area",
   ],
-  color: ["color", "colour", "couleur", "wine color"],
+  color: ["color", "colour", "couleur", "wine color", "type"],
   cuvee: [
     "cuvee",
     "wine",
@@ -169,6 +169,8 @@ const aliases: Record<CsvImportField, readonly string[]> = {
     "millesime",
     "year",
     "annee",
+    "annee prod",
+    "annee production",
   ],
 }
 

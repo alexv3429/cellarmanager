@@ -11,7 +11,7 @@ crosses a milestone boundary.
 |---|---|---|
 | `v0.3` | A cellar can live safely in CellarManager through daily manual use or guarded CSV import | Released (`v0.3.0`) |
 | `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable evidence | Released (`v0.4.0`) |
-| `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | In progress (`0.5.12`) |
+| `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | In progress (`0.5.13`) |
 | `v0.6` | Adding or identifying wine requires dramatically less typing | Planned |
 | `v0.7` | CellarManager explains what happened to the cellar and what the collection means over time | Planned |
 | `v1.0` | A self-host can install, trust, upgrade, recover, and maintain CellarManager for years | Planned |
@@ -168,7 +168,8 @@ make incompatible changes while offline.
 | 0.5.10 | Ownership transfer and leaving a household |
 | 0.5.11 | Full membership security matrix |
 | 0.5.12 | Account & profile settings: own display name and password change, with verified authentication flows |
-| 0.5.13 | v0.5 acceptance and release |
+| 0.5.13 | Spreadsheet import hardening: in-app row corrections, bulk replacements and explicit reversible exclusions |
+| 0.5.14 | v0.5 acceptance and release |
 
 Step 0.5.1 introduced the two-role contract, refined during 0.5.4 validation:
 every owner and member may read the shared cellar, use private preferences and
@@ -257,7 +258,7 @@ erasure; membership removal remains the access-control workflow. See
 [`household-devices.md`](household-devices.md) for migration, limits and validation.
 
 Basic **Account & profile** settings are implemented in **0.5.12**, before
-the release gate now numbered **0.5.13**. Each user edits their own display name
+the release gate now numbered **0.5.14**. Each user edits their own display name
 and changes their own password through verified authentication; Owners manage
 membership, not other users' credentials. Stable account UUIDs remain authoritative
 and email remains the display fallback. Broader account/household deletion,
@@ -320,7 +321,18 @@ household first and recheck authority after waiting. Account-switch regressions
 also fail closed when clearing the previous local database fails. No new screen
 or permission model is introduced. See
 [membership security acceptance](membership-security-matrix.md) for the
-function-only migration and the remaining hosted 0.5.13 release checks.
+function-only migration and the remaining hosted 0.5.14 release checks.
+
+Step 0.5.13 addresses third-party workbooks that load but cannot be prepared
+without returning to Excel. Owners can correct individual rows, replace exact
+values across included rows, and explicitly exclude historical zero stock,
+summary totals or unwanted entries. Source data remains unchanged; exclusions
+are reversible and never inferred silently. Only included, revalidated rows
+enter wine matching, capacity calculations and the normal atomic import.
+The UI identifies the selected worksheet, preserves Excel row coordinates,
+supports missing-Cuvée fallbacks without a dummy column, and keeps row review
+paginated. No migration or production data repair is required. See
+[spreadsheet preparation](csv-ingestion.md#in-app-row-corrections-and-exclusions).
 
 ## v0.6 — Capture-assisted enrichment
 

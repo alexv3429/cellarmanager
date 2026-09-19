@@ -10,6 +10,10 @@ import {
 } from "./csvColumnMapping"
 
 describe("CSV column mapping", () => {
+  it("recognizes legacy French headings without confusing purchase and drinking years with vintage", () => {
+    expect(suggestCsvColumnMapping(["Année Achat", "Année Prod", "Année Cons", "Appelation", "Vignoble", "Type", "Producteur", "Nbre 1", "Nbre 2", "Contient"]))
+      .toEqual([null, "vintage", null, "appellation", "area", "color", "producer", null, null, null])
+  })
   it("normalizes accents, casing, whitespace, and separators", () => {
     expect(normalizeCsvHeader("  MILLÉSIME / Année  ")).toBe(
       "millesime annee",

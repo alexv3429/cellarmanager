@@ -166,9 +166,28 @@ export async function parseXlsxWorkbook(
     throw new Error("The Excel workbook does not contain a worksheet with data.")
   }
 
-  return parseCsvText(sheetCsvText(worksheet.data), {
+  const document = parseCsvText(sheetCsvText(worksheet.data), {
     delimiter: ",",
   })
+  // Generated CSV lines diverge from Excel rows for multiline cells. Use
+  // physical input positions, including blank rows skipped by the CSV parser.
+  let generatedLine = 1
+  const excelRowByLine = new Map<number, number>()
+  worksheet.data.forEach((values, index) => {
+    excelRowByLine.set(generatedLine, index + 1)
+    generatedLine += 1 + values.reduce<number>((count, value) =>
+      count + (readCellText(value).match(/\r\n|\r|\n/gu)?.length ?? 0), 0)
+  })
+  for (const row of [document.header, ...document.rows]) {
+    if (!row) continue
+    const excelRow = excelRowByLine.get(row.sourceLineStart)
+    if (excelRow !== undefined) {
+      row.recordNumber = excelRow
+      row.sourceLineStart = excelRow
+      row.sourceLineEnd = excelRow
+    }
+  }
+  return { ...document, worksheetName: worksheet.sheet }
 }
 
 function columnWidth(

@@ -39,6 +39,7 @@ export interface CsvSourceRecord {
 }
 
 export interface CsvIngestionDocument {
+  worksheetName?: string
   delimiter: CsvDelimiter | null
   delimiterSource: CsvDelimiterSource | null
   header: CsvSourceRecord | null

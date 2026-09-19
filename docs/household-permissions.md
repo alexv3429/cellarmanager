@@ -271,4 +271,4 @@ acceptance. Invitation mutations now take the household lock before the
 invitation row lock and recheck Owner authority after waiting. This closes the
 accept/cancel deadlock without changing roles or granting new browser access.
 See [security acceptance](membership-security-matrix.md) for coverage, the
-function-only migration and the remaining hosted 0.5.13 validation boundary.
+function-only migration and the remaining hosted 0.5.14 validation boundary.

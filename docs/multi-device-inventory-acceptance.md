@@ -85,7 +85,7 @@ IndexedDB/Web Locks, physical network loss, email invitations, or session refres
 Database concurrency and web connector/projection behavior are tested at their
 boundaries. The cross-role and invitation coverage is documented in
 [0.5.11 membership security acceptance](membership-security-matrix.md);
-end-to-end hosted release acceptance remains **0.5.13**.
+end-to-end hosted release acceptance remains **0.5.14**.
 
 For additional device validation, use a **disposable test household** with a fake
 wine, not the real cellar. No destructive stock test is required on production
