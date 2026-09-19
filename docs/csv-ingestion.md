@@ -146,7 +146,7 @@ make matching unsafe. Decimal comma and decimal point metric values are both
 accepted only when their conversion produces a whole millilitre.
 
 Producer, cuvée, color, bottle format, and quantity must contain a valid value
-on every row. For blank cells in a mapped Cuvée column, the user may explicitly
+on every included row. For a missing Cuvée column or blank cells, the user may explicitly
 choose one import-only fallback: a fixed value, the row's normalized Color, or
 the row's normalized Appellation. Non-empty Cuvée cells are never replaced. A
 blank or unavailable selected fallback leaves the row invalid, so the database
@@ -158,10 +158,36 @@ Cleaning issues retain the source record number, physical line range, field,
 and raw source value. The original mapped source row and unmapped values remain
 available unchanged. Safe, documented equivalences such as `NM` to `NV` are
 normalized automatically; this is a working-copy transformation, not a write
-to the source file or database. Invalid rows are displayed first and block later import
-stages; the user must correct the source file and upload it again, or configure
-the explicit blank-Cuvée fallback when that is the only issue. This step does
-not match wines, reconcile locations, resolve issues, or write data.
+to the source file or database. Invalid included rows block later import stages;
+0.5.13 adds the in-app correction and exclusion controls below. Cleaning itself
+does not match wines, reconcile locations, or write cellar data.
+
+### In-app row corrections and exclusions
+
+In **4. Clean and validate**, Owners can edit a row or replace an exact field
+value across included rows. Selecting **Empty** fills missing values without
+overwriting non-empty cells. Edits are in-memory, import-only overrides of the
+mapped values and defaults. They survive changes to those mappings/defaults
+until explicitly reset; the editor shows the mapped value before row edits.
+Every saved correction passes through the same validation and normalization.
+Search and pagination reach all rows, including those beyond the initial page.
+
+All source rows are included initially. **Exclude zero-stock rows** excludes
+only explicit integer zeros in the mapped/corrected quantity; missing, negative
+or malformed quantities still require attention. Individual exclusions handle
+summary totals or unwanted entries. No producer, drink type or summary row is
+silently discarded or reclassified. Excluded rows remain inspectable and can be
+included again. Search and display filters never change the import selection.
+
+Only included rows reach matching, storage/capacity reconciliation and the
+atomic commit plan. The preparation and confirmation summaries disclose excluded
+counts. Zero included rows cannot proceed. Any edit or exclusion resets previous
+resolution choices and final confirmation. Once a commit is attempted, preparation
+is locked to the original retry plan. Choosing another file clears edits and
+exclusions. Unsubmitted preparation is not persisted across a page refresh.
+
+Workbook/CSV originals are never overwritten, formulas are never executed and
+normal positive-quantity, identity and permission checks remain in place.
 
 ## Existing-wine matching contract
 
@@ -284,8 +310,8 @@ The resolved wine matches and storage assignments are passed through the same
 complete preview model as the first preview. The second preview therefore
 retains source records, wine actions, destinations, quantities, warnings, and
 unmapped values while reporting whether any blocker remains. Cleaning errors
-are still corrected in the source CSV; this step does not edit invalid wine or
-quantity values in place.
+can be corrected in stage 4; this storage-resolution step does not modify wine
+or quantity values itself.
 
 To keep small imports usable, preparation stages collapse into a reopenable
 summary after the first preview is available. The first preview exposes its

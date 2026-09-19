@@ -99,7 +99,7 @@ The test doubles do **not** prove hosted PowerSync bucket isolation, full physic
 device synchronization, SMTP delivery, or remote erasure. Offline cached data
 cannot be recalled from a disconnected device. Database denial is immediate for
 new server calls; UI/cache convergence on other devices needs reconnection and
-synchronization. The two-device, hosted acceptance remains a **0.5.13** release
+synchronization. The two-device, hosted acceptance remains a **0.5.14** release
 gate, not something claimed by this database matrix.
 
 ## Run and release

@@ -35,7 +35,10 @@ named `Cellar` when present; otherwise it chooses the worksheet whose first row
 contains the most recognized CellarManager import headings. The selected rows
 then enter the same mapping, cleaning, matching, storage-resolution, preview,
 and confirmation pipeline as CSV. No workbook formula is evaluated by
-CellarManager.
+CellarManager. The file summary identifies the chosen worksheet; row references
+use Excel coordinates even when a heading or cell contains line breaks.
+In-app corrections, exact-value replacements and explicit reversible row
+exclusions are documented in [spreadsheet preparation](csv-ingestion.md#in-app-row-corrections-and-exclusions).
 
 ## CSV file and row contract
 
