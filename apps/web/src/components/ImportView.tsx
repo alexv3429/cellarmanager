@@ -69,6 +69,7 @@ import { ImportRowEditor } from "./ImportRowEditor"
 import { Notice } from "./Notice"
 
 const FILE_SIZE_LIMIT_BYTES = 20_000_000
+type CuveePreparationMode = CsvCuveeFallback["mode"] | "splitProducer"
 const SAMPLE_ROW_COUNT = 3
 const MATCHING_ROW_DISPLAY_LIMIT = 100
 const STORAGE_ROW_DISPLAY_LIMIT = 100
@@ -460,7 +461,7 @@ export function ImportWorkspace({
   >("")
   const [defaultValue, setDefaultValue] = useState("")
   const [cuveeFallbackMode, setCuveeFallbackMode] =
-    useState<CsvCuveeFallback["mode"]>("none")
+    useState<CuveePreparationMode>("none")
   const [cuveeFallbackValue, setCuveeFallbackValue] =
     useState("")
   const [fileError, setFileError] = useState<
@@ -568,8 +569,9 @@ export function ImportWorkspace({
     }
   }, [commitAttempted, commitPlan, householdId, isOnline])
 
-  const cuveeFallbackIsConfigured = cuveeFallbackMode !== "none" &&
-    (cuveeFallbackMode !== "fixed" || cuveeFallbackValue.trim().length > 0)
+  const cuveeFallbackIsConfigured = cuveeFallbackMode === "splitProducer"
+    ? mapping.includes("producer")
+    : cuveeFallbackMode !== "none" && (cuveeFallbackMode !== "fixed" || cuveeFallbackValue.trim().length > 0)
   const mappingIssues = useMemo(
     () =>
       validateCsvColumnMapping(mapping, cuveeFallbackIsConfigured
@@ -602,7 +604,7 @@ export function ImportWorkspace({
             mode: "fixed",
             value: cuveeFallbackValue,
           }
-        : { mode: cuveeFallbackMode }
+        : { mode: cuveeFallbackMode === "splitProducer" ? "none" : cuveeFallbackMode }
 
     return prepareCsvImportRows({ document, mapping, defaults: fieldDefaults,
       corrections: rowCorrections, excluded: excludedRecords, options: { cuveeFallback } })
@@ -1096,13 +1098,17 @@ export function ImportWorkspace({
   }
 
   function updateCuveeFallbackMode(
-    mode: CsvCuveeFallback["mode"],
+    mode: CuveePreparationMode,
   ) {
     if (commitAttempted || isCommitting) {
       return
     }
 
     setCuveeFallbackMode(mode)
+    if (mode !== "none" && defaultField === "cuvee") {
+      setDefaultField("")
+      setDefaultValue("")
+    }
     if (mode !== "fixed") {
       setCuveeFallbackValue("")
     }
@@ -1875,19 +1881,21 @@ export function ImportWorkspace({
               </div>
               <div className="import-cuvee-fallback__controls">
                 <label>
-                  <span>For an empty Cuvée, use</span>
+                  <span>How should missing cuvées be filled?</span>
                   <select
                     disabled={importIsLocked}
                     onChange={(event) =>
                       updateCuveeFallbackMode(
-                        event.target.value as
-                          CsvCuveeFallback["mode"],
+                        event.target.value as CuveePreparationMode,
                       )
                     }
                     value={cuveeFallbackMode}
                   >
                     <option value="none">
                       Keep the row blocked
+                    </option>
+                    <option value="splitProducer" disabled={!mapping.includes("producer")}>
+                      Separate Producer + Cuvée from the Producer column
                     </option>
                     <option value="fixed">
                       One fixed value
@@ -1914,6 +1922,11 @@ export function ImportWorkspace({
                   </label>
                 ) : null}
               </div>
+              {cuveeFallbackMode === "splitProducer" ? <p>
+                In step 4, review the combined names and confirm both fields.
+                Repeated names can be corrected together. Rows without a cuvée
+                remain blocked until you review or exclude them; no name is applied automatically.
+              </p> : null}
             </section>
           ) : null}
 
@@ -2154,6 +2167,7 @@ export function ImportWorkspace({
           )}
 
           <ImportRowEditor rows={preparedRows.allRows} corrections={rowCorrections}
+            splitCombinedNames={cuveeFallbackMode === "splitProducer"}
             disabled={importIsLocked} onCorrect={correctRows} onExclude={excludeRows}
             onReset={() => {
               if (importIsLocked) return

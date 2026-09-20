@@ -331,7 +331,9 @@ are reversible and never inferred silently. Only included, revalidated rows
 enter wine matching, capacity calculations and the normal atomic import.
 The UI identifies the selected worksheet, preserves Excel row coordinates,
 supports missing-Cuvée fallbacks without a dummy column, and keeps row review
-paginated. No migration or production data repair is required. See
+paginated. Combined Producer/Cuvée cells can be separated through an explicit,
+grouped review, with reversible-order text suggestions and manual exceptions;
+no names are silently inferred. No migration or production data repair is required. See
 [spreadsheet preparation](csv-ingestion.md#in-app-row-corrections-and-exclusions).
 
 ## v0.6 — Capture-assisted enrichment

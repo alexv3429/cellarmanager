@@ -1,6 +1,7 @@
 import { useMemo, useState, type FormEvent } from "react"
 import { CSV_IMPORT_FIELD_DEFINITIONS, type CsvImportField, type CsvImportFieldDefaults } from "../data/csvColumnMapping"
 import { isZeroStockRow, type CsvPreparedRow, type CsvRowCorrections } from "../data/csvImportPreparation"
+import { ImportCombinedNames } from "./ImportCombinedNames"
 
 const PAGE_SIZE = 20
 const rowCountLabel = (count: number) => `${count} ${count === 1 ? "row" : "rows"}`
@@ -38,10 +39,11 @@ function RowCorrectionForm({ row, onSave, onCancel }: {
   </form>
 }
 
-export function ImportRowEditor({ rows, corrections, disabled, onCorrect, onExclude, onReset }: {
+export function ImportRowEditor({ rows, corrections, disabled, splitCombinedNames = false, onCorrect, onExclude, onReset }: {
   rows: CsvPreparedRow[]
   corrections: CsvRowCorrections
   disabled: boolean
+  splitCombinedNames?: boolean
   onCorrect: (changes: CsvRowCorrections) => void
   onExclude: (recordNumbers: number[], excluded: boolean) => void
   onReset: () => void
@@ -99,6 +101,10 @@ export function ImportRowEditor({ rows, corrections, disabled, onCorrect, onExcl
         <button type="button" disabled={!excludedCount} onClick={() => { setEditing(null); onExclude(rows.map((row) => row.cleaned.recordNumber), false) }}>Include all rows again</button>
         <button type="button" disabled={!editedCount} onClick={() => { setEditing(null); setMessage(""); onReset() }}>Reset all row corrections</button>
       </div>
+      {splitCombinedNames ? <ImportCombinedNames rows={rows} corrections={corrections} disabled={disabled} onCorrect={(changes) => {
+        setEditing(null)
+        onCorrect(changes)
+      }} /> : null}
       <details className="import-row-editor__bulk">
         <summary>Replace a value in several rows</summary>
         <p>Only included rows with this exact value are changed. Empty values can be filled this way; zero is not treated as empty.</p>

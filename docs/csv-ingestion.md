@@ -162,6 +162,28 @@ to the source file or database. Invalid included rows block later import stages;
 0.5.13 adds the in-app correction and exclusion controls below. Cleaning itself
 does not match wines, reconcile locations, or write cellar data.
 
+### Combined producer and cuvée names
+
+When one source column mixes both names, map it to Producer and select
+**Separate Producer + Cuvée from the Producer column** in the missing-Cuvée
+controls. This opens a dedicated review in stage 4 without inventing a Cuvée
+default. Included rows with no Cuvée still fail validation until explicitly
+corrected or excluded.
+
+The review groups exact combined names with the same appellation, area and
+color. Vintages and quantities stay per row. Blank names are reviewed separately.
+A single spaced dash offers an unconfirmed text split, with a Swap button for
+reversed order; unseparated or multi-separator names require manual entry.
+No producer identity, cuvée, appellation or bottle format is inferred from the
+text. The original name and affected source rows are visible before applying.
+
+Applying a group writes only import-local Producer/Cuvée corrections for that
+group's included rows. Populated Cuvée values and unrelated row edits remain
+unchanged. Individual exceptions can be handled with **Edit row**. Users may
+explicitly enter an appellation or other chosen name when no cuvée is known.
+Resetting row corrections restores the combined input and its validation
+blockers. Search/pagination do not change which rows will be imported.
+
 ### In-app row corrections and exclusions
 
 In **4. Clean and validate**, Owners can edit a row or replace an exact field

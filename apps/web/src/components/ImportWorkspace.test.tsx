@@ -46,6 +46,60 @@ async function fill(selector: string, value: string) {
 const text = "Producer,Cuvée,Vintage,Color,Bottle format,Quantity,Cellar,Location\nTest,Old,2020,red,75 cl,0,Main,A1\nTest,Current,bad,white,,2,Main,A1\n,,,,,99,,\n"
 
 describe("import workspace row preparation", () => {
+  it("reviews combined names before matching, allows a reversed split, and commits only confirmed names", async () => {
+    await render()
+    await upload("Producer,Vintage,Color,Bottle format,Quantity,Appellation,Cellar,Location\nEstate - Hill,2020,red,75 cl,2,Village,Main,A1\nEstate - Hill,2021,red,75 cl,3,Village,Main,A1\nGarden - Estate,2022,red,75 cl,1,Village,Main,A1\nOld name,1990,red,75 cl,0,Village,Main,A1\n")
+    await fill('.import-cuvee-fallback select', "splitProducer")
+    expect(container.querySelector<HTMLSelectElement>('.import-mapping-default-add select')?.value).toBe("")
+    expect(container.textContent).toContain("4 included rows still need a cuvée")
+    expect(container.textContent).not.toContain("Preparation complete")
+    await click("Exclude 1 zero-stock row")
+    await click("Apply names to 2 rows")
+    expect(container.textContent).toContain("1 included row still needs a cuvée")
+    await click("Swap producer and cuvée")
+    await click("Apply names to 1 row")
+    expect(container.textContent).toContain("Preparation complete")
+    await click("Continue to import confirmation")
+    expect(container.textContent).toContain("This will add 6 bottles across 3 source rows")
+    vi.mocked(commitCsvImport).mockImplementation(async (plan) => ({ importId: plan.importId, importedRowCount: 3, importedBottleCount: 6, createdWineCount: 3, reusedWineCount: 0 }))
+    await act(async () => container.querySelector<HTMLInputElement>('.import-confirmation input[type="checkbox"]')!.click())
+    await click("Import 6 bottles")
+    const plan = vi.mocked(commitCsvImport).mock.calls[0][0]
+    expect(plan.rows.map((row) => [row.wineProducer, row.wineCuvee, row.wineVintage, row.quantity])).toEqual([
+      ["Estate", "Hill", 2020, 2], ["Estate", "Hill", 2021, 3], ["Estate", "Garden", 2022, 1],
+    ])
+  })
+  it("requires manual names without a separator and resetting corrections invalidates confirmation", async () => {
+    await render()
+    const input = "Producer,Vintage,Color,Bottle format,Quantity,Appellation,Cellar,Location\nEstate Hill,2020,red,75 cl,2,Village,Main,A1\n"
+    await upload(input)
+    await fill('.import-cuvee-fallback select', "splitProducer")
+    expect(button("Apply names to 1 row").disabled).toBe(true)
+    await fill('.import-combined-names__group label:nth-child(1) input', "Estate")
+    await fill('.import-combined-names__group label:nth-child(2) input', "Hill")
+    expect(container.textContent).not.toContain("Preparation complete")
+    await click("Apply names to 1 row")
+    await click("Continue to import confirmation")
+    await click("Review or edit stages 1–6")
+    await click("Reset all row corrections")
+    expect(container.querySelector(".import-confirmation")).toBeNull()
+    expect(container.textContent).toContain("1 included row still needs a cuvée")
+    expect(commitCsvImport).not.toHaveBeenCalled()
+    await click("Choose another file"); await upload(input)
+    expect(container.querySelector<HTMLSelectElement>('.import-cuvee-fallback select')?.value).toBe("none")
+    expect(container.querySelector(".import-combined-names")).toBeNull()
+  })
+  it("searches and pages through combined names without changing what is included", async () => {
+    await render()
+    await upload("Producer,Vintage,Color,Bottle format,Quantity\n" + Array.from({ length: 9 }, (_, index) => `Estate ${index} - Hill,2020,red,75 cl,1`).join("\n"))
+    await fill('.import-cuvee-fallback select', "splitProducer")
+    expect(container.querySelectorAll(".import-combined-names__group")).toHaveLength(6)
+    await click("Next name groups")
+    expect(container.querySelectorAll(".import-combined-names__group")).toHaveLength(3)
+    await fill('.import-combined-names input[type="search"]', "Estate 8")
+    expect(container.querySelectorAll(".import-combined-names__group")).toHaveLength(1)
+    expect(container.textContent).toContain("9 rows included · 0 excluded")
+  })
   it("supports an absent Cuvée column with an explicit fallback and does not accept an empty fixed name", async () => {
     await render()
     await upload("Producer,Vintage,Color,Bottle format,Quantity,Appellation,Cellar,Location\nTest,2020,red,75 cl,2,Village,Main,A1\n")
