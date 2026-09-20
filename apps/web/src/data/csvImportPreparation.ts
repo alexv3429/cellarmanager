@@ -21,10 +21,19 @@ export function prepareCsvImportRows({
   options?: CsvCleaningOptions
 }) {
   const allRows = document?.header ? document.rows.map((row) => {
-    const source = mapCsvSourceRow(document.header!.values, row, mapping, defaults)
+    const source = mapCsvSourceRow(document.header!.values, row, mapping)
+    const fields = { ...source.fields, ...corrections[row.recordNumber] }
+    const defaultsApplied = Object.keys(defaults).filter((key) => {
+      const field = key as keyof CsvImportFieldDefaults
+      if (Object.hasOwn(corrections[row.recordNumber] ?? {}, field) || fields[field]?.trim() || !defaults[field]?.trim()) return false
+      fields[field] = defaults[field]
+      return true
+    }) as Array<keyof CsvImportFieldDefaults>
     return {
       original: source,
-      cleaned: cleanCsvMappedRow({ ...source, fields: { ...source.fields, ...corrections[row.recordNumber] } }, options),
+      sourceValues: row.values,
+      defaultsApplied,
+      cleaned: cleanCsvMappedRow({ ...source, fields }, options),
       excluded: excluded.has(row.recordNumber),
     }
   }) : []

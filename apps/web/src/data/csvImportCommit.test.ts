@@ -119,6 +119,23 @@ function dependencies(ids: string[]) {
 }
 
 describe("CSV import commit plan", () => {
+  it("recovers an immutable catalog-only plan without a destination and accepts a zero-bottle receipt", async () => {
+    const row = previewRow({ quantity: 0 })
+    row.storage = null
+    const plan = createCsvImportCommitPlan({ deviceId: "device-1", householdId, previewRows: [row] }, dependencies(["import-zero", "wine-zero", "operation-zero"]))
+    expect(plan.rows[0].destinationLocationId).toBeNull()
+    let saved: string | null = null
+    const storage = { getItem: () => saved, setItem: (_key: string, value: string) => { saved = value }, removeItem: () => { saved = null } }
+    savePendingCsvImportPlan(storage, plan)
+    expect(readPendingCsvImportPlan(storage, householdId)).toEqual(plan)
+    const rpc = vi.fn().mockResolvedValue({ data: [{ import_id: "import-zero", imported_row_count: 1, imported_bottle_count: "0", created_wine_count: 1, reused_wine_count: 0 }], error: null })
+    await expect(commitCsvImport(plan, { rpc })).resolves.toMatchObject({ importedBottleCount: 0, importedRowCount: 1 })
+    expect(rpc).toHaveBeenCalledWith("commit_csv_import", expect.objectContaining({ p_rows: [expect.objectContaining({ quantity: 0, destination_location_id: null })] }))
+    // Corrupted pending rows must not become a stock import without storage.
+    saved = JSON.stringify({ ...plan, rows: [{ ...plan.rows[0], quantity: 1 }] })
+    expect(readPendingCsvImportPlan(storage, householdId)).toBeNull()
+  })
+
   it("shares one requested wine ID across repeated new-wine rows", () => {
     const plan = createCsvImportCommitPlan(
       {

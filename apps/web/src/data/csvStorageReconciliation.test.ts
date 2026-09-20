@@ -137,7 +137,7 @@ describe("CSV storage and quantity reconciliation", () => {
         cleanedRow({
           cellar: "Main Cellar",
           location: "A1",
-          quantity: "0",
+          quantity: "-1",
         }),
       ],
       cellars,

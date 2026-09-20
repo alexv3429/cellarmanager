@@ -1,23 +1,26 @@
 import { useMemo, useState, type FormEvent } from "react"
 import { CSV_IMPORT_FIELD_DEFINITIONS, type CsvImportField, type CsvImportFieldDefaults } from "../data/csvColumnMapping"
 import { isZeroStockRow, type CsvPreparedRow, type CsvRowCorrections } from "../data/csvImportPreparation"
-import { ImportCombinedNames } from "./ImportCombinedNames"
+import type { ReactNode } from "react"
 
 const PAGE_SIZE = 20
 const rowCountLabel = (count: number) => `${count} ${count === 1 ? "row" : "rows"}`
 
-function RowCorrectionForm({ row, onSave, onCancel }: {
+function RowCorrectionForm({ row, corrections, onSave, onCancel }: {
   row: CsvPreparedRow
+  corrections: CsvImportFieldDefaults
   onSave: (values: CsvImportFieldDefaults) => void
   onCancel: () => void
 }) {
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const form = new FormData(event.currentTarget)
-    const values: CsvImportFieldDefaults = {}
+    const values: CsvImportFieldDefaults = { ...corrections }
     for (const { field } of CSV_IMPORT_FIELD_DEFINITIONS) {
       const value = String(form.get(field) ?? "")
-      if (value !== (row.original.fields[field] ?? "")) values[field] = value
+      if (value === (row.cleaned.sourceRow.fields[field] ?? "")) continue
+      if (row.defaultsApplied.includes(field) || value !== (row.original.fields[field] ?? "")) values[field] = value
+      else delete values[field]
     }
     onSave(values)
   }
@@ -39,11 +42,11 @@ function RowCorrectionForm({ row, onSave, onCancel }: {
   </form>
 }
 
-export function ImportRowEditor({ rows, corrections, disabled, splitCombinedNames = false, onCorrect, onExclude, onReset }: {
+export function ImportRowEditor({ rows, corrections, disabled, splitReview, onCorrect, onExclude, onReset }: {
   rows: CsvPreparedRow[]
   corrections: CsvRowCorrections
   disabled: boolean
-  splitCombinedNames?: boolean
+  splitReview?: ReactNode
   onCorrect: (changes: CsvRowCorrections) => void
   onExclude: (recordNumbers: number[], excluded: boolean) => void
   onReset: () => void
@@ -89,7 +92,7 @@ export function ImportRowEditor({ rows, corrections, disabled, splitCombinedName
   }
   return <div className="import-row-editor">
     <p role="status">{included.length} rows included · {excludedCount} excluded · {editedCount} corrected</p>
-    <p>Correct values here or exclude historical entries, totals and rows you do not want to import. Nothing is excluded automatically.</p>
+    <p>Quantity 0 keeps a wine in your catalog without adding bottles. You can optionally exclude those rows, totals or other entries. Nothing is excluded automatically.</p>
     <fieldset disabled={disabled}>
       <legend className="visually-hidden">Prepare import rows</legend>
       <div className="import-row-editor__actions">
@@ -101,10 +104,7 @@ export function ImportRowEditor({ rows, corrections, disabled, splitCombinedName
         <button type="button" disabled={!excludedCount} onClick={() => { setEditing(null); onExclude(rows.map((row) => row.cleaned.recordNumber), false) }}>Include all rows again</button>
         <button type="button" disabled={!editedCount} onClick={() => { setEditing(null); setMessage(""); onReset() }}>Reset all row corrections</button>
       </div>
-      {splitCombinedNames ? <ImportCombinedNames rows={rows} corrections={corrections} disabled={disabled} onCorrect={(changes) => {
-        setEditing(null)
-        onCorrect(changes)
-      }} /> : null}
+      {splitReview}
       <details className="import-row-editor__bulk">
         <summary>Replace a value in several rows</summary>
         <p>Only included rows with this exact value are changed. Empty values can be filled this way; zero is not treated as empty.</p>
@@ -139,7 +139,8 @@ export function ImportRowEditor({ rows, corrections, disabled, splitCombinedName
             <div className="import-row-editor__heading">
               <div><strong>Row {id} · {fields.producer || "No producer"} — {row.cleaned.fields.cuvee || fields.appellation || "No wine name"}</strong>
                 <p>{fields.vintage || "NV"} · {fields.color || "No color/type"} · Quantity: {fields.quantity || "Empty"}</p>
-                <p>{row.excluded ? "Excluded from this import" : row.cleaned.issues.length ? `${row.cleaned.issues.length} ${row.cleaned.issues.length === 1 ? "value needs" : "values need"} correction` : "Values valid"}{corrections[id] && Object.keys(corrections[id]).length ? " · Your corrections applied" : ""}</p>
+                <p>{row.excluded ? "Excluded from this import" : row.cleaned.issues.length ? `${row.cleaned.issues.length} ${row.cleaned.issues.length === 1 ? "value needs" : "values need"} correction` : row.cleaned.fields.quantity === 0 ? "Catalog only · no bottles will be added" : "Values valid"}{corrections[id] && Object.keys(corrections[id]).length ? " · Your corrections applied" : ""}</p>
+                {row.defaultsApplied.length ? <small>Defaults used: {row.defaultsApplied.map((field) => CSV_IMPORT_FIELD_DEFINITIONS.find((item) => item.field === field)!.label).join(", ")}</small> : null}
               </div>
               <div className="import-row-editor__actions">
                 <button type="button" aria-expanded={editing === id} onClick={() => setEditing(editing === id ? null : id)}>Edit row {id}</button>
@@ -153,7 +154,7 @@ export function ImportRowEditor({ rows, corrections, disabled, splitCombinedName
                 {CSV_IMPORT_FIELD_DEFINITIONS.find(({ field }) => field === change.field)?.label}: {change.sourceValue || "Empty"} → {change.normalizedValue}
               </li>)}</ul>
             </details> : null}
-            {editing === id ? <RowCorrectionForm key={JSON.stringify(row.cleaned.sourceRow.fields)} row={row} onCancel={() => setEditing(null)} onSave={(value) => { onCorrect({ [id]: value }); setEditing(null); setMessage(`Corrections saved for row ${id}.`) }} /> : null}
+            {editing === id ? <RowCorrectionForm key={JSON.stringify(row.cleaned.sourceRow.fields)} row={row} corrections={corrections[id] ?? {}} onCancel={() => setEditing(null)} onSave={(value) => { onCorrect({ [id]: value }); setEditing(null); setMessage(`Corrections saved for row ${id}.`) }} /> : null}
           </article>
         })}
       </div>

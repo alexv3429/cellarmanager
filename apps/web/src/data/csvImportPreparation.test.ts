@@ -17,6 +17,32 @@ function preview(corrections = { 3: { vintage: "NV", formatMl: "75 cl" } }, excl
 }
 
 describe("in-memory import preparation", () => {
+  it("tracks blank-only defaults, preserves source and invalid nonblank values, and respects row overrides", () => {
+    const document = parseCsvText("Producer,Cuvée,Color,Bottle format,Quantity\nTest,Hill,red,,0\nTest,Hill,red,1500 ml,2\nTest,Hill,red,bad,3\nTest,Hill,red, ,4\n")
+    const mapping = suggestCsvColumnMapping(document.header!.values)
+    const before = JSON.stringify(document)
+    const prepared = prepareCsvImportRows({ document, mapping, defaults: { formatMl: "750 ml", quantity: "1" }, corrections: { 5: { formatMl: "375 ml" } } })
+    expect(prepared.includedRows.map((row) => row.fields.formatMl)).toEqual([750, 1500, null, 375])
+    expect(prepared.allRows.map((row) => row.defaultsApplied)).toEqual([["formatMl"], [], [], []])
+    expect(prepared.allRows[0].original.fields.formatMl).toBe("")
+    expect(prepared.includedRows[0].fields.quantity).toBe(0)
+    expect(prepared.includedRows[2].issues[0].code).toBe("INVALID_BOTTLE_FORMAT")
+    expect(JSON.stringify(document)).toBe(before)
+  })
+  it("imports zero-stock wines with no storage and only counts positive rows towards capacity", () => {
+    const document = parseCsvText("Producer,Cuvée,Vintage,Color,Bottle format,Quantity,Cellar,Location\nTest,Hill,2020,red,750,0,Unknown,Missing\nTest,Hill,2020,red,750,2,Main,A1\n")
+    const rows = prepareCsvImportRows({ document, mapping: suggestCsvColumnMapping(document.header!.values) }).includedRows
+    const results = buildCsvImportPreview(matchCsvWines(rows, [], "h"), reconcileCsvStorage(rows, cellars, locations, "h", { 2: "foreign-location" }))
+    expect(results.map((row) => row.status)).toEqual(["ready", "ready"])
+    expect(results[0].storage).toMatchObject({ location: null, quantity: 0, issues: [] })
+    expect(results[1].storage?.importBottleCount).toBe(2)
+    const plan = createCsvImportCommitPlan({ householdId: "h", deviceId: "d", previewRows: results })
+    expect(plan.rows[0].destinationLocationId).toBeNull()
+    expect(plan.rows[0].requestedWineId).toBe(plan.rows[1].requestedWineId)
+    expect(plan.rows.map((row) => row.quantity)).toEqual([0, 2])
+    const catalogOnly = createCsvImportCommitPlan({ householdId: "h", deviceId: "d", previewRows: results.slice(0, 1) })
+    expect(catalogOnly.rows[0].quantity).toBe(0)
+  })
   it("keeps all rows until explicitly excluded, even zero-stock and total rows", () => {
     const prepared = prepareCsvImportRows({ document, mapping })
     expect(prepared.includedRows).toHaveLength(3)

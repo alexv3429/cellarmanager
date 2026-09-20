@@ -210,6 +210,7 @@ export function suggestCsvColumnMapping(
 export function validateCsvColumnMapping(
   mapping: CsvColumnMapping,
   fieldDefaults: CsvImportFieldDefaults = {},
+  reviewedFields: readonly CsvImportField[] = [],
 ): CsvMappingIssue[] {
   const columnIndexesByField = new Map<
     CsvImportField,
@@ -246,12 +247,13 @@ export function validateCsvColumnMapping(
       if (
         definition.required &&
         sourceColumnIndexes.length === 0 &&
-        !fieldDefaults[definition.field]?.trim()
+        !fieldDefaults[definition.field]?.trim() &&
+        !reviewedFields.includes(definition.field)
       ) {
         return [
           {
             field: definition.field,
-            message: `${definition.label} must be mapped or set once for every row`,
+            message: `${definition.label} needs a source column, a default, or a reviewed column split`,
             sourceColumnIndexes,
             type: "MISSING_REQUIRED_FIELD",
           },
@@ -279,7 +281,7 @@ export function mapCsvSourceRow(
     const field = mapping[sourceColumnIndex]
 
     if (field) {
-      fields[field] = value
+      fields[field] = value.trim() ? value : (fieldDefaults[field] ?? value)
     } else {
       unmapped.push({
         sourceColumnIndex,

@@ -120,6 +120,10 @@ function classifyStorage(
     }
   }
 
+  if (quantity === 0) {
+    return { cellar: null, location: null, issues: [], quantity, row, status: "ready" }
+  }
+
   if (selectedLocationId) {
     const location = locations.find(
       (candidate) =>

@@ -6149,8 +6149,9 @@
 .import-row-editor__normalization summary { font-size: 14px; }
 .import-row-editor__form { border-top: 1px solid var(--border); padding-top: 14px; margin-top: 14px; }
 
-.import-combined-names,
-.import-combined-names__group {
+.import-column-split-settings,
+.import-column-split,
+.import-column-split__group {
   display: grid;
   gap: 14px;
   min-width: 0;
@@ -6161,11 +6162,11 @@
   overflow-wrap: anywhere;
 }
 
-.import-combined-names h3 { margin: 0; color: var(--text-h); }
-.import-combined-names__group { background: var(--surface); }
-.import-combined-names__group header { display: grid; gap: 6px; min-width: 0; }
-.import-combined-names__group header strong { color: var(--text-h); }
-.import-combined-names__group header > span { font-size: 13px; }
+.import-column-split h3 { margin: 0; color: var(--text-h); }
+.import-column-split__group { background: var(--surface); }
+.import-column-split__group header { display: grid; gap: 6px; min-width: 0; }
+.import-column-split__group header strong { color: var(--text-h); }
+.import-column-split__group header > span { font-size: 13px; }
 
 .import-cleaning-card {
   min-width: 0;

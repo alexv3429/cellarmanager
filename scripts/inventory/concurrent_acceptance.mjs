@@ -66,6 +66,16 @@ function newWine(f, actorIndex, quantity) {
     FROM public.apply_add_inventory_operation(${args.map(quote).join(",")}) r;`) }
 }
 
+function catalogImport(f, actorIndex) {
+  const actor = f.actors[actorIndex]
+  const rows = [{ record_number: 2, operation_id: randomUUID(), requested_wine_id: randomUUID(),
+    wine_action: "create", quantity: 0, destination_location_id: null,
+    wine_producer: "Synthetic New Domaine", wine_cuvee: "Shared identity", wine_vintage: 2021,
+    wine_color: "red", wine_appellation: "Morgon", wine_area: "Beaujolais", wine_format_ml: 750 }]
+  return { sql: asUser(actor, `SELECT json_build_object('pid', pg_backend_pid(), 'receipt', row_to_json(r))
+    FROM public.commit_csv_import('${randomUUID()}', '${f.household}', '${actor.device}', ${quote(JSON.stringify(rows))}::jsonb, '${timestamp}') r;`) }
+}
+
 async function race(f, operations) {
   return db.concurrently(f.household, operations.map((op) => op.sql))
 }
@@ -284,6 +294,26 @@ try {
     }
     assert.equal(await assertConvergedReads(f), beforeRetry)
   })
+
+  for (const kind of ["catalog/catalog", "catalog/ADD", "ADD/catalog"]) {
+    await check(`catalog-only import serializes with ${kind} and retries without extra stock`, async () => {
+      const f = await fixture(0)
+      const ops = kind.split("/").map((type, i) => type === "catalog" ? catalogImport(f, i === 0 ? 0 : 2) : newWine(f, i === 0 ? 0 : 2, 3))
+      const result = receipts(await race(f, ops))
+      result.forEach((r, i) => kind.split("/")[i] === "catalog"
+        ? assert.equal(r.imported_bottle_count, 0) : assert.equal(r.operation_status, "ACCEPTED"))
+      const snapshot = () => db.query(`SELECT json_build_object(
+        'wines', (SELECT count(*) FROM public.wines WHERE household_id = '${f.household}' AND producer = 'Synthetic New Domaine'),
+        'bottles', (SELECT coalesce(sum(quantity), 0) FROM public.holdings WHERE household_id = '${f.household}'),
+        'positions', (SELECT count(*) FROM public.holdings WHERE household_id = '${f.household}'),
+        'journal', (SELECT count(*) FROM public.inventory_operations WHERE household_id = '${f.household}'));`)
+      const beforeRetry = await snapshot()
+      const hasStock = kind.includes("ADD")
+      assert.deepEqual(JSON.parse(beforeRetry), { wines: 1, bottles: hasStock ? 3 : 0, positions: hasStock ? 1 : 0, journal: hasStock ? 1 : 0 })
+      assert.deepEqual(receipts(await race(f, ops)), result)
+      assert.equal(await snapshot(), beforeRetry)
+    })
+  }
 
   for (const revokeFirst of [true, false]) {
     await check(`device revocation serializes with in-flight upload (${revokeFirst ? "revoke" : "upload"} first)`, async () => {

@@ -198,9 +198,12 @@ describe("CSV cleaning and normalization", () => {
     expect(parseCsvBottleFormat("2147483648 ml")).toBeNull()
   })
 
-  it("requires a positive whole-number quantity", () => {
+  it("allows zero stock but rejects blank, negative and fractional quantities", () => {
     expect(parseCsvQuantity(" 12 ")).toBe(12)
-    expect(parseCsvQuantity("0")).toBeNull()
+    expect(parseCsvQuantity("0")).toBe(0)
+    expect(parseCsvQuantity(" 00 ")).toBe(0)
+    expect(parseCsvQuantity("")).toBeNull()
+    expect(parseCsvQuantity("-1")).toBeNull()
     expect(parseCsvQuantity("1.5")).toBeNull()
     expect(parseCsvQuantity("2 bottles")).toBeNull()
     expect(parseCsvQuantity("2147483648")).toBeNull()
@@ -214,7 +217,7 @@ describe("CSV cleaning and normalization", () => {
           cuvee: "Cuvée",
           formatMl: "magnum",
           producer: " ",
-          quantity: "0",
+          quantity: "-1",
           vintage: "202",
         },
         17,
@@ -275,7 +278,7 @@ describe("CSV cleaning and normalization", () => {
           cuvee: "Cuvée",
           formatMl: "750",
           producer: "Domaine",
-          quantity: "0",
+          quantity: "-1",
         },
         3,
       ),

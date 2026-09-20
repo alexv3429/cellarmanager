@@ -95,18 +95,23 @@ headers to the following CellarManager fields:
 | Color | Required |
 | Appellation | Optional supporting metadata |
 | Area | Optional supporting metadata |
-| Bottle format | Required; may use an explicit value applied to every row |
+| Bottle format | Required; may use an explicit default for missing values |
 | Cellar | Optional; unresolved storage is handled before import |
 | Location | Optional; unresolved storage is handled before import |
-| Quantity | Required; may use an explicit value applied to every row |
+| Quantity | Required; may use an explicit default for missing values; zero means catalog only |
 
-Each target field may be assigned to at most one source column. When a source
-omits a column because every row has the same value, the user may explicitly
-set that target field once for every row. This applies to required and optional
-fields—for example `750 ml` for Bottle format—and is shown in the sample,
-cleaning, preview, and commit plan exactly like a mapped source value. The
-importer never supplies such a value implicitly. A target field cannot use a
-source mapping and an all-row value at the same time.
+Each target field may be assigned to at most one source column. In **Defaults
+for missing values**, the user may explicitly choose a fallback for any field,
+whether its source column is missing or mapped. A `750 ml` Bottle format default
+fills empty or whitespace-only cells, preserving explicit values such as
+`1500 ml`. Non-empty invalid values are not hidden by defaults; `0` is not blank.
+The UI shows how many included rows use each default. The importer never
+supplies a default implicitly.
+
+Explicit row corrections take precedence, including a deliberate blank value.
+Saving an unrelated row field does not freeze its defaults: changing the format
+default later still updates rows that rely on it. Raw source values remain
+available independently of defaults and corrections.
 
 Header-based suggestions recognize a conservative set of common English and
 French labels; unknown or duplicate-looking headers remain unmapped for
@@ -120,7 +125,7 @@ only when the mapping is structurally ready for the next stage.
 
 Cellar and location are optional source mappings because a valid source may
 describe bottles without assigning their final physical storage. The later
-location-reconciliation step must assign those rows to a real location—such as
+location-reconciliation step must assign positive-quantity rows to a real location—such as
 an explicitly selected overflow location—before the transactional commit can
 be enabled. The importer must not invent or silently choose that location.
 
@@ -137,7 +142,8 @@ data remain unchanged during preparation:
 - a numeric vintage must contain four digits and fall between 1800 and 2200
 - bottle formats accept a positive metric value in millilitres, centilitres,
   or litres and become a supported positive whole number of millilitres
-- quantity becomes a supported positive whole number
+- quantity becomes a supported non-negative whole number; zero imports the
+  wine into the catalog without bottles or a storage destination
 - blank optional wine metadata, cellar, and location values become null
 
 Bottle formats without a unit are interpreted as millilitres. Named formats
@@ -152,7 +158,7 @@ the row's normalized Appellation. Non-empty Cuvée cells are never replaced. A
 blank or unavailable selected fallback leaves the row invalid, so the database
 still receives a non-empty cuvée and its schema does not change. Vintage and
 supporting metadata may be empty. Cellar and location remain optional at this
-stage and must be reconciled before commit.
+stage and must be reconciled before commit for positive-quantity rows.
 
 Cleaning issues retain the source record number, physical line range, field,
 and raw source value. The original mapped source row and unmapped values remain
@@ -162,27 +168,30 @@ to the source file or database. Invalid included rows block later import stages;
 0.5.13 adds the in-app correction and exclusion controls below. Cleaning itself
 does not match wines, reconcile locations, or write cellar data.
 
-### Combined producer and cuvée names
+### Split a column
 
-When one source column mixes both names, map it to Producer and select
-**Separate Producer + Cuvée from the Producer column** in the missing-Cuvée
-controls. This opens a dedicated review in stage 4 without inventing a Cuvée
-default. Included rows with no Cuvée still fail validation until explicitly
-corrected or excluded.
+In step 2, **Split a column** accepts any source column, two different target
+fields, and a literal separator (or no separator for manual entry). Examples
+include Producer + Cuvée or Cellar + Location. The selected source may be mapped
+or unmapped. Configuring a split satisfies the mapping prerequisite for those
+targets, but does not supply any values: required fields still fail row
+validation until reviewed values are applied.
 
-The review groups exact combined names with the same appellation, area and
-color. Vintages and quantities stay per row. Blank names are reviewed separately.
-A single spaced dash offers an unconfirmed text split, with a Swap button for
-reversed order; unseparated or multi-separator names require manual entry.
-No producer identity, cuvée, appellation or bottle format is inferred from the
-text. The original name and affected source rows are visible before applying.
+Stage 4 groups exact source values with their appellation, area and color
+context, excluding any of those fields chosen as split targets. Other fields,
+including vintage and quantity, stay per row. Blank source values are reviewed
+separately. Exactly one separator offers an unconfirmed split. The default
+spaced dash also accepts en/em dashes; multiple separators or no separator
+require manual entry. **Swap values** handles reversed order. No wine identity
+or missing fact is inferred. The original text and affected rows remain visible.
 
-Applying a group writes only import-local Producer/Cuvée corrections for that
-group's included rows. Populated Cuvée values and unrelated row edits remain
-unchanged. Individual exceptions can be handled with **Edit row**. Users may
-explicitly enter an appellation or other chosen name when no cuvée is known.
-Resetting row corrections restores the combined input and its validation
-blockers. Search/pagination do not change which rows will be imported.
+Applying a group writes only the two import-local corrections. Separately
+supplied target values, existing corrections and excluded rows are protected;
+the field mapped directly from the combined source may be replaced. A reviewed
+split can replace a fallback default. Use **Edit row** for exceptions. Changing
+or stopping the split keeps confirmed corrections; resetting row corrections
+restores the source/default values. Search and pagination never change the
+import selection.
 
 ### In-app row corrections and exclusions
 
@@ -194,7 +203,14 @@ until explicitly reset; the editor shows the mapped value before row edits.
 Every saved correction passes through the same validation and normalization.
 Search and pagination reach all rows, including those beyond the initial page.
 
-All source rows are included initially. **Exclude zero-stock rows** excludes
+All source rows are included initially. Quantity `0` is valid: its wine is
+created or matched in the catalog without changing any existing stock, creating
+holdings, or writing an ADD activity. Storage and capacity do not apply to these
+rows; wine identity and ownership checks still do. Blank, negative and fractional
+quantities are invalid, not implicit zeros. The preview and confirmation disclose
+catalog-only counts, including files containing only zero quantities.
+
+For users who do not want historical catalog entries, **Exclude zero-stock rows** excludes
 only explicit integer zeros in the mapped/corrected quantity; missing, negative
 or malformed quantities still require attention. Individual exclusions handle
 summary totals or unwanted entries. No producer, drink type or summary row is
@@ -209,7 +225,7 @@ is locked to the original retry plan. Choosing another file clears edits and
 exclusions. Unsubmitted preparation is not persisted across a page refresh.
 
 Workbook/CSV originals are never overwritten, formulas are never executed and
-normal positive-quantity, identity and permission checks remain in place.
+normal quantity, identity and permission checks remain in place.
 
 ## Existing-wine matching contract
 
@@ -248,7 +264,8 @@ for wine identity. A row is assigned only when exactly one active cellar and
 exactly one active location inside that cellar match.
 
 Cellar and location remain optional CSV columns, but both values must be
-resolved before an authoritative import can proceed. A missing, unknown,
+resolved for positive-quantity rows before an authoritative import can proceed.
+Catalog-only rows skip storage resolution and capacity checks. A missing, unknown,
 archived, or ambiguous value remains an explicit issue. The importer does not
 invent storage, select an overflow location, restore an archived record, or
 match storage owned by another household. The user may explicitly create a new
@@ -284,18 +301,18 @@ row shows its original source record and physical line context together with:
   wine decision
 - the resolved cellar and location, the location's current and projected
   occupancy, and its optional configured capacity
-- the positive bottle quantity that would be added after later confirmation
+- the bottle quantity that would be added, or a catalog-only label for zero
 - every blocking issue and advisory capacity warning
 - all preserved values from source columns that were intentionally left
   unmapped
 
 Summary counts distinguish total and ready bottles, blocked rows, distinct new
-and existing wine references, distinct resolved destinations, and distinct
+and existing wine references, catalog-only rows, distinct resolved destinations, and distinct
 locations with capacity warnings. Repeated CSV rows for the same semantic new
 wine or destination are counted once in those reference totals while remaining
 individually visible with their own quantities and source context.
 
-A preview row is blocked when either its wine decision or storage assignment is
+A preview row is blocked when either its wine decision or required storage assignment is
 unresolved. Capacity warnings remain advisory and do not block an otherwise
 resolved row. Blocked rows and warning rows are displayed before ready rows so
 the first preview is useful even before issue-resolution controls exist.
@@ -364,19 +381,29 @@ ID while retaining separate quantities and source records. Existing-wine rows
 retain their explicitly resolved catalog IDs.
 
 Before the final action is enabled, every row must have a non-blocking second
-preview, an active destination, a complete normalized wine identity, and a
-positive quantity. The device must be registered, the browser must be online,
+preview, a complete normalized wine identity, and a non-negative quantity.
+Positive quantities require an active destination; zero quantities use no
+destination. The device must be registered and active, the browser must be online,
 and the user must explicitly acknowledge the final wine, destination, quantity,
 and capacity-warning plan. If synchronized data changes after the confirmation
 opens, the browser discards that confirmation and requires review again.
 
 The server treats the complete JSON payload as untrusted input. It revalidates
 authentication, household ownership, device ownership, unique source records
-and operation IDs, requested create/reuse actions, wine identity, positive
-quantities, household destinations, and active cellar/location state. Each row
-then passes through the normal ADD inventory operation functions so catalog
+and operation IDs, requested create/reuse actions, wine identity, non-negative
+quantities, and (for stock additions) household destinations and active
+cellar/location state. Positive-quantity rows pass through the normal ADD inventory operation functions so catalog
 normalization, conservative semantic matching, immutable activity records, and
 holding updates keep their existing domain behavior.
+
+Zero-quantity rows use a private catalog resolver under the same household and
+semantic-identity locks. It creates or reuses an active wine, rejects ambiguous
+or mismatched identities, and never changes existing wine metadata or holdings.
+No inventory operation is written for such a row. The Owner and active-device
+checks still apply, and mixed or all-zero batches share the same atomic receipt
+and retry contract. The additive migration
+`20260920120000_catalog_only_spreadsheet_import.sql` is required for this path;
+it changes functions and a receipt constraint, not existing cellar data.
 
 All rows and the private import receipt are written inside one PostgreSQL
 transaction. A rejected row rolls back earlier wine, holding, journal, and

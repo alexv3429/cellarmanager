@@ -66,10 +66,12 @@ import {
 import { inspectCellarManagerCsvVersion } from "../data/csvExport"
 import { CsvExportPanel } from "./CsvExportPanel"
 import { ImportRowEditor } from "./ImportRowEditor"
+import { ImportColumnSplit } from "./ImportColumnSplit"
+import { isCsvSplitConfigured, type CsvColumnSplit } from "../data/csvColumnSplit"
 import { Notice } from "./Notice"
 
 const FILE_SIZE_LIMIT_BYTES = 20_000_000
-type CuveePreparationMode = CsvCuveeFallback["mode"] | "splitProducer"
+type CuveePreparationMode = CsvCuveeFallback["mode"]
 const SAMPLE_ROW_COUNT = 3
 const MATCHING_ROW_DISPLAY_LIMIT = 100
 const STORAGE_ROW_DISPLAY_LIMIT = 100
@@ -191,6 +193,7 @@ function storageStatusLabel(
   if (result.status !== "ready") {
     return "Needs storage"
   }
+  if (result.quantity === 0) return "Catalog only · no storage needed"
 
   return result.issues.some(
     (storageIssue) => storageIssue.severity === "warning",
@@ -289,7 +292,7 @@ function CompactImportPreviewCard({
           <strong>
             {storage?.cellar && storage.location
               ? `${storage.cellar.name} / ${storage.location.code}`
-              : "Unresolved"}
+              : row.fields.quantity === 0 ? "Catalog only · no storage needed" : "Unresolved"}
           </strong>
         </section>
 
@@ -321,7 +324,7 @@ function CompactImportPreviewCard({
             <dd>
               {storage?.location
                 ? `${storage.currentBottleCount} + ${storage.importBottleCount} = ${storage.projectedBottleCount}`
-                : "Unresolved"}
+                : row.fields.quantity === 0 ? "No stock change" : "Unresolved"}
             </dd>
           </div>
           <div>
@@ -453,6 +456,7 @@ export function ImportWorkspace({
   const [mapping, setMapping] =
     useState<CsvColumnMapping>([])
   const [rowCorrections, setRowCorrections] = useState<CsvRowCorrections>({})
+  const [columnSplit, setColumnSplit] = useState<CsvColumnSplit | null>(null)
   const [excludedRecords, setExcludedRecords] = useState<Set<number>>(new Set())
   const [fieldDefaults, setFieldDefaults] =
     useState<CsvImportFieldDefaults>({})
@@ -569,15 +573,14 @@ export function ImportWorkspace({
     }
   }, [commitAttempted, commitPlan, householdId, isOnline])
 
-  const cuveeFallbackIsConfigured = cuveeFallbackMode === "splitProducer"
-    ? mapping.includes("producer")
-    : cuveeFallbackMode !== "none" && (cuveeFallbackMode !== "fixed" || cuveeFallbackValue.trim().length > 0)
+  const cuveeFallbackIsConfigured = cuveeFallbackMode !== "none" && (cuveeFallbackMode !== "fixed" || cuveeFallbackValue.trim().length > 0)
+  const splitIsConfigured = isCsvSplitConfigured(columnSplit, mapping.length)
   const mappingIssues = useMemo(
     () =>
       validateCsvColumnMapping(mapping, cuveeFallbackIsConfigured
         ? { ...fieldDefaults, cuvee: fieldDefaults.cuvee || "Derived during cleaning" }
-        : fieldDefaults),
-    [fieldDefaults, mapping, cuveeFallbackIsConfigured],
+        : fieldDefaults, splitIsConfigured ? [columnSplit.firstField, columnSplit.secondField] : []),
+    [fieldDefaults, mapping, cuveeFallbackIsConfigured, splitIsConfigured, columnSplit],
   )
 
   const sampleRows = useMemo(() => {
@@ -604,7 +607,7 @@ export function ImportWorkspace({
             mode: "fixed",
             value: cuveeFallbackValue,
           }
-        : { mode: cuveeFallbackMode === "splitProducer" ? "none" : cuveeFallbackMode }
+        : { mode: cuveeFallbackMode }
 
     return prepareCsvImportRows({ document, mapping, defaults: fieldDefaults,
       corrections: rowCorrections, excluded: excludedRecords, options: { cuveeFallback } })
@@ -871,6 +874,7 @@ export function ImportWorkspace({
 
     setFileError(null)
     setDocument(nextDocument)
+    setColumnSplit(null)
     setRowCorrections({})
     setExcludedRecords(new Set())
     setMapping(nextMapping)
@@ -904,6 +908,7 @@ export function ImportWorkspace({
     setFileError(null)
     setSourceText(null)
     setDocument(null)
+    setColumnSplit(null)
     setRowCorrections({})
     setExcludedRecords(new Set())
     setMapping([])
@@ -1002,19 +1007,6 @@ export function ImportWorkspace({
       ),
     )
 
-    if (field) {
-      setFieldDefaults((currentDefaults) => {
-        const nextDefaults = { ...currentDefaults }
-        delete nextDefaults[field]
-        return nextDefaults
-      })
-
-      if (defaultField === field) {
-        setDefaultField("")
-        setDefaultValue("")
-      }
-    }
-
     setResolutionSelections({
       locationIdByRecord: {},
       wineIdByRecord: {},
@@ -1028,6 +1020,13 @@ export function ImportWorkspace({
       wineIdByRecord: {},
     })
     resetCommitState()
+  }
+
+  function updateColumnSplit(split: CsvColumnSplit | null) {
+    if (commitAttempted || isCommitting) return
+    setColumnSplit(split)
+    setPreparationExpanded(true)
+    resetImportDecisions()
   }
 
   function correctRows(changes: CsvRowCorrections) {
@@ -1053,7 +1052,6 @@ export function ImportWorkspace({
     if (
       !defaultField ||
       !defaultValue.trim() ||
-      mapping.includes(defaultField) ||
       commitAttempted ||
       isCommitting
     ) {
@@ -1216,6 +1214,7 @@ export function ImportWorkspace({
     setFileName(null)
     setSourceText(null)
     setDocument(null)
+    setColumnSplit(null)
     setRowCorrections({})
     setExcludedRecords(new Set())
     setMapping([])
@@ -1407,13 +1406,13 @@ export function ImportWorkspace({
   const availableDefaultDefinitions =
     CSV_IMPORT_FIELD_DEFINITIONS.filter(
       (definition) =>
-        !mapping.includes(definition.field) &&
         !(definition.field === "cuvee" && cuveeFallbackIsConfigured) &&
         fieldDefaults[definition.field] === undefined,
     )
   const hasMissingRequiredDefault =
     availableDefaultDefinitions.some(
-      (definition) => definition.required,
+      (definition) => definition.required && !mapping.includes(definition.field) &&
+        !(splitIsConfigured && [columnSplit.firstField, columnSplit.secondField].includes(definition.field)),
     )
   const defaultAddControls =
     availableDefaultDefinitions.length > 0 ? (
@@ -1442,7 +1441,7 @@ export function ImportWorkspace({
           </select>
         </label>
         <label>
-          <span>Value applied to every row</span>
+          <span>Default for empty cells</span>
           <input
             disabled={importIsLocked}
             onChange={(event) =>
@@ -1463,7 +1462,7 @@ export function ImportWorkspace({
           onClick={addFieldDefault}
           type="button"
         >
-          Apply to every row
+          Set default
         </button>
       </div>
     ) : null
@@ -1782,13 +1781,12 @@ export function ImportWorkspace({
           >
             <div>
               <h3 id="mapping-defaults-heading">
-                Values missing from the source file
+                Defaults for missing values
               </h3>
               <p>
-                When every imported row has the same missing value,
-                enter it once instead of editing every row. For
-                example, Bottle format can be 750 ml for the whole
-                file.
+                Fill empty cells or missing columns without replacing existing values.
+                For example, use 750 ml for a blank Bottle format; an explicit 1500 ml stays unchanged.
+                Zero is a value, not an empty cell.
               </p>
             </div>
 
@@ -1796,12 +1794,10 @@ export function ImportWorkspace({
               <div className="import-mapping-default-applied">
                 <div>
                   <strong>
-                    Applied to all {document.rows.length}{" "}
-                    {document.rows.length === 1 ? "row" : "rows"}
+                    Fill blanks only
                   </strong>
                   <span>
-                    These values will be used wherever the source file has
-                    no mapped column.
+                    Explicit source values and your row corrections take priority.
                   </span>
                 </div>
                 <div className="import-mapping-default-list">
@@ -1813,7 +1809,7 @@ export function ImportWorkspace({
                       <label>
                         <span>{definition.label}</span>
                         <input
-                          aria-label={`${definition.label} applied to every row`}
+                          aria-label={`${definition.label} default for empty cells`}
                           disabled={importIsLocked}
                           onChange={(event) =>
                             updateFieldDefault(
@@ -1826,6 +1822,7 @@ export function ImportWorkspace({
                           }
                         />
                       </label>
+                      <small>{preparedRows.allRows.filter((row) => !row.excluded && row.defaultsApplied.includes(definition.field)).length} included rows use this default</small>
                       <button
                         disabled={importIsLocked}
                         onClick={() =>
@@ -1846,18 +1843,16 @@ export function ImportWorkspace({
                 <div>
                   <strong>Complete the missing required field</strong>
                   <span>
-                    Choose the field and enter the value shared by
-                    every imported row.
+                    Map a source column, set a default, or configure a column split below.
                   </span>
                 </div>
                 {defaultAddControls}
               </div>
             ) : availableDefaultDefinitions.length > 0 ? (
               <details className="import-mapping-default-more">
-                <summary>Apply another value to every row</summary>
+                <summary>Set another default for empty cells</summary>
                 <p>
-                  Optional: use this when another value is also
-                  absent from every row in the source file.
+                  Use a default for a missing column or blanks in a mapped column.
                 </p>
                 {defaultAddControls}
               </details>
@@ -1894,9 +1889,6 @@ export function ImportWorkspace({
                     <option value="none">
                       Keep the row blocked
                     </option>
-                    <option value="splitProducer" disabled={!mapping.includes("producer")}>
-                      Separate Producer + Cuvée from the Producer column
-                    </option>
                     <option value="fixed">
                       One fixed value
                     </option>
@@ -1922,13 +1914,30 @@ export function ImportWorkspace({
                   </label>
                 ) : null}
               </div>
-              {cuveeFallbackMode === "splitProducer" ? <p>
-                In step 4, review the combined names and confirm both fields.
-                Repeated names can be corrected together. Rows without a cuvée
-                remain blocked until you review or exclude them; no name is applied automatically.
-              </p> : null}
             </section>
           ) : null}
+
+          <section className="import-column-split-settings" aria-label="Split a column">
+            <h3>Split a column</h3>
+            <p>One source column can contain two values, such as producer / cuvée or cellar / location. Choose their fields, then review and apply each split in step 4. Nothing is applied automatically.</p>
+            {!columnSplit ? <button type="button" disabled={importIsLocked} onClick={() => updateColumnSplit({ sourceColumnIndex: 0, firstField: mapping[0] ?? "producer", secondField: mapping[0] === "cellar" ? "location" : mapping[0] === "cuvee" ? "producer" : "cuvee", separator: " - " })}>Split a column</button> : <>
+              <div className="import-row-editor__fields">
+                <label><span>Source column to split</span><select disabled={importIsLocked} value={columnSplit.sourceColumnIndex} onChange={(event) => updateColumnSplit({ ...columnSplit, sourceColumnIndex: Number(event.target.value) })}>
+                  {document.header.values.map((header, index) => <option key={index} value={index}>{index + 1}. {header || "Untitled column"}</option>)}
+                </select></label>
+                <label><span>First part goes to</span><select disabled={importIsLocked} value={columnSplit.firstField} onChange={(event) => updateColumnSplit({ ...columnSplit, firstField: event.target.value as CsvImportField })}>
+                  {CSV_IMPORT_FIELD_DEFINITIONS.map(({ field, label }) => <option key={field} value={field}>{label}</option>)}
+                </select></label>
+                <label><span>Second part goes to</span><select disabled={importIsLocked} value={columnSplit.secondField} onChange={(event) => updateColumnSplit({ ...columnSplit, secondField: event.target.value as CsvImportField })}>
+                  {CSV_IMPORT_FIELD_DEFINITIONS.map(({ field, label }) => <option key={field} value={field}>{label}</option>)}
+                </select></label>
+                <label><span>Separator</span><input disabled={importIsLocked} value={columnSplit.separator} onChange={(event) => updateColumnSplit({ ...columnSplit, separator: event.target.value })} maxLength={30} placeholder="e.g. / or -" /><small>Use the exact separator, including spaces. Leave blank for manual separation.</small></label>
+              </div>
+              {!splitIsConfigured ? <Notice tone="error">Choose two different destination fields.</Notice> : null}
+              <button type="button" disabled={importIsLocked} onClick={() => updateColumnSplit(null)}>Stop splitting this column</button>
+              <small>Confirmed row corrections stay in place. Use Reset all row corrections in step 4 to remove them.</small>
+            </>}
+          </section>
 
           <div className="import-mapping-list">
             {document.header.values.map(
@@ -2167,7 +2176,8 @@ export function ImportWorkspace({
           )}
 
           <ImportRowEditor rows={preparedRows.allRows} corrections={rowCorrections}
-            splitCombinedNames={cuveeFallbackMode === "splitProducer"}
+            splitReview={splitIsConfigured ? <ImportColumnSplit key={JSON.stringify(columnSplit)} rows={preparedRows.allRows} mapping={mapping} split={columnSplit}
+              corrections={rowCorrections} disabled={importIsLocked} onCorrect={correctRows} /> : null}
             disabled={importIsLocked} onCorrect={correctRows} onExclude={excludeRows}
             onReset={() => {
               if (importIsLocked) return
@@ -2477,8 +2487,8 @@ export function ImportWorkspace({
                 </Notice>
               ) : (
                 <Notice role="status" tone="success">
-                  Every source row has an active cellar and
-                  location assignment.
+                  Every stocked row has an active cellar and location.
+                  Catalog-only rows need no storage.
                 </Notice>
               )}
 
@@ -2573,7 +2583,7 @@ export function ImportWorkspace({
                           <dd>
                             {result.cellar && result.location
                               ? `${result.cellar.name} / ${result.location.code}`
-                              : "Unresolved"}
+                              : result.quantity === 0 ? "Not needed (catalog only)" : "Unresolved"}
                           </dd>
                         </div>
                         <div>
@@ -3010,6 +3020,10 @@ export function ImportWorkspace({
               <strong>{resolvedImportPreviewSummary.destinationCount}</strong>
               <span>Destinations</span>
             </div>
+            {resolvedImportPreviewSummary.catalogOnlyRowCount > 0 ? <div>
+              <strong>{resolvedImportPreviewSummary.catalogOnlyRowCount}</strong>
+              <span>Catalog-only rows · no stock change</span>
+            </div> : null}
             <div>
               <strong>{resolvedImportPreviewSummary.blockedRowCount}</strong>
               <span>Blocked rows</span>
@@ -3099,6 +3113,7 @@ export function ImportWorkspace({
                 <p>
                   This will add {commitPlan.rows.reduce((total, row) => total + row.quantity, 0)} {commitPlan.rows.reduce((total, row) => total + row.quantity, 0) === 1 ? "bottle" : "bottles"} across {commitPlan.rows.length} source {commitPlan.rows.length === 1 ? "row" : "rows"}. It may create {new Set(commitPlan.rows.filter((row) => row.wineAction === "create").map((row) => row.requestedWineId)).size} catalog {new Set(commitPlan.rows.filter((row) => row.wineAction === "create").map((row) => row.requestedWineId)).size === 1 ? "wine" : "wines"}.
                 </p>
+                {commitPlan.rows.some((row) => row.quantity === 0) ? <p>{commitPlan.rows.filter((row) => row.quantity === 0).length} catalog-only rows add or match wines without adding bottles or changing existing stock.</p> : null}
                 <p>
                   {excludedRecords.size} source rows are excluded. The included batch succeeds or rolls back. It
                   does not replace or remove existing bottles.
@@ -3144,6 +3159,7 @@ export function ImportWorkspace({
                     ? "Importing…"
                     : commitAttempted
                       ? "Retry the same import"
+                      : commitPlan.rows.every((row) => row.quantity === 0) ? "Import catalog wines"
                       : `Import ${commitPlan.rows.reduce((total, row) => total + row.quantity, 0)} ${commitPlan.rows.reduce((total, row) => total + row.quantity, 0) === 1 ? "bottle" : "bottles"}`}
                 </button>
               </div>

@@ -60,9 +60,10 @@ workflow.
 The default export contains only positive inventory and is compatible with the
 existing guarded spreadsheet importer. **Include wines with no bottles** adds one
 catalog-only row for each wine without bottles. Those rows have blank Cellar
-and Location values and Quantity `0`; they are useful as an archive but cannot
-be committed by the importer, which intentionally accepts only positive bottle
-quantities.
+and Location values and Quantity `0`. From step 0.5.13, the importer accepts
+these as catalog-only entries: it creates or matches wines without creating
+holdings or changing existing stock. The catalog-only import migration must
+be installed before committing them.
 
 Merged source wines are not exported. The surviving wine and transferred
 holdings are exported normally.
@@ -82,7 +83,7 @@ The first ten columns use exact headers already recognized by the importer:
 | `Bottle format` | Positive integer millilitres followed by `ml` | Mapped |
 | `Cellar` | Physical cellar name | Mapped |
 | `Location` | Physical location code | Mapped |
-| `Quantity` | Bottles at this position | Mapped when positive |
+| `Quantity` | Bottles at this position | Positive adds bottles; zero imports only the wine |
 
 The remaining columns preserve portable context without silently changing the
 current importer. Excel keeps their complete structured form on the technical
@@ -162,7 +163,7 @@ existing explicit preview and confirmation.
   safeguards rather than a separate commit path;
 - automatically map and clean the first ten columns through the production
   importer without a second import implementation;
-- omit zero-stock wines by default and clearly warn when they are included;
+- omit zero-stock wines by default and explain their catalog-only behavior when included;
 - remain usable offline after synchronization;
 - avoid spreadsheet-formula execution without changing normalized round-trip
   values;
