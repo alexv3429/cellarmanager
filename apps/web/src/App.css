@@ -5441,15 +5441,19 @@
   gap: 0.5rem;
 }
 
-.import-confirmation__acknowledgement {
+.app-shell__content .import-confirmation label.import-confirmation__acknowledgement {
   align-items: flex-start;
   cursor: pointer;
   display: flex;
   gap: 0.75rem;
 }
 
-.import-confirmation__acknowledgement input {
+.import-confirmation__acknowledgement input[type="checkbox"] {
   flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  padding: 0;
   margin-top: 0.2rem;
 }
 
