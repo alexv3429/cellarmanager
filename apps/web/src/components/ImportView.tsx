@@ -1,14 +1,13 @@
 import { useQuery } from "@powersync/react"
 import {
   type ChangeEvent,
-  type FormEvent,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from "react"
 
-import { createInitialImportDestination } from "../data/cellarSetup"
+import { ImportStorageGroups } from "./ImportStorageGroups"
 
 import {
   CSV_IMPORT_FIELD_DEFINITIONS,
@@ -506,10 +505,6 @@ export function ImportWorkspace({
   const [isCommitting, setIsCommitting] = useState(false)
   const [destinationIsCreating, setDestinationIsCreating] =
     useState(false)
-  const [destinationCreationError, setDestinationCreationError] =
-    useState<string | null>(null)
-  const [destinationCreationMessage, setDestinationCreationMessage] =
-    useState<string | null>(null)
   const recoveredCommitChecked = useRef(false)
 
   useEffect(() => {
@@ -676,40 +671,6 @@ export function ImportWorkspace({
     ],
   )
 
-  const storageSummary = useMemo(
-    () =>
-      summarizeCsvStorageReconciliation(storageResults),
-    [storageResults],
-  )
-
-  const displayedStorageResults = useMemo(() => {
-    const unresolvedResults = storageResults.filter(
-      (result) => result.status !== "ready",
-    )
-    const warningResults = storageResults.filter(
-      (result) =>
-        result.status === "ready" &&
-        result.issues.some(
-          (storageIssue) =>
-            storageIssue.severity === "warning",
-        ),
-    )
-    const readyResults = storageResults.filter(
-      (result) =>
-        result.status === "ready" &&
-        result.issues.every(
-          (storageIssue) =>
-            storageIssue.severity !== "warning",
-        ),
-    )
-
-    return [
-      ...unresolvedResults,
-      ...warningResults,
-      ...readyResults,
-    ].slice(0, STORAGE_ROW_DISPLAY_LIMIT)
-  }, [storageResults])
-
   const initialImportPreviewRows = useMemo(
     () =>
       buildCsvImportPreview(
@@ -744,6 +705,17 @@ export function ImportWorkspace({
       storageLocations,
     ],
   )
+
+  const storageSummary = useMemo(() => summarizeCsvStorageReconciliation(resolvedImport.storageResults), [resolvedImport.storageResults])
+  const catalogOnlyStorageRows = resolvedImport.storageResults.filter((result) => result.status === "ready" && result.quantity === 0).length
+  const displayedStorageResults = useMemo(() => {
+    const results = resolvedImport.storageResults
+    return [
+      ...results.filter((result) => result.status !== "ready"),
+      ...results.filter((result) => result.status === "ready" && result.issues.length > 0),
+      ...results.filter((result) => result.status === "ready" && result.issues.length === 0),
+    ].slice(0, STORAGE_ROW_DISPLAY_LIMIT)
+  }, [resolvedImport.storageResults])
 
   const resolvedImportPreviewRows = useMemo(
     () =>
@@ -817,36 +789,10 @@ export function ImportWorkspace({
       ),
     [initialImportPreviewRows],
   )
-  const rowsNeedingStorage = useMemo(
-    () =>
-      resolvedImportPreviewRows.filter(
-        (result) => result.storage?.status !== "ready",
-      ),
-    [resolvedImportPreviewRows],
-  )
-  const suggestedDestinationCellar = useMemo(() => {
-    const names = new Set(
-      cleanedRows.flatMap((row) =>
-        row.fields.cellar ? [row.fields.cellar] : [],
-      ),
-    )
-
-    return names.size === 1 ? [...names][0] : ""
-  }, [cleanedRows])
-  const suggestedDestinationLocation = useMemo(() => {
-    const codes = new Set(
-      cleanedRows.flatMap((row) =>
-        row.fields.location ? [row.fields.location] : [],
-      ),
-    )
-
-    return codes.size === 1 ? [...codes][0] : "Unsorted"
-  }, [cleanedRows])
-
   function applyDocument(
     nextDocument: CsvIngestionDocument,
   ) {
-    if (commitAttempted || isCommitting) {
+    if (commitAttempted || isCommitting || destinationIsCreating) {
       return
     }
 
@@ -883,8 +829,6 @@ export function ImportWorkspace({
     setDefaultValue("")
     setCuveeFallbackMode("none")
     setCuveeFallbackValue("")
-    setDestinationCreationError(null)
-    setDestinationCreationMessage(null)
     setPreparationExpanded(false)
     setResolutionSelections({
       locationIdByRecord: {},
@@ -896,7 +840,7 @@ export function ImportWorkspace({
   async function selectFile(
     event: ChangeEvent<HTMLInputElement>,
   ) {
-    if (commitAttempted || isCommitting) {
+    if (commitAttempted || isCommitting || destinationIsCreating) {
       event.target.value = ""
       return
     }
@@ -917,8 +861,6 @@ export function ImportWorkspace({
     setDefaultValue("")
     setCuveeFallbackMode("none")
     setCuveeFallbackValue("")
-    setDestinationCreationError(null)
-    setDestinationCreationMessage(null)
     setFileName(file?.name ?? null)
 
     if (!file) {
@@ -990,7 +932,7 @@ export function ImportWorkspace({
     sourceColumnIndex: number,
     value: string,
   ) {
-    if (commitAttempted || isCommitting) {
+    if (commitAttempted || isCommitting || destinationIsCreating) {
       return
     }
 
@@ -1023,20 +965,20 @@ export function ImportWorkspace({
   }
 
   function updateColumnSplit(split: CsvColumnSplit | null) {
-    if (commitAttempted || isCommitting) return
+    if (commitAttempted || isCommitting || destinationIsCreating) return
     setColumnSplit(split)
     setPreparationExpanded(true)
     resetImportDecisions()
   }
 
   function correctRows(changes: CsvRowCorrections) {
-    if (commitAttempted || isCommitting) return
+    if (commitAttempted || isCommitting || destinationIsCreating) return
     setRowCorrections((current) => ({ ...current, ...changes }))
     resetImportDecisions()
   }
 
   function excludeRows(recordNumbers: number[], excluded: boolean) {
-    if (commitAttempted || isCommitting) return
+    if (commitAttempted || isCommitting || destinationIsCreating) return
     setExcludedRecords((current) => {
       const next = new Set(current)
       for (const number of recordNumbers) {
@@ -1052,6 +994,7 @@ export function ImportWorkspace({
     if (
       !defaultField ||
       !defaultValue.trim() ||
+      destinationIsCreating ||
       commitAttempted ||
       isCommitting
     ) {
@@ -1071,7 +1014,7 @@ export function ImportWorkspace({
     field: CsvImportField,
     value: string,
   ) {
-    if (commitAttempted || isCommitting) {
+    if (commitAttempted || isCommitting || destinationIsCreating) {
       return
     }
 
@@ -1083,7 +1026,7 @@ export function ImportWorkspace({
   }
 
   function removeFieldDefault(field: CsvImportField) {
-    if (commitAttempted || isCommitting) {
+    if (commitAttempted || isCommitting || destinationIsCreating) {
       return
     }
 
@@ -1098,7 +1041,7 @@ export function ImportWorkspace({
   function updateCuveeFallbackMode(
     mode: CuveePreparationMode,
   ) {
-    if (commitAttempted || isCommitting) {
+    if (commitAttempted || isCommitting || destinationIsCreating) {
       return
     }
 
@@ -1114,84 +1057,12 @@ export function ImportWorkspace({
   }
 
   function updateCuveeFallbackValue(value: string) {
-    if (commitAttempted || isCommitting) {
+    if (commitAttempted || isCommitting || destinationIsCreating) {
       return
     }
 
     setCuveeFallbackValue(value)
     resetImportDecisions()
-  }
-
-  async function createDestinationForImport(
-    event: FormEvent<HTMLFormElement>,
-  ) {
-    event.preventDefault()
-
-    if (
-      destinationIsCreating ||
-      importIsLocked ||
-      rowsNeedingStorage.length === 0
-    ) {
-      return
-    }
-
-    if (!isOnline) {
-      setDestinationCreationError(
-        "Reconnect before creating cellar setup.",
-      )
-      return
-    }
-
-    const form = new FormData(event.currentTarget)
-    const cellarName = String(form.get("cellarName") ?? "")
-    const locationCode = String(
-      form.get("locationCode") ?? "",
-    )
-    const capacity = String(form.get("capacity") ?? "")
-    const recordNumbers = rowsNeedingStorage.map(
-      (result) => result.row.recordNumber,
-    )
-
-    setDestinationIsCreating(true)
-    setDestinationCreationError(null)
-    setDestinationCreationMessage(null)
-
-    try {
-      const { locationId } =
-        await createInitialImportDestination(
-          householdId,
-          cellarName,
-          locationCode,
-          capacity,
-        )
-
-      setResolutionSelections((current) => {
-        const locationIdByRecord = {
-          ...current.locationIdByRecord,
-        }
-
-        for (const recordNumber of recordNumbers) {
-          locationIdByRecord[recordNumber] = locationId
-        }
-
-        return {
-          ...current,
-          locationIdByRecord,
-        }
-      })
-      resetCommitState()
-      setDestinationCreationMessage(
-        `Created ${cellarName.trim()} / ${locationCode.trim()} and selected it for ${recordNumbers.length} ${recordNumbers.length === 1 ? "row" : "rows"}. Waiting for synchronization; no bottles have been imported yet.`,
-      )
-    } catch (error: unknown) {
-      setDestinationCreationError(
-        error instanceof Error
-          ? error.message
-          : "Unable to create the import destination",
-      )
-    } finally {
-      setDestinationIsCreating(false)
-    }
   }
 
   function resetCommitState() {
@@ -1205,7 +1076,7 @@ export function ImportWorkspace({
   }
 
   function resetImport() {
-    if ((commitAttempted || isCommitting) && !commitResult) {
+    if ((commitAttempted || isCommitting || destinationIsCreating) && !commitResult) {
       return
     }
 
@@ -1223,8 +1094,6 @@ export function ImportWorkspace({
     setDefaultValue("")
     setCuveeFallbackMode("none")
     setCuveeFallbackValue("")
-    setDestinationCreationError(null)
-    setDestinationCreationMessage(null)
     setFileError(null)
     setPreparationExpanded(false)
     setResolutionSelections({
@@ -1278,7 +1147,8 @@ export function ImportWorkspace({
     if (
       !commitPlan ||
       (!confirmationAccepted && !commitAttempted) ||
-      isCommitting
+      isCommitting ||
+      destinationIsCreating
     ) {
       return
     }
@@ -1395,7 +1265,7 @@ export function ImportWorkspace({
     resolvedImportPreviewSummary.blockedRowCount === 0
   const preparationIsCollapsed =
     showImportPreview && !preparationExpanded
-  const importIsLocked = isCommitting || commitAttempted
+  const importIsLocked = isCommitting || commitAttempted || destinationIsCreating
   const hasRecoveredPendingImport =
     commitAttempted && commitPlan !== null && !document?.header
   const defaultDefinitions =
@@ -1466,7 +1336,9 @@ export function ImportWorkspace({
         </button>
       </div>
     ) : null
-  const importConfirmationBlocker = !mappingIsReady
+  const importConfirmationBlocker = destinationIsCreating
+    ? { buttonLabel: "Saving cellar setup…", message: "Wait for cellar setup to finish before confirming the import. No bottles are being imported." }
+    : !mappingIsReady
     ? {
         buttonLabel: "Complete column mapping first",
         message:
@@ -1548,6 +1420,7 @@ export function ImportWorkspace({
         </button>
         <button
           aria-pressed={dataMode === "export"}
+          disabled={destinationIsCreating}
           onClick={() => setDataMode("export")}
           type="button"
         >
@@ -1626,7 +1499,7 @@ export function ImportWorkspace({
           <div>
             <h2>Preparation complete</h2>
             <p>
-              {fileName} · {cleaningSummary.totalRowCount} {cleaningSummary.totalRowCount === 1 ? "row" : "rows"} · {matchingSummary.existingRowCount} existing · {matchingSummary.newRowCount} new · {storageSummary.readyRowCount} assigned
+              {fileName} · {cleaningSummary.totalRowCount} {cleaningSummary.totalRowCount === 1 ? "row" : "rows"} · {matchingSummary.existingRowCount} existing · {matchingSummary.newRowCount} new · {storageSummary.readyRowCount - catalogOnlyStorageRows} stocked rows assigned · {catalogOnlyStorageRows} catalog only
               {` · ${excludedRecords.size} excluded · ${Object.values(rowCorrections).filter((row) => Object.keys(row).length > 0).length} corrected`}
             </p>
           </div>
@@ -1686,7 +1559,7 @@ export function ImportWorkspace({
                 </span>
               ) : null}
             </div>
-            <button onClick={resetImport} type="button">
+            <button disabled={importIsLocked} onClick={resetImport} type="button">
               Choose another file
             </button>
           </div>
@@ -2458,8 +2331,8 @@ export function ImportWorkspace({
                   <span>Assigned bottles</span>
                 </div>
                 <div>
-                  <strong>{storageSummary.readyRowCount}</strong>
-                  <span>Assigned rows</span>
+                  <strong>{storageSummary.readyRowCount - catalogOnlyStorageRows}</strong>
+                  <span>Stocked rows assigned</span>
                 </div>
                 <div>
                   <strong>
@@ -2469,6 +2342,7 @@ export function ImportWorkspace({
                 </div>
               </div>
 
+              {catalogOnlyStorageRows > 0 ? <p>{catalogOnlyStorageRows} catalog-only rows need no storage and add no bottles.</p> : null}
               <p className="import-storage-display-note">
                 Showing {displayedStorageResults.length} of {storageSummary.totalRowCount} rows. Unresolved storage and capacity warnings appear first; source context is unchanged.
               </p>
@@ -2479,11 +2353,10 @@ export function ImportWorkspace({
                     Assign storage for {storageSummary.unresolvedRowCount} {storageSummary.unresolvedRowCount === 1 ? "row" : "rows"} before import
                   </strong>
                   <p>
-                    The importer never invents a cellar, chooses an
-                    overflow location, or restores archived storage.
-                    Assignment controls will be added in the
-                    issue-resolution step.
+                    You do not need to leave the import or create every cellar beforehand.
+                    In step 8, review the grouped destinations and confirm which cellars and locations to create or reuse.
                   </p>
+                  <button type="button" onClick={() => window.document.getElementById("import-storage-groups")?.scrollIntoView?.({ behavior: "smooth", block: "start" })}>Review storage groups</button>
                 </Notice>
               ) : (
                 <Notice role="status" tone="success">
@@ -2505,6 +2378,8 @@ export function ImportWorkspace({
                 </Notice>
               ) : null}
 
+              <details className="import-storage-details">
+                <summary>Inspect row-level storage details ({displayedStorageResults.length} of {storageSummary.totalRowCount})</summary>
               <div className="import-storage-list">
                 {displayedStorageResults.map((result) => {
                   const hasWarning = result.issues.some(
@@ -2621,6 +2496,7 @@ export function ImportWorkspace({
                   )
                 })}
               </div>
+              </details>
             </>
           )}
         </section>
@@ -2741,74 +2617,21 @@ export function ImportWorkspace({
             </span>
           </div>
 
-          {rowsNeedingStorage.length > 0 ? (
-            <details
-              className="import-create-destination"
-              open={storageOptions.length === 0}
-            >
-              <summary>Create a destination for this import</summary>
-              <div>
-                <p>
-                  Create a real cellar and its first location, then
-                  assign all {rowsNeedingStorage.length} storage-unresolved {rowsNeedingStorage.length === 1 ? "row" : "rows"} there. The setup is saved immediately even if you later cancel the import; bottles are added only after final confirmation.
-                </p>
-                <form onSubmit={(event) => void createDestinationForImport(event)}>
-                  <label>
-                    <span>New cellar name</span>
-                    <input
-                      autoComplete="off"
-                      defaultValue={suggestedDestinationCellar}
-                      name="cellarName"
-                      placeholder="Stock A"
-                      required
-                    />
-                  </label>
-                  <label>
-                    <span>Initial location</span>
-                    <input
-                      autoComplete="off"
-                      defaultValue={suggestedDestinationLocation}
-                      name="locationCode"
-                      placeholder="Unsorted"
-                      required
-                    />
-                  </label>
-                  <label>
-                    <span>Capacity (optional)</span>
-                    <input
-                      inputMode="numeric"
-                      min="1"
-                      name="capacity"
-                      step="1"
-                      type="number"
-                    />
-                  </label>
-                  <button
-                    disabled={
-                      !isOnline ||
-                      destinationIsCreating ||
-                      importIsLocked
-                    }
-                    type="submit"
-                  >
-                    {destinationIsCreating
-                      ? "Creating destination…"
-                      : "Create and assign destination"}
-                  </button>
-                </form>
-                {destinationCreationError ? (
-                  <Notice role="alert" tone="error">
-                    {destinationCreationError}
-                  </Notice>
-                ) : null}
-                {destinationCreationMessage ? (
-                  <Notice role="status" tone="success">
-                    {destinationCreationMessage}
-                  </Notice>
-                ) : null}
-              </div>
-            </details>
-          ) : null}
+          <ImportStorageGroups
+            key={fileInputKey}
+            results={resolvedImport.storageResults}
+            snapshot={{ cellars: storageCellars, locations: storageLocations }}
+            householdId={householdId}
+            disabled={importIsLocked}
+            isOnline={isOnline}
+            onBusy={setDestinationIsCreating}
+            onAssign={(assignments) => {
+              resetCommitState()
+              setResolutionSelections((current) => ({
+                ...current, locationIdByRecord: { ...current.locationIdByRecord, ...assignments },
+              }))
+            }}
+          />
 
           {rowsNeedingResolution.length === 0 ? (
             <Notice role="status" tone="success">
@@ -2816,6 +2639,8 @@ export function ImportWorkspace({
               preview is ready for review.
             </Notice>
           ) : (
+            <details className="import-storage-details" open={rowsNeedingResolution.some((row) => row.wineMatch?.classification === "ambiguous")}>
+              <summary>Review individual rows and exceptions ({rowsNeedingResolution.length})</summary>
             <div className="import-resolution-list">
               {rowsNeedingResolution.map((result) => {
                 const recordNumber = result.row.recordNumber
@@ -2969,6 +2794,7 @@ export function ImportWorkspace({
                 )
               })}
             </div>
+            </details>
           )}
         </section>
       ) : null}

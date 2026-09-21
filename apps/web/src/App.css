@@ -5421,6 +5421,33 @@
   gap: 1rem;
 }
 
+.import-storage-groups { display: grid; gap: 16px; flex-basis: 100%; min-width: 0; scroll-margin-top: 24px; }
+.import-storage-groups h3, .import-storage-group h4, .import-storage-group p { margin: 0; }
+.import-storage-groups > header { display: grid; gap: 8px; }
+.import-storage-groups > header p { margin: 0; color: var(--text); }
+.import-storage-group { display: grid; gap: 16px; padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); min-width: 0; }
+.import-storage-group header { display: flex; gap: 12px; justify-content: space-between; }
+.import-storage-group h4 { font-size: 1.15rem; overflow-wrap: anywhere; }
+.import-storage-group header p, .import-storage-group small { color: var(--text); }
+.import-storage-group fieldset { display: grid; gap: 16px; border: 0; padding: 0; margin: 0; min-width: 0; }
+.import-storage-group legend { margin-bottom: 8px; font-weight: 600; }
+.import-storage-group__fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.import-storage-group__fields input, .import-storage-group__fields select { width: 100%; min-width: 0; box-sizing: border-box; }
+.import-storage-group__locations { display: grid; gap: 12px; }
+.import-storage-group__location { display: grid; gap: 10px; background: var(--surface-muted); padding: 12px; border-radius: 8px; min-width: 0; }
+.import-storage-group__location > div:first-child { display: grid; gap: 4px; overflow-wrap: anywhere; }
+.app-shell__content .import-storage-group label.import-storage-group__confirm { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
+.import-storage-group__confirm input[type="checkbox"] { flex: 0 0 auto; width: 18px; height: 18px; min-height: 18px; padding: 0; margin: 3px 0 0; }
+.import-storage-group fieldset > button { justify-self: start; }
+.import-storage-groups__paging { display: flex; flex-wrap: wrap; gap: 8px; }
+.import-storage-details { width: 100%; min-width: 0; }
+.import-storage-details > summary { cursor: pointer; padding: 12px 0; font-weight: 600; }
+@media (max-width: 640px) {
+  .import-storage-group__fields { grid-template-columns: minmax(0, 1fr); }
+  .import-storage-group { padding: 12px; }
+  .import-storage-group fieldset > button { width: 100%; }
+}
+
 .import-confirmation {
   background: color-mix(in srgb, var(--surface) 92%, var(--accent));
   border: 1px solid var(--border);

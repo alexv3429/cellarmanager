@@ -334,7 +334,10 @@ supports missing-Cuvée fallbacks without a dummy column, and keeps row review
 paginated. A generic **Split a column** groups any source column into two chosen
 fields, with unconfirmed separator suggestions, a swap action and manual
 exceptions. Defaults fill only missing values, preserving explicit formats and
-row corrections. Quantity zero imports a catalog entry without storage, stock
+row corrections. Grouped storage review creates or reuses each source cellar
+and its locations independently, with explicit confirmation, editable missing-location
+defaults and safe retries. This uses existing setup RPCs without another migration.
+Quantity zero imports a catalog entry without storage, stock
 changes or inventory activity. The additive catalog-only import migration
 changes functions and the receipt constraint; no production data repair is
 required. See

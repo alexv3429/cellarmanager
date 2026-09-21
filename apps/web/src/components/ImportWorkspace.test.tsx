@@ -4,9 +4,10 @@ import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { ImportWorkspace } from "./ImportView"
 import { commitCsvImport } from "../data/csvImportCommit"
+import { saveImportStorageGroup } from "../data/csvImportStorageSetup"
 
 vi.mock("./CsvExportPanel", () => ({ CsvExportPanel: () => null }))
-vi.mock("../data/cellarSetup", () => ({ createInitialImportDestination: vi.fn() }))
+vi.mock("../data/csvImportStorageSetup", async (original) => ({ ...await original<typeof import("../data/csvImportStorageSetup")>(), saveImportStorageGroup: vi.fn() }))
 vi.mock("../data/csvImportCommit", async (original) => ({ ...await original<typeof import("../data/csvImportCommit")>(), commitCsvImport: vi.fn() }))
 let root: Root
 let container: HTMLDivElement
@@ -16,11 +17,11 @@ beforeEach(() => {
   container = document.createElement("div"); document.body.append(container); root = createRoot(container)
 })
 afterEach(async () => { await act(async () => root.unmount()); container.remove(); vi.unstubAllGlobals() })
-async function render() {
+async function render(overrides: Partial<Parameters<typeof ImportWorkspace>[0]> = {}) {
   await act(async () => root.render(<ImportWorkspace catalogError={null} catalogIsLoading={false} catalogWines={[]}
     deviceId="device" householdId="household" isOnline={true} storageError={null} storageIsLoading={false}
     storageCellars={[{ id: "cellar", household_id: "household", name: "Main", is_active: 1 }]}
-    storageLocations={[{ id: "location", cellar_id: "cellar", household_id: "household", code: "A1", is_active: 1, bottle_count: 0, capacity: 20 }]} />))
+    storageLocations={[{ id: "location", cellar_id: "cellar", household_id: "household", code: "A1", is_active: 1, bottle_count: 0, capacity: 20 }]} {...overrides} />))
 }
 async function upload(text: string) {
   await act(async () => {
@@ -46,6 +47,77 @@ async function fill(selector: string, value: string) {
 const text = "Producer,Cuvée,Vintage,Color,Bottle format,Quantity,Cellar,Location\nTest,Old,2020,red,75 cl,0,Main,A1\nTest,Current,bad,white,,2,Main,A1\n,,,,,99,,\n"
 
 describe("import workspace row preparation", () => {
+  it("confirms Bar and Frigo separately, waits for synchronized storage and commits only the reviewed destinations", async () => {
+    await render({ storageCellars: [], storageLocations: [] })
+    await upload("Producer,Cuvée,Color,Bottle format,Quantity,Cellar,Location\nTest,A,red,750,1,Bar,\nTest,B,white,750,2,Bar,Top\nTest,C,red,750,3,Frigo,\nTest,D,red,750,0,Historical,\n")
+    expect(container.querySelectorAll(".import-storage-group")).toHaveLength(2)
+    expect(container.textContent).toContain("2 cellar groups need storage")
+    expect(button("Confirm storage for Bar").disabled).toBe(true)
+    expect(saveImportStorageGroup).not.toHaveBeenCalled()
+    vi.mocked(saveImportStorageGroup).mockResolvedValueOnce({ 2: "bar-general", 3: "bar-top" })
+    await act(async () => container.querySelector<HTMLInputElement>('.import-storage-group[aria-label="Storage for Bar"] input[type="checkbox"]')!.click())
+    await click("Confirm storage for Bar")
+    const [, group, choices] = vi.mocked(saveImportStorageGroup).mock.calls[0]
+    expect(group.locations.flatMap((item) => item.records)).toEqual([2, 3])
+    expect(choices).toEqual({ cellar: { kind: "new", name: "Bar" }, locations: { "": { kind: "new", name: "General" }, top: { kind: "new", name: "Top" } } })
+    expect(container.textContent).toContain("Waiting for synchronized storage")
+    expect(commitCsvImport).not.toHaveBeenCalled()
+    expect([...container.querySelectorAll("button")].some((node) => node.textContent === "Continue to import confirmation")).toBe(false)
+    const cellar = (id: string, name: string) => ({ id, name, household_id: "household", is_active: 1 })
+    const location = (id: string, cellar_id: string, code: string) => ({ id, cellar_id, code, household_id: "household", is_active: 1, bottle_count: 0, capacity: null })
+    await render({ storageCellars: [cellar("bar", "Bar")], storageLocations: [location("bar-general", "bar", "General"), location("bar-top", "bar", "Top")] })
+    expect(container.querySelectorAll(".import-storage-group")).toHaveLength(1)
+    expect(container.querySelector('.import-storage-group[aria-label="Storage for Frigo"]')).not.toBeNull()
+    vi.mocked(saveImportStorageGroup).mockResolvedValueOnce({ 4: "frigo-general" })
+    await act(async () => container.querySelector<HTMLInputElement>('.import-storage-group input[type="checkbox"]')!.click())
+    await click("Confirm storage for Frigo")
+    await render({ storageCellars: [cellar("bar", "Bar"), cellar("frigo", "Frigo")], storageLocations: [location("bar-general", "bar", "General"), location("bar-top", "bar", "Top"), location("frigo-general", "frigo", "General")] })
+    await click("Continue to import confirmation")
+    expect(container.textContent).toContain("This will add 6 bottles across 4 source rows")
+    vi.mocked(commitCsvImport).mockImplementation(async (plan) => ({ importId: plan.importId, importedRowCount: 4, importedBottleCount: 6, createdWineCount: 4, reusedWineCount: 0 }))
+    await act(async () => container.querySelector<HTMLInputElement>('.import-confirmation input[type="checkbox"]')!.click())
+    await click("Import 6 bottles")
+    expect(vi.mocked(commitCsvImport).mock.calls[0][0].rows.map((row) => [row.recordNumber, row.destinationLocationId])).toEqual([[2, "bar-general"], [3, "bar-top"], [4, "frigo-general"], [5, null]])
+  })
+  it("resets storage consent when destinations change and blocks setup while offline", async () => {
+    await render()
+    await upload("Producer,Cuvée,Color,Bottle format,Quantity,Cellar\nTest,A,red,750,1,Bar\n")
+    await act(async () => container.querySelector<HTMLInputElement>('.import-storage-group input[type="checkbox"]')!.click())
+    await fill('.import-storage-group input[aria-label="New cellar name"]', "New bar")
+    expect(button("Confirm storage for Bar").disabled).toBe(true)
+    await render({ isOnline: false })
+    expect(container.querySelector<HTMLFieldSetElement>('.import-storage-group fieldset')?.disabled).toBe(true)
+    expect(saveImportStorageGroup).not.toHaveBeenCalled()
+  })
+  it("locks preparation during setup and surfaces partial failures for an explicit retry", async () => {
+    await render()
+    await upload("Producer,Cuvée,Color,Bottle format,Quantity,Cellar\nTest,A,red,750,1,Bar\n")
+    let reject!: (error: Error) => void
+    vi.mocked(saveImportStorageGroup).mockImplementationOnce(() => new Promise((_resolve, fail) => { reject = fail }))
+    await click("Review or edit stages 1–6")
+    await act(async () => container.querySelector<HTMLInputElement>('.import-storage-group input[type="checkbox"]')!.click())
+    await click("Confirm storage for Bar")
+    expect(button("Choose another file").disabled).toBe(true)
+    expect(button("Export cellar").disabled).toBe(true)
+    expect(button("Saving cellar setup…")).toBeDefined()
+    expect(container.querySelector<HTMLFieldSetElement>('.import-storage-group fieldset')?.disabled).toBe(true)
+    await act(async () => reject(new Error("Response lost")))
+    expect(container.textContent).toContain("Some setup may already have been saved")
+    expect(container.textContent).toContain("matching active names are reused")
+    expect(button("Choose another file").disabled).toBe(false)
+    expect(commitCsvImport).not.toHaveBeenCalled()
+  })
+  it("pages and searches storage groups without creating setup or changing the row selection", async () => {
+    await render()
+    await upload("Producer,Cuvée,Color,Bottle format,Quantity,Cellar\n" + Array.from({ length: 8 }, (_, i) => `Test,A${i},red,750,1,Cellar ${i}`).join("\n"))
+    expect(container.querySelectorAll(".import-storage-group")).toHaveLength(6)
+    await click("Next cellars")
+    expect(container.querySelectorAll(".import-storage-group")).toHaveLength(2)
+    await fill('.import-storage-groups input[type="search"]', "Cellar 7")
+    expect(container.querySelectorAll(".import-storage-group")).toHaveLength(1)
+    expect(container.textContent).toContain("8 cellar groups need storage")
+    expect(saveImportStorageGroup).not.toHaveBeenCalled()
+  })
   it("fills blank formats only, preserves magnums and row edits, and imports catalog-only rows without destinations", async () => {
     await render()
     await upload("Producer,Cuvée,Vintage,Color,Bottle format,Quantity\nEstate,Hill,2020,red,,0\nEstate,Garden,2020,red,1500 ml,0\n")

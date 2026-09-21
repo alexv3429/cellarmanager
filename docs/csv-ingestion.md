@@ -268,11 +268,25 @@ resolved for positive-quantity rows before an authoritative import can proceed.
 Catalog-only rows skip storage resolution and capacity checks. A missing, unknown,
 archived, or ambiguous value remains an explicit issue. The importer does not
 invent storage, select an overflow location, restore an archived record, or
-match storage owned by another household. The user may explicitly create a new
-cellar and its first location from the resolution stage, then assign every
-currently storage-unresolved row to that destination. Cellar setup is written
-immediately and remains even if the CSV is later cancelled; bottle inventory is
-still written only by final transactional confirmation.
+match storage owned by another household. In the resolution stage, unresolved
+positive-quantity rows are grouped by normalized source cellar, then source
+location. Each cellar has its own review: create or reuse its destination cellar,
+then create or reuse each location. A missing location suggests an editable
+`General`; a missing cellar name requires an explicit name or existing selection.
+For example, `Bar` and `Frigo` remain separate groups, not one catch-all destination.
+Explicit confirmation assigns only that group's rows. Zero-stock, excluded and
+invalid rows never trigger setup. Individual row controls remain available for
+exceptions, while search and pagination do not alter the import selection.
+
+Setup re-reads all household storage from the server, validates every destination
+before writing, and reuses unique active names on retries. Archived, ambiguous or
+foreign-household destinations are never silently selected. Partial or lost-response
+failures are surfaced for explicit retry, not automatically rolled back. Cellar setup
+is written immediately and remains even if the file is later cancelled; bottle
+inventory is still written only by final transactional confirmation. New location
+capacity is unset and can be configured later in Cellar setup. Preparation and import
+confirmation are locked while a setup group is saving. The preview waits for the
+authoritative storage to synchronize before accepting the returned assignments.
 
 For each matched location, the importer adds the quantities from every CSV row
 assigned there and compares that total with the location's current synchronized
@@ -282,13 +296,15 @@ invalidate the otherwise valid assignment because capacity is a rough planning
 value and existing inventory workflows do not enforce it as a hard limit. An
 unconfigured capacity does not produce a warning.
 
-The reconciliation view reports assigned bottles and rows, unresolved rows,
+The reconciliation view reports assigned bottles and stocked rows, catalog-only
+rows separately, unresolved rows,
 and distinct locations with capacity warnings. It displays unresolved rows and
 warnings first while retaining the original source record and physical line
 context. The automatic reconciliation calculation is read-only: it does not
 change capacity, move bottles, update holdings, or write import data. The only
-setup write in the larger resolution workspace is the user's explicit creation
-of a named cellar and its first location as described above.
+setup writes in the larger resolution workspace are the user's explicitly
+confirmed grouped cellar/location creations described above. Counts and capacity
+warnings are recomputed from the resolved destinations after synchronization.
 
 ## Complete import preview contract
 
