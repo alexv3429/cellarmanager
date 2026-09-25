@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(36);
+select plan(39);
 
 select has_table(
     'public',
@@ -113,44 +113,159 @@ select ok(
 );
 
 select ok(
-    (
-        has_table_privilege(
-            'service_role',
-            'public.wine_reference_sources',
-            'SELECT'
-        )
-        and not has_table_privilege(
-            'service_role',
-            'public.wine_reference_sources',
-            'INSERT, UPDATE, DELETE'
-        )
-        and has_table_privilege(
-            'service_role',
-            'public.wine_reference_lwin_snapshots',
-            'SELECT, INSERT'
-        )
-        and not has_table_privilege(
-            'service_role',
-            'public.wine_reference_lwin_snapshots',
-            'UPDATE, DELETE'
-        )
-        and has_table_privilege(
-            'service_role',
-            'public.wine_reference_lwin_entries',
-            'SELECT, INSERT'
-        )
-        and not has_table_privilege(
-            'service_role',
-            'public.wine_reference_lwin_entries',
-            'UPDATE, DELETE'
-        )
-        and has_table_privilege(
-            'service_role',
-            'public.wine_reference_identifier_demands',
-            'SELECT, INSERT, UPDATE, DELETE'
-        )
+    has_table_privilege(
+        'service_role',
+        'public.wine_reference_sources',
+        'SELECT'
+    )
+    and not has_table_privilege(
+        'service_role',
+        'public.wine_reference_sources',
+        'INSERT'
+    )
+    and not has_table_privilege(
+        'service_role',
+        'public.wine_reference_sources',
+        'UPDATE'
+    )
+    and not has_table_privilege(
+        'service_role',
+        'public.wine_reference_sources',
+        'DELETE'
+    )
+    and not has_table_privilege(
+        'service_role',
+        'public.wine_reference_sources',
+        'TRUNCATE'
+    )
+    and not has_table_privilege(
+        'service_role',
+        'public.wine_reference_sources',
+        'REFERENCES'
+    )
+    and not has_table_privilege(
+        'service_role',
+        'public.wine_reference_sources',
+        'TRIGGER'
     ),
-    'Trusted services can stage immutable snapshots and maintain demands with least privilege'
+    'Trusted services can only read LWIN source attribution'
+);
+
+select ok(
+    has_table_privilege(
+        'service_role',
+        'public.wine_reference_lwin_snapshots',
+        'SELECT'
+    )
+    and has_table_privilege(
+        'service_role',
+        'public.wine_reference_lwin_snapshots',
+        'INSERT'
+    )
+    and not has_table_privilege(
+        'service_role',
+        'public.wine_reference_lwin_snapshots',
+        'UPDATE'
+    )
+    and not has_table_privilege(
+        'service_role',
+        'public.wine_reference_lwin_snapshots',
+        'DELETE'
+    )
+    and not has_table_privilege(
+        'service_role',
+        'public.wine_reference_lwin_snapshots',
+        'TRUNCATE'
+    )
+    and not has_table_privilege(
+        'service_role',
+        'public.wine_reference_lwin_snapshots',
+        'REFERENCES'
+    )
+    and not has_table_privilege(
+        'service_role',
+        'public.wine_reference_lwin_snapshots',
+        'TRIGGER'
+    ),
+    'Trusted services can stage immutable LWIN snapshots only'
+);
+
+select ok(
+    has_table_privilege(
+        'service_role',
+        'public.wine_reference_lwin_entries',
+        'SELECT'
+    )
+    and has_table_privilege(
+        'service_role',
+        'public.wine_reference_lwin_entries',
+        'INSERT'
+    )
+    and not has_table_privilege(
+        'service_role',
+        'public.wine_reference_lwin_entries',
+        'UPDATE'
+    )
+    and not has_table_privilege(
+        'service_role',
+        'public.wine_reference_lwin_entries',
+        'DELETE'
+    )
+    and not has_table_privilege(
+        'service_role',
+        'public.wine_reference_lwin_entries',
+        'TRUNCATE'
+    )
+    and not has_table_privilege(
+        'service_role',
+        'public.wine_reference_lwin_entries',
+        'REFERENCES'
+    )
+    and not has_table_privilege(
+        'service_role',
+        'public.wine_reference_lwin_entries',
+        'TRIGGER'
+    ),
+    'Trusted services can stage immutable LWIN entry rows only'
+);
+
+select ok(
+    has_table_privilege(
+        'service_role',
+        'public.wine_reference_identifier_demands',
+        'SELECT'
+    )
+    and has_table_privilege(
+        'service_role',
+        'public.wine_reference_identifier_demands',
+        'INSERT'
+    )
+    and has_table_privilege(
+        'service_role',
+        'public.wine_reference_identifier_demands',
+        'UPDATE'
+    )
+    and has_table_privilege(
+        'service_role',
+        'public.wine_reference_identifier_demands',
+        'DELETE'
+    )
+    and not has_table_privilege(
+        'service_role',
+        'public.wine_reference_identifier_demands',
+        'TRUNCATE'
+    )
+    and not has_table_privilege(
+        'service_role',
+        'public.wine_reference_identifier_demands',
+        'REFERENCES'
+    )
+    and not has_table_privilege(
+        'service_role',
+        'public.wine_reference_identifier_demands',
+        'TRIGGER'
+    ),
+    'Trusted services can maintain LWIN identifier demands with row-level access only'
 );
 
 select ok(
