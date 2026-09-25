@@ -122,11 +122,9 @@ enrichment worker. Deployment secrets and the source-rights boundary are
 documented in
 [`docs/reviewed-enrichment-research.md`](docs/reviewed-enrichment-research.md).
 
-The v0.5 release candidate is governed by
-[`docs/v05-acceptance.md`](docs/v05-acceptance.md). The deployed `v0.5.0`
-version/readiness check and post-deployment smoke pass must succeed before its
-annotated release tag is created. See `apps/web/README.md` for local
-development and production/PWA testing commands.
+The v0.5 release and its production acceptance are recorded in
+[`docs/v05-acceptance.md`](docs/v05-acceptance.md). See `apps/web/README.md`
+for local development and production/PWA testing commands.
 
 ## Documentation
 
