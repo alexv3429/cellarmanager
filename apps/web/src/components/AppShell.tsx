@@ -16,7 +16,6 @@ import {
 } from "../navigation/appNavigation"
 import {
   getHouseholdPermissions,
-  getHouseholdRoleLabel,
   type HouseholdRole,
 } from "../households/householdPermissions"
 import type {
@@ -27,6 +26,7 @@ import { Notice } from "./Notice"
 import { HouseholdSwitcher } from "./HouseholdSwitcher"
 import { AccountLink } from "./AccountNavigation"
 import { ShellDisclosure } from "./ShellDisclosure"
+import { useLanguage } from "../i18n/useLanguage"
 
 interface AppShellProps {
   activeHouseholdId: string
@@ -88,6 +88,7 @@ export function AppShell({
   syncError,
   view,
 }: AppShellProps) {
+  const { t } = useLanguage()
   const permissions = getHouseholdPermissions(activeHouseholdRole)
   const status = useStatus()
   const {
@@ -201,55 +202,56 @@ export function AppShell({
       : deviceRegistration.isLoading
         ? "Waiting for synchronized data…"
         : "Not ready"
-  const activeHouseholdName = households.find((household) => household.id === activeHouseholdId)?.name ?? "Your household"
+  const activeHouseholdName = households.find((household) => household.id === activeHouseholdId)?.name ?? t("shell.yourHousehold")
+  const activeRoleLabel = activeHouseholdRole === "owner" ? t("shell.owner") : t("shell.member")
 
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main-content">
-        Skip to main content
+        {t("common.skipMain")}
       </a>
 
       <header className="app-shell__header">
         <div className="app-shell__toolbar">
           <div className="app-shell__brand">CellarManager</div>
           <ShellDisclosure className={`app-shell__sync app-shell__sync--${syncPresentation.tone}`}
-            accessibleLabel={`Sync: ${syncPresentation.label}`} open={openPanel === "sync"}
+            accessibleLabel={`${t("shell.sync")}: ${syncPresentation.label}`} open={openPanel === "sync"}
             onToggle={() => setOpenPanel(openPanel === "sync" ? null : "sync")} onClose={() => setOpenPanel(null)}
             label={<><span aria-hidden="true" className="app-shell__sync-dot" /><span aria-live="polite">{syncPresentation.label}</span></>}>
-            <strong>Sync &amp; this device</strong>
+            <strong>{t("shell.syncDevice")}</strong>
             <p>{syncPresentation.detail}</p>
             <p>Device: {deviceStatus}</p>
             {lastSyncLabel ? <small>{lastSyncLabel}</small> : null}
             {isOfflineAccess ? <p>Local access only · authentication will refresh after reconnection.</p> : null}
-            <a className="app-shell__account-link" href={getAppViewPath("activity")} onClick={(event) => navigate(event, "activity")}>View activity &amp; queued changes</a>
+            <a className="app-shell__account-link" href={getAppViewPath("activity")} onClick={(event) => navigate(event, "activity")}>{t("shell.activityQueue")}</a>
           </ShellDisclosure>
 
-          <ShellDisclosure className="app-shell__household" accessibleLabel={`Household: ${activeHouseholdName} · ${getHouseholdRoleLabel(activeHouseholdRole)}`}
+          <ShellDisclosure className="app-shell__household" accessibleLabel={`${t("shell.household")}: ${activeHouseholdName} · ${activeRoleLabel}`}
             open={openPanel === "household"} onToggle={() => setOpenPanel(openPanel === "household" ? null : "household")} onClose={() => setOpenPanel(null)}
-            label={<><span className="app-shell__household-name" title={activeHouseholdName}>{activeHouseholdName}</span><span className="app-shell__role">{getHouseholdRoleLabel(activeHouseholdRole)}</span></>}>
+            label={<><span className="app-shell__household-name" title={activeHouseholdName}>{activeHouseholdName}</span><span className="app-shell__role">{activeRoleLabel}</span></>}>
             <HouseholdSwitcher activeHouseholdId={activeHouseholdId} households={households}
               isOnline={isOnline} pendingOperationCount={pendingOperationCount}
               onSelectHousehold={(id) => { setOpenPanel(null); onSelectHousehold(id) }} />
           </ShellDisclosure>
 
-          <ShellDisclosure className="app-shell__settings" accessibleLabel="Settings" label="Settings" open={openPanel === "settings"}
+          <ShellDisclosure className="app-shell__settings" accessibleLabel={t("shell.settings")} label={t("shell.settings")} open={openPanel === "settings"}
             onToggle={() => setOpenPanel(openPanel === "settings" ? null : "settings")} onClose={() => setOpenPanel(null)}>
             <nav aria-label="Settings" className="app-shell__settings-links">
-              <span className="app-shell__settings-label">Personal</span>
+              <span className="app-shell__settings-label">{t("shell.personal")}</span>
               <AccountLink />
-              <span className="app-shell__settings-label">This household</span>
+              <span className="app-shell__settings-label">{t("shell.household")}</span>
               <a aria-current={view === "members" ? "page" : undefined} className="app-shell__account-link"
-                href={getAppViewPath("members")} onClick={(event) => navigate(event, "members")}>Members</a>
+                href={getAppViewPath("members")} onClick={(event) => navigate(event, "members")}>{t("shell.members")}</a>
               <a aria-current={view === "devices" ? "page" : undefined} className="app-shell__account-link"
-                href={getAppViewPath("devices")} onClick={(event) => navigate(event, "devices")}>Devices</a>
-              <button className="app-shell__sign-out" onClick={() => void signOut()} title={isOnline ? undefined : "Reconnect before signing out"} type="button">Sign out</button>
+                href={getAppViewPath("devices")} onClick={(event) => navigate(event, "devices")}>{t("shell.devices")}</a>
+              <button className="app-shell__sign-out" onClick={() => void signOut()} title={isOnline ? undefined : "Reconnect before signing out"} type="button">{t("shell.signOut")}</button>
             </nav>
           </ShellDisclosure>
         </div>
       </header>
 
       <nav
-        aria-label="Primary"
+        aria-label={t("nav.primary")}
         className="app-shell__nav"
       >
         <div className="app-shell__nav-items">
@@ -258,7 +260,7 @@ export function AppShell({
           href={getAppViewPath(permissions.canManageInventory ? "inventory" : "cellar")}
           onClick={(event) => navigate(event, permissions.canManageInventory ? "inventory" : "cellar")}
         >
-          {permissions.canManageInventory ? "Inventory" : "Cellar"}
+          {permissions.canManageInventory ? t("nav.inventory") : t("nav.cellar")}
         </a>
 
         <a
@@ -266,7 +268,7 @@ export function AppShell({
           href={getAppViewPath("pairing")}
           onClick={(event) => navigate(event, "pairing")}
         >
-          Pairing
+          {t("nav.pairing")}
         </a>
 
         <a
@@ -274,7 +276,7 @@ export function AppShell({
           href={getAppViewPath("activity")}
           onClick={(event) => navigate(event, "activity")}
         >
-          Activity
+          {t("nav.activity")}
         </a>
 
         {permissions.canManageCatalog ? <a
@@ -282,7 +284,7 @@ export function AppShell({
           href={getAppViewPath("catalog")}
           onClick={(event) => navigate(event, "catalog")}
         >
-          Catalog
+          {t("nav.catalog")}
         </a> : null}
 
         <a
@@ -290,7 +292,7 @@ export function AppShell({
           href={getAppViewPath("import")}
           onClick={(event) => navigate(event, "import")}
         >
-          Data
+          {t("nav.data")}
         </a>
 
         {permissions.canManageCellarSetup ? (
@@ -299,7 +301,7 @@ export function AppShell({
             href={getAppViewPath("setup")}
             onClick={(event) => navigate(event, "setup")}
           >
-            Cellar setup
+            {t("nav.setup")}
           </a>
         ) : null}
         </div>

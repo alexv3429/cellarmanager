@@ -3,13 +3,15 @@ import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { AccountView } from "./AccountView"
-import { getAccountProfile, requestAccountPasswordReset, saveAccountDisplayName } from "../auth/accountProfile"
+import { LanguageProvider } from "../i18n/LanguageProvider"
+import { getAccountProfile, requestAccountPasswordReset, saveAccountDisplayName, saveAccountLanguagePreference } from "../auth/accountProfile"
+import type { Session } from "@supabase/supabase-js"
 
 vi.mock("../auth/accountProfile", async (original) => ({
   ...await original<typeof import("../auth/accountProfile")>(),
-  getAccountProfile: vi.fn(), requestAccountPasswordReset: vi.fn(), saveAccountDisplayName: vi.fn(),
+  getAccountProfile: vi.fn(), requestAccountPasswordReset: vi.fn(), saveAccountDisplayName: vi.fn(), saveAccountLanguagePreference: vi.fn(),
 }))
-const fixture = { userId: "self", email: "alice@example.test", displayName: "Alice" }
+const fixture = { userId: "self", email: "alice@example.test", displayName: "Alice", languagePreference: "system" as const }
 let root: Root
 let container: HTMLDivElement
 beforeEach(() => {
@@ -17,6 +19,7 @@ beforeEach(() => {
   vi.resetAllMocks()
   vi.mocked(getAccountProfile).mockResolvedValue({ ...fixture })
   vi.mocked(saveAccountDisplayName).mockImplementation(async (_id, name) => ({ ...fixture, displayName: name.trim() }))
+  vi.mocked(saveAccountLanguagePreference).mockImplementation(async (_id, languagePreference) => ({ ...fixture, languagePreference }))
   vi.mocked(requestAccountPasswordReset).mockResolvedValue(fixture.email)
   container = document.createElement("div")
   document.body.append(container)
@@ -70,6 +73,33 @@ describe("account settings", () => {
     await click("Save display name")
     expect(saveAccountDisplayName).toHaveBeenLastCalledWith("self", "", expect.any(Object))
   })
+  it("saves the language selection to the current account", async () => {
+    await render()
+    const select = container.querySelector<HTMLSelectElement>("#account-language")!
+    await act(async () => {
+      select.value = "fr"
+      select.dispatchEvent(new Event("change", { bubbles: true }))
+    })
+    await click("Save language")
+    expect(saveAccountLanguagePreference).toHaveBeenCalledExactlyOnceWith("self", "fr", expect.any(Object))
+    expect(container.textContent).toContain("Language preference saved for your account")
+    expect(container.querySelector<HTMLSelectElement>("#account-language")?.value).toBe("fr")
+  })
+  it("applies a saved French preference immediately to the Account screen", async () => {
+    const session = { user: { id: "self", user_metadata: { preferred_language: "system" } } } as unknown as Session
+    await act(async () => root.render(<LanguageProvider userId="self" session={session} isOnline>
+      <AccountView userId="self" isOnline />
+    </LanguageProvider>))
+    const select = container.querySelector<HTMLSelectElement>("#account-language")!
+    await act(async () => {
+      select.value = "fr"
+      select.dispatchEvent(new Event("change", { bubbles: true }))
+    })
+    await click("Save language")
+    expect(container.querySelector("h1")?.textContent).toBe("Compte et profil")
+    expect(container.querySelector("#profile-heading")?.textContent).toBe("Votre profil")
+    expect(document.documentElement.lang).toBe("fr")
+  })
   it("requests a reset once, without collecting or changing a password in this screen", async () => {
     await render()
     await click("Send password reset email")
@@ -111,7 +141,7 @@ describe("account settings", () => {
     const pending = deferred<Awaited<ReturnType<typeof getAccountProfile>>>()
     vi.mocked(getAccountProfile).mockReturnValueOnce(pending.promise)
     await render()
-    vi.mocked(getAccountProfile).mockResolvedValue({ userId: "other", email: "bob@example.test", displayName: "Bob" })
+    vi.mocked(getAccountProfile).mockResolvedValue({ userId: "other", email: "bob@example.test", displayName: "Bob", languagePreference: "system" })
     await render("other")
     await act(async () => pending.resolve(fixture))
     expect(container.querySelector<HTMLInputElement>("#account-name")?.value).toBe("Bob")

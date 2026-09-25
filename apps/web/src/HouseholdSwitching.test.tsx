@@ -314,7 +314,7 @@ describe("multi-household workspace isolation", () => {
     expect(document.activeElement?.tagName).toBe("SELECT")
     await act(async () => document.activeElement!.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true })))
     expect(container.querySelector(".household-switcher")).toBeNull()
-    expect(document.activeElement?.getAttribute("aria-label")).toContain("Household: My collection")
+    expect(document.activeElement?.getAttribute("aria-label")).toContain("This household: My collection")
     expect(readActiveHouseholdId(localStorage, "test-user")).not.toBe("b")
   })
 

@@ -48,7 +48,8 @@
   font-weight: 600;
 }
 
-.account-page input {
+.account-page input,
+.account-page select {
   width: 100%;
   min-width: 0;
 }

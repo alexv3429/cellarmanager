@@ -1,11 +1,13 @@
 import type { SupabaseClient, User } from "@supabase/supabase-js"
 import { getAuthEmailRedirectTo } from "./authEmailFlow"
+import { normalizeLanguagePreference, type LanguagePreference } from "../i18n/language"
 
 type AccountAuth = Pick<SupabaseClient["auth"], "getUser" | "updateUser" | "resetPasswordForEmail">
 export interface AccountProfile {
   userId: string
   email: string
   displayName: string
+  languagePreference: LanguagePreference
 }
 interface Options {
   auth?: AccountAuth
@@ -23,10 +25,16 @@ export function normalizeDisplayName(value: string): string {
 }
 
 function profile(user: User): AccountProfile {
+  const metadata = user.user_metadata ?? {}
   // Use the same precedence as get_household_members. An empty full_name
   // deliberately clears a legacy name and restores the email fallback.
-  const name: unknown = user.user_metadata.full_name ?? user.user_metadata.name
-  return { userId: user.id, email: user.email ?? "", displayName: typeof name === "string" ? name.trim() : "" }
+  const name: unknown = metadata.full_name ?? metadata.name
+  return {
+    userId: user.id,
+    email: user.email ?? "",
+    displayName: typeof name === "string" ? name.trim() : "",
+    languagePreference: normalizeLanguagePreference(metadata.preferred_language),
+  }
 }
 
 async function client(options: Options): Promise<AccountAuth> {
@@ -54,6 +62,19 @@ export async function saveAccountDisplayName(userId: string, value: string, opti
   const { data, error } = await auth.updateUser({ data: { full_name: name } })
   if (error || !data.user || data.user.id !== userId) {
     throw new Error("Could not confirm the saved name. Reload your account to check before trying again.")
+  }
+  return profile(data.user)
+}
+
+export async function saveAccountLanguagePreference(userId: string, preference: LanguagePreference, options: Options = {}): Promise<AccountProfile> {
+  const normalized = normalizeLanguagePreference(preference)
+  const auth = await client(options)
+  await verifiedProfile(auth, userId, options)
+  // Store only the current user's presentation preference. Auth metadata is not
+  // used for roles, access or cellar data.
+  const { data, error } = await auth.updateUser({ data: { preferred_language: normalized } })
+  if (error || !data.user || data.user.id !== userId) {
+    throw new Error("Could not confirm the saved language. Reload your account to check before trying again.")
   }
   return profile(data.user)
 }
