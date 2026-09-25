@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react"
 import "./App.css"
 import { signOutAndClearLocalData } from "./auth/signOut"
 import { useSession } from "./auth/useSession"
+import { LanguageProvider } from "./i18n/LanguageProvider"
+import { useLanguage } from "./i18n/useLanguage"
 import { AppShell } from "./components/AppShell"
 import { useAccountRoute } from "./navigation/useAccountRoute"
 import { AccountView } from "./components/AccountView"
@@ -95,6 +97,7 @@ function ReadyAuthenticatedApp({
   selectHousehold,
   userId,
 }: ReadyAuthenticatedAppProps) {
+  const { t } = useLanguage()
   const workspaceActive = useRef(true)
   useEffect(() => {
     workspaceActive.current = true
@@ -107,7 +110,7 @@ function ReadyAuthenticatedApp({
   const activeHouseholdName =
     households.find(
       (household) => household.id === activeHouseholdId,
-    )?.name ?? "this household"
+    )?.name ?? t("shell.yourHousehold")
   const permissions = getHouseholdPermissions(activeHouseholdRole)
 
   const [requestedRoute, setRoute] =
@@ -238,6 +241,14 @@ function ReadyAuthenticatedApp({
     window.history.replaceState(householdHistoryState(householdId), "", getAppViewPath(nextRoute.view as AppView))
   }
 
+  const displayedView = route.view === "wine" ? wineDetailReturnView : route.view
+  const translatedPageLabels = {
+    inventory: t("nav.inventory"), cellar: t("nav.cellar"), pairing: t("nav.pairing"),
+    activity: t("nav.activity"), catalog: t("nav.catalog"), import: t("nav.data"), setup: t("nav.setup"),
+  }
+  const pageLabel = translatedPageLabels[displayedView as keyof typeof translatedPageLabels]
+    ?? getAppRouteTitle(route).replace(" · CellarManager", "")
+
   return (
     <AppShell
       activeHouseholdId={activeHouseholdId}
@@ -257,7 +268,7 @@ function ReadyAuthenticatedApp({
       onSelectHousehold={switchHousehold}
       onSignOut={signOutAndClearLocalData}
       onViewChange={changeView}
-      pageTitle={getAppRouteTitle(route).replace(" · CellarManager", ` · ${activeHouseholdName} · CellarManager`)}
+      pageTitle={`${pageLabel} · ${activeHouseholdName} · CellarManager`}
       syncError={currentSyncError}
       view={
         route.view === "wine"
@@ -505,6 +516,13 @@ function AuthenticatedApp({
 }
 
 export default function App() {
+  const auth = useSession()
+  return <LanguageProvider userId={auth.userId} session={auth.session} isOnline={auth.isOnline}>
+    <AppContent auth={auth} />
+  </LanguageProvider>
+}
+
+function AppContent({ auth }: { auth: ReturnType<typeof useSession> }) {
   const isAccountRoute = useAccountRoute()
   const {
     session,
@@ -515,7 +533,7 @@ export default function App() {
     isPasswordRecovery,
     finishPasswordRecovery,
     error: sessionError,
-  } = useSession()
+  } = auth
 
   const [invitationToken, setInvitationToken] =
     useState<string | null>(() => {

@@ -1,6 +1,6 @@
 import type { User } from "@supabase/supabase-js"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { getAccountProfile, normalizeDisplayName, requestAccountPasswordReset, saveAccountDisplayName } from "./accountProfile"
+import { getAccountProfile, normalizeDisplayName, requestAccountPasswordReset, saveAccountDisplayName, saveAccountLanguagePreference } from "./accountProfile"
 
 const user = (metadata: Record<string, unknown> = {}): User => ({
   id: "self", email: "self@example.test", user_metadata: metadata, app_metadata: {}, aud: "authenticated", created_at: "2026-09-01",
@@ -15,7 +15,7 @@ beforeEach(() => {
 
 describe("own account profile", () => {
   it("uses a verified Auth user, not cached session or editable security metadata", async () => {
-    expect(await getAccountProfile("self", { auth })).toEqual({ userId: "self", email: "self@example.test", displayName: "Alice" })
+    expect(await getAccountProfile("self", { auth })).toEqual({ userId: "self", email: "self@example.test", displayName: "Alice", languagePreference: "system" })
     expect(auth.getUser).toHaveBeenCalledOnce()
   })
   it.each([
@@ -25,6 +25,13 @@ describe("own account profile", () => {
     auth.getUser.mockResolvedValue({ data: { user: user(metadata) }, error: null })
     expect((await getAccountProfile("self", { auth })).displayName).toBe(expected)
   })
+  it.each([["fr", "fr"], ["en", "en"], ["system", "system"], ["de", "system"], [null, "system"]])(
+    "normalizes saved language metadata %s",
+    async (stored, expected) => {
+      auth.getUser.mockResolvedValue({ data: { user: user({ preferred_language: stored }) }, error: null })
+      expect((await getAccountProfile("self", { auth })).languagePreference).toBe(expected)
+    },
+  )
   it.each(["  Zoé 🍷  ", ""]) ("saves only full_name, including an explicit blank: %s", async (name) => {
     expect((await saveAccountDisplayName("self", name, { auth })).displayName).toBe(name.trim())
     expect(auth.updateUser).toHaveBeenCalledExactlyOnceWith({ data: { full_name: name.trim() } })
@@ -35,15 +42,29 @@ describe("own account profile", () => {
     await expect(saveAccountDisplayName("self", name, { auth })).rejects.toThrow()
     expect(auth.updateUser).not.toHaveBeenCalled()
   })
-  it.each(["save", "email"])("fails closed when verified identity differs: %s", async (action) => {
-    const promise = action === "save" ? saveAccountDisplayName("other", "Name", { auth }) : requestAccountPasswordReset("other", "https://cellar.example", { auth })
+  it.each(["system", "en", "fr"] as const)("saves only the current user's language preference: %s", async (preference) => {
+    const saved = await saveAccountLanguagePreference("self", preference, { auth })
+    expect(auth.updateUser).toHaveBeenCalledExactlyOnceWith({ data: { preferred_language: preference } })
+    expect(auth.getUser).toHaveBeenCalledBefore(auth.updateUser)
+    expect(saved.languagePreference).toBe(preference)
+  })
+  it.each(["save", "language", "email"])("fails closed when verified identity differs: %s", async (action) => {
+    const promise = action === "save"
+      ? saveAccountDisplayName("other", "Name", { auth })
+      : action === "language"
+        ? saveAccountLanguagePreference("other", "fr", { auth })
+        : requestAccountPasswordReset("other", "https://cellar.example", { auth })
     await expect(promise).rejects.toThrow("verify this account")
     expect(auth.updateUser).not.toHaveBeenCalled()
     expect(auth.resetPasswordForEmail).not.toHaveBeenCalled()
   })
-  it.each(["save", "email"])("does not start a mutation after navigation/account change: %s", async (action) => {
+  it.each(["save", "language", "email"])("does not start a mutation after navigation/account change: %s", async (action) => {
     const options = { auth, isCurrent: () => false }
-    const promise = action === "save" ? saveAccountDisplayName("self", "Name", options) : requestAccountPasswordReset("self", "https://cellar.example", options)
+    const promise = action === "save"
+      ? saveAccountDisplayName("self", "Name", options)
+      : action === "language"
+        ? saveAccountLanguagePreference("self", "fr", options)
+        : requestAccountPasswordReset("self", "https://cellar.example", options)
     await expect(promise).rejects.toThrow("verify this account")
     expect(auth.updateUser).not.toHaveBeenCalled()
     expect(auth.resetPasswordForEmail).not.toHaveBeenCalled()

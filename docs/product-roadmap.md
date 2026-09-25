@@ -371,9 +371,20 @@ not silently translated.
 
 | Step | Scope |
 |---|---|
-| 0.6.1 | Localization foundation and persistent per-user language preference |
+| 0.6.1 | Localization foundation, device-locale detection, and persistent per-user English/French/device language preference |
 | 0.6.2 | French translation of primary cellar, account, and collaboration workflows |
 | 0.6.3 | Remaining French coverage, locale formatting, accessibility, and acceptance |
+
+Step 0.6.1 introduces typed message lookup with English fallback, sets the
+document language from the effective preference, and translates the shared
+navigation and Account settings. Account language choices are verified and
+stored in the authenticated user's presentation metadata, so they follow that
+account across devices; a per-account local copy is used only when the account
+is opened offline. **Use device language** stores the automatic-detection choice
+instead of pinning the current locale. Device detection accepts English and
+French locale tags and safely falls back to English for all other locales.
+Untranslated screens intentionally remain in English until 0.6.2. No household
+permission or cellar data changes and no database migration are introduced.
 
 Acceptance covers the complete app-owned interface, including empty,
 loading, validation, and error states; date, number, and plural formatting; and
