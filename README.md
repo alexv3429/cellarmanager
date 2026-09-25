@@ -45,10 +45,10 @@ then adds explainable advice and a governed wine-knowledge lifecycle:
 - Excel-first cellar export with CSV fallback and guarded round-trip import.
 
 The canonical [`docs/product-roadmap.md`](docs/product-roadmap.md) now sequences
-shared-household collaboration, photo/OCR/barcode capture, history/insight,
-and v1.0 reliability work. Full
-internationalization and arbitrary graphical cellar layouts are explicitly
-post-v1.0 unless that roadmap is changed first.
+shared-household collaboration, English/French localization, photo/OCR/barcode
+capture, history/insight, and v1.0 reliability work. Additional interface
+languages and arbitrary graphical cellar layouts remain post-v1.0 unless that
+roadmap is changed again.
 
 ## Development
 

@@ -53,7 +53,7 @@ zero conflicts.
 No current-model approximation is invented for these archived values:
 
 - 46 external identifiers and 10 legacy enrichment profiles remain deferred to
-  v0.6.13, after barcode/identifier capture has a reviewed model;
+  v0.6.16, after barcode/identifier capture has a reviewed model;
 - 919 movements remain deferred to v0.7.2;
 - 56 market observations and one market value remain deferred to v0.7.11;
 - acquisition and allocation tables are empty in this archive;
