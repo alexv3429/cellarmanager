@@ -1,13 +1,16 @@
 import { describe, expect, it, vi } from "vitest"
 import { cleanCsvMappedRow } from "./csvCleaning"
 import { reconcileCsvStorage } from "./csvStorageReconciliation"
-import { groupImportStorage, initialStorageChoices, saveImportStorageGroup, type ImportStorageSnapshot } from "./csvImportStorageSetup"
+import { groupImportStorage, initialStorageChoices, saveImportStorageGroup, suggestImportStorageFamilies, type ImportStorageFamilyRule, type ImportStorageSnapshot } from "./csvImportStorageSetup"
 
-function groups(rows: [string, string, number][]) {
-  return groupImportStorage(reconcileCsvStorage(rows.map(([cellar, location, quantity], i) => cleanCsvMappedRow({
+function storageResults(rows: [string, string, number][]) {
+  return reconcileCsvStorage(rows.map(([cellar, location, quantity], i) => cleanCsvMappedRow({
     recordNumber: i + 2, sourceLineStart: i + 2, sourceLineEnd: i + 2, unmapped: [],
     fields: { producer: "Synthetic", cuvee: "Test", color: "red", formatMl: "750", quantity: String(quantity), cellar, location },
-  })), [], [], "h"))
+  })), [], [], "h")
+}
+function groups(rows: [string, string, number][]) {
+  return groupImportStorage(storageResults(rows))
 }
 function fixture() {
   const snapshot: ImportStorageSnapshot = { cellars: [], locations: [] }
@@ -29,9 +32,36 @@ describe("grouped import storage", () => {
   it("groups by normalized cellar and location, excludes zero and invalid rows, and retains record IDs", () => {
     const result = groups([[" Bar ", "", 1], ["bar", "", 2], ["Bar", "Shelf 1", 3], ["Frigo", "", 1], ["Historical", "", 0], ["Bad", "", -1]])
     expect(result).toEqual([
-      { key: "bar", sourceCellar: "Bar", locations: [{ key: "", sourceLocation: "", records: [2, 3], bottles: 3 }, { key: "shelf 1", sourceLocation: "Shelf 1", records: [4], bottles: 3 }] },
-      { key: "frigo", sourceCellar: "Frigo", locations: [{ key: "", sourceLocation: "", records: [5], bottles: 1 }] },
+      { key: "bar", sourceCellar: "Bar", sourceCellars: ["Bar"], locations: [{ key: "", sourceLocation: "", sourceExamples: ["Bar", "bar"], records: [2, 3], bottles: 3 }, { key: "shelf 1", sourceLocation: "Shelf 1", sourceExamples: ["Bar / Shelf 1"], records: [4], bottles: 3 }] },
+      { key: "frigo", sourceCellar: "Frigo", sourceCellars: ["Frigo"], locations: [{ key: "", sourceLocation: "", sourceExamples: ["Frigo"], records: [5], bottles: 1 }] },
     ])
+  })
+  it("suggests numeric label families and combines selected source labels into one cellar", () => {
+    const sourceRows = groups([["C1", "4", 2], ["C01", "", 1], ["C2", "2 3", 3], ["Carton 04", "", 0]])
+    const suggestions = suggestImportStorageFamilies(sourceRows)
+    expect(suggestions).toEqual([{ key: "c", prefix: "C", sourceCellars: ["C01", "C1", "C2"] }])
+
+    const rule: ImportStorageFamilyRule = { sourceCellars: ["C1", "C01", "C2"], destinationCellarName: "Wine room", locationMode: "suffix" }
+    const [group] = groupImportStorage(storageResults([["C1", "4", 2], ["C01", "", 1], ["C2", "2 3", 3]]), [rule])
+
+    expect(group).toMatchObject({
+      sourceCellar: "Wine room",
+      sourceCellars: ["C01", "C1", "C2"],
+      locations: [
+        { sourceLocation: "01", records: [3] },
+        { sourceLocation: "1 / 4", records: [2], sourceExamples: ["C1 / 4"] },
+        { sourceLocation: "2 / 2 3", records: [4] },
+      ],
+    })
+  })
+  it("keeps the full label for nonnumeric labels and rejects overlapping rules", () => {
+    const grouped = groupImportStorage(storageResults([["Carton", "A", 1], ["Cart noir", "B", 2]]), [{ sourceCellars: ["Carton", "Cart noir"], destinationCellarName: "Cartons", locationMode: "suffix" }])
+    expect(grouped).toHaveLength(1)
+    expect(grouped[0].locations.map((location) => location.sourceLocation)).toEqual(["Cart noir / B", "Carton / A"])
+    expect(() => groupImportStorage([], [
+      { sourceCellars: ["C1"], destinationCellarName: "A", locationMode: "suffix" },
+      { sourceCellars: [" C1 "], destinationCellarName: "B", locationMode: "full-label" },
+    ])).toThrow("included in more than one")
   })
   it("creates distinct cellars and all reviewed locations, assigning only each group's rows", async () => {
     const { snapshot, dependencies } = fixture()
@@ -42,6 +72,16 @@ describe("grouped import storage", () => {
     expect(dependencies.createLocation.mock.calls).toEqual([["h", "cellar-0", "General"], ["h", "cellar-0", "Top"]])
     expect(await saveImportStorageGroup("h", frigo, initialStorageChoices(frigo, snapshot, "h"), dependencies)).toEqual({ 4: "location-2" })
     expect(snapshot.cellars.map((c) => c.name)).toEqual(["Bar", "Frigo"])
+  })
+  it("creates one reviewed cellar and transformed locations for a family rule", async () => {
+    const { snapshot, dependencies } = fixture()
+    const rule: ImportStorageFamilyRule = { sourceCellars: ["C1", "C2"], destinationCellarName: "Family cellar", locationMode: "suffix" }
+    const [group] = groupImportStorage(storageResults([["C1", "4", 2], ["C2", "", 1]]), [rule])
+    const choices = initialStorageChoices(group, snapshot, "h")
+    const assignments = await saveImportStorageGroup("h", group, choices, dependencies)
+    expect(snapshot.cellars.map((cellar) => cellar.name)).toEqual(["Family cellar"])
+    expect(snapshot.locations.map((location) => location.code)).toEqual(["1 / 4", "2"])
+    expect(assignments).toEqual({ 2: "location-0", 3: "location-1" })
   })
   it("lets the user map a group to another existing cellar and location without creating setup", async () => {
     const { snapshot, dependencies } = fixture()

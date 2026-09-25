@@ -7,9 +7,15 @@ export const isActiveStorage = (value: CsvStorageCellar["is_active"]) => value =
 export interface ImportStorageGroup {
   key: string
   sourceCellar: string
-  locations: { key: string; sourceLocation: string; records: number[]; bottles: number }[]
+  sourceCellars: string[]
+  locations: { key: string; sourceLocation: string; sourceExamples: string[]; records: number[]; bottles: number }[]
 }
 export type StorageTarget = { kind: "existing"; id: string } | { kind: "new"; name: string }
+export interface ImportStorageFamilyRule {
+  sourceCellars: string[]
+  destinationCellarName: string
+  locationMode: "suffix" | "full-label"
+}
 export interface ImportStorageChoices {
   cellar: StorageTarget
   locations: Record<string, StorageTarget>
@@ -19,23 +25,82 @@ export interface ImportStorageSnapshot {
   locations: Pick<CsvStorageLocation, "id" | "household_id" | "cellar_id" | "code" | "is_active">[]
 }
 
-export function groupImportStorage(results: CsvStorageReconciliationResult[]): ImportStorageGroup[] {
+export function familyLocationLabel(sourceCellar: string, sourceLocation: string, rule: ImportStorageFamilyRule): string {
+  const suffix = sourceCellar.match(/(\d+)$/u)?.[1]
+  const base = rule.locationMode === "suffix" && suffix ? suffix : sourceCellar
+  return [base, sourceLocation.trim()].filter(Boolean).join(" / ")
+}
+
+export function suggestImportStorageFamilies(groups: ImportStorageGroup[]) {
+  const candidates = new Map<string, { prefix: string; sourceCellars: string[] }>()
+  for (const group of groups) {
+    if (!group.sourceCellar.trim()) continue
+    const label = group.sourceCellar.trim()
+    const spaced = label.match(/^(.*?)[\s_-]+(\d+)$/u)
+    const compact = spaced ? null : label.match(/^([^\d]+)(\d+)$/u)
+    const prefix = (spaced?.[1] ?? compact?.[1] ?? "").trim()
+    if (!prefix) continue
+    const key = storageNameKey(prefix)
+    const candidate = candidates.get(key) ?? { prefix, sourceCellars: [] }
+    if (!candidate.sourceCellars.some((value) => storageNameKey(value) === group.key)) {
+      candidate.sourceCellars.push(label)
+    }
+    candidates.set(key, candidate)
+  }
+  return [...candidates.entries()]
+    .map(([key, candidate]) => ({ key, ...candidate }))
+    .filter((candidate) => candidate.sourceCellars.length > 1)
+    .map((candidate) => ({
+      ...candidate,
+      sourceCellars: candidate.sourceCellars.sort((a, b) => a.localeCompare(b)),
+    }))
+    .sort((a, b) => a.prefix.localeCompare(b.prefix))
+}
+
+export function groupImportStorage(
+  results: CsvStorageReconciliationResult[],
+  familyRules: ImportStorageFamilyRule[] = [],
+): ImportStorageGroup[] {
+  const ruleBySource = new Map<string, ImportStorageFamilyRule>()
+  for (const rule of familyRules) {
+    for (const sourceCellar of rule.sourceCellars) {
+      const key = storageNameKey(sourceCellar)
+      if (ruleBySource.has(key)) throw new Error(`Source cellar “${sourceCellar}” is included in more than one grouping rule`)
+      ruleBySource.set(key, rule)
+    }
+  }
   const groups = new Map<string, ImportStorageGroup>()
   for (const result of results) {
     if (result.status !== "unresolved" || result.row.issues.length || result.quantity === null || result.quantity <= 0) continue
-    const sourceCellar = result.row.fields.cellar ?? ""
-    const sourceLocation = result.row.fields.location ?? ""
+    const originalCellar = result.row.fields.cellar?.trim() ?? ""
+    const originalLocation = result.row.fields.location?.trim() ?? ""
+    const rule = ruleBySource.get(storageNameKey(originalCellar))
+    const sourceCellar = rule?.destinationCellarName.trim() || originalCellar
+    const sourceLocation = rule
+      ? familyLocationLabel(originalCellar, originalLocation, rule)
+      : originalLocation
     const key = storageNameKey(sourceCellar)
-    const group = groups.get(key) ?? { key, sourceCellar, locations: [] }
+    const group = groups.get(key) ?? { key, sourceCellar, sourceCellars: [], locations: [] }
+    if (!group.sourceCellars.some((value) => storageNameKey(value) === storageNameKey(originalCellar))) {
+      group.sourceCellars.push(originalCellar)
+    }
     const locationKey = storageNameKey(sourceLocation)
     let location = group.locations.find((item) => item.key === locationKey)
     if (!location) {
-      location = { key: locationKey, sourceLocation, records: [], bottles: 0 }
+      location = { key: locationKey, sourceLocation, sourceExamples: [], records: [], bottles: 0 }
       group.locations.push(location)
+    }
+    const sourceExample = `${originalCellar || "No cellar"}${originalLocation ? ` / ${originalLocation}` : ""}`
+    if (!location.sourceExamples.includes(sourceExample) && location.sourceExamples.length < 4) {
+      location.sourceExamples.push(sourceExample)
     }
     location.records.push(result.row.recordNumber)
     location.bottles += result.quantity
     groups.set(key, group)
+  }
+  for (const group of groups.values()) {
+    group.sourceCellars.sort((a, b) => a.localeCompare(b))
+    group.locations.sort((a, b) => a.sourceLocation.localeCompare(b.sourceLocation))
   }
   return [...groups.values()].sort((a, b) => a.sourceCellar.localeCompare(b.sourceCellar))
 }
