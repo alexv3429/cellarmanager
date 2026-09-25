@@ -11,8 +11,8 @@ crosses a milestone boundary.
 |---|---|---|
 | `v0.3` | A cellar can live safely in CellarManager through daily manual use or guarded CSV import | Released (`v0.3.0`) |
 | `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable evidence | Released (`v0.4.0`) |
-| `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | In progress (`0.5.13`) |
-| `v0.6` | Adding or identifying wine requires dramatically less typing | Planned |
+| `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | In progress (`0.5.14`) |
+| `v0.6` | The app is usable in English or French, and adding or identifying wine requires dramatically less typing | Planned |
 | `v0.7` | CellarManager explains what happened to the cellar and what the collection means over time | Planned |
 | `v1.0` | A self-host can install, trust, upgrade, recover, and maintain CellarManager for years | Planned |
 
@@ -343,11 +343,37 @@ changes functions and the receipt constraint; no production data repair is
 required. See
 [spreadsheet preparation](csv-ingestion.md#in-app-row-corrections-and-exclusions).
 
-## v0.6 — Capture-assisted enrichment
+## v0.6 — French-first localization and capture-assisted enrichment
 
-Camera, OCR, and barcode workflows extend the v0.4 provider boundary and feed
-the same normalization and candidate-resolution principles established by CSV
-import:
+French localization is scheduled before camera, OCR, and barcode work so those
+new flows launch on a properly localized foundation. English remains fully
+supported. Language is a per-user preference, not a household setting, and is
+available across that user's devices when explicitly selected. With no saved
+override, the app uses the device locale: English locales select English,
+French locales select French (`fr-FR`), and any other locale falls back to
+English. **Account** provides English, French, and **Use device language**;
+an explicit choice is saved per user and overrides automatic detection on all
+their devices. Untranslated interface strings fall back to English. Cellar
+labels, wine names, source claims, and user-authored notes remain data and are
+not silently translated.
+
+| Step | Scope |
+|---|---|
+| 0.6.1 | Localization foundation and persistent per-user language preference |
+| 0.6.2 | French translation of primary cellar, account, and collaboration workflows |
+| 0.6.3 | Remaining French coverage, locale formatting, accessibility, and acceptance |
+
+Acceptance covers the complete app-owned interface, including empty,
+loading, validation, and error states; date, number, and plural formatting; and
+mobile and desktop layouts. App-owned invitation and recovery messages are
+included where their templates are controlled by this project. User content
+and externally sourced wine names or advice are not machine-translated. Tests
+must cover device-locale detection, unsupported-locale fallback, saved override
+and reset to device language, missing French strings, and English fallback.
+
+After localization, camera, OCR, and barcode workflows extend the v0.4 provider
+boundary and feed the same normalization and candidate-resolution principles
+established by CSV import:
 
 `photo/OCR/barcode -> normalized candidate -> review -> match/create -> wine`
 
@@ -356,21 +382,21 @@ never inventory authority.
 
 | Step | Scope |
 |---|---|
-| 0.6.1 | Capture architecture extending the v0.4 enrichment boundary |
-| 0.6.2 | Image/storage security model |
-| 0.6.3 | Camera and photo upload |
-| 0.6.4 | Image preprocessing |
-| 0.6.5 | OCR |
-| 0.6.6 | Structured wine-field extraction |
-| 0.6.7 | Human review and correction workflow |
-| 0.6.8 | Existing-wine candidate matching |
-| 0.6.9 | Photo-to-inventory ADD flow |
-| 0.6.10 | Batch-entry workflow |
-| 0.6.11 | Location QR codes |
-| 0.6.12 | Wine barcode identifiers, scanning, and provider lookup |
-| 0.6.13 | Restore useful archived v0.1 enrichment identifiers/data |
-| 0.6.14 | Accuracy and privacy acceptance |
-| 0.6.15 | v0.6 release |
+| 0.6.4 | Capture architecture extending the v0.4 enrichment boundary |
+| 0.6.5 | Image/storage security model |
+| 0.6.6 | Camera and photo upload |
+| 0.6.7 | Image preprocessing |
+| 0.6.8 | OCR |
+| 0.6.9 | Structured wine-field extraction |
+| 0.6.10 | Human review and correction workflow |
+| 0.6.11 | Existing-wine candidate matching |
+| 0.6.12 | Photo-to-inventory ADD flow |
+| 0.6.13 | Batch-entry workflow |
+| 0.6.14 | Location QR codes |
+| 0.6.15 | Wine barcode identifiers, scanning, and provider lookup |
+| 0.6.16 | Restore useful archived v0.1 enrichment identifiers/data |
+| 0.6.17 | Accuracy and privacy acceptance |
+| 0.6.18 | v0.6 release |
 
 ## v0.7 — History, purchases, value, and insights
 
@@ -432,9 +458,9 @@ synchronization.
 - A general graphical builder for arbitrary cellar geometries is post-v1.0
   exploration. Through v1.0, storage remains the simpler flexible model of
   named cellars, ordered locations, optional capacity, occupancy, and archives.
-- Full user-interface internationalization is not a v0.4-v1.0 release gate. It
-  requires its own roadmap decision rather than being smuggled into an unrelated
-  feature PR; data and imports continue to preserve Unicode text.
+- Additional interface languages beyond English and French are post-v1.0
+  exploration unless the roadmap is changed again. v0.6 adds explicit English
+  and French UI support; data and imports continue to preserve Unicode text.
 
 These items can be promoted only by changing this roadmap first and documenting
 the trade-off with the milestone work they displace.
