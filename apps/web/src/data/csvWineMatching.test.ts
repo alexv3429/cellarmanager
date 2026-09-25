@@ -152,7 +152,7 @@ describe("CSV existing-wine matching", () => {
 
   it("does not attempt matching for an invalid cleaned row", () => {
     const result = matchCsvWine(
-      cleanedRow(validFields({ quantity: "0" })),
+      cleanedRow(validFields({ quantity: "-1" })),
       wines,
       "household-1",
     )
@@ -172,7 +172,7 @@ describe("CSV existing-wine matching", () => {
         }),
         4,
       ),
-      cleanedRow(validFields({ quantity: "0" }), 5),
+      cleanedRow(validFields({ quantity: "-1" }), 5),
     ]
 
     expect(

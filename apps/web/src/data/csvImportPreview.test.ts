@@ -283,6 +283,7 @@ describe("CSV import preview", () => {
     ]
 
     expect(summarizeCsvImportPreview(previewFor(rows))).toEqual({
+      catalogOnlyRowCount: 0,
       blockedBottleCount: 4,
       blockedRowCount: 1,
       destinationCount: 2,

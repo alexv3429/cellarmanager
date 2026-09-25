@@ -188,7 +188,7 @@ export function parseCsvQuantity(
 
   const quantity = Number(cleaned)
 
-  return Number.isSafeInteger(quantity) && quantity > 0
+  return Number.isSafeInteger(quantity) && quantity >= 0
     && quantity <= POSTGRES_INTEGER_MAX
     ? quantity
     : null
@@ -418,7 +418,7 @@ function cleanQuantity(
       "quantity",
       sourceValue === undefined || cleanWineText(sourceValue).length === 0
         ? "Quantity is required"
-        : "Quantity must be a supported positive whole number",
+        : "Quantity must be a whole number of zero or more (zero imports the wine without stock)",
       sourceValue,
     )
     return null

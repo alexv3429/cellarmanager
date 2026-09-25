@@ -43,6 +43,7 @@ export interface CsvImportPreviewRow {
 }
 
 export interface CsvImportPreviewSummary {
+  catalogOnlyRowCount: number
   blockedBottleCount: number
   blockedRowCount: number
   destinationCount: number
@@ -297,6 +298,7 @@ export function summarizeCsvImportPreview(
       const isBlocked = previewRow.status === "blocked"
 
       return {
+        catalogOnlyRowCount: summary.catalogOnlyRowCount + (previewRow.row.fields.quantity === 0 ? 1 : 0),
         blockedBottleCount:
           summary.blockedBottleCount +
           (isBlocked ? quantity : 0),
@@ -317,6 +319,7 @@ export function summarizeCsvImportPreview(
       }
     },
     {
+      catalogOnlyRowCount: 0,
       blockedBottleCount: 0,
       blockedRowCount: 0,
       destinationCount: 0,

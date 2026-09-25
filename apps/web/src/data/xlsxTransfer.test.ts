@@ -88,6 +88,29 @@ const sourceMaturity: MaturityOverviewItem = {
 }
 
 describe("Excel cellar transfer", () => {
+  it("selects the inventory after summary sheets and preserves Excel row numbers with multiline headings", async () => {
+    const blob = await writeXlsxFile([
+      { sheet: "Summary", data: [["Total"], [99]] },
+      { sheet: "Cave", data: [
+        ["Producteur", "Année Prod", "Appelation", "Vignoble", "Type", "Nbre 1", "Note\r\nquality"],
+        ["Test", 2020, "Village", "Region", "Rouge", 0, "first\nsecond"],
+        ["Test", 2021, "Village", "Region", "Blanc", 3],
+        [null, null, null, null, null, 3],
+      ] },
+    ]).toBlob()
+    const document = await parseXlsxWorkbook(await blob.arrayBuffer())
+    expect(document.worksheetName).toBe("Cave")
+    expect(document.issues).toEqual([])
+    expect(document.header).toMatchObject({ recordNumber: 1, sourceLineStart: 1, sourceLineEnd: 1 })
+    expect(document.rows.map((row) => [row.recordNumber, row.sourceLineStart, row.sourceLineEnd])).toEqual([[2, 2, 2], [3, 3, 3], [4, 4, 4]])
+    expect(document.rows.map((row) => row.values[5])).toEqual(["0", "3", "3"])
+  })
+
+  it("keeps worksheet coordinates after blank single-column rows", async () => {
+    const blob = await writeXlsxFile([{ sheet: "Wine list", data: [["Producer"], [], ["Test"]] }]).toBlob()
+    const document = await parseXlsxWorkbook(await blob.arrayBuffer())
+    expect(document.rows[0]).toMatchObject({ recordNumber: 3, sourceLineStart: 3, sourceLineEnd: 3 })
+  })
   it("creates a readable cellar sheet and a complete technical sheet", async () => {
     const records = createCsvExportRecords(
       [sourceWine],

@@ -344,8 +344,8 @@ export function CsvExportPanel({
               Include {zeroStockWineCount} {zeroStockWineCount === 1 ? "wine" : "wines"} with no bottles
             </strong>
             <small>
-              Useful for a complete catalog copy. Leave this off if you
-              plan to import the file again.
+              Useful for a complete catalog copy. These wines can be imported
+              again as catalog entries without adding bottles.
             </small>
           </span>
         </label>

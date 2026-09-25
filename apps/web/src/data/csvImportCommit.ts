@@ -6,7 +6,7 @@ export const CSV_IMPORT_PENDING_STORAGE_PREFIX =
   "cellarmanager.csv_import_pending.v1."
 
 export interface CsvImportCommitRow {
-  destinationLocationId: string
+  destinationLocationId: string | null
   operationId: string
   quantity: number
   recordNumber: number
@@ -206,11 +206,11 @@ export function createCsvImportCommitPlan(
       fields.formatMl,
       `Source record ${recordNumber} has no valid bottle format`,
     )
-    const quantity = requirePositiveInteger(
-      fields.quantity,
-      `Source record ${recordNumber} has no valid quantity`,
-    )
-    const destinationLocationId = requireNonEmptyString(
+    const quantity = fields.quantity
+    if (quantity === null || !Number.isSafeInteger(quantity) || quantity < 0 || quantity > 2_147_483_647) {
+      throw new Error(`Source record ${recordNumber} has no valid quantity`)
+    }
+    const destinationLocationId = quantity === 0 ? null : requireNonEmptyString(
       previewRow.storage?.location?.id,
       `Source record ${recordNumber} has no destination`,
     )
@@ -317,10 +317,11 @@ function isPendingCommitRow(
   const row = value as Record<string, unknown>
 
   return (
-    typeof row.destinationLocationId === "string" &&
+    (row.quantity === 0 ? row.destinationLocationId === null : typeof row.destinationLocationId === "string") &&
     typeof row.operationId === "string" &&
     Number.isInteger(row.quantity) &&
-    (row.quantity as number) > 0 &&
+    (row.quantity as number) >= 0 &&
+    (row.quantity as number) <= 2_147_483_647 &&
     Number.isInteger(row.recordNumber) &&
     (row.recordNumber as number) > 0 &&
     typeof row.requestedWineId === "string" &&

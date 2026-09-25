@@ -246,6 +246,7 @@ describe("CSV import regression fixtures", () => {
       initialStorage.map((result) => result.status),
     ).toEqual(["ready", "unresolved", "ready", "unresolved"])
     expect(summarizeCsvImportPreview(initialPreview)).toEqual({
+      catalogOnlyRowCount: 0,
       blockedBottleCount: 3,
       blockedRowCount: 2,
       destinationCount: 2,
@@ -281,6 +282,7 @@ describe("CSV import regression fixtures", () => {
       finalPreview.map((row) => row.status),
     ).toEqual(["ready", "ready", "warning", "warning"])
     expect(summarizeCsvImportPreview(finalPreview)).toEqual({
+      catalogOnlyRowCount: 0,
       blockedBottleCount: 0,
       blockedRowCount: 0,
       destinationCount: 2,
