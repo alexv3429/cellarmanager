@@ -2,7 +2,7 @@
 
 CellarManager is a local-first wine cellar inventory application.
 
-**Current release: v0.4.0**
+**Current release: v0.5.0**
 
 ## Architecture
 
@@ -43,6 +43,27 @@ then adds explainable advice and a governed wine-knowledge lifecycle:
   error reports, curator review, immutable revisions, and trusted publication;
 - conservative duplicate detection and explicit wine merging; and
 - Excel-first cellar export with CSV fallback and guarded round-trip import.
+
+## v0.5 capabilities
+
+v0.5 adds secure shared-household collaboration while preserving the existing
+local-first inventory model:
+
+- explicit Owner and read-only Member capabilities, enforced by the database;
+- invitations, membership changes, household switching, and safe ownership
+  transfer or departure;
+- account display names, verified password changes, and browser-device
+  management;
+- conflict explanations and recoverable handling for rejected or blocked
+  offline inventory operations;
+- concurrent multi-device stock safety, invitation-race protections, and a
+  cross-role security matrix; and
+- spreadsheet import review for row corrections, exclusions, generic column
+  splits, missing-value defaults, and grouped cellar/location creation.
+
+PostgreSQL remains authoritative when concurrent devices submit incompatible
+changes. Existing holdings are preserved when upgrading; apply the committed
+Supabase migrations in order before deploying the v0.5 Worker and web assets.
 
 The canonical [`docs/product-roadmap.md`](docs/product-roadmap.md) now sequences
 shared-household collaboration, English/French localization, photo/OCR/barcode
@@ -101,16 +122,18 @@ enrichment worker. Deployment secrets and the source-rights boundary are
 documented in
 [`docs/reviewed-enrichment-research.md`](docs/reviewed-enrichment-research.md).
 
-The `v0.4.0` production build was smoke-tested before its annotated release tag
-was created. See `apps/web/README.md` for local development and production/PWA
-testing commands.
+The v0.5 release candidate is governed by
+[`docs/v05-acceptance.md`](docs/v05-acceptance.md). The deployed `v0.5.0`
+version/readiness check and post-deployment smoke pass must succeed before its
+annotated release tag is created. See `apps/web/README.md` for local
+development and production/PWA testing commands.
 
 ## Documentation
 
 See `docs/README.md` for current architecture, roadmap, release, and historical
 migration evidence.
 
-Release notes: `docs/releases/v0.4.0.md`.
+Release notes: `docs/releases/v0.5.0.md`.
 
 Current product roadmap: `docs/product-roadmap.md`.
 
