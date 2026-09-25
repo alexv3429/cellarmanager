@@ -348,12 +348,14 @@ required. See
 French localization is scheduled before camera, OCR, and barcode work so those
 new flows launch on a properly localized foundation. English remains fully
 supported. Language is a per-user preference, not a household setting, and is
-available across that user's devices. Existing users stay in English until they
-choose otherwise; new users may start from a supported browser language, with
-an explicit Account setting to override it. French uses `fr-FR`. Unsupported
-or untranslated interface strings fall back to English. Cellar labels, wine
-names, source claims, and user-authored notes remain data and are not silently
-translated.
+available across that user's devices when explicitly selected. With no saved
+override, the app uses the device locale: English locales select English,
+French locales select French (`fr-FR`), and any other locale falls back to
+English. **Account** provides English, French, and **Use device language**;
+an explicit choice is saved per user and overrides automatic detection on all
+their devices. Untranslated interface strings fall back to English. Cellar
+labels, wine names, source claims, and user-authored notes remain data and are
+not silently translated.
 
 | Step | Scope |
 |---|---|
@@ -361,12 +363,13 @@ translated.
 | 0.6.2 | French translation of primary cellar, account, and collaboration workflows |
 | 0.6.3 | Remaining French coverage, locale formatting, accessibility, and acceptance |
 
-French acceptance covers the complete app-owned interface, including empty,
+Acceptance covers the complete app-owned interface, including empty,
 loading, validation, and error states; date, number, and plural formatting; and
 mobile and desktop layouts. App-owned invitation and recovery messages are
 included where their templates are controlled by this project. User content
 and externally sourced wine names or advice are not machine-translated. Tests
-must detect missing French strings and verify English fallback.
+must cover device-locale detection, unsupported-locale fallback, saved override
+and reset to device language, missing French strings, and English fallback.
 
 After localization, camera, OCR, and barcode workflows extend the v0.4 provider
 boundary and feed the same normalization and candidate-resolution principles
