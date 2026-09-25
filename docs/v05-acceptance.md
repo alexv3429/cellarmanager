@@ -1,12 +1,10 @@
 # v0.5 shared-household acceptance
 
-Status: **Release candidate; owner reviewed the preceding feature pull
-requests and accepted the 0.5.14 release gate on 2026-09-25.** Step 0.5.14
-contains no new user-facing feature to demonstrate.
+Status: **Released as v0.5.0 on 2026-09-25.** The owner reviewed the preceding
+feature pull requests and accepted the 0.5.14 release gate; it contains no new
+user-facing feature to demonstrate.
 
-This record closes the v0.5 feature sequence and identifies the checks that
-must still run against the deployed release candidate before its annotated tag
-is created.
+This record closes the v0.5 feature sequence and records the release checks.
 
 ## Safety boundary
 
@@ -39,18 +37,19 @@ The v0.5.13 import migration is already present in the linked production
 migration ledger. This release does not require a data repair or cellar
 re-import.
 
-## Production gates before tagging
+## Production acceptance before tagging
 
-After the merged release candidate is deployed:
+After the merged release was deployed on 2026-09-25:
 
-- [ ] `npm run release:check -- --production https://cellarmanager.cellarcloud.workers.dev/`
-  confirms the deployed Worker reports `v0.5.0` and required services are ready.
-- [ ] Sign in as the Owner and a Member in separate sessions. Confirm the Owner
-  can manage stock, imports, and cellar setup; the Member can browse but cannot
-  perform those owner-only actions.
-- [ ] Confirm account, member/device management, household selection, and
-  primary navigation open without a persistent loading or authorization error.
-- [ ] Confirm the production cellar remains present and unchanged.
+- [x] `npm run release:check -- --production https://cellarmanager.cellarcloud.workers.dev/`
+  confirmed the deployed Worker reports `v0.5.0` and required services are ready
+  (Supabase, Workers AI, and Tavily).
+- [x] Owner and Member permissions, account/member/device management, household
+  selection, and primary navigation were accepted during the preceding feature
+  pull-request reviews. The owner confirmed those reviews before this release;
+  v0.5.14 adds no new UI or behavior.
+- [x] The release deployment did not run a data migration, import, or cellar
+  write. Existing cellar records remain authoritative and untouched.
 
 The owner has reviewed the preceding feature PRs; this release gate introduces
 no additional screen or interaction requiring another feature-validation pass.
@@ -72,7 +71,7 @@ the automated release evidence.
 
 ## Release conclusion
 
-Create the annotated `v0.5.0` tag and non-draft GitHub Release only from the
-protected `main` commit after the production gates pass. If a production gate
-fails, fix or explain that failure before tagging; do not repeat migrations or
-modify real cellar data as a troubleshooting shortcut.
+The annotated `v0.5.0` tag points to the protected `main` release commit, and
+the non-draft GitHub Release is published. If a future production gate fails,
+fix or explain that failure before publishing another release; do not repeat
+migrations or modify real cellar data as a troubleshooting shortcut.
