@@ -1,7 +1,7 @@
 import { researchConfiguration, runResearchCycle } from "./researchWorker.mjs";
 import { handleInvitationEmail } from "./invitationEmail.mjs";
 
-const WORKER_VERSION = "0.4.0";
+const WORKER_VERSION = "0.5.0";
 
 export default {
   async fetch(request, env) {

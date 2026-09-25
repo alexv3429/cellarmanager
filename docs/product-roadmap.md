@@ -11,7 +11,7 @@ crosses a milestone boundary.
 |---|---|---|
 | `v0.3` | A cellar can live safely in CellarManager through daily manual use or guarded CSV import | Released (`v0.3.0`) |
 | `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable evidence | Released (`v0.4.0`) |
-| `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | In progress (`0.5.14`) |
+| `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | Released (`v0.5.0`) |
 | `v0.6` | The app is usable in English or French, and adding or identifying wine requires dramatically less typing | Planned |
 | `v0.7` | CellarManager explains what happened to the cellar and what the collection means over time | Planned |
 | `v1.0` | A self-host can install, trust, upgrade, recover, and maintain CellarManager for years | Planned |
@@ -342,6 +342,18 @@ changes or inventory activity. The additive catalog-only import migration
 changes functions and the receipt constraint; no production data repair is
 required. See
 [spreadsheet preparation](csv-ingestion.md#in-app-row-corrections-and-exclusions).
+
+### Milestone conclusion
+
+The v0.5 collaboration contract and steps 0.5.1 through 0.5.14 are complete.
+The accepted permissions, membership and device lifecycle, conflict recovery,
+spreadsheet preparation, release metadata, and release notes define the
+`v0.5.0` shared-household baseline. The annotated tag is created from protected
+`main` only after the release pull request is merged, the deployed Worker reports
+v0.5.0 ready, and the focused production smoke pass succeeds. The documented
+manual two-device offline scenario was not repeated as part of this release
+metadata change; its database concurrency and web projection boundaries remain
+covered by the automated acceptance suites.
 
 ## v0.6 — French-first localization and capture-assisted enrichment
 
