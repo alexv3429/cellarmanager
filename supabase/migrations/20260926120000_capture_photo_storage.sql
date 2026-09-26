@@ -79,9 +79,16 @@ alter table private.capture_session_events enable row level security;
 revoke all on private.capture_sessions, private.capture_assets, private.capture_session_events
     from public, anon, authenticated, service_role;
 
+-- PostgREST exposes only public and graphql_public. Keep the Storage RLS
+-- helper in its own non-exposed schema instead of granting authenticated
+-- execute on a private-schema guard function.
+create schema capture_guard authorization postgres;
+revoke all on schema capture_guard from public, anon, authenticated, service_role;
+grant usage on schema capture_guard to authenticated;
+
 -- Used only by Storage RLS. A path is valid only for the current initiating
 -- Owner, the exact reserved object key, and the currently allowed lifecycle.
-create function storage.capture_object_operation_allowed(
+create function capture_guard.capture_object_operation_allowed(
     p_object_name text,
     p_expected_state text
 )
@@ -106,9 +113,9 @@ as $$
     );
 $$;
 
-revoke all on function storage.capture_object_operation_allowed(text, text)
+revoke all on function capture_guard.capture_object_operation_allowed(text, text)
     from public, anon, authenticated;
-grant execute on function storage.capture_object_operation_allowed(text, text)
+grant execute on function capture_guard.capture_object_operation_allowed(text, text)
     to authenticated;
 
 do $$
@@ -135,7 +142,7 @@ on storage.objects
 for insert to authenticated
 with check (
     bucket_id = 'capture-labels'
-    and storage.capture_object_operation_allowed(name, 'uploading')
+    and capture_guard.capture_object_operation_allowed(name, 'uploading')
 );
 
 -- Supabase Storage's upload path performs a narrowly-scoped metadata read on
@@ -147,7 +154,7 @@ for select to authenticated
 using (
     bucket_id = 'capture-labels'
     and storage.allow_only_operation('storage.object.upload')
-    and storage.capture_object_operation_allowed(name, 'uploading')
+    and capture_guard.capture_object_operation_allowed(name, 'uploading')
 );
 
 create policy capture_label_cancel_delete
@@ -155,7 +162,7 @@ on storage.objects
 for delete to authenticated
 using (
     bucket_id = 'capture-labels'
-    and storage.capture_object_operation_allowed(name, 'deletion_pending')
+    and capture_guard.capture_object_operation_allowed(name, 'deletion_pending')
 );
 
 create function public.create_capture_session(

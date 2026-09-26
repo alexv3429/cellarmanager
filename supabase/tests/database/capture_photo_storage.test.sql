@@ -7,6 +7,8 @@ select ok(not has_function_privilege('service_role', 'public.create_capture_sess
 select ok(not has_function_privilege('anon', 'public.list_capture_sessions(uuid)', 'execute'), 'Anonymous users cannot list photo captures');
 select ok(not has_table_privilege('authenticated', 'private.capture_sessions', 'select'), 'Capture sessions remain server-only');
 select ok(not has_table_privilege('authenticated', 'private.capture_assets', 'select'), 'Object keys remain server-only');
+select ok(has_schema_privilege('authenticated', 'capture_guard', 'usage') and not has_schema_privilege('anon', 'capture_guard', 'usage'), 'Only authenticated Storage requests can resolve the non-API guard schema');
+select ok(has_function_privilege('authenticated', 'capture_guard.capture_object_operation_allowed(text,text)', 'execute') and not has_function_privilege('anon', 'capture_guard.capture_object_operation_allowed(text,text)', 'execute') and not has_function_privilege('service_role', 'capture_guard.capture_object_operation_allowed(text,text)', 'execute'), 'The non-exposed Storage guard is callable only by authenticated RLS checks');
 select ok(has_function_privilege('service_role', 'public.claim_capture_cleanup(integer)', 'execute'), 'Only the service worker can claim expired cleanup');
 select ok(not has_function_privilege('authenticated', 'public.claim_capture_cleanup(integer)', 'execute'), 'Clients cannot claim cleanup jobs');
 select is((select public from storage.buckets where id = 'capture-labels'), false, 'Capture bucket is private');
@@ -81,7 +83,7 @@ select throws_ok(
     'P0001', 'Capture limit reached; cancel or finish an earlier photo capture', 'Concurrent-safe ten-session active limit is enforced'
 );
 select ok(
-    storage.capture_object_operation_allowed((select response->'objects'->0->>'object_name' from capture_created), 'uploading'),
+    capture_guard.capture_object_operation_allowed((select response->'objects'->0->>'object_name' from capture_created), 'uploading'),
     'The initiating Owner is authorized for the exact live upload slot'
 );
 reset role;
@@ -105,16 +107,16 @@ set local role authenticated;
 
 set local request.jwt.claim.sub = '00000000-0000-4000-8000-000000009987';
 select ok(
-    not storage.capture_object_operation_allowed((select response->'objects'->0->>'object_name' from capture_created), 'uploading'),
+    not capture_guard.capture_object_operation_allowed((select response->'objects'->0->>'object_name' from capture_created), 'uploading'),
     'A household Member cannot use an Owner capture upload key'
 );
 select ok(
-    not storage.capture_object_operation_allowed((select response->'objects'->0->>'object_name' from capture_created), 'deletion_pending'),
+    not capture_guard.capture_object_operation_allowed((select response->'objects'->0->>'object_name' from capture_created), 'deletion_pending'),
     'A household Member cannot delete an Owner capture object'
 );
 set local request.jwt.claim.sub = '00000000-0000-4000-8000-000000000002';
 select ok(
-    not storage.capture_object_operation_allowed((select response->'objects'->0->>'object_name' from capture_created), 'uploading'),
+    not capture_guard.capture_object_operation_allowed((select response->'objects'->0->>'object_name' from capture_created), 'uploading'),
     'A different household Owner cannot access this capture object'
 );
 reset role;
@@ -130,7 +132,7 @@ create temporary table cancel_result as
 select public.cancel_capture_session((select (response->>'session_id')::uuid from capture_created)) as response;
 select is(jsonb_array_length(response->'object_names'), 2, 'Cancellation returns only the two exact paths needed for Storage API deletion') from cancel_result;
 select ok(
-    storage.capture_object_operation_allowed((select response->'objects'->0->>'object_name' from capture_created), 'deletion_pending'),
+    capture_guard.capture_object_operation_allowed((select response->'objects'->0->>'object_name' from capture_created), 'deletion_pending'),
     'Owner can delete an exact object only after closing the capture'
 );
 select is(
