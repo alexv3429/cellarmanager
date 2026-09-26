@@ -7,8 +7,11 @@ import { LanguageProvider } from "./LanguageProvider"
 import { useLanguage } from "./useLanguage"
 
 function Probe() {
-  const { language, preference, t } = useLanguage()
-  return <div>{language}|{preference}|{t("account.link")}</div>
+  const { language, preference, setSavedPreference, t } = useLanguage()
+  return <>
+    <div>{language}|{preference}|{t("account.link")}</div>
+    <button aria-label="Set English" onClick={() => setSavedPreference("en")} type="button" />
+  </>
 }
 
 let root: Root
@@ -56,6 +59,15 @@ describe("language provider", () => {
     await render("fr")
     expect(container.textContent).toBe("fr|fr|Compte")
     expect(window.localStorage.getItem("cellarmanager.languagePreference.self")).toBe("fr")
+  })
+
+  it("updates the document language when the account preference changes", async () => {
+    Object.defineProperty(window.navigator, "languages", { configurable: true, value: ["fr-FR"] })
+    await render(null)
+    expect(document.documentElement.lang).toBe("fr")
+    await act(async () => container.querySelector("button")?.click())
+    expect(container.textContent).toContain("en|en|Account")
+    expect(document.documentElement.lang).toBe("en")
   })
 
   it("restores only this account's saved language preference while offline", async () => {

@@ -17,6 +17,7 @@ import {
 } from "../data/enrichmentResearch"
 import { Notice } from "./Notice"
 import { useLanguage } from "../i18n/useLanguage"
+import { formatLocalizedDate, formatLocalizedNumber } from "../i18n/formatting"
 
 interface EnrichmentResearchInboxProps {
   error: string | null
@@ -679,7 +680,7 @@ function ResearchItemCard({
   onInboxChange: (inbox: ResearchInbox) => void
   onOpenWine: (wineId: string) => void
 }) {
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [identityCandidates, setIdentityCandidates] = useState<
@@ -831,7 +832,7 @@ function ResearchItemCard({
           <h3>{item.subject.title}</h3>
           <p>{t(status.description)}</p>
         </div>
-        <small>{t("Requested")}{new Date(item.requestedAt).toLocaleDateString()}
+        <small>{t("Requested")}{t(" ")}{formatLocalizedDate(item.requestedAt, language)}
         </small>
       </header>
 
@@ -989,7 +990,7 @@ function ResearchItemCard({
                   <a href={source.url} rel="noreferrer" target="_blank">
                     {source.name}
                   </a>
-                  <small>{t("Retrieved")}{new Date(source.retrievedAt).toLocaleDateString()}
+                  <small>{t("Retrieved")}{t(" ")}{formatLocalizedDate(source.retrievedAt, language)}
                     {source.attribution ? ` · ${source.attribution}` : ""}
                   </small>
                 </li>
@@ -1044,7 +1045,7 @@ export function EnrichmentResearchInbox({
   onOpenWine,
   onRefresh,
 }: EnrichmentResearchInboxProps) {
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
   const items = inbox?.items ?? []
   const { active: activeItems, published: publishedItems } =
     partitionEnrichmentResearchItems(items)
@@ -1062,10 +1063,10 @@ export function EnrichmentResearchInbox({
     >
       <summary>
         <span>
-          <strong className="research-inbox__closed-label">{t("Show research inbox ·")}{activeCount}{t("active")}{publishedCount > 0 ? t(" · {value1} published", { value1: String(publishedCount) }) : ""}
+          <strong className="research-inbox__closed-label">{t("Show research inbox ·")}{formatLocalizedNumber(activeCount, language)}{t("active")}{publishedCount > 0 ? t(" · {value1} published", { value1: formatLocalizedNumber(publishedCount, language) }) : ""}
             {unread > 0 ? t(" · {value1} new", { value1: String(unread) }) : ""}
           </strong>
-          <strong className="research-inbox__open-label">{t("Hide research inbox ·")}{activeCount}{t("active")}{publishedCount > 0 ? t(" · {value1} published", { value1: String(publishedCount) }) : ""}
+          <strong className="research-inbox__open-label">{t("Hide research inbox ·")}{formatLocalizedNumber(activeCount, language)}{t("active")}{publishedCount > 0 ? t(" · {value1} published", { value1: formatLocalizedNumber(publishedCount, language) }) : ""}
           </strong>
           <small>{t("Attributed drafts, your reviews, and publication status")}</small>
         </span>

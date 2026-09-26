@@ -9,6 +9,7 @@ import {
 import { LoginForm } from "./LoginForm"
 import { Notice } from "./Notice"
 import { useLanguage } from "../i18n/useLanguage"
+import { formatLocalizedDateTime } from "../i18n/formatting"
 
 interface InvitationEntryViewProps {
   hasAuthenticatedSession: boolean
@@ -26,10 +27,6 @@ function errorMessage(error: unknown): string {
     : "Unable to open this household invitation"
 }
 
-function formatDate(value: string): string {
-  return new Date(value).toLocaleString()
-}
-
 export function InvitationEntryView({
   hasAuthenticatedSession,
   isOnline,
@@ -39,7 +36,7 @@ export function InvitationEntryView({
   token,
   userId,
 }: InvitationEntryViewProps) {
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
   const [preview, setPreview] =
     useState<HouseholdInvitationPreview | null>(null)
   const [accepted, setAccepted] =
@@ -209,7 +206,7 @@ export function InvitationEntryView({
           </div>
           <div>
             <dt>{t("Expires")}</dt>
-            <dd>{formatDate(preview.expiresAt)}</dd>
+            <dd>{formatLocalizedDateTime(preview.expiresAt, language)}</dd>
           </div>
         </dl>
       </section>

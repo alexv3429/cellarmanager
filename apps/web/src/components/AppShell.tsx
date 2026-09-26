@@ -27,6 +27,7 @@ import { HouseholdSwitcher } from "./HouseholdSwitcher"
 import { AccountLink } from "./AccountNavigation"
 import { ShellDisclosure } from "./ShellDisclosure"
 import { useLanguage } from "../i18n/useLanguage"
+import { formatLocalizedDateTime } from "../i18n/formatting"
 
 interface AppShellProps {
   activeHouseholdId: string
@@ -148,9 +149,7 @@ export function AppShell({
   })
   const lastSyncLabel = status.lastSyncedAt
     ? t("shell.lastCompleteSync", {
-        date: status.lastSyncedAt.toLocaleString(
-          language === "fr" ? "fr-FR" : "en-US",
-        ),
+        date: formatLocalizedDateTime(status.lastSyncedAt, language),
       })
     : null
 

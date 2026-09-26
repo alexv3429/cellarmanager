@@ -42,6 +42,7 @@ import { WineReferenceMatchReview } from "./WineReferenceMatchReview"
 import { WineMaturityPanel } from "./WineMaturityPanel"
 import { WinePersonalGuidancePanel } from "./WinePersonalGuidancePanel"
 import { useLanguage } from "../i18n/useLanguage"
+import { formatLocalizedNumber } from "../i18n/formatting"
 
 interface WineDetailViewProps {
   canManageCellar: boolean
@@ -188,7 +189,7 @@ export function WineDetailView({
   userId,
   wineId,
 }: WineDetailViewProps) {
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
   const {
     data: wines,
     error: wineError,
@@ -835,12 +836,12 @@ export function WineDetailView({
         </div>
 
         <div className="wine-detail-total" aria-live="polite">
-          <strong>{totalBottles}</strong>
+          <strong>{formatLocalizedNumber(totalBottles, language)}</strong>
           <span>{t("bottle")}{totalBottles === 1 ? "" : t("s")}{t(" ")}{t("in stock")}</span>
           <small>
-            {holdings.length}{t(" ")}{t("physical position")}{holdings.length === 1 ? "" : t("s")}
+            {formatLocalizedNumber(holdings.length, language)}{t(" ")}{t("physical position")}{holdings.length === 1 ? "" : t("s")}
             {pendingOperations.length > 0
-              ? t(" · {value1} pending operation{value2}", { value1: String(pendingOperations.length), value2: String(pendingOperations.length === 1 ? "" : "s") })
+              ? t(" · {value1} pending operation{value2}", { value1: formatLocalizedNumber(pendingOperations.length, language), value2: String(pendingOperations.length === 1 ? "" : "s") })
               : ""}
           </small>
         </div>
@@ -1112,7 +1113,7 @@ export function WineDetailView({
                       {canManageCellar ? <small>{t("Revision")}{t(" ")}{holding.revision}</small> : null}
                     </div>
                     <div className="wine-detail-position__quantity">
-                      <strong>{holding.quantity}</strong>
+                      <strong>{formatLocalizedNumber(holding.quantity, language)}</strong>
                       <span>{t("bottle")}{holding.quantity === 1 ? "" : "s"}
                       </span>
                       {holding.pending_delta !== 0 ? (

@@ -20,7 +20,6 @@ import {
 import {
   buildCellarSetupSummaries,
   filterCellarSetupSummaries,
-  formatBottleCount,
   formatLocationCount,
   getLocationOccupancy,
   getLocationStoragePurposeLabel,
@@ -35,6 +34,7 @@ import {
 } from "../data/cellarSetupView"
 import { Notice } from "./Notice"
 import { useLanguage } from "../i18n/useLanguage"
+import { formatLocalizedNumber } from "../i18n/formatting"
 
 interface CellarSetupViewProps {
   householdId: string
@@ -95,7 +95,7 @@ function OwnerCellarSetupView({
   householdId,
   isOnline,
 }: CellarSetupViewProps) {
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
   const { data: cellars, error: cellarsError } =
     useQuery<CellarSetupCellar>(
       CELLARS_QUERY,
@@ -435,19 +435,19 @@ function OwnerCellarSetupView({
         <dl>
           <div>
             <dt>{t("Active cellars")}</dt>
-            <dd>{activeCellars.length}</dd>
+            <dd>{formatLocalizedNumber(activeCellars.length, language)}</dd>
           </div>
           <div>
             <dt>{t("Active locations")}</dt>
-            <dd>{totalLocations}</dd>
+            <dd>{formatLocalizedNumber(totalLocations, language)}</dd>
           </div>
           <div>
             <dt>{t("Bottles placed")}</dt>
-            <dd>{totalBottles}</dd>
+            <dd>{formatLocalizedNumber(totalBottles, language)}</dd>
           </div>
           <div>
             <dt>{t("Archived locations")}</dt>
-            <dd>{archivedLocationCount}</dd>
+            <dd>{formatLocalizedNumber(archivedLocationCount, language)}</dd>
           </div>
         </dl>
       </section>
@@ -540,7 +540,7 @@ function OwnerCellarSetupView({
                         cellar.locations.length,
                       )}
                       <span aria-hidden="true"> · </span>
-                      {formatBottleCount(cellar.bottleCount)}
+                      {formatLocalizedNumber(cellar.bottleCount, language)} {t(cellar.bottleCount === 1 ? "bottle" : "bottles")}
                     </p>
                   </div>
 

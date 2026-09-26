@@ -14,6 +14,7 @@ import {
 } from "../data/profileGovernance"
 import { Notice } from "./Notice"
 import { useLanguage } from "../i18n/useLanguage"
+import { formatLocalizedDate, formatLocalizedDateTime, formatLocalizedNumber } from "../i18n/formatting"
 
 interface ProfileGovernanceInboxProps {
   isOnline: boolean
@@ -436,7 +437,7 @@ function DismissCaseForm({ caseId, isOnline, onSaved }: DismissCaseFormProps) {
 }
 
 function RevisionComparison({ revision }: { revision: ProfileRevision }) {
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
   const changes = changedValues(revision)
   return (
     <section className="profile-governance-revision">
@@ -447,7 +448,7 @@ function RevisionComparison({ revision }: { revision: ProfileRevision }) {
           </span>
           <strong>{t("Proposed by")}{t(" ")}{revision.proposedBy}</strong>
         </div>
-        <small>{new Date(revision.proposedAt).toLocaleString()}</small>
+        <small>{formatLocalizedDateTime(revision.proposedAt, language)}</small>
       </header>
       <div className="profile-governance-diff">
         <h4>{t("Proposed changes")}</h4>
@@ -483,7 +484,7 @@ function RevisionComparison({ revision }: { revision: ProfileRevision }) {
                   {decision.verdict === "approve" ? "Approved" : "Disagreed"}
                 </span>
                 <p>{decision.rationale}</p>
-                <small>{decision.curator} · {new Date(decision.decidedAt).toLocaleString()}</small>
+                <small>{decision.curator} · {formatLocalizedDateTime(decision.decidedAt, language)}</small>
               </li>
             ))}
           </ol>
@@ -491,7 +492,7 @@ function RevisionComparison({ revision }: { revision: ProfileRevision }) {
       ) : null}
       {revision.publishedProfile ? (
         <Notice tone="success">{t("Published in shared library version")}{revision.publishedProfile.knowledgeVersion.number}
-          {revision.publishedAt ? ` on ${new Date(revision.publishedAt).toLocaleString()}` : ""}.
+          {revision.publishedAt ? ` · ${formatLocalizedDateTime(revision.publishedAt, language)}` : ""}.
         </Notice>
       ) : null}
     </section>
@@ -505,7 +506,7 @@ interface GovernanceCardProps {
 }
 
 function GovernanceCard({ isOnline, item, onSaved }: GovernanceCardProps) {
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
   const activeRevision = item.revisions.find((revision) =>
     revision.status === "proposed" ||
     revision.status === "approved" ||
@@ -530,9 +531,9 @@ function GovernanceCard({ isOnline, item, onSaved }: GovernanceCardProps) {
                   : t("Closed — no change")}
           </span>
           <h3>{item.subjectTitle}</h3>
-          <p>{item.reporterCount} {item.reporterCount === 1 ? t("reporter") : t("reporters")}{t(" ")}{t("raised this shared-profile review.")}</p>
+          <p>{formatLocalizedNumber(item.reporterCount, language)} {item.reporterCount === 1 ? t("reporter") : t("reporters")}{t(" ")}{t("raised this shared-profile review.")}</p>
         </div>
-        <small>{t("Opened")}{t(" ")}{new Date(item.openedAt).toLocaleDateString()}</small>
+        <small>{t("Opened")}{t(" ")}{formatLocalizedDate(item.openedAt, language)}</small>
       </header>
 
       {item.resolutionSummary ? (
@@ -550,7 +551,7 @@ function GovernanceCard({ isOnline, item, onSaved }: GovernanceCardProps) {
               <strong>{t(reportKindLabel(report.kind))}</strong>
               <p>{report.comment}</p>
               <div>
-                <small>{new Date(report.createdAt).toLocaleString()}</small>
+                <small>{formatLocalizedDateTime(report.createdAt, language)}</small>
                 {report.evidenceUrl ? (
                   <a href={report.evidenceUrl} rel="noreferrer" target="_blank">{t("Open reporter source")}</a>
                 ) : null}
@@ -635,7 +636,7 @@ function GovernanceCard({ isOnline, item, onSaved }: GovernanceCardProps) {
             {item.events.map((event, index) => (
               <li key={`${event.occurredAt}-${event.type}-${index}`}>
                 <strong>{event.type.replaceAll("-", " ")}</strong>
-                <small>{event.actor ?? "Trusted publication service"} · {new Date(event.occurredAt).toLocaleString()}</small>
+                <small>{event.actor ?? "Trusted publication service"} · {formatLocalizedDateTime(event.occurredAt, language)}</small>
               </li>
             ))}
           </ol>

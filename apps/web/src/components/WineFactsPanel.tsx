@@ -13,6 +13,7 @@ import {
 } from "../data/wineFacts"
 import { Notice } from "./Notice"
 import { useLanguage } from "../i18n/useLanguage"
+import { formatLocalizedNumber } from "../i18n/formatting"
 
 interface WineFactsPanelProps {
   canManageCellar?: boolean
@@ -28,8 +29,8 @@ const EMPTY_GRAPE: WineGrapeDraft = {
   percentage: "",
 }
 
-function alcoholLabel(value: number): string {
-  return `${value.toLocaleString(undefined, {
+function alcoholLabel(value: number, language: "en" | "fr"): string {
+  return `${formatLocalizedNumber(value, language, {
     maximumFractionDigits: 2,
     minimumFractionDigits: 0,
   })}%`
@@ -40,7 +41,7 @@ export function WineFactsPanel({
   isOnline,
   wine,
 }: WineFactsPanelProps) {
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
   const parsed = (() => {
     try {
       return { facts: parseWineFacts(wine), error: null }
@@ -301,7 +302,7 @@ export function WineFactsPanel({
                   : null,
                 suggestions.values.alcoholPercent === null
                   ? null
-                  : alcoholLabel(suggestions.values.alcoholPercent),
+                  : alcoholLabel(suggestions.values.alcoholPercent, language),
               ]
                 .filter(Boolean)
                 .join(" · ")}
@@ -543,7 +544,7 @@ export function WineFactsPanel({
               <dd>
                 {facts.alcoholPercent === null
                   ? "—"
-                  : alcoholLabel(facts.alcoholPercent)}
+                  : alcoholLabel(facts.alcoholPercent, language)}
               </dd>
             </div>
           </dl>

@@ -51,6 +51,7 @@ import { ProfileReviewInbox } from "./ProfileReviewInbox"
 import { ProfileGovernanceInbox } from "./ProfileGovernanceInbox"
 import { WineDuplicateReview } from "./WineDuplicateReview"
 import { useLanguage } from "../i18n/useLanguage"
+import { formatLocalizedNumber } from "../i18n/formatting"
 
 interface CatalogWineRow {
   id: string
@@ -218,7 +219,7 @@ export function CatalogView({
   isOnline,
   onOpenWine,
 }: CatalogViewProps) {
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
   const {
     data: wines,
     error,
@@ -1069,12 +1070,12 @@ export function CatalogView({
 
         <div className="catalog-coverage__summary">
           <div>
-            <strong>{coverageSummary.completeFacts}</strong>
-            <span>{t("of")}{t(" ")}{catalogWines.length}{t(" ")}{t("with core facts")}</span>
+            <strong>{formatLocalizedNumber(coverageSummary.completeFacts, language)}</strong>
+            <span>{t("of")}{t(" ")}{formatLocalizedNumber(catalogWines.length, language)}{t(" ")}{t("with core facts")}</span>
             <small>{t("Country, grapes, and sweetness")}</small>
           </div>
           <div>
-            <strong>{coverageSummary.fullProfiles}</strong>
+            <strong>{formatLocalizedNumber(coverageSummary.fullProfiles, language)}</strong>
             <span>{t("full-depth profiles")}</span>
             <small>{t("Vintage, producer, and cuvée layers")}</small>
           </div>
@@ -1133,9 +1134,9 @@ export function CatalogView({
                       <strong>{curationTitle(item, t)}</strong>
                       <span>{t(item.detail)}</span>
                       <small>
-                        {item.wineCount} {t(item.wineCount === 1 ? "wine" : "wines")}
+                      {formatLocalizedNumber(item.wineCount, language)} {t(item.wineCount === 1 ? "wine" : "wines")}
                         {" · "}
-                        {item.bottleCount} {t(item.bottleCount === 1 ? "bottle" : "bottles")}
+                        {formatLocalizedNumber(item.bottleCount, language)} {t(item.bottleCount === 1 ? "bottle" : "bottles")}
                       </small>
                     </div>
                     <div className="catalog-curation-queue__actions">
@@ -1242,12 +1243,12 @@ export function CatalogView({
         {activeCurationItem ? (
           <strong>{t("Queue filter:")}{t(" ")}{activeCurationItem.title} · </strong>
         ) : null}{t("catalog.resultsSummary", {
-          shownWines: String(visibleWines.length),
-          totalWines: String(catalogWines.length),
-          shownBottles: String(visibleBottles),
-          totalBottles: String(totalBottles),
+          shownWines: formatLocalizedNumber(visibleWines.length, language),
+          totalWines: formatLocalizedNumber(catalogWines.length, language),
+          shownBottles: formatLocalizedNumber(visibleBottles, language),
+          totalBottles: formatLocalizedNumber(totalBottles, language),
         })}{isOnline && !maturityLoading && !maturityError
-          ? t(" · {value1} assessed · {value2} need input or review", { value1: String(maturityOverview.filter((item) => item.state !== null).length), value2: String(maturityOverview.filter((item) => item.demandStatus === "needs-review").length) })
+          ? t(" · {value1} assessed · {value2} need input or review", { value1: formatLocalizedNumber(maturityOverview.filter((item) => item.state !== null).length, language), value2: formatLocalizedNumber(maturityOverview.filter((item) => item.demandStatus === "needs-review").length, language) })
           : ""}
       </p>
 
@@ -1454,7 +1455,7 @@ export function CatalogView({
                   )}
                 </td>
 
-                <td data-label={t("Current bottles")}>{wine.quantity}</td>
+                <td data-label={t("Current bottles")}>{formatLocalizedNumber(wine.quantity, language)}</td>
 
                 <td data-label={t("Actions")}>
                   {isEditing ? (

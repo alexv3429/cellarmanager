@@ -6,6 +6,7 @@ import { formatWineVolume } from "../data/wineCatalog"
 import { getHouseholdMaturityOverview, type MaturityOverviewItem } from "../data/wineMaturity"
 import { Notice } from "./Notice"
 import { useLanguage } from "../i18n/useLanguage"
+import { formatLocalizedNumber } from "../i18n/formatting"
 
 export interface MemberCellarRow {
   id: string
@@ -41,7 +42,7 @@ export function MemberCellarView({ householdId, isOnline, onOpenWine }: {
   isOnline: boolean
   onOpenWine: (wineId: string) => void
 }) {
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
   const { data: rows, isLoading, error } = useQuery<MemberCellarRow>(CELLAR_QUERY, [householdId])
   const [search, setSearch] = useState("")
   const [color, setColor] = useState("")
@@ -107,22 +108,22 @@ export function MemberCellarView({ householdId, isOnline, onOpenWine }: {
       </section>
       {error ? <Notice role="alert" tone="error">{t("Unable to load cellar data:")}{t(" ")}{String(error)}</Notice> : null}
       {!isOnline || adviceError ? <Notice tone="warning">{!isOnline ? "Offline: showing synchronized cellar data. Reconnect for drinking advice." : "Drinking advice is temporarily unavailable. Wine details and stock remain available."}</Notice> : null}
-      <p role="status">{isLoading ? t("Loading cellar…") : t("{value1} wine{value2} · {value3} bottles", { value1: String(visible.length), value2: String(visible.length === 1 ? "" : "s"), value3: String(visible.reduce((total, item) => total + item.quantity, 0)) })}</p>
+      <p role="status">{isLoading ? t("Loading cellar…") : t("{value1} wine{value2} · {value3} bottles", { value1: formatLocalizedNumber(visible.length, language), value2: String(visible.length === 1 ? "" : "s"), value3: formatLocalizedNumber(visible.reduce((total, item) => total + item.quantity, 0), language) })}</p>
       {!isLoading && !visible.length ? <p>{t("No wines match these filters.")}</p> : null}
       <div className="member-cellar__wines">
         {visible.slice(0, visibleLimit).map(({ wine, quantity, positions }) => {
           const advice = maturityByWine.get(wine.id)
           return <article className="member-cellar__wine" key={wine.id}>
             <div><h2>{wine.producer} — {wine.cuvee}</h2><p>{wine.vintage ?? t("NV")} · {t(wine.color)} · {formatWineVolume(wine.format_ml)}</p><p>{[wine.appellation, wine.area].filter(Boolean).join(" · ")}</p></div>
-            <strong>{quantity}{t(" ")}{t("bottle")}{quantity === 1 ? "" : "s"}</strong>
-            {positions.length ? <ul aria-label={t("Bottle locations")}>{positions.map((position, index) => <li key={index}>{position.cellar_name} / {position.location_code} · {position.quantity}{t(" ")}{t("bottle")}{position.quantity === 1 ? "" : "s"}</li>)}</ul> : <p>{t("No bottles currently in stock.")}</p>}
+            <strong>{formatLocalizedNumber(quantity, language)}{t(" ")}{t("bottle")}{quantity === 1 ? "" : "s"}</strong>
+            {positions.length ? <ul aria-label={t("Bottle locations")}>{positions.map((position, index) => <li key={index}>{position.cellar_name} / {position.location_code} · {formatLocalizedNumber(position.quantity, language)}{t(" ")}{t("bottle")}{position.quantity === 1 ? "" : "s"}</li>)}</ul> : <p>{t("No bottles currently in stock.")}</p>}
             {advice?.stateLabel ? <p>{t(advice.stateLabel)}{advice.drinkByYear ? ` · ${t("Suggested drink-by")} ${advice.drinkByYear}` : ""}</p> : null}
             <button type="button" onClick={() => onOpenWine(wine.id)}>{t("View wine")}</button>
           </article>
         })}
       </div>
       {visible.length > visibleLimit ? (
-        <button type="button" onClick={() => setVisibleLimit((limit) => limit + 30)}>{t("Show more wines (")}{visibleLimit}{t(" ")}{t("of")}{t(" ")}{visible.length}{t("shown)")}</button>
+        <button type="button" onClick={() => setVisibleLimit((limit) => limit + 30)}>{t("Show more wines (")}{formatLocalizedNumber(visibleLimit, language)}{t(" ")}{t("of")}{t(" ")}{formatLocalizedNumber(visible.length, language)}{t("shown)")}</button>
       ) : null}
     </main>
   )

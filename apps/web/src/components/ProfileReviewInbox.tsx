@@ -11,6 +11,7 @@ import {
 } from "../data/profileReviews"
 import { Notice } from "./Notice"
 import { useLanguage } from "../i18n/useLanguage"
+import { formatLocalizedDate, formatLocalizedDateTime } from "../i18n/formatting"
 
 interface ProfileReviewInboxProps {
   householdId: string
@@ -69,7 +70,7 @@ function ProfileReviewCard({
   onInboxChange,
   onOpenWine,
 }: ProfileReviewCardProps) {
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -119,7 +120,7 @@ function ProfileReviewCard({
               : "Your report opened a review of this shared profile.")}
           </p>
         </div>
-        <small>{t("Requested")}{new Date(item.requestedAt).toLocaleDateString()}
+        <small>{t("Requested")}{t(" ")}{formatLocalizedDate(item.requestedAt, language)}
         </small>
       </header>
 
@@ -141,7 +142,7 @@ function ProfileReviewCard({
             <li key={message.id}>
               <div>
                 <strong>{t(messageKindLabel(message.kind))}</strong>
-                <small>{new Date(message.createdAt).toLocaleString()}</small>
+                <small>{formatLocalizedDateTime(message.createdAt, language)}</small>
               </div>
               <p>{message.comment}</p>
               {message.evidenceUrl ? (

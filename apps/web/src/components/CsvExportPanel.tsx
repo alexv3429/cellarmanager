@@ -18,6 +18,7 @@ import {
 import { getHouseholdMaturityOverview } from "../data/wineMaturity"
 import { Notice } from "./Notice"
 import { useLanguage } from "../i18n/useLanguage"
+import { formatLocalizedNumber } from "../i18n/formatting"
 
 const EXPORT_WINES_QUERY = `
   select
@@ -138,7 +139,7 @@ export function CsvExportPanel({
   householdId: string
   isOnline: boolean
 }) {
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
   const {
     data: wines,
     error: winesError,
@@ -239,7 +240,7 @@ export function CsvExportPanel({
         "text/csv;charset=utf-8",
       )
       setExportMessage(
-        `${filename} downloaded · ${snapshot.wineCount} wines · ${snapshot.bottleCount} bottles`,
+        `${filename} downloaded · ${formatLocalizedNumber(snapshot.wineCount, language)} wines · ${formatLocalizedNumber(snapshot.bottleCount, language)} bottles`,
       )
     } catch (caughtError: unknown) {
       setExportError(
@@ -268,7 +269,7 @@ export function CsvExportPanel({
       const filename = getPortableExportFilename("xlsx")
       downloadFile(contents, filename, XLSX_MIME_TYPE)
       setExportMessage(
-        `${filename} downloaded · ${wineCount} wines · ${bottleCount} bottles${maturityOverview ? " · drinking windows included" : " · drinking windows omitted offline"}`,
+        `${filename} downloaded · ${formatLocalizedNumber(wineCount, language)} wines · ${formatLocalizedNumber(bottleCount, language)} bottles${maturityOverview ? " · drinking windows included" : " · drinking windows omitted offline"}`,
       )
     } catch (caughtError: unknown) {
       setExportError(
@@ -301,19 +302,19 @@ export function CsvExportPanel({
       <dl className="csv-export-panel__summary">
         <div>
           <dt>{t("Wines")}</dt>
-          <dd>{isLoading ? "…" : wineCount}</dd>
+          <dd>{isLoading ? "…" : formatLocalizedNumber(wineCount, language)}</dd>
         </div>
         <div>
           <dt>{t("Bottles")}</dt>
-          <dd>{isLoading ? "…" : bottleCount}</dd>
+          <dd>{isLoading ? "…" : formatLocalizedNumber(bottleCount, language)}</dd>
         </div>
         <div>
           <dt>{t("Positions")}</dt>
-          <dd>{isLoading ? "…" : positionCount}</dd>
+          <dd>{isLoading ? "…" : formatLocalizedNumber(positionCount, language)}</dd>
         </div>
         <div>
           <dt>{t("Queued changes")}</dt>
-          <dd>{isLoading ? "…" : pendingOperations.length}</dd>
+          <dd>{isLoading ? "…" : formatLocalizedNumber(pendingOperations.length, language)}</dd>
         </div>
       </dl>
 

@@ -17,6 +17,7 @@ import {
 import { Notice } from "./Notice"
 import { useLanguage } from "../i18n/useLanguage"
 import { formatLegacyGuidanceNote } from "../i18n/legacyGuidanceNote"
+import { formatLocalizedDate } from "../i18n/formatting"
 
 interface WinePersonalGuidancePanelProps {
   canManageCellar?: boolean
@@ -713,7 +714,7 @@ export function WinePersonalGuidancePanel({
                         <div>
                           <strong>{t(observationTypeLabel(observation.type))}</strong>
                           <span>
-                            {new Date(`${observation.observedOn}T12:00:00`).toLocaleDateString(language === "fr" ? "fr-FR" : "en-US")}
+                            {formatLocalizedDate(`${observation.observedOn}T12:00:00`, language)}
                             {` · ${
                               observation.visibility === "personal"
                                 ? t("Only me")

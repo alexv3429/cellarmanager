@@ -11,6 +11,7 @@ import { Notice } from "./Notice"
 import { HouseholdLifecycle } from "./HouseholdLifecycle"
 import type { OwnHouseholdAccess } from "../data/householdLifecycle"
 import { useLanguage } from "../i18n/useLanguage"
+import { formatLocalizedDate, formatLocalizedNumber } from "../i18n/formatting"
 
 interface HouseholdMembersViewProps {
   householdId: string
@@ -40,7 +41,7 @@ export function HouseholdMembersView(props: HouseholdMembersViewProps) {
 }
 
 function MembersWorkspace({ householdId, householdName, userId, role, isOnline, onInvite, onAccessChanged }: HouseholdMembersViewProps) {
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
   const [members, setMembers] = useState<HouseholdMember[]>([])
   const [phase, setPhase] = useState<"loading" | "ready" | "error">("loading")
   const [action, setAction] = useState<MemberAction | null>(null)
@@ -184,7 +185,7 @@ function MembersWorkspace({ householdId, householdName, userId, role, isOnline, 
           {phase === "loading" && !busy ? <p role="status">{t("Loading current members…")}</p> : null}
           {phase === "ready" ? (
             <>
-              <h2>{members.length} {members.length === 1 ? "person" : "people"}{t(" ")}{t("with access")}</h2>
+              <h2>{formatLocalizedNumber(members.length, language)} {members.length === 1 ? "person" : "people"}{t(" ")}{t("with access")}</h2>
               {!canManage ? <p>{t("Only Owners can invite people or change their access.")}</p> : null}
               <ul className="household-members__list">
                 {members.map((member) => {
@@ -195,7 +196,7 @@ function MembersWorkspace({ householdId, householdName, userId, role, isOnline, 
                       <div className="household-members__person">
                         <div><strong>{label}</strong>{isSelf ? <span className="household-members__badge">{t("You")}</span> : null}<span className="household-members__badge">{getHouseholdRoleLabel(member.role)}</span></div>
                         {member.email && member.displayName ? <span>{member.email}</span> : null}
-                        <small>{t("Joined")}{t(" ")}{new Date(member.joinedAt).toLocaleDateString()}</small>
+                        <small>{t("Joined")}{t(" ")}{formatLocalizedDate(member.joinedAt, language)}</small>
                         {isSelf ? <small>{t("To transfer ownership or leave, use Your access below.")}</small> : null}
                       </div>
                       {canManage && !isSelf ? (

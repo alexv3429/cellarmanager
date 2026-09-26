@@ -3,6 +3,7 @@ import { getHouseholdDevices, manageHouseholdDevice, type DeviceDirectory, type 
 import type { HouseholdRole } from "../households/householdPermissions"
 import { Notice } from "./Notice"
 import { useLanguage } from "../i18n/useLanguage"
+import { formatLocalizedDateTime } from "../i18n/formatting"
 
 interface Props {
   householdId: string
@@ -16,14 +17,16 @@ interface Props {
 type Action = { device: HouseholdDevice; kind: "rename" | "revoke" }
 type Message = { text: string; tone: "success" | "error" | "warning" }
 function errorText(error: unknown) { return error instanceof Error ? error.message : "Unable to reach the server." }
-function timestamp(value: string | null) { return value ? new Date(value).toLocaleString() : "Not recorded" }
+function timestamp(value: string | null, language: "en" | "fr", t: (key: string) => string) {
+  return value ? formatLocalizedDateTime(value, language) : t("Not recorded")
+}
 
 export function HouseholdDevicesView(props: Props) {
   return <DevicesWorkspace key={`${props.householdId}:${props.userId}:${props.role}:${props.isOnline}`} {...props} />
 }
 
 function DevicesWorkspace({ householdId, householdName, userId, role, isOnline, currentDeviceId, onRevoked }: Props) {
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
   const [directory, setDirectory] = useState<DeviceDirectory | null>(null)
   const [loading, setLoading] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -119,9 +122,9 @@ function DevicesWorkspace({ householdId, householdName, userId, role, isOnline, 
         </div>
         <p>{device.accountLabel}{device.userId === userId ? t(" · You") : ""}</p>
         <dl>
-          <div><dt>{t("Registered")}</dt><dd>{timestamp(device.createdAt)}</dd></div>
-          <div><dt>{t("Last registration contact")}</dt><dd>{timestamp(device.lastSeenAt)}</dd></div>
-          {device.revokedAt ? <div><dt>{t("Revoked")}</dt><dd>{timestamp(device.revokedAt)}</dd></div> : null}
+          <div><dt>{t("Registered")}</dt><dd>{timestamp(device.createdAt, language, t)}</dd></div>
+          <div><dt>{t("Last registration contact")}</dt><dd>{timestamp(device.lastSeenAt, language, t)}</dd></div>
+          {device.revokedAt ? <div><dt>{t("Revoked")}</dt><dd>{timestamp(device.revokedAt, language, t)}</dd></div> : null}
         </dl>
         <small>{t("Registration ID:")}{t(" ")}{device.id}</small>
       </div>

@@ -15,6 +15,7 @@ import { describeInventoryRejection } from "../data/inventoryRecovery"
 import { formatWineVolume } from "../data/wineCatalog"
 import { InventoryQueueReview } from "./InventoryQueueReview"
 import { useLanguage } from "../i18n/useLanguage"
+import { formatLocalizedDateTime, formatLocalizedNumber } from "../i18n/formatting"
 
 interface ActivityViewProps {
   householdId: string
@@ -66,14 +67,10 @@ const ACTIVITY_QUERY = `
 `
 
 function formatActivityDate(value: string, language: "en" | "fr"): string {
-  const date = new Date(value)
-
-  return Number.isNaN(date.getTime())
-    ? value
-    : new Intl.DateTimeFormat(language === "fr" ? "fr-FR" : "en-US", {
-        dateStyle: "medium",
-        timeStyle: "short",
-      }).format(date)
+  return formatLocalizedDateTime(value, language, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  })
 }
 
 function activityMovement(
@@ -175,19 +172,19 @@ export function ActivityView({
         className="activity-summary"
       >
         <div>
-          <strong>{summary.totalCount}</strong>
+          <strong>{formatLocalizedNumber(summary.totalCount, language)}</strong>
           <span>{t("Recent operations")}</span>
         </div>
         <div>
-          <strong>{summary.pendingCount}</strong>
+          <strong>{formatLocalizedNumber(summary.pendingCount, language)}</strong>
           <span>{t("Queued")}</span>
         </div>
         <div>
-          <strong>{summary.rejectedCount}</strong>
+          <strong>{formatLocalizedNumber(summary.rejectedCount, language)}</strong>
           <span>{t("Rejected")}</span>
         </div>
         <div>
-          <strong>{summary.acceptedCount}</strong>
+          <strong>{formatLocalizedNumber(summary.acceptedCount, language)}</strong>
           <span>{t("Synced")}</span>
         </div>
       </section>
@@ -195,7 +192,7 @@ export function ActivityView({
       {summary.pendingCount > 0 ? (
         <Notice role="status" tone="warning">
           <strong>
-            {summary.pendingCount}{t(" ")}{t("local")}{t(" ")}{summary.pendingCount === 1 ? "change is" : "changes are"}{t("waiting for server confirmation")}</strong>
+            {formatLocalizedNumber(summary.pendingCount, language)}{t(" ")}{t("local")}{t(" ")}{summary.pendingCount === 1 ? "change is" : "changes are"}{t("waiting for server confirmation")}</strong>
           <p>{t("These are not yet confirmed stock changes. Temporary connection failures retry automatically. If an upload is blocked by access or registration changes, review this browser’s queue above.")}</p>
         </Notice>
       ) : null}
@@ -203,7 +200,7 @@ export function ActivityView({
       {summary.rejectedCount > 0 ? (
         <Notice role="status" tone="error">
           <strong>
-            {summary.rejectedCount} {summary.rejectedCount === 1 ? "change was" : "changes were"}{t("rejected")}</strong>
+            {formatLocalizedNumber(summary.rejectedCount, language)} {summary.rejectedCount === 1 ? "change was" : "changes were"}{t("rejected")}</strong>
           <p>{t("These are historical rejections, not changes still waiting to upload. They did not change stock. Review the explanation and current stock before making a separate new request.")}</p>
           <button type="button" onClick={() => { setStatus("REJECTED"); setOperationType("ALL"); setSearch("") }}>{t("Show rejected changes")}</button>
         </Notice>
@@ -310,7 +307,7 @@ export function ActivityView({
 
             <p className="activity-card__movement">
               <strong>
-                {t(item.actionLabel)} {item.quantity} {t(item.quantity === 1 ? "bottle" : "bottles")}
+                {t(item.actionLabel)} {formatLocalizedNumber(item.quantity, language)} {t(item.quantity === 1 ? "bottle" : "bottles")}
               </strong>{" "}
               {activityMovement(item, t)}
             </p>

@@ -11,6 +11,7 @@ import {
 import { supabase } from "../data/supabase"
 import { Notice } from "./Notice"
 import { useLanguage } from "../i18n/useLanguage"
+import { formatLocalizedDateTime } from "../i18n/formatting"
 
 type AuthMode =
   | "sign-in"
@@ -91,7 +92,7 @@ function getAuthErrorMessage(error: unknown): string {
 export function LoginForm({
   invitationContext,
 }: LoginFormProps = {}) {
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
   const [mode, setMode] =
     useState<AuthMode>(() =>
       invitationContext?.accountExists
@@ -315,9 +316,10 @@ export function LoginForm({
             <li>
               <span>3</span>{t("Join household")}</li>
           </ol>
-          <p className="invitation-auth__expiry">{t("Private invitation · Valid until")}{new Date(
+          <p className="invitation-auth__expiry">{t("Private invitation · Valid until")}{t(" ")}{formatLocalizedDateTime(
               invitationContext.expiresAt,
-            ).toLocaleString()}
+              language,
+          )}
           </p>
         </>
       ) : (
