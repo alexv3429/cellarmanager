@@ -10,6 +10,7 @@ it was introduced.
 | [002](002-inventory-operation-model.md) | Accepted | Immutable inventory operations with PostgreSQL-authoritative holdings |
 | [003](003-v01-data-migration.md) | Accepted (historical) | One-off, reconciliation-backed v0.1 migration |
 | [004](004-wine-reference-and-enrichment-evidence.md) | Accepted | Shared wine identity, plural evidence, reviewed matching, and explicit enrichment fallbacks |
+| [005](005-capture-assisted-wine-entry.md) | Accepted | Multimodal wine capture produces reviewable candidates; only explicit owner action reaches the existing cellar and inventory workflows |
 
 Create a new numbered ADR before changing a stable contract from
 [`../product-roadmap.md`](../product-roadmap.md). Do not rewrite an accepted ADR
