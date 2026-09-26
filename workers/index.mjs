@@ -1,5 +1,6 @@
 import { researchConfiguration, runResearchCycle } from "./researchWorker.mjs";
 import { handleInvitationEmail } from "./invitationEmail.mjs";
+import { cleanupExpiredCaptureSessions } from "./captureCleanup.mjs";
 
 const WORKER_VERSION = "0.5.0";
 
@@ -54,6 +55,16 @@ export default {
           }))
           : [],
       });
+    }));
+    context.waitUntil(cleanupExpiredCaptureSessions(env).then((result) => {
+      console.log("Temporary photo cleanup completed", {
+        status: result.status,
+        claimed: result.claimed,
+        deleted: result.deleted,
+        failed: result.failed,
+      });
+    }).catch(() => {
+      console.log("Temporary photo cleanup failed");
     }));
   },
 };

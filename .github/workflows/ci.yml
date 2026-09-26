@@ -46,6 +46,9 @@ jobs:
       - name: Test invitation email delivery
         run: npm run invitations:test
 
+      - name: Test temporary photo cleanup
+        run: npm run workers:test
+
       - name: Lint, test, and build the web application
         run: npm run web:ci
 

@@ -106,6 +106,7 @@ try {
     "npm run repository:check",
     "npm run release:check",
     "npm run lwin:test",
+    "npm run workers:test",
     "npm run web:ci",
     "npm run supabase -- test db",
     "npm run inventory:test",

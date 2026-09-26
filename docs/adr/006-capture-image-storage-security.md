@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-09-26
-- Implemented: Security model in v0.6.5; upload behavior follows in later v0.6 steps
+- Implemented: Storage and upload boundary in v0.6.6; safe image processing follows in v0.6.7
 
 ## Context
 
@@ -33,8 +33,10 @@ threat model, thresholds, deletion workflow, and implementation acceptance.
 - Validate byte signatures and decoded dimensions server-side, strip metadata,
   re-encode a bounded sanitized image, and delete the original after successful
   normalization.
-- Delete assets and raw extraction immediately on terminal review; expire
-  unfinished captures after seven days with a server-side cleanup job. A
+- Delete source and normalized images as soon as extracted wine information is
+  durably ingested into the capture draft; expire unprocessed captures after
+  24 hours with a server-side cleanup job. Delete raw extraction immediately
+  on terminal review. A
   cancellation denies access first, then deletes through the Storage API.
 - Do not retain a permanent cellar photo library or send an image to an
   external recognizer until the provider's security, rights, training, and
@@ -67,7 +69,11 @@ threat model, thresholds, deletion workflow, and implementation acceptance.
 
 ## Validation
 
-0.6.5 records architecture and source references only; it does not create a
-Storage bucket, schema, migration, upload, or provider integration. Later steps
-must satisfy the negative-test matrix in
-[`../capture-storage-security.md`](../capture-storage-security.md).
+Step 0.6.5 recorded the architecture. Step 0.6.6 adds the private bucket,
+server-created upload slots, live Owner policies, bounded direct uploads,
+temporary session listing/cancellation, and retryable scheduled cleanup. The
+browser cannot list or download the image objects, no image is previewed or
+sent to a recognizer, and no wine or stock data changes. The remaining
+sanitization and image-byte validation gates still apply before preview or
+recognition. See [`../capture-storage-security.md`](../capture-storage-security.md)
+for the full negative-test matrix.

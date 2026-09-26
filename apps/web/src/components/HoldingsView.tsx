@@ -49,12 +49,15 @@ import {
   type RemoveReason,
 } from "../data/powersync/inventoryOperations"
 import { Notice } from "./Notice"
+import { CapturePhotosPanel } from "./CapturePhotosPanel"
 import { useLanguage } from "../i18n/useLanguage"
 import { formatLocalizedNumber } from "../i18n/formatting"
 
 interface HoldingsViewProps {
   userId: string
   householdId: string
+  isOnline: boolean
+  canManageInventory: boolean
   deviceRegistration: RegisteredDevicesState
   onOpenWine: (wineId: string) => void
 }
@@ -160,6 +163,8 @@ function locationLabel(
 export function HoldingsView({
   userId,
   householdId,
+  isOnline,
+  canManageInventory,
   deviceRegistration,
   onOpenWine,
 }: HoldingsViewProps) {
@@ -846,6 +851,14 @@ export function HoldingsView({
             <small>{t("Queue stock for an existing or new wine")}</small>
           </span>
         </summary>
+
+        {canManageInventory ? (
+          <CapturePhotosPanel
+            householdId={householdId}
+            isOnline={isOnline}
+            userId={userId}
+          />
+        ) : null}
 
       <form className="add-bottles-form" onSubmit={(event) => void handleAdd(event)}>
         <label>{t("Producer / winery")}<input

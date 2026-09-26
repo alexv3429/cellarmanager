@@ -138,19 +138,19 @@ operations. Those require the explicit review and existing owner workflows in
 
 - Keep the image in browser memory only until the authenticated upload finishes;
   do not persist a queued photo for automatic background upload.
-- Keep a server-side capture and its sanitized preview only while review is
-  pending, with a hard seven-day lifetime from capture creation. The expiry
-  cannot be extended by repeated retries. Keep no more than the two images
-  allowed by the per-capture limit.
-- Delete the original immediately after successful sanitization. Delete the
-  sanitized preview and raw extraction/OCR draft immediately when the owner
-  confirms, chooses an existing wine, discards, or cancels the capture.
-- On a failed parse, permit a bounded retry from the sanitized derivative until
-  the seven-day deadline. Terminal errors or expiry delete both assets and
+- Until extracted wine information is durably ingested into the capture draft,
+  retain images for no more than 24 hours from capture creation. This is a hard
+  fallback expiry and repeated retries cannot extend it. Keep no more than the
+  two images allowed by the per-capture limit.
+- As soon as extracted wine information is durably ingested into the capture
+  draft, delete the source and normalized images immediately; do not retain
+  images for the later owner-review period.
+- On a failed parse, permit a bounded retry from the normalized derivative
+  until the 24-hour deadline. Terminal errors or expiry delete all images and
   unconfirmed extracted text.
 - An explicit delete/cancel first closes access by changing the capture state,
   then deletes the bytes. If deletion fails transiently, keep access denied and
-  retry through a server-side cleanup job. A daily cleanup job deletes expired
+  retry through a server-side cleanup job. A 15-minute cleanup job deletes expired
   sessions and orphaned objects; it must report failures and verify the
   Storage API result.
 - Delete objects through the Supabase Storage API, not by deleting rows from
@@ -163,6 +163,25 @@ operations. Those require the explicit review and existing owner workflows in
 
 There is no permanent image library in v0.6. Reusing or retaining label photos
 after a capture review requires a new, explicit product decision and consent.
+
+## 0.6.6 upload implementation boundary
+
+The first upload slice is intentionally stricter than the design ceiling: the
+bucket and server RPC both cap each object at 6 MB so the browser can use the
+standard authenticated upload path. The database reserves 13 MiB per photo
+(the design's 8 MiB original plus a future 5 MiB sanitized derivative), up to
+260 MiB per initiating account and 512 MiB deployment-wide. These are reserved
+capacity limits; they do not permit the client to raise the bucket limit.
+
+The browser does not persist selected `File` objects offline, show a photo
+preview, or expose original filenames. It can show the initiating Owner that a
+private capture is pending and when its 24-hour deadline expires. JPEG/PNG
+MIME metadata and byte count are checked at upload, but actual file signatures,
+decoding, dimensions, and metadata are not trusted until 0.6.7. Therefore this
+step cannot preview, analyze, or transmit an image. Owner cancellation first
+sets `deletion_pending`; the Storage API removes the exact reserved keys, and a
+15-minute scheduled Worker retries failures and expired captures before the
+database releases their storage reservation.
 
 ## Required acceptance for implementation
 

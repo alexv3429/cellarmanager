@@ -2818,6 +2818,85 @@
   font-weight: 400;
 }
 
+.capture-photos {
+  display: grid;
+  gap: 14px;
+  margin: 16px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-muted, var(--surface));
+}
+
+.capture-photos__intro,
+.capture-photos__selection,
+.capture-photos__session {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.capture-photos h3,
+.capture-photos h4,
+.capture-photos p {
+  margin: 0;
+}
+
+.capture-photos__intro p,
+.capture-photos__session p {
+  margin-top: 5px;
+  color: var(--text-muted);
+}
+
+.capture-photos__pickers {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.capture-photos__pickers label {
+  display: grid;
+  gap: 7px;
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+.capture-photos__pickers input {
+  width: 100%;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  background: var(--surface);
+}
+
+.capture-photos__selection {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.capture-photos__sessions {
+  display: grid;
+  gap: 10px;
+}
+
+.capture-photos__session {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.capture-photos__offline,
+.capture-photos__error {
+  color: var(--danger, #a33148);
+}
+
+.capture-photos__message {
+  color: var(--success, #477c58);
+}
+
 .app-shell__content .inventory-add-panel .add-bottles-form {
   margin: 0;
   padding: 16px;
@@ -4381,6 +4460,27 @@
   .inventory-add-panel > summary,
   .app-shell__content .inventory-add-panel .add-bottles-form {
     padding: 12px;
+  }
+
+  .capture-photos {
+    margin: 12px;
+    padding: 12px;
+  }
+
+  .capture-photos__intro,
+  .capture-photos__session {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .capture-photos__intro > button,
+  .capture-photos__selection > button,
+  .capture-photos__session > button {
+    width: 100%;
+  }
+
+  .capture-photos__pickers {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .app-shell__content .add-bottles-form {
