@@ -288,8 +288,10 @@ function ReadyAuthenticatedApp({
       ) : null}
       {route.view === "inventory" ? (
         <HoldingsView
+          canManageInventory={permissions.canManageInventory}
           deviceRegistration={deviceRegistration}
           householdId={activeHouseholdId}
+          isOnline={isOnline}
           onOpenWine={(wineId) =>
             openWineDetail(wineId, "inventory")
           }

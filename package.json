@@ -20,6 +20,7 @@
     "enrichment:test": "node --test scripts/enrichment/*.test.mjs",
     "invitations:test": "node --test scripts/invitations/*.test.mjs",
     "inventory:test": "node --test scripts/inventory/*.test.mjs",
+    "workers:test": "node --test workers/*.test.mjs",
     "inventory:acceptance": "node scripts/inventory/concurrent_acceptance.mjs",
     "membership:acceptance": "node scripts/invitations/concurrent_acceptance.mjs",
     "web:dev": "npm run dev --workspace @cellarmanager/web",
@@ -27,7 +28,7 @@
     "web:test": "npm run test --workspace @cellarmanager/web",
     "web:build": "npm run build --workspace @cellarmanager/web",
     "web:ci": "npm run web:lint && npm run web:test && npm run web:build",
-    "ci": "npm run repository:check && npm run release:check && npm run v01:test && npm run lwin:test && npm run enrichment:test && npm run invitations:test && npm run inventory:test && npm run web:ci",
+    "ci": "npm run repository:check && npm run release:check && npm run v01:test && npm run lwin:test && npm run enrichment:test && npm run invitations:test && npm run inventory:test && npm run workers:test && npm run web:ci",
     "audit": "npm audit --omit=dev --audit-level=high",
     "supabase": "supabase"
   },

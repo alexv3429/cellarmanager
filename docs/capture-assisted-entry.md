@@ -113,8 +113,8 @@ for 0.6.15; this step defines their place in the architecture only.
 
 | Step | Work enabled by this architecture |
 |---|---|
-| 0.6.5 | Decide image/storage threat model, access controls, retention/deletion, upload limits, metadata handling, and provider-data boundaries — see [capture storage security](capture-storage-security.md) and [ADR 006](adr/006-capture-image-storage-security.md) |
-| 0.6.6 | Owner-facing mobile camera and photo selection; no recognition dependency |
+| 0.6.5 | Decide image/storage threat model, access controls, retention/deletion, upload limits, metadata handling, and provider-data boundaries — complete; see [capture storage security](capture-storage-security.md) and [ADR 006](adr/006-capture-image-storage-security.md) |
+| 0.6.6 | Owner-only mobile camera and photo upload to private temporary storage — in progress; no recognition dependency |
 | 0.6.7 | Safe orientation, crop/resize, and image preprocessing |
 | 0.6.8–0.6.9 | OCR and structured field extraction through a reviewed adapter |
 | 0.6.10–0.6.12 | Human correction, conservative existing-wine matching, explicit wine selection/creation, and normal ADD |
@@ -122,6 +122,15 @@ for 0.6.15; this step defines their place in the architecture only.
 
 This order deliberately establishes storage/privacy controls before upload and
 provider rights before sending images to any external recognizer.
+
+Step 0.6.6 places a temporary photo panel in the Owner-only Add bottles flow.
+It accepts one or two JPEG/PNG images up to 6 MB each, and uploads only when
+online. The browser uses authenticated Supabase Storage policies and never
+receives a service key. It displays capture status and expiry, but does not
+render, download, or analyze the images. Owners can delete a capture; a
+scheduled Worker retries failed or expired deletions. Uploading a photo does
+not create a wine or change stock. Local image-byte validation, metadata
+stripping, and safe preview are reserved for step 0.6.7.
 
 ## Acceptance for 0.6.4
 

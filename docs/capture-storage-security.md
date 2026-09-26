@@ -164,6 +164,25 @@ operations. Those require the explicit review and existing owner workflows in
 There is no permanent image library in v0.6. Reusing or retaining label photos
 after a capture review requires a new, explicit product decision and consent.
 
+## 0.6.6 upload implementation boundary
+
+The first upload slice is intentionally stricter than the design ceiling: the
+bucket and server RPC both cap each object at 6 MB so the browser can use the
+standard authenticated upload path. The database reserves 13 MiB per photo
+(the design's 8 MiB original plus a future 5 MiB sanitized derivative), up to
+260 MiB per initiating account and 512 MiB deployment-wide. These are reserved
+capacity limits; they do not permit the client to raise the bucket limit.
+
+The browser does not persist selected `File` objects offline, show a photo
+preview, or expose original filenames. It can show the initiating Owner that a
+private capture is pending and when its seven-day deadline expires. JPEG/PNG
+MIME metadata and byte count are checked at upload, but actual file signatures,
+decoding, dimensions, and metadata are not trusted until 0.6.7. Therefore this
+step cannot preview, analyze, or transmit an image. Owner cancellation first
+sets `deletion_pending`; the Storage API removes the exact reserved keys, and a
+15-minute scheduled Worker retries failures and expired captures before the
+database releases their storage reservation.
+
 ## Required acceptance for implementation
 
 Later upload/provider steps must include negative tests for:

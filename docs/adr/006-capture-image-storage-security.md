@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-09-26
-- Implemented: Security model in v0.6.5; upload behavior follows in later v0.6 steps
+- Implemented: Storage and upload boundary in v0.6.6; safe image processing follows in v0.6.7
 
 ## Context
 
@@ -67,7 +67,11 @@ threat model, thresholds, deletion workflow, and implementation acceptance.
 
 ## Validation
 
-0.6.5 records architecture and source references only; it does not create a
-Storage bucket, schema, migration, upload, or provider integration. Later steps
-must satisfy the negative-test matrix in
-[`../capture-storage-security.md`](../capture-storage-security.md).
+Step 0.6.5 recorded the architecture. Step 0.6.6 adds the private bucket,
+server-created upload slots, live Owner policies, bounded direct uploads,
+temporary session listing/cancellation, and retryable scheduled cleanup. The
+browser cannot list or download the image objects, no image is previewed or
+sent to a recognizer, and no wine or stock data changes. The remaining
+sanitization and image-byte validation gates still apply before preview or
+recognition. See [`../capture-storage-security.md`](../capture-storage-security.md)
+for the full negative-test matrix.
