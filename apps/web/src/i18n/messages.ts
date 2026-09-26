@@ -3,6 +3,7 @@ import { frenchText } from "./frenchText"
 export const englishMessages = {
   "common.skipMain": "Skip to main content",
   "shell.sync": "Sync",
+  "shell.lastCompleteSync": "Last complete sync {date}",
   "shell.syncDevice": "Sync & this device",
   "shell.activityQueue": "View activity & queued changes",
   "shell.settings": "Settings",
@@ -68,6 +69,7 @@ export type MessageKey = keyof typeof englishMessages
 export const frenchMessages: Partial<Record<MessageKey, string>> = {
   "common.skipMain": "Passer au contenu principal",
   "shell.sync": "Synchronisation",
+  "shell.lastCompleteSync": "Dernière synchronisation complète : {date}",
   "shell.syncDevice": "Synchronisation et appareil",
   "shell.activityQueue": "Voir l’activité et les modifications en attente",
   "shell.settings": "Paramètres",

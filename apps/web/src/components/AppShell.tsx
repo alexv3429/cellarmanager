@@ -88,7 +88,7 @@ export function AppShell({
   syncError,
   view,
 }: AppShellProps) {
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
   const permissions = getHouseholdPermissions(activeHouseholdRole)
   const status = useStatus()
   const {
@@ -147,7 +147,11 @@ export function AppShell({
     uploading: status.uploading,
   })
   const lastSyncLabel = status.lastSyncedAt
-    ? `Last complete sync ${status.lastSyncedAt.toLocaleString()}`
+    ? t("shell.lastCompleteSync", {
+        date: status.lastSyncedAt.toLocaleString(
+          language === "fr" ? "fr-FR" : "en-US",
+        ),
+      })
     : null
 
   async function signOut() {

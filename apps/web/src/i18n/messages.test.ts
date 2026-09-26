@@ -27,5 +27,8 @@ describe("French dynamic interface messages", () => {
     expect(translate("fr", "Your private 2 years younger preference now applies to every assessed wine."))
       .toBe("Votre préférence privée (2 ans plus tôt) s’applique maintenant à tous les vins évalués.")
     expect(translate("fr", "Refreshing local data…")).toBe("Actualisation des données locales…")
+    expect(translate("fr", "shell.lastCompleteSync", { date: "26/09/2026 16:50:38" }))
+      .toBe("Dernière synchronisation complète : 26/09/2026 16:50:38")
+    expect(translate("fr", "Sparkling")).toBe("Mousseux")
   })
 })

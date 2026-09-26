@@ -12,6 +12,7 @@ import {
 } from "../data/activityView"
 import { Notice } from "./Notice"
 import { describeInventoryRejection } from "../data/inventoryRecovery"
+import { formatWineVolume } from "../data/wineCatalog"
 import { InventoryQueueReview } from "./InventoryQueueReview"
 import { useLanguage } from "../i18n/useLanguage"
 
@@ -64,31 +65,49 @@ const ACTIVITY_QUERY = `
   limit 100
 `
 
-const activityDateFormatter = new Intl.DateTimeFormat(
-  undefined,
-  {
-    dateStyle: "medium",
-    timeStyle: "short",
-  },
-)
-
-function formatActivityDate(value: string): string {
+function formatActivityDate(value: string, language: "en" | "fr"): string {
   const date = new Date(value)
 
   return Number.isNaN(date.getTime())
     ? value
-    : activityDateFormatter.format(date)
+    : new Intl.DateTimeFormat(language === "fr" ? "fr-FR" : "en-US", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }).format(date)
 }
 
-function activityMovement(item: InventoryActivityItem): string {
+function activityMovement(
+  item: InventoryActivityItem,
+  t: (key: string, values?: Record<string, string>) => string,
+): string {
   switch (item.operation_type) {
     case "ADD":
-      return `to ${item.destinationLabel ?? "an unknown location"}`
+      return t("to {location}", {
+        location: item.destinationLabel ?? t("an unknown location"),
+      })
     case "MOVE":
-      return `from ${item.sourceLabel ?? "an unknown location"} to ${item.destinationLabel ?? "an unknown location"}`
+      return t("from {source} to {destination}", {
+        source: item.sourceLabel ?? t("an unknown location"),
+        destination: item.destinationLabel ?? t("an unknown location"),
+      })
     case "REMOVE":
-      return `from ${item.sourceLabel ?? "an unknown location"}`
+      return t("from {location}", {
+        location: item.sourceLabel ?? t("an unknown location"),
+      })
   }
+}
+
+function activityWineMeta(
+  item: InventoryActivityItem,
+  t: (key: string) => string,
+): string {
+  return [
+    item.vintage ?? "NV",
+    item.color ? t(item.color.trim().toLowerCase()) : null,
+    item.format_ml ? formatWineVolume(item.format_ml) : null,
+  ]
+    .filter((value): value is string | number => value !== null)
+    .join(" · ")
 }
 
 export function ActivityView({
@@ -97,7 +116,7 @@ export function ActivityView({
   isOnline,
   onOpenWine,
 }: ActivityViewProps) {
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
   const {
     data: activityRows,
     error,
@@ -279,32 +298,32 @@ export function ActivityView({
                 ) : (
                   <strong>{item.wineLabel}</strong>
                 )}
-                <span>{item.wineMeta}</span>
+                <span>{activityWineMeta(item, t)}</span>
               </div>
 
               <span
                 className={`activity-status activity-status--${item.statusTone}`}
               >
-                {item.statusLabel}
+                {t(item.statusLabel)}
               </span>
             </header>
 
             <p className="activity-card__movement">
               <strong>
-                {item.actionLabel} {item.quantityLabel}
+                {t(item.actionLabel)} {item.quantity} {t(item.quantity === 1 ? "bottle" : "bottles")}
               </strong>{" "}
-              {activityMovement(item)}
+              {activityMovement(item, t)}
             </p>
 
             <p className="activity-card__meta">
               <time dateTime={item.created_at_client}>
-                {formatActivityDate(item.created_at_client)}
+                {formatActivityDate(item.created_at_client, language)}
               </time>
               <span aria-hidden="true"> · </span>
-              {item.device_name ?? "Unknown device"}
+              {item.device_name ?? t("Unknown device")}
               {item.reasonLabel ? (
                 <>
-                  <span aria-hidden="true"> · </span>{t("Reason:")}{item.reasonLabel}
+                  <span aria-hidden="true"> · </span>{t("Reason:")}{" "}{t(item.reasonLabel)}
                 </>
               ) : null}
             </p>

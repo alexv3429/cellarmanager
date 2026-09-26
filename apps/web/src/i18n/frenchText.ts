@@ -337,7 +337,7 @@ export const frenchText: Readonly<Record<string, string>> = {
   "Select": "Sélectionner",
   "Settings": "Paramètres",
   "Sign out": "Se déconnecter",
-  "Sparkling": "Effervescent",
+  "Sparkling": "Mousseux",
   "Stock": "Stock",
   "Sweet": "Doux",
   "Sweetness": "Sucrosité",
