@@ -12,7 +12,7 @@ crosses a milestone boundary.
 | `v0.3` | A cellar can live safely in CellarManager through daily manual use or guarded CSV import | Released (`v0.3.0`) |
 | `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable evidence | Released (`v0.4.0`) |
 | `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | Released (`v0.5.0`) |
-| `v0.6` | The app is usable in English or French, and adding or identifying wine requires dramatically less typing | In progress (0.6.1–0.6.3 complete; 0.6.4 in progress) |
+| `v0.6` | The app is usable in English or French, and adding or identifying wine requires dramatically less typing | In progress (0.6.1–0.6.4 complete; 0.6.5 in progress) |
 | `v0.7` | CellarManager explains what happened to the cellar and what the collection means over time | Planned |
 | `v1.0` | A self-host can install, trust, upgrade, recover, and maintain CellarManager for years | Planned |
 
@@ -420,8 +420,8 @@ and [ADR 005](adr/005-capture-assisted-wine-entry.md).
 
 | Step | Scope |
 |---|---|
-| 0.6.4 | Capture architecture extending the v0.4 enrichment boundary — in progress |
-| 0.6.5 | Image/storage security model |
+| 0.6.4 | Capture architecture extending the v0.4 enrichment boundary — complete |
+| 0.6.5 | Image/storage security model — in progress |
 | 0.6.6 | Camera and photo upload |
 | 0.6.7 | Image preprocessing |
 | 0.6.8 | OCR |
@@ -435,6 +435,18 @@ and [ADR 005](adr/005-capture-assisted-wine-entry.md).
 | 0.6.16 | Restore useful archived v0.1 enrichment identifiers/data |
 | 0.6.17 | Accuracy and privacy acceptance |
 | 0.6.18 | v0.6 release |
+
+Step 0.6.5 selects a private, temporary Supabase Storage design before the app
+uploads user images. It defines live Owner authorization, per-capture object
+scoping, file validation and quotas, metadata removal, external-recognizer
+gates, deletion, and hard expiry. Capture assets and in-progress OCR data stay
+outside PowerSync and are removed when the review ends or expires. No public
+image URLs, client service credentials, permanent cellar photo library, or
+provider transmission without a separate rights/privacy approval are allowed.
+See [`capture-storage-security.md`](capture-storage-security.md) and
+[ADR 006](adr/006-capture-image-storage-security.md). This is a design step;
+bucket creation, migrations, upload behavior, and provider integration are not
+part of 0.6.5.
 
 ## v0.7 — History, purchases, value, and insights
 

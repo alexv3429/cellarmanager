@@ -95,9 +95,13 @@ for 0.6.15; this step defines their place in the architecture only.
   A provider must pass the existing source, licence, retention, and rights
   review before receiving a user's image or supplying persisted claims.
 - Image and extraction data are private to the active household and purpose-
-  limited. They are not public, copied into PowerSync wine facts, or used to
-  train a model. Exact storage, access, retention, deletion, upload limits, and
-  EXIF handling are decided in 0.6.5 before upload is implemented.
+  limited. Access to the original asset is limited to its initiating Owner and
+  the authorized processing service; other household members do not get image
+  access by implication. They are not public, copied into PowerSync wine facts,
+  or used to train a model. Storage, access, retention, deletion, upload limits,
+  and EXIF handling are defined in
+  [`capture-storage-security.md`](capture-storage-security.md) before upload is
+  implemented.
 - The browser never receives provider credentials. External requests omit
   household, account, wine, and inventory identifiers unless a later reviewed
   contract demonstrates a strict need; no such need is established here.
@@ -109,7 +113,7 @@ for 0.6.15; this step defines their place in the architecture only.
 
 | Step | Work enabled by this architecture |
 |---|---|
-| 0.6.5 | Decide image/storage threat model, access controls, retention/deletion, upload limits, metadata handling, and provider-data boundaries |
+| 0.6.5 | Decide image/storage threat model, access controls, retention/deletion, upload limits, metadata handling, and provider-data boundaries — see [capture storage security](capture-storage-security.md) and [ADR 006](adr/006-capture-image-storage-security.md) |
 | 0.6.6 | Owner-facing mobile camera and photo selection; no recognition dependency |
 | 0.6.7 | Safe orientation, crop/resize, and image preprocessing |
 | 0.6.8–0.6.9 | OCR and structured field extraction through a reviewed adapter |
