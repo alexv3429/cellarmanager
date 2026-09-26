@@ -20,6 +20,7 @@ import {
   type PairingVerdict,
 } from "../data/winePairing"
 import { Notice } from "./Notice"
+import { useLanguage } from "../i18n/useLanguage"
 
 interface PairingViewProps {
   householdId: string
@@ -229,6 +230,7 @@ export function PairingView({
   isOnline,
   onOpenWine,
 }: PairingViewProps) {
+  const { t } = useLanguage()
   const [dishes, setDishes] = useState<PairingDishProfile[]>([])
   const [selectedDishKey, setSelectedDishKey] = useState("")
   const [dishAttributes, setDishAttributes] =
@@ -400,7 +402,7 @@ export function PairingView({
               : dish,
           ),
         )
-        setMessage("Your color and style defaults were saved for this dish.")
+        setMessage(t("Your color and style defaults were saved for this dish."))
       }
 
       setResult(
@@ -450,7 +452,7 @@ export function PairingView({
       setPreferredStyle(null)
       setRememberPreference(false)
       setResult(null)
-      setMessage("Your saved defaults were removed.")
+      setMessage(t("Your saved defaults were removed."))
     } catch (caughtError: unknown) {
       setError(
         caughtError instanceof Error
@@ -489,7 +491,7 @@ export function PairingView({
           : current,
       )
       setMessage(
-        "Your feedback was saved and will refine future results for this dish.",
+        t("Your feedback was saved and will refine future results for this dish."),
       )
     } catch (caughtError: unknown) {
       setError(
@@ -506,28 +508,22 @@ export function PairingView({
     <main className="pairing-view">
       <header className="view-heading">
         <div>
-          <h1>Food pairing</h1>
-          <p>
-            Describe tonight&apos;s dish and rank only bottles currently in your
-            cellar. The result is structural advice, not a guarantee.
-          </p>
+          <h1>{t("Food pairing")}</h1>
+          <p>{t("Describe tonight's dish and rank only bottles currently in your cellar. The result is structural advice, not a guarantee.")}</p>
         </div>
       </header>
 
       {!isOnline ? (
-        <Notice tone="warning">
-          Pairing advice requires a connection. Inventory remains available
-          offline.
-        </Notice>
+        <Notice tone="warning">{t("Pairing advice requires a connection. Inventory remains available offline.")}</Notice>
       ) : null}
 
       {isLoading ? (
-        <Notice role="status">Loading reviewed dish profiles…</Notice>
+        <Notice role="status">{t("Loading reviewed dish profiles…")}</Notice>
       ) : null}
 
       {error ? (
         <Notice role="alert" tone="error">
-          {error}
+          {t(error)}
         </Notice>
       ) : null}
 
@@ -538,10 +534,7 @@ export function PairingView({
       ) : null}
 
       {!isLoading && isOnline && !error && dishes.length === 0 ? (
-        <Notice tone="warning">
-          Pairing knowledge is not active yet. Try again after the deployment
-          finishes preparing it.
-        </Notice>
+        <Notice tone="warning">{t("Pairing knowledge is not active yet. Try again after the deployment finishes preparing it.")}</Notice>
       ) : null}
 
       {selectedDish && dishAttributes ? (
@@ -551,17 +544,15 @@ export function PairingView({
         >
           <div className="pairing-builder__main">
             <div className="pairing-builder__dish">
-              <label>
-                What are you serving?
-                <select
+              <label>{t("What are you serving?")}<select
                   onChange={(event) => chooseDish(event.target.value)}
                   value={selectedDishKey}
                 >
                   {groupedDishes.map((group) => (
-                    <optgroup key={group.label} label={group.label}>
+                    <optgroup key={group.label} label={t(group.label)}>
                       {group.dishes.map((dish) => (
                         <option key={dish.key} value={dish.key}>
-                          {dish.name}
+                          {t(dish.name)}
                         </option>
                       ))}
                     </optgroup>
@@ -569,20 +560,16 @@ export function PairingView({
                 </select>
               </label>
               <p className="pairing-builder__description">
-                {selectedDish.description}
+                {t(selectedDish.description)}
               </p>
             </div>
 
             <fieldset className="pairing-builder__preferences">
-              <legend>
-                Wine preferences <span>(optional)</span>
+              <legend>{t("Wine preferences")}<span>{t("(optional)")}</span>
               </legend>
-              <p>
-                Leave these open to consider every compatible bottle in your
-                cellar.
-              </p>
+              <p>{t("Leave these open to consider every compatible bottle in your cellar.")}</p>
               <div className="pairing-builder__colors">
-                <span>Wine colors</span>
+                <span>{t("Wine colors")}</span>
                 <div>
                   {COLOR_OPTIONS.map((option) => (
                     <label key={option.value}>
@@ -591,14 +578,12 @@ export function PairingView({
                         onChange={() => toggleColor(option.value)}
                         type="checkbox"
                       />
-                      {option.label}
+                      {t(option.label)}
                     </label>
                   ))}
                 </div>
               </div>
-              <label className="pairing-builder__style">
-                Preferred style
-                <select
+              <label className="pairing-builder__style">{t("Preferred style")}<select
                   onChange={(event) => {
                     setPreferredStyle(
                       (event.target.value || null) as PairingStyle | null,
@@ -607,10 +592,10 @@ export function PairingView({
                   }}
                   value={preferredStyle ?? ""}
                 >
-                  <option value="">No style preference</option>
+                  <option value="">{t("No style preference")}</option>
                   {STYLE_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
-                      {option.label} — {option.description}
+                      {t(option.label)} — {t(option.description)}
                     </option>
                   ))}
                 </select>
@@ -623,20 +608,17 @@ export function PairingView({
             key={selectedDish.key}
             open={selectedDish.key === "custom-dish" ? true : undefined}
           >
-            <summary>Adjust ingredients and preparation</summary>
-            <p>
-              The selected dish is only a starting point. Change what matters
-              for your actual recipe.
-            </p>
+            <summary>{t("Adjust ingredients and preparation")}</summary>
+            <p>{t("The selected dish is only a starting point. Change what matters for your actual recipe.")}</p>
             <div className="pairing-builder__sliders">
               {PAIRING_ATTRIBUTE_KEYS.map((key) => (
                 <label key={key}>
                   <span>
-                    <strong>{ATTRIBUTE_LABELS[key].label}</strong>
-                    <small>{ATTRIBUTE_LABELS[key].description}</small>
+                    <strong>{t(ATTRIBUTE_LABELS[key].label)}</strong>
+                    <small>{t(ATTRIBUTE_LABELS[key].description)}</small>
                   </span>
                   <input
-                    aria-label={ATTRIBUTE_LABELS[key].label}
+                    aria-label={t(ATTRIBUTE_LABELS[key].label)}
                     max="5"
                     min="0"
                     onChange={(event) =>
@@ -660,9 +642,7 @@ export function PairingView({
                   setRememberPreference(event.target.checked)
                 }
                 type="checkbox"
-              />
-              Remember color and style for this dish
-            </label>
+              />{t("Remember color and style for this dish")}</label>
             <div>
               <button
                 disabled={!isOnline || isSearching}
@@ -675,9 +655,7 @@ export function PairingView({
                   disabled={!isOnline || isSearching}
                   onClick={() => void forgetPreference()}
                   type="button"
-                >
-                  Forget saved defaults
-                </button>
+                >{t("Forget saved defaults")}</button>
               ) : null}
             </div>
           </div>
@@ -691,13 +669,10 @@ export function PairingView({
         >
           <div className="wine-detail-section-heading">
             <div>
-              <h2 id="pairing-results-heading">
-                Bottles for {result.dish.name}
+              <h2 id="pairing-results-heading">{t("Bottles for")}{result.dish.name}
               </h2>
               <p>
-                {result.assessedCandidates} of {result.stockWines} in-stock
-                wines had a compatible reviewed structure
-                {result.unavailableProfiles > 0
+                {result.assessedCandidates}{t(" ")}{t("of")}{t(" ")}{result.stockWines}{t("in-stock wines had a compatible reviewed structure")}{result.unavailableProfiles > 0
                   ? `; ${result.unavailableProfiles} could not yet be assessed`
                   : ""}
                 .
@@ -706,28 +681,20 @@ export function PairingView({
           </div>
 
           {result.status === "preparing" ? (
-            <Notice role="status">
-              Wine profiles are still being prepared. Try again shortly.
-            </Notice>
+            <Notice role="status">{t("Wine profiles are still being prepared. Try again shortly.")}</Notice>
           ) : null}
 
           {result.status === "not-assessed" ? (
-            <Notice tone="warning">
-              No in-stock wine has a reviewed pairing profile yet. Nothing was
-              guessed from color alone.
-            </Notice>
+            <Notice tone="warning">{t("No in-stock wine has a reviewed pairing profile yet. Nothing was guessed from color alone.")}</Notice>
           ) : null}
 
           {result.status === "no-suitable-wine" ? (
-            <Notice tone="warning">
-              No assessed bottle clears the safety threshold for this dish and
-              your current preferences.
-            </Notice>
+            <Notice tone="warning">{t("No assessed bottle clears the safety threshold for this dish and your current preferences.")}</Notice>
           ) : null}
 
           {result.bestRejected && result.suggestions.length === 0 ? (
             <details className="pairing-results__rejected">
-              <summary>Why the closest bottle was rejected</summary>
+              <summary>{t("Why the closest bottle was rejected")}</summary>
               <strong>
                 {result.bestRejected.producer} — {result.bestRejected.cuvee}{" "}
                 {result.bestRejected.vintage ?? "NV"}
@@ -770,14 +737,14 @@ export function PairingView({
                       </p>
                     </div>
                     <div className="pairing-result-card__status">
-                      <strong>{maturityLabel(suggestion.maturityState)}</strong>
-                      <span>{suggestion.confidenceLabel} confidence</span>
+                      <strong>{t(maturityLabel(suggestion.maturityState))}</strong>
+                      <span>{suggestion.confidenceLabel}{t(" ")}{t("confidence")}</span>
                     </div>
                   </header>
 
                   <div className="pairing-result-card__body">
                     <div>
-                      <h4>Why it works</h4>
+                      <h4>{t("Why it works")}</h4>
                       <ul>
                         {suggestion.reasons.map((reason) => (
                           <li key={reason}>{reason}</li>
@@ -786,7 +753,7 @@ export function PairingView({
                     </div>
                     {suggestion.cautions.length > 0 ? (
                       <div>
-                        <h4>Keep in mind</h4>
+                        <h4>{t("Keep in mind")}</h4>
                         <ul>
                           {suggestion.cautions.map((caution) => (
                             <li key={caution}>{caution}</li>
@@ -797,7 +764,7 @@ export function PairingView({
                   </div>
 
                   <div className="pairing-result-card__locations">
-                    <strong>{suggestion.quantity} bottle(s) in stock</strong>
+                    <strong>{suggestion.quantity}{t(" ")}{t("bottle(s) in stock")}</strong>
                     <ul>
                       {suggestion.locations.map((location) => (
                         <li
@@ -811,7 +778,7 @@ export function PairingView({
                   </div>
 
                   <div className="pairing-result-card__feedback">
-                    <span>Would this work for you?</span>
+                    <span>{t("Would this work for you?")}</span>
                     <div>
                       {(
                         ["useful", "questionable", "wrong"] as const
@@ -835,7 +802,7 @@ export function PairingView({
                           {busyFeedback ===
                           `${suggestion.projectionId}:${verdict}`
                             ? "Saving…"
-                            : feedbackLabel(verdict)}
+                            : t(feedbackLabel(verdict))}
                         </button>
                       ))}
                     </div>

@@ -50,6 +50,7 @@ import { Notice } from "./Notice"
 import { ProfileReviewInbox } from "./ProfileReviewInbox"
 import { ProfileGovernanceInbox } from "./ProfileGovernanceInbox"
 import { WineDuplicateReview } from "./WineDuplicateReview"
+import { useLanguage } from "../i18n/useLanguage"
 
 interface CatalogWineRow {
   id: string
@@ -123,6 +124,32 @@ function curationCategoryLabel(item: CatalogCurationItem): string {
   }
 }
 
+function curationTitle(item: CatalogCurationItem, t: (key: string) => string): string {
+  const title = item.title
+  if (item.category === "household-fact") {
+    const separator = title.indexOf(": ")
+    return separator < 0 ? title : `${t(title.slice(0, separator))}: ${title.slice(separator + 2)}`
+  }
+
+  const prefixByGap: Partial<Record<CatalogCurationItem["gap"], string>> = {
+    "profile-place": "Add place profile",
+    "profile-vintage": "Add vintage profile",
+    "profile-producer": "Add producer profile",
+    "profile-cuvee": "Add cuvée profile",
+    "wine-missing-vintage": "Add a date anchor",
+    "wine-identity-conflict": "Check identity",
+  }
+  const prefix = prefixByGap[item.gap]
+  if (!prefix || !title.startsWith(`${prefix}: `)) return title
+  const remainder = title.slice(prefix.length + 2)
+  const colorSuffix = remainder.match(/ · (red|white|rosé|rose|sparkling|sweet|fortified)$/i)
+  if (colorSuffix) {
+    const color = colorSuffix[1]
+    return `${t(prefix)} ${remainder.slice(0, -colorSuffix[0].length)} · ${t(color[0].toUpperCase() + color.slice(1).toLowerCase())}`
+  }
+  return `${t(prefix)} ${remainder}`
+}
+
 const CATALOG_QUERY = `
   select
     w.id,
@@ -191,6 +218,7 @@ export function CatalogView({
   isOnline,
   onOpenWine,
 }: CatalogViewProps) {
+  const { t } = useLanguage()
   const {
     data: wines,
     error,
@@ -815,20 +843,15 @@ export function CatalogView({
 
   return (
     <main>
-      <h1>Wine catalog</h1>
-      <p>
-        All synchronized wines are shown here, including wines
-        with no bottles currently in stock.
-      </p>
+      <h1>{t("Wine catalog")}</h1>
+      <p>{t("All synchronized wines are shown here, including wines with no bottles currently in stock.")}</p>
 
       {!isOnline ? (
-        <Notice tone="warning">
-          Offline · catalog edits are disabled.
-        </Notice>
+        <Notice tone="warning">{t("Offline · catalog edits are disabled.")}</Notice>
       ) : null}
 
       {isLoading ? (
-        <Notice>Opening local catalog…</Notice>
+        <Notice>{t("Opening local catalog…")}</Notice>
       ) : null}
 
       {error ? (
@@ -850,23 +873,19 @@ export function CatalogView({
       ) : null}
 
       <section aria-labelledby="catalog-filters-heading">
-        <h2 id="catalog-filters-heading">Find wines</h2>
+        <h2 id="catalog-filters-heading">{t("Find wines")}</h2>
 
-        <label>
-          Search
-          <input
+        <label>{t("Search")}<input
             onChange={(event) =>
               setSearch(event.target.value)
             }
-            placeholder="Producer, cuvée, appellation, area, vintage…"
+            placeholder={t("Producer, cuvée, appellation, area, vintage…")}
             type="search"
             value={search}
           />
         </label>
 
-        <label>
-          Stock
-          <select
+        <label>{t("Stock")}<select
             onChange={(event) =>
               setStockFilter(
                 event.target.value as StockFilter,
@@ -874,23 +893,21 @@ export function CatalogView({
             }
             value={stockFilter}
           >
-            <option value="ALL">All wines</option>
-            <option value="IN_STOCK">In stock</option>
-            <option value="ZERO_STOCK">Zero stock</option>
+            <option value="ALL">{t("All wines")}</option>
+            <option value="IN_STOCK">{t("In stock")}</option>
+            <option value="ZERO_STOCK">{t("Zero stock")}</option>
           </select>
         </label>
 
-        <label>
-          Vintage
-          <select
+        <label>{t("Vintage")}<select
             onChange={(event) =>
               setVintageFilter(event.target.value)
             }
             value={vintageFilter}
           >
-            <option value="ALL">All vintages</option>
+            <option value="ALL">{t("All vintages")}</option>
             {vintageOptions.hasNv ? (
-              <option value="NV">NV</option>
+              <option value="NV">{t("NV")}</option>
             ) : null}
 
             {vintageOptions.vintages.map((vintage) => (
@@ -904,9 +921,7 @@ export function CatalogView({
           </select>
         </label>
 
-        <label>
-          When to drink
-          <select
+        <label>{t("When to drink")}<select
             disabled={!isOnline || maturityLoading}
             onChange={(event) =>
               setMaturityFilter(
@@ -915,32 +930,26 @@ export function CatalogView({
             }
             value={maturityFilter}
           >
-            <option value="ALL">All maturity states</option>
-            <option value="DRINK_SOON">Drink sooner</option>
-            <option value="READY">Assess or ready</option>
-            <option value="HOLD">Keep aging</option>
-            <option value="UNASSESSED">Not assessed</option>
+            <option value="ALL">{t("All maturity states")}</option>
+            <option value="DRINK_SOON">{t("Drink sooner")}</option>
+            <option value="READY">{t("Assess or ready")}</option>
+            <option value="HOLD">{t("Keep aging")}</option>
+            <option value="UNASSESSED">{t("Not assessed")}</option>
           </select>
         </label>
 
         <details className="catalog-advanced-filters">
           <summary>
             <span>
-              <strong className="catalog-advanced-filters__closed-label">
-                Show advanced filters
-              </strong>
-              <strong className="catalog-advanced-filters__open-label">
-                Hide advanced filters
-              </strong>
-              <small>
-                Color, area, country, sweetness, facts, and profile depth
-                {colorFilter !== "ALL" ||
+              <strong className="catalog-advanced-filters__closed-label">{t("Show advanced filters")}</strong>
+              <strong className="catalog-advanced-filters__open-label">{t("Hide advanced filters")}</strong>
+              <small>{t("Color, area, country, sweetness, facts, and profile depth")}{colorFilter !== "ALL" ||
                 areaFilter !== "ALL" ||
                 countryFilter !== "ALL" ||
                 sweetnessFilter !== "ALL" ||
                 factFilter !== "ALL" ||
                 profileFilter !== "ALL"
-                  ? " · filters active"
+                  ? t(" · filters active")
                   : ""}
               </small>
             </span>
@@ -953,13 +962,11 @@ export function CatalogView({
           </summary>
 
           <div className="catalog-advanced-filters__grid">
-            <label>
-              Color
-              <select
+            <label>{t("Color")}<select
                 onChange={(event) => setColorFilter(event.target.value)}
                 value={colorFilter}
               >
-                <option value="ALL">All colors</option>
+                <option value="ALL">{t("All colors")}</option>
                 {colorSuggestions.map((color) => (
                   <option key={color} value={color}>
                     {color}
@@ -968,13 +975,11 @@ export function CatalogView({
               </select>
             </label>
 
-            <label>
-              Area
-              <select
+            <label>{t("Area")}<select
                 onChange={(event) => setAreaFilter(event.target.value)}
                 value={areaFilter}
               >
-                <option value="ALL">All areas</option>
+                <option value="ALL">{t("All areas")}</option>
                 {areaSuggestions.map((area) => (
                   <option key={area} value={area}>
                     {area}
@@ -983,13 +988,11 @@ export function CatalogView({
               </select>
             </label>
 
-            <label>
-              Country
-              <select
+            <label>{t("Country")}<select
                 onChange={(event) => setCountryFilter(event.target.value)}
                 value={countryFilter}
               >
-                <option value="ALL">All countries</option>
+                <option value="ALL">{t("All countries")}</option>
                 {countrySuggestions.map((country) => (
                   <option key={country} value={country}>
                     {country}
@@ -998,50 +1001,44 @@ export function CatalogView({
               </select>
             </label>
 
-            <label>
-              Sweetness
-              <select
+            <label>{t("Sweetness")}<select
                 onChange={(event) => setSweetnessFilter(event.target.value)}
                 value={sweetnessFilter}
               >
-                <option value="ALL">All sweetness levels</option>
-                <option value="bone-dry">Bone-dry</option>
-                <option value="dry">Dry</option>
-                <option value="off-dry">Off-dry</option>
-                <option value="medium-sweet">Medium-sweet</option>
-                <option value="sweet">Sweet</option>
+                <option value="ALL">{t("All sweetness levels")}</option>
+                <option value="bone-dry">{t("Bone-dry")}</option>
+                <option value="dry">{t("Dry")}</option>
+                <option value="off-dry">{t("Off-dry")}</option>
+                <option value="medium-sweet">{t("Medium-sweet")}</option>
+                <option value="sweet">{t("Sweet")}</option>
               </select>
             </label>
 
-            <label>
-              Core facts
-              <select
+            <label>{t("Core facts")}<select
                 onChange={(event) =>
                   setFactFilter(event.target.value as FactFilter)
                 }
                 value={factFilter}
               >
-                <option value="ALL">All fact coverage</option>
-                <option value="complete">Country, grapes, sweetness set</option>
-                <option value="partial">Some core facts set</option>
-                <option value="missing">No core facts set</option>
+                <option value="ALL">{t("All fact coverage")}</option>
+                <option value="complete">{t("Country, grapes, sweetness set")}</option>
+                <option value="partial">{t("Some core facts set")}</option>
+                <option value="missing">{t("No core facts set")}</option>
               </select>
             </label>
 
-            <label>
-              Profile depth
-              <select
+            <label>{t("Profile depth")}<select
                 disabled={!isOnline || maturityLoading}
                 onChange={(event) =>
                   setProfileFilter(event.target.value as ProfileFilter)
                 }
                 value={profileFilter}
               >
-                <option value="ALL">All profile coverage</option>
-                <option value="full">Vintage + producer + cuvée</option>
-                <option value="needs-refinement">Needs library refinement</option>
-                <option value="unavailable">Cannot assess yet</option>
-                <option value="pending">Assessment pending</option>
+                <option value="ALL">{t("All profile coverage")}</option>
+                <option value="full">{t("Vintage + producer + cuvée")}</option>
+                <option value="needs-refinement">{t("Needs library refinement")}</option>
+                <option value="unavailable">{t("Cannot assess yet")}</option>
+                <option value="pending">{t("Assessment pending")}</option>
               </select>
             </label>
           </div>
@@ -1051,14 +1048,11 @@ export function CatalogView({
           disabled={!hasFilters}
           onClick={clearFilters}
           type="button"
-        >
-          Clear filters
-        </button>
+        >{t("Clear filters")}</button>
       </section>
 
       {maturityError ? (
-        <Notice role="alert" tone="warning">
-          Maturity guidance is temporarily unavailable: {maturityError}
+        <Notice role="alert" tone="warning">{t("Maturity guidance is temporarily unavailable:")}{maturityError}
         </Notice>
       ) : null}
 
@@ -1068,60 +1062,45 @@ export function CatalogView({
       >
         <div className="catalog-coverage__heading">
           <div>
-            <h2 id="catalog-coverage-heading">Knowledge coverage</h2>
-            <p>
-              Separate household facts, cellar-data issues, and missing shared
-              profiles. Low confidence alone does not create a curation task.
-            </p>
+            <h2 id="catalog-coverage-heading">{t("Knowledge coverage")}</h2>
+            <p>{t("Separate household facts, cellar-data issues, and missing shared profiles. Low confidence alone does not create a curation task.")}</p>
           </div>
         </div>
 
         <div className="catalog-coverage__summary">
           <div>
             <strong>{coverageSummary.completeFacts}</strong>
-            <span>of {catalogWines.length} with core facts</span>
-            <small>Country, grapes, and sweetness</small>
+            <span>{t("of")}{t(" ")}{catalogWines.length}{t(" ")}{t("with core facts")}</span>
+            <small>{t("Country, grapes, and sweetness")}</small>
           </div>
           <div>
             <strong>{coverageSummary.fullProfiles}</strong>
-            <span>full-depth profiles</span>
-            <small>Vintage, producer, and cuvée layers</small>
+            <span>{t("full-depth profiles")}</span>
+            <small>{t("Vintage, producer, and cuvée layers")}</small>
           </div>
           <div>
             <strong>{coverageSummary.profilesToRefine}</strong>
-            <span>assessed but refinable</span>
-            <small>Broader safe guidance remains active</small>
+            <span>{t("assessed but refinable")}</span>
+            <small>{t("Broader safe guidance remains active")}</small>
           </div>
           <div>
             <strong>{coverageSummary.unavailableProfiles}</strong>
-            <span>cannot be assessed yet</span>
-            <small>Identity, date, or place profile needed</small>
+            <span>{t("cannot be assessed yet")}</span>
+            <small>{t("Identity, date, or place profile needed")}</small>
           </div>
         </div>
 
         {!isOnline ? (
-          <p className="catalog-coverage__offline">
-            Core fact coverage remains available offline. Reconnect to refresh
-            profile coverage and the curation queue.
-          </p>
+          <p className="catalog-coverage__offline">{t("Core fact coverage remains available offline. Reconnect to refresh profile coverage and the curation queue.")}</p>
         ) : maturityLoading ? (
-          <p className="catalog-coverage__offline">
-            Checking the reviewed profile layers…
-          </p>
+          <p className="catalog-coverage__offline">{t("Checking the reviewed profile layers…")}</p>
         ) : (
           <details className="catalog-curation-queue">
             <summary>
               <span>
-                <strong className="catalog-curation-queue__closed-label">
-                  Show prioritized curation queue · {curationQueue.length} items
-                </strong>
-                <strong className="catalog-curation-queue__open-label">
-                  Hide prioritized curation queue · {curationQueue.length} items
-                </strong>
-                <small>
-                  Missing facts, shared profiles, and cellar-data issues ranked
-                  by impact
-                </small>
+                <strong className="catalog-curation-queue__closed-label">{t("Show prioritized curation queue ·")}{curationQueue.length}{t("items")}</strong>
+                <strong className="catalog-curation-queue__open-label">{t("Hide prioritized curation queue ·")}{curationQueue.length}{t("items")}</strong>
+                <small>{t("Missing facts, shared profiles, and cellar-data issues ranked by impact")}</small>
               </span>
               <span
                 aria-hidden="true"
@@ -1130,13 +1109,10 @@ export function CatalogView({
                 ▾
               </span>
             </summary>
-            <p>
-              Ranked by bottles and wines affected. Research uses approved
-              sources and remains an inactive, attributable draft until review.
-            </p>
+            <p>{t("Ranked by bottles and wines affected. Research uses approved sources and remains an inactive, attributable draft until review.")}</p>
 
             {curationQueue.length === 0 ? (
-              <p>No fact, profile, or cellar-data gaps were detected.</p>
+              <p>{t("No fact, profile, or cellar-data gaps were detected.")}</p>
             ) : (
               <ol>
                 {curationQueue.slice(0, 12).map((item) => {
@@ -1152,14 +1128,14 @@ export function CatalogView({
                     <li key={item.id}>
                     <div>
                       <span className="catalog-curation-queue__category">
-                        {curationCategoryLabel(item)}
+                        {t(curationCategoryLabel(item))}
                       </span>
-                      <strong>{item.title}</strong>
-                      <span>{item.detail}</span>
+                      <strong>{curationTitle(item, t)}</strong>
+                      <span>{t(item.detail)}</span>
                       <small>
-                        {item.wineCount} {item.wineCount === 1 ? "wine" : "wines"}
+                        {item.wineCount} {t(item.wineCount === 1 ? "wine" : "wines")}
                         {" · "}
-                        {item.bottleCount} {item.bottleCount === 1 ? "bottle" : "bottles"}
+                        {item.bottleCount} {t(item.bottleCount === 1 ? "bottle" : "bottles")}
                       </small>
                     </div>
                     <div className="catalog-curation-queue__actions">
@@ -1170,8 +1146,8 @@ export function CatalogView({
                         type="button"
                       >
                         {activeCurationItem?.id === item.id
-                          ? "Shown below"
-                          : "Show wines"}
+                          ? t("Shown below")
+                          : t("Show wines")}
                       </button>
                       {item.category !== "wine-data" ? (
                         <button
@@ -1190,8 +1166,8 @@ export function CatalogView({
                           type="button"
                         >
                           {requestingCurationItemId === item.id
-                            ? "Requesting…"
-                            : researchAction.label}
+                            ? t("Requesting…")
+                            : t(researchAction.label)}
                         </button>
                       ) : null}
                     </div>
@@ -1202,8 +1178,7 @@ export function CatalogView({
             )}
 
             {curationQueue.length > 12 ? (
-              <p>
-                Showing the 12 highest-impact items of {curationQueue.length}.
+              <p>{t("Showing the 12 highest-impact items of")}{curationQueue.length}.
               </p>
             ) : null}
           </details>
@@ -1265,41 +1240,40 @@ export function CatalogView({
 
       <p className="catalog-results-summary" ref={catalogResultsRef}>
         {activeCurationItem ? (
-          <strong>Queue filter: {activeCurationItem.title} · </strong>
-        ) : null}
-        Showing {visibleWines.length} of {catalogWines.length} wines
-        {" · "}
-        {visibleBottles} of {totalBottles} bottles
-        {isOnline && !maturityLoading && !maturityError
-          ? ` · ${maturityOverview.filter((item) => item.state !== null).length} assessed · ${maturityOverview.filter((item) => item.demandStatus === "needs-review").length} need input or review`
+          <strong>{t("Queue filter:")}{t(" ")}{activeCurationItem.title} · </strong>
+        ) : null}{t("catalog.resultsSummary", {
+          shownWines: String(visibleWines.length),
+          totalWines: String(catalogWines.length),
+          shownBottles: String(visibleBottles),
+          totalBottles: String(totalBottles),
+        })}{isOnline && !maturityLoading && !maturityError
+          ? t(" · {value1} assessed · {value2} need input or review", { value1: String(maturityOverview.filter((item) => item.state !== null).length), value2: String(maturityOverview.filter((item) => item.demandStatus === "needs-review").length) })
           : ""}
       </p>
 
       {!isLoading && catalogWines.length === 0 ? (
-        <p>No synchronized wines found.</p>
+        <p>{t("No synchronized wines found.")}</p>
       ) : null}
 
       {!isLoading &&
       catalogWines.length > 0 &&
       visibleWines.length === 0 ? (
-        <p>No wines match the current filters.</p>
+        <p>{t("No wines match the current filters.")}</p>
       ) : null}
 
       <table className="catalog-table">
-        <caption className="visually-hidden">
-          Filtered wine catalog
-        </caption>
+        <caption className="visually-hidden">{t("Filtered wine catalog")}</caption>
         <thead>
           <tr>
-            <th scope="col">Producer</th>
-            <th scope="col">Cuvée</th>
-            <th scope="col">Vintage</th>
-            <th scope="col">Color</th>
-            <th scope="col">Appellation</th>
-            <th scope="col">Area</th>
-            <th scope="col">Format</th>
-            <th scope="col">Current bottles</th>
-            <th scope="col">Actions</th>
+            <th scope="col">{t("Producer")}</th>
+            <th scope="col">{t("Cuvée")}</th>
+            <th scope="col">{t("Vintage")}</th>
+            <th scope="col">{t("Color")}</th>
+            <th scope="col">{t("Appellation")}</th>
+            <th scope="col">{t("Area")}</th>
+            <th scope="col">{t("Format")}</th>
+            <th scope="col">{t("Current bottles")}</th>
+            <th scope="col">{t("Actions")}</th>
           </tr>
         </thead>
 
@@ -1315,7 +1289,7 @@ export function CatalogView({
 
             return (
               <tr key={wine.id}>
-                <td data-label="Producer">
+                <td data-label={t("Producer")}>
                   {isEditing ? (
                     <input
                       aria-label={`Producer for ${wine.producer} ${wine.cuvee}`}
@@ -1333,7 +1307,7 @@ export function CatalogView({
                   )}
                 </td>
 
-                <td data-label="Cuvée">
+                <td data-label={t("Cuvée")}>
                   {isEditing ? (
                     <input
                       aria-label={`Cuvée for ${wine.producer} ${wine.cuvee}`}
@@ -1353,17 +1327,17 @@ export function CatalogView({
                         <span
                           className={`maturity-badge maturity-badge--${maturity.state}`}
                         >
-                          {maturity.stateLabel}
+                          {maturity.stateLabel ? t(maturity.stateLabel) : ""}
                           {maturity.drinkByYear
-                            ? ` · by ${maturity.drinkByYear}`
+                            ? ` · ${t("Suggested drink-by")} ${maturity.drinkByYear}`
                             : ""}
                           {maturity.isPersonalized
-                            ? ` · ${maturityCalibrationLabel(
+                            ? ` · ${t(maturityCalibrationLabel(
                                 maturity.personalYearShift,
-                              ).toLowerCase()} for you`
+                              ))} ${t("for you")}`
                             : ""}
                           {maturity.moveNeeded
-                            ? " · move suggested"
+                            ? ` · ${t("move suggested")}`
                             : ""}
                         </span>
                       ) : maturity?.assessmentReason ? (
@@ -1373,8 +1347,7 @@ export function CatalogView({
                           )}
                         </span>
                       ) : null}
-                      <span className="catalog-wine-coverage">
-                        Core facts {factCoverage.presentCoreFactCount}/3
+                      <span className="catalog-wine-coverage">{t("Core facts")}{t(" ")}{factCoverage.presentCoreFactCount}/3
                         {isOnline && !maturityLoading
                           ? ` · ${profileCoverageLabel(maturity)}`
                           : ""}
@@ -1383,7 +1356,7 @@ export function CatalogView({
                   )}
                 </td>
 
-                <td data-label="Vintage">
+                <td data-label={t("Vintage")}>
                   {isEditing ? (
                     <input
                       aria-label={`Vintage for ${wine.producer} ${wine.cuvee}`}
@@ -1394,7 +1367,7 @@ export function CatalogView({
                           event.target.value,
                         )
                       }
-                      placeholder="NV"
+                      placeholder={t("NV")}
                       value={editVintage}
                     />
                   ) : (
@@ -1402,7 +1375,7 @@ export function CatalogView({
                   )}
                 </td>
 
-                <td data-label="Color">
+                <td data-label={t("Color")}>
                   {isEditing ? (
                     <input
                       aria-label={`Color for ${wine.producer} ${wine.cuvee}`}
@@ -1417,11 +1390,11 @@ export function CatalogView({
                       value={editColor}
                     />
                   ) : (
-                    wine.color
+                    t(wine.color)
                   )}
                 </td>
 
-                <td data-label="Appellation">
+                <td data-label={t("Appellation")}>
                   {isEditing ? (
                     <input
                       aria-label={`Appellation for ${wine.producer} ${wine.cuvee}`}
@@ -1432,7 +1405,7 @@ export function CatalogView({
                           event.target.value,
                         )
                       }
-                      placeholder="Optional"
+                      placeholder={t("Optional")}
                       value={editAppellation}
                     />
                   ) : (
@@ -1440,7 +1413,7 @@ export function CatalogView({
                   )}
                 </td>
 
-                <td data-label="Area">
+                <td data-label={t("Area")}>
                   {isEditing ? (
                     <input
                       aria-label={`Area for ${wine.producer} ${wine.cuvee}`}
@@ -1451,7 +1424,7 @@ export function CatalogView({
                           event.target.value,
                         )
                       }
-                      placeholder="Optional"
+                      placeholder={t("Optional")}
                       value={editArea}
                     />
                   ) : (
@@ -1459,7 +1432,7 @@ export function CatalogView({
                   )}
                 </td>
 
-                <td data-label="Format">
+                <td data-label={t("Format")}>
                   {isEditing ? (
                     <input
                       aria-label={`Format in millilitres for ${wine.producer} ${wine.cuvee}`}
@@ -1481,9 +1454,9 @@ export function CatalogView({
                   )}
                 </td>
 
-                <td data-label="Current bottles">{wine.quantity}</td>
+                <td data-label={t("Current bottles")}>{wine.quantity}</td>
 
-                <td data-label="Actions">
+                <td data-label={t("Actions")}>
                   {isEditing ? (
                     <div className="catalog-table__actions">
                       <button
@@ -1500,9 +1473,7 @@ export function CatalogView({
                         disabled={isSaving}
                         onClick={cancelEditing}
                         type="button"
-                      >
-                        Cancel
-                      </button>
+                      >{t("Cancel")}</button>
                     </div>
                   ) : (
                     <div className="catalog-table__actions">
@@ -1511,9 +1482,7 @@ export function CatalogView({
                           onOpenWine(wine.id)
                         }
                         type="button"
-                      >
-                        View
-                      </button>
+                      >{t("View")}</button>
 
                       <button
                         disabled={
@@ -1529,9 +1498,7 @@ export function CatalogView({
                             : "Reconnect before editing"
                         }
                         type="button"
-                      >
-                        Edit
-                      </button>
+                      >{t("Edit")}</button>
                     </div>
                   )}
                 </td>

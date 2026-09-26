@@ -34,6 +34,7 @@ import {
   type CellarSetupLocationSummary,
 } from "../data/cellarSetupView"
 import { Notice } from "./Notice"
+import { useLanguage } from "../i18n/useLanguage"
 
 interface CellarSetupViewProps {
   householdId: string
@@ -77,14 +78,12 @@ export function CellarSetupView({
   canManageCellarSetup,
   ...props
 }: CellarSetupViewProps & { canManageCellarSetup: boolean }) {
+  const { t } = useLanguage()
   if (!canManageCellarSetup) {
     return (
       <main className="cellar-setup-view">
-        <h1>Cellar setup</h1>
-        <Notice role="status">
-          Only a household Owner can change cellars and locations.
-          You can still add, move, and remove bottles from Inventory.
-        </Notice>
+        <h1>{t("Cellar setup")}</h1>
+        <Notice role="status">{t("Only a household Owner can change cellars and locations. You can still add, move, and remove bottles from Inventory.")}</Notice>
       </main>
     )
   }
@@ -96,6 +95,7 @@ function OwnerCellarSetupView({
   householdId,
   isOnline,
 }: CellarSetupViewProps) {
+  const { t } = useLanguage()
   const { data: cellars, error: cellarsError } =
     useQuery<CellarSetupCellar>(
       CELLARS_QUERY,
@@ -400,20 +400,12 @@ function OwnerCellarSetupView({
   return (
     <main className="cellar-setup-view">
       <div className="cellar-setup-intro">
-        <h1>Cellar setup</h1>
-        <p>
-          Organize the physical places where you store wine.
-          Setup changes synchronize to every device and require a
-          connection; inventory ADD, MOVE, and REMOVE remain
-          local-first.
-        </p>
+        <h1>{t("Cellar setup")}</h1>
+        <p>{t("Organize the physical places where you store wine. Setup changes synchronize to every device and require a connection; inventory ADD, MOVE, and REMOVE remain local-first.")}</p>
       </div>
 
       {!isOnline ? (
-        <Notice tone="warning">
-          Offline · setup changes are disabled, but your saved
-          layout remains available.
-        </Notice>
+        <Notice tone="warning">{t("Offline · setup changes are disabled, but your saved layout remains available.")}</Notice>
       ) : null}
 
       {error ? (
@@ -438,44 +430,40 @@ function OwnerCellarSetupView({
         aria-labelledby="storage-overview-heading"
         className="cellar-setup-overview"
       >
-        <h2 id="storage-overview-heading">
-          Storage overview
-        </h2>
+        <h2 id="storage-overview-heading">{t("Storage overview")}</h2>
 
         <dl>
           <div>
-            <dt>Active cellars</dt>
+            <dt>{t("Active cellars")}</dt>
             <dd>{activeCellars.length}</dd>
           </div>
           <div>
-            <dt>Active locations</dt>
+            <dt>{t("Active locations")}</dt>
             <dd>{totalLocations}</dd>
           </div>
           <div>
-            <dt>Bottles placed</dt>
+            <dt>{t("Bottles placed")}</dt>
             <dd>{totalBottles}</dd>
           </div>
           <div>
-            <dt>Archived locations</dt>
+            <dt>{t("Archived locations")}</dt>
             <dd>{archivedLocationCount}</dd>
           </div>
         </dl>
       </section>
 
       <details className="cellar-setup-create">
-        <summary>Add a cellar</summary>
+        <summary>{t("Add a cellar")}</summary>
 
         <form
           onSubmit={(event) =>
             void handleCreateCellar(event)
           }
         >
-          <label>
-            Cellar name
-            <input
+          <label>{t("Cellar name")}<input
               autoComplete="off"
               name="name"
-              placeholder="For example: Main cellar"
+              placeholder={t("For example: Main cellar")}
               required
             />
           </label>
@@ -485,8 +473,8 @@ function OwnerCellarSetupView({
             type="submit"
           >
             {busyAction === "create-cellar"
-              ? "Saving…"
-              : "Create cellar"}
+              ? t("Saving…")
+              : t("Create cellar")}
           </button>
         </form>
       </details>
@@ -497,21 +485,17 @@ function OwnerCellarSetupView({
       >
         <div className="cellar-setup-management__heading">
           <div>
-            <h2 id="cellars-heading">Your cellars</h2>
-            <p>
-              The first location in each list appears at the top
-              of the physical layout. Archive unused positions
-              instead of deleting their history.
-            </p>
+            <h2 id="cellars-heading">{t("Your cellars")}</h2>
+            <p>{t("The first location in each list appears at the top of the physical layout. Archive unused positions instead of deleting their history.")}</p>
           </div>
 
           <label className="cellar-setup-search">
-            <span>Find a cellar or location</span>
+            <span>{t("Find a cellar or location")}</span>
             <input
               onChange={(event) =>
                 setSearch(event.target.value)
               }
-              placeholder="Search by name or code"
+              placeholder={t("Search by name or code")}
               type="search"
               value={search}
             />
@@ -519,16 +503,12 @@ function OwnerCellarSetupView({
         </div>
 
         {activeCellars.length === 0 ? (
-          <Notice>
-            No active cellars found. Add a new cellar above or
-            restore an archived one below.
-          </Notice>
+          <Notice>{t("No active cellars found. Add a new cellar above or restore an archived one below.")}</Notice>
         ) : null}
 
         {activeCellars.length > 0 &&
         visibleCellars.length === 0 ? (
-          <Notice role="status">
-            No cellar or location matches “{search}”.
+          <Notice role="status">{t("No cellar or location matches “")}{search}”.
           </Notice>
         ) : null}
 
@@ -572,9 +552,7 @@ function OwnerCellarSetupView({
                         setEditingLocationId(null)
                       }}
                       type="button"
-                    >
-                      Rename cellar
-                    </button>
+                    >{t("Rename cellar")}</button>
 
                     {!hasSearch ? (
                       <button
@@ -598,9 +576,7 @@ function OwnerCellarSetupView({
                       void handleRenameCellar(event, cellar)
                     }
                   >
-                    <label>
-                      Cellar name
-                      <input
+                    <label>{t("Cellar name")}<input
                         autoFocus
                         defaultValue={cellar.name}
                         name="name"
@@ -626,9 +602,7 @@ function OwnerCellarSetupView({
                           setEditingCellarId(null)
                         }
                         type="button"
-                      >
-                        Cancel
-                      </button>
+                      >{t("Cancel")}</button>
                     </div>
                   </form>
                 ) : null}
@@ -640,10 +614,8 @@ function OwnerCellarSetupView({
                   >
                     <div className="cellar-location-toolbar">
                       <div>
-                        <strong>Display order</strong>
-                        <span>
-                          Top of the list = top of the cellar.
-                        </span>
+                        <strong>{t("Display order")}</strong>
+                        <span>{t("Top of the list = top of the cellar.")}</span>
                       </div>
                       <button
                         disabled={
@@ -667,9 +639,7 @@ function OwnerCellarSetupView({
                             : undefined
                         }
                         type="button"
-                      >
-                        Reverse order
-                      </button>
+                      >{t("Reverse order")}</button>
                     </div>
 
                     <form
@@ -678,31 +648,26 @@ function OwnerCellarSetupView({
                         void handleCreateLocation(event, cellar)
                       }
                     >
-                      <label>
-                        New location in {cellar.name}
+                      <label>{t("New location in")}{cellar.name}
                         <input
                           autoComplete="off"
                           name="code"
-                          placeholder="For example: Rack A-01"
+                          placeholder={t("For example: Rack A-01")}
                           required
                         />
                       </label>
 
-                      <label>
-                        Capacity (optional)
-                        <input
+                      <label>{t("Capacity (optional)")}<input
                           inputMode="numeric"
                           min="1"
                           name="capacity"
-                          placeholder="For example: 20"
+                          placeholder={t("For example: 20")}
                           step="1"
                           type="number"
                         />
                       </label>
 
-                      <label>
-                        Purpose
-                        <select
+                      <label>{t("Purpose")}<select
                           defaultValue="mixed"
                           name="storagePurpose"
                         >
@@ -712,7 +677,7 @@ function OwnerCellarSetupView({
                                 key={purpose.value}
                                 value={purpose.value}
                               >
-                                {purpose.label}
+                                {t(purpose.label)}
                               </option>
                             ),
                           )}
@@ -735,18 +700,14 @@ function OwnerCellarSetupView({
                     {hasSearch &&
                     visibleCellar.locations.length !==
                       cellar.locations.length ? (
-                      <p className="cellar-card__filter-summary">
-                        Showing {formatLocationCount(
-                          visibleCellar.locations.length,
-                        )} of {cellar.locations.length}. Clear the
-                        search to change display order.
-                      </p>
+                      <p className="cellar-card__filter-summary">{t("cellar.locationFilterSummary", {
+                        shown: String(visibleCellar.locations.length),
+                        total: String(cellar.locations.length),
+                      })}{t(". Clear the search to change display order.")}</p>
                     ) : null}
 
                     {visibleCellar.locations.length === 0 ? (
-                      <p className="cellar-card__empty">
-                        No active locations in this cellar yet.
-                      </p>
+                      <p className="cellar-card__empty">{t("No active locations in this cellar yet.")}</p>
                     ) : (
                       <ol className="cellar-location-list">
                         {visibleCellar.locations.map(
@@ -773,14 +734,14 @@ function OwnerCellarSetupView({
                                   <span
                                     className={`cellar-location__occupancy cellar-location__occupancy--${occupancy.tone}`}
                                   >
-                                    {occupancy.label}
+                                    {t(occupancy.label)}
                                   </span>
                                   <span className="cellar-location__purpose">
-                                    {getLocationStoragePurposeLabel(
+                                    {t(getLocationStoragePurposeLabel(
                                       location.storage_purpose,
-                                    )}
+                                    ))}
                                   </span>
-                                  <span>{occupancy.detail}</span>
+                                  <span>{t(occupancy.detail)}</span>
                                 </div>
 
                                 {isEditingLocation ? (
@@ -794,7 +755,7 @@ function OwnerCellarSetupView({
                                     }
                                   >
                                     <label>
-                                      <span>Location code</span>
+                                      <span>{t("Location code")}</span>
                                       <input
                                         autoFocus
                                         defaultValue={location.code}
@@ -803,7 +764,7 @@ function OwnerCellarSetupView({
                                       />
                                     </label>
                                     <label>
-                                      <span>Purpose</span>
+                                      <span>{t("Purpose")}</span>
                                       <select
                                         defaultValue={
                                           location.storage_purpose
@@ -816,14 +777,14 @@ function OwnerCellarSetupView({
                                               key={purpose.value}
                                               value={purpose.value}
                                             >
-                                              {purpose.label}
+                                              {t(purpose.label)}
                                             </option>
                                           ),
                                         )}
                                       </select>
                                     </label>
                                     <label>
-                                      <span>Capacity (optional)</span>
+                                      <span>{t("Capacity (optional)")}</span>
                                       <input
                                         defaultValue={
                                           location.capacity ?? ""
@@ -856,9 +817,7 @@ function OwnerCellarSetupView({
                                           setEditingLocationId(null)
                                         }
                                         type="button"
-                                      >
-                                        Cancel
-                                      </button>
+                                      >{t("Cancel")}</button>
                                     </div>
                                   </form>
                                 ) : (
@@ -887,9 +846,7 @@ function OwnerCellarSetupView({
                                             )
                                           }
                                           type="button"
-                                        >
-                                          Up
-                                        </button>
+                                        >{t("Up")}</button>
                                         <button
                                           aria-label={`Move ${location.code} down`}
                                           disabled={
@@ -913,9 +870,7 @@ function OwnerCellarSetupView({
                                             )
                                           }
                                           type="button"
-                                        >
-                                          Down
-                                        </button>
+                                        >{t("Down")}</button>
                                       </div>
                                     ) : null}
 
@@ -928,9 +883,7 @@ function OwnerCellarSetupView({
                                         setEditingCellarId(null)
                                       }}
                                       type="button"
-                                    >
-                                      Edit
-                                    </button>
+                                    >{t("Edit")}</button>
 
                                     <button
                                       aria-describedby={
@@ -954,16 +907,12 @@ function OwnerCellarSetupView({
                                           : undefined
                                       }
                                       type="button"
-                                    >
-                                      Archive
-                                    </button>
+                                    >{t("Archive")}</button>
                                     {location.bottleCount > 0 ? (
                                       <span
                                         className="cellar-location__archive-hint"
                                         id={`archive-location-hint-${location.id}`}
-                                      >
-                                        Move bottles first
-                                      </span>
+                                      >{t("Move bottles first")}</span>
                                     ) : null}
                                   </div>
                                 )}
@@ -976,9 +925,7 @@ function OwnerCellarSetupView({
 
                     {cellar.archivedLocations.length > 0 ? (
                       <details className="cellar-archived-locations">
-                        <summary>
-                          Archived locations (
-                          {cellar.archivedLocations.length})
+                        <summary>{t("Archived locations (")}{cellar.archivedLocations.length})
                         </summary>
                         <ul>
                           {cellar.archivedLocations.map(
@@ -1011,11 +958,8 @@ function OwnerCellarSetupView({
 
                     <div className="cellar-card__archive-action">
                       <div>
-                        <strong>Archive this cellar</strong>
-                        <span>
-                          Archive every active location first. The
-                          cellar and its history can be restored.
-                        </span>
+                        <strong>{t("Archive this cellar")}</strong>
+                        <span>{t("Archive every active location first. The cellar and its history can be restored.")}</span>
                       </div>
                       <button
                         disabled={
@@ -1055,13 +999,8 @@ function OwnerCellarSetupView({
           className="cellar-setup-archived"
         >
           <div>
-            <h2 id="archived-cellars-heading">
-              Archived cellars
-            </h2>
-            <p>
-              Restore a cellar first, then restore only the
-              locations that still exist in its physical layout.
-            </p>
+            <h2 id="archived-cellars-heading">{t("Archived cellars")}</h2>
+            <p>{t("Restore a cellar first, then restore only the locations that still exist in its physical layout.")}</p>
           </div>
 
           <ul>
@@ -1072,8 +1011,7 @@ function OwnerCellarSetupView({
                   <span>
                     {formatLocationCount(
                       cellar.archivedLocations.length,
-                    )} archived
-                  </span>
+                    )}{t("archived")}</span>
                 </div>
                 <button
                   disabled={!isOnline || busyAction !== null}

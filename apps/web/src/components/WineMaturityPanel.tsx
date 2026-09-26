@@ -27,6 +27,7 @@ import {
   type ProfileReviewTarget,
 } from "../data/profileReviews"
 import { Notice } from "./Notice"
+import { useLanguage } from "../i18n/useLanguage"
 
 interface WineMaturityPanelProps {
   canManageCellar?: boolean
@@ -49,22 +50,23 @@ function MaturityComparisonColumn({
   label: string
   recommendation: MaturityRecommendation
 }) {
+  const { t } = useLanguage()
   return (
     <section>
       <strong>{label}</strong>
       <dl>
         <div>
-          <dt>First assessment</dt>
+          <dt>{t("First assessment")}</dt>
           <dd>{recommendation.firstTrialYear}</dd>
         </div>
         <div>
-          <dt>Best period</dt>
+          <dt>{t("Best period")}</dt>
           <dd>
             {recommendation.bestStartYear}–{recommendation.bestEndYear}
           </dd>
         </div>
         <div>
-          <dt>Drink by</dt>
+          <dt>{t("Drink by")}</dt>
           <dd>{recommendation.drinkByYear}</dd>
         </div>
       </dl>
@@ -159,6 +161,7 @@ export function WineMaturityPanel({
   isOnline,
   wineId,
 }: WineMaturityPanelProps) {
+  const { language, t } = useLanguage()
   const [result, setResult] = useState<WineMaturity | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [busyAction, setBusyAction] = useState<string | null>(null)
@@ -256,7 +259,7 @@ export function WineMaturityPanel({
       setResult(
         await reviewWineMaturity(projectionId, verdict, ""),
       )
-      setMessage("Your review was saved for this model result.")
+      setMessage(t("Your review was saved for this model result."))
     } catch (caughtError: unknown) {
       setError(
         caughtError instanceof Error
@@ -300,7 +303,7 @@ export function WineMaturityPanel({
           String(data.get("note") ?? ""),
         ),
       )
-      setMessage("Your maturity window now takes priority over the model.")
+      setMessage(t("Your maturity window now takes priority over the model."))
     } catch (caughtError: unknown) {
       setError(
         caughtError instanceof Error
@@ -324,7 +327,7 @@ export function WineMaturityPanel({
 
     try {
       setResult(await clearWineMaturityOverride(wineId))
-      setMessage("The model result is active again.")
+      setMessage(t("The model result is active again."))
     } catch (caughtError: unknown) {
       setError(
         caughtError instanceof Error
@@ -352,13 +355,13 @@ export function WineMaturityPanel({
     try {
       await setMemberMaturityCalibration(yearShift)
       setResult(await getWineMaturity(wineId))
-      setMessage(
+      setMessage(t(
         yearShift === 0
           ? "Your recommendations now use canonical timing."
           : `Your private ${maturityCalibrationLabel(
               yearShift,
             ).toLowerCase()} preference now applies to every assessed wine.`,
-      )
+      ))
     } catch (caughtError: unknown) {
       setError(
         caughtError instanceof Error
@@ -382,7 +385,7 @@ export function WineMaturityPanel({
     try {
       await clearMemberMaturityCalibration()
       setResult(await getWineMaturity(wineId))
-      setMessage("Your recommendations now use canonical timing.")
+      setMessage(t("Your recommendations now use canonical timing."))
     } catch (caughtError: unknown) {
       setError(
         caughtError instanceof Error
@@ -416,7 +419,7 @@ export function WineMaturityPanel({
       )
       setReviewTarget(null)
       setMessage(
-        "Your report was submitted. The published guidance remains unchanged while it is reviewed.",
+        t("Your report was submitted. The published guidance remains unchanged while it is reviewed."),
       )
     } catch (caughtError: unknown) {
       setError(
@@ -458,17 +461,15 @@ export function WineMaturityPanel({
     return existingReview ? (
       <span className="wine-maturity__review-status">
         {existingReview.status === "reviewing"
-          ? "Review in progress"
-          : "Review submitted"}
+          ? t("Review in progress")
+          : t("Review submitted")}
       </span>
     ) : (
       <button
         disabled={!isOnline || busyAction !== null}
         onClick={() => setReviewTarget({ label, profileId })}
         type="button"
-      >
-        Report an issue
-      </button>
+      >{t("Report an issue")}</button>
     )
   }
 
@@ -479,22 +480,16 @@ export function WineMaturityPanel({
     >
       <div className="wine-detail-section-heading">
         <div>
-          <h2 id="wine-maturity-heading">When to drink</h2>
-          <p>
-            Canonical guidance from reviewed profiles, with private preferences
-            and manual windows kept visibly separate.
-          </p>
+          <h2 id="wine-maturity-heading">{t("When to drink")}</h2>
+          <p>{t("Canonical guidance from reviewed profiles, with private preferences and manual windows kept visibly separate.")}</p>
         </div>
       </div>
 
       {!isOnline ? (
-        <Notice tone="warning">
-          Maturity advice requires a connection. Your wine and inventory remain
-          available offline.
-        </Notice>
+        <Notice tone="warning">{t("Maturity advice requires a connection. Your wine and inventory remain available offline.")}</Notice>
       ) : null}
 
-      {isLoading ? <Notice role="status">Loading maturity advice…</Notice> : null}
+      {isLoading ? <Notice role="status">{t("Loading maturity advice…")}</Notice> : null}
 
       {error ? (
         <Notice role="alert" tone="error">
@@ -512,9 +507,9 @@ export function WineMaturityPanel({
         <Notice tone={result.demandStatus === "needs-review" ? "warning" : undefined}>
           {result.demandStatus === "needs-review"
             ? result.assessmentReason
-              ? maturityAssessmentReasonMessage(result.assessmentReason)
-              : "Not assessed: no reviewed profile safely matches this wine yet. No range has been guessed."
-            : "Assessment is being prepared. Check again shortly."}
+              ? t(maturityAssessmentReasonMessage(result.assessmentReason))
+              : t("Not assessed: no reviewed profile safely matches this wine yet. No range has been guessed.")
+            : t("Assessment is being prepared. Check again shortly.")}
         </Notice>
       ) : null}
 
@@ -524,42 +519,42 @@ export function WineMaturityPanel({
             <div>
               <span className="wine-maturity__badge">
                 {override
-                  ? "Manual window"
+                  ? t("Manual window")
                   : activePersonalizedModel
-                    ? "Personal timing"
-                    : model.stateLabel}
+                    ? t("Personal timing")
+                    : t(model.stateLabel)}
               </span>
               <h3>
                 {override
-                  ? "Your maturity window"
-                  : displayedRecommendation?.headline ?? model.headline}
+                  ? t("Your maturity window")
+                  : t(displayedRecommendation?.headline ?? model.headline)}
               </h3>
               <p>
-                {override?.note ??
-                  displayedRecommendation?.message ??
-                  model.message}
+                {override?.note ?? t(
+                  displayedRecommendation?.message ?? model.message,
+                )}
               </p>
             </div>
             <span className="wine-maturity__confidence">
               {override
-                ? "Owner estimate"
-                : `${model.confidenceLabel[0]?.toUpperCase()}${model.confidenceLabel.slice(1)} canonical confidence`}
+                ? t("Owner estimate")
+                : t(`${model.confidenceLabel[0]?.toUpperCase()}${model.confidenceLabel.slice(1)} canonical confidence`)}
             </span>
           </div>
 
           <dl className="wine-maturity__window">
             <div>
-              <dt>First assessment</dt>
+              <dt>{t("First assessment")}</dt>
               <dd>{displayedYears.firstTrialYear}</dd>
             </div>
             <div>
-              <dt>Likely best period</dt>
+              <dt>{t("Likely best period")}</dt>
               <dd>
                 {displayedYears.bestStartYear}–{displayedYears.bestEndYear}
               </dd>
             </div>
             <div>
-              <dt>Preferably drink by</dt>
+              <dt>{t("Preferably drink by")}</dt>
               <dd>{displayedYears.drinkByYear}</dd>
             </div>
           </dl>
@@ -570,48 +565,38 @@ export function WineMaturityPanel({
           >
             <header>
               <div>
-                <h3 id="maturity-calibration-heading">
-                  Your timing preference
-                </h3>
-                <p>
-                  Shift every canonical drinking window for your account only.
-                  Shared profiles and other members remain unchanged.
-                </p>
+                <h3 id="maturity-calibration-heading">{t("Your timing preference")}</h3>
+                <p>{t("Shift every canonical drinking window for your account only. Shared profiles and other members remain unchanged.")}</p>
               </div>
               <span className="wine-maturity__confidence">
-                {maturityCalibrationLabel(calibration?.yearShift ?? 0)}
+                {t(maturityCalibrationLabel(calibration?.yearShift ?? 0))}
               </span>
             </header>
 
             {calibration && personalizedModel ? (
               <div className="wine-maturity__calibration-comparison">
                 <MaturityComparisonColumn
-                  label="Canonical guidance"
+                  label={t("Canonical guidance")}
                   recommendation={model}
                 />
                 <MaturityComparisonColumn
-                  label={`Your private view · ${maturityCalibrationLabel(
+                  label={`${t("Your private view")} · ${t(maturityCalibrationLabel(
                     calibration.yearShift,
-                  )}`}
+                  ))}`}
                   recommendation={personalizedModel}
                 />
               </div>
             ) : null}
 
             {calibration && override ? (
-              <Notice tone="warning">
-                This preference still applies to your other wines, but this
-                wine's manual window takes priority.
-              </Notice>
+              <Notice tone="warning">{t("This preference still applies to your other wines, but this wine's manual window takes priority.")}</Notice>
             ) : null}
 
             <form
               key={calibration?.updatedAt ?? "canonical"}
               onSubmit={(event) => void saveCalibration(event)}
             >
-              <label>
-                I generally prefer wines
-                <select
+              <label>{t("I generally prefer wines")}<select
                   defaultValue={calibration?.yearShift ?? 0}
                   disabled={!isOnline || busyAction !== null}
                   name="yearShift"
@@ -619,8 +604,8 @@ export function WineMaturityPanel({
                   {MATURITY_CALIBRATION_OPTIONS.map((yearShift) => (
                     <option key={yearShift} value={yearShift}>
                       {yearShift === 0
-                        ? "At canonical timing"
-                        : maturityCalibrationLabel(yearShift)}
+                        ? t("At canonical timing")
+                        : t(maturityCalibrationLabel(yearShift))}
                     </option>
                   ))}
                 </select>
@@ -631,8 +616,8 @@ export function WineMaturityPanel({
                   type="submit"
                 >
                   {busyAction === "calibration"
-                    ? "Saving…"
-                    : "Save preference"}
+                    ? t("Saving…")
+                    : t("Save preference")}
                 </button>
                 {calibration ? (
                   <button
@@ -641,8 +626,8 @@ export function WineMaturityPanel({
                     type="button"
                   >
                     {busyAction === "clear-calibration"
-                      ? "Resetting…"
-                      : "Reset to canonical"}
+                      ? t("Resetting…")
+                      : t("Reset to canonical")}
                   </button>
                 ) : null}
               </div>
@@ -652,39 +637,34 @@ export function WineMaturityPanel({
           {projection.storage ? (
             <div className="wine-maturity__storage">
               <div>
-                <span>Suggested placement</span>
+                <span>{t("Suggested placement")}</span>
                 <strong>
                   {override?.storagePurpose
-                    ? getLocationStoragePurposeLabel(override.storagePurpose)
-                    : storagePurposeLabel(projection.storage.purpose)}
+                    ? t(getLocationStoragePurposeLabel(override.storagePurpose))
+                    : t(storagePurposeLabel(projection.storage.purpose))}
                 </strong>
               </div>
               <p>
                 {override?.storagePurpose
-                  ? "Your location preference overrides the model purpose."
-                  : projection.storage.message}
+                  ? t("Your location preference overrides the model purpose.")
+                  : t(projection.storage.message)}
               </p>
               {activePersonalizedModel ? (
-                <small>
-                  Storage guidance remains canonical; your private timing
-                  preference changes drinking dates and catalog urgency only.
-                </small>
+                <small>{t("Storage guidance remains canonical; your private timing preference changes drinking dates and catalog urgency only.")}</small>
               ) : null}
               {projection.storage.move.needed && !override?.storagePurpose ? (
                 <span
                   className={`wine-maturity__move wine-maturity__move--${projection.storage.move.possible ? "possible" : "blocked"}`}
                 >
-                  {projection.storage.move.message}
+                  {t(projection.storage.move.message)}
                 </span>
               ) : null}
             </div>
           ) : null}
 
           <details className="wine-maturity__explanation">
-            <summary>Why this estimate?</summary>
-            <p>
-              Model specificity: {projection.specificity.replaceAll("-", " ")}.
-              Calculated {new Date(projection.calculatedAt).toLocaleDateString()}.
+            <summary>{t("Why this estimate?")}</summary>
+            <p>{t("Model specificity:")}{t(projection.specificity.replaceAll("-", " "))}{t(". Calculated")}{new Date(projection.calculatedAt).toLocaleDateString(language === "fr" ? "fr-FR" : "en-US")}.
             </p>
             {model.contributions.length > 0 ? (
               <ol className="wine-maturity__contributions">
@@ -692,9 +672,9 @@ export function WineMaturityPanel({
                   <li key={`${contribution.layer}:${contribution.label}:${index}`}>
                     <div>
                       <strong>
-                        {maturityLayerLabel(contribution.layer)}: {contribution.label}
+                        {t(maturityLayerLabel(contribution.layer))}: {contribution.label}
                       </strong>
-                      <span>{contribution.rationale}</span>
+                      <span>{t(contribution.rationale)}</span>
                     </div>
                     {contribution.profileId
                       ? profileReviewAction(
@@ -708,24 +688,20 @@ export function WineMaturityPanel({
             ) : model.reasons.length > 0 ? (
               <ul>
                 {model.reasons.map((reason) => (
-                  <li key={reason}>{reason}</li>
+                  <li key={reason}>{t(reason)}</li>
                 ))}
               </ul>
             ) : null}
             {supplementalReviewTargets.length > 0 ? (
               <div className="wine-maturity__linked-profiles">
-                <strong>Shared profiles used by this estimate</strong>
-                <p>
-                  These are the exact reviewed profiles recorded with this
-                  calculation, including older estimates whose explanation is
-                  shown as prose.
-                </p>
+                <strong>{t("Shared profiles used by this estimate")}</strong>
+                <p>{t("These are the exact reviewed profiles recorded with this calculation, including older estimates whose explanation is shown as prose.")}</p>
                 <ol className="wine-maturity__contributions">
                   {supplementalReviewTargets.map((target) => (
                     <li key={target.profileId}>
                       <div>
                         <strong>{target.subjectTitle}</strong>
-                        <span>{profileTypeLabel(target.profileType)}</span>
+                        <span>{t(profileTypeLabel(target.profileType))}</span>
                       </div>
                       {profileReviewAction(
                         target.profileId,
@@ -738,10 +714,10 @@ export function WineMaturityPanel({
             ) : null}
             {model.warnings.length > 0 ? (
               <>
-                <strong>Limits</strong>
+                <strong>{t("Limits")}</strong>
                 <ul>
                   {model.warnings.map((warning) => (
-                    <li key={warning}>{warning}</li>
+                    <li key={warning}>{t(warning)}</li>
                   ))}
                 </ul>
               </>
@@ -753,38 +729,29 @@ export function WineMaturityPanel({
                 onSubmit={(event) => void submitProfileReview(event)}
               >
                 <div>
-                  <strong>Report an issue with {reviewTarget.label}</strong>
-                  <p>
-                    This opens or joins a review of this exact shared profile.
-                    It does not alter your wine or the published guidance.
-                  </p>
+                  <strong>{t("Report an issue with")}{t(" ")}{reviewTarget.label}</strong>
+                  <p>{t("This opens or joins a review of this exact shared profile. It does not alter your wine or the published guidance.")}</p>
                 </div>
-                <label>
-                  What needs review?
-                  <select defaultValue="drinking-window" name="category">
-                    <option value="drinking-window">Drinking window</option>
-                    <option value="wine-style">Wine style</option>
-                    <option value="wrong-identity">Wrong identity</option>
-                    <option value="evidence-problem">Evidence or source</option>
-                    <option value="other">Something else</option>
+                <label>{t("What needs review?")}<select defaultValue="drinking-window" name="category">
+                    <option value="drinking-window">{t("Drinking window")}</option>
+                    <option value="wine-style">{t("Wine style")}</option>
+                    <option value="wrong-identity">{t("Wrong identity")}</option>
+                    <option value="evidence-problem">{t("Evidence or source")}</option>
+                    <option value="other">{t("Something else")}</option>
                   </select>
                 </label>
-                <label>
-                  What seems wrong?
-                  <textarea
+                <label>{t("What seems wrong?")}<textarea
                     minLength={10}
                     name="comment"
-                    placeholder="Describe what you observed and what should be checked."
+                    placeholder={t("Describe what you observed and what should be checked.")}
                     required
                     rows={4}
                   />
                 </label>
-                <label>
-                  Supporting HTTPS link (optional)
-                  <input
+                <label>{t("Supporting HTTPS link (optional)")}<input
                     name="evidenceUrl"
                     pattern="https://.*"
-                    placeholder="https://…"
+                    placeholder={t("https://…")}
                     type="url"
                   />
                 </label>
@@ -798,16 +765,14 @@ export function WineMaturityPanel({
                     disabled={busyAction !== null}
                     onClick={() => setReviewTarget(null)}
                     type="button"
-                  >
-                    Cancel
-                  </button>
+                  >{t("Cancel")}</button>
                 </div>
               </form>
             ) : null}
           </details>
 
           <div className="wine-maturity__feedback">
-            <span>Is this model result credible?</span>
+            <span>{t("Is this model result credible?")}</span>
             <div>
               {(["useful", "questionable", "wrong"] as const).map(
                 (verdict) => (
@@ -819,8 +784,8 @@ export function WineMaturityPanel({
                     type="button"
                   >
                     {busyAction === `feedback:${verdict}`
-                      ? "Saving…"
-                      : feedbackLabel(verdict)}
+                      ? t("Saving…")
+                      : t(feedbackLabel(verdict))}
                   </button>
                 ),
               )}
@@ -829,17 +794,12 @@ export function WineMaturityPanel({
 
           {canManageCellar ? <details className="wine-maturity__override">
             <summary>{override ? "Edit your window" : "Adjust this window"}</summary>
-            <p>
-              Your values take priority in the app; the original model and its
-              evidence remain unchanged.
-            </p>
+            <p>{t("Your values take priority in the app; the original model and its evidence remain unchanged.")}</p>
             <form
               key={override?.updatedAt ?? projection.calculatedAt}
               onSubmit={(event) => void saveOverride(event)}
             >
-              <label>
-                First assessment
-                <input
+              <label>{t("First assessment")}<input
                   defaultValue={displayedYears.firstTrialYear}
                   min="1800"
                   name="firstTrialYear"
@@ -847,9 +807,7 @@ export function WineMaturityPanel({
                   type="number"
                 />
               </label>
-              <label>
-                Best from
-                <input
+              <label>{t("Best from")}<input
                   defaultValue={displayedYears.bestStartYear}
                   min="1800"
                   name="bestStartYear"
@@ -857,9 +815,7 @@ export function WineMaturityPanel({
                   type="number"
                 />
               </label>
-              <label>
-                Best until
-                <input
+              <label>{t("Best until")}<input
                   defaultValue={displayedYears.bestEndYear}
                   min="1800"
                   name="bestEndYear"
@@ -867,9 +823,7 @@ export function WineMaturityPanel({
                   type="number"
                 />
               </label>
-              <label>
-                Drink by
-                <input
+              <label>{t("Drink by")}<input
                   defaultValue={displayedYears.drinkByYear}
                   min="1800"
                   name="drinkByYear"
@@ -877,26 +831,22 @@ export function WineMaturityPanel({
                   type="number"
                 />
               </label>
-              <label>
-                Preferred storage (optional)
-                <select
+              <label>{t("Preferred storage (optional)")}<select
                   defaultValue={override?.storagePurpose ?? ""}
                   name="storagePurpose"
                 >
-                  <option value="">Use model suggestion</option>
+                  <option value="">{t("Use model suggestion")}</option>
                   {LOCATION_STORAGE_PURPOSES.map((purpose) => (
                     <option key={purpose.value} value={purpose.value}>
-                      {purpose.label}
+                      {t(purpose.label)}
                     </option>
                   ))}
                 </select>
               </label>
-              <label className="wine-maturity__override-note">
-                Note (optional)
-                <input
+              <label className="wine-maturity__override-note">{t("Note (optional)")}<input
                   defaultValue={override?.note ?? ""}
                   name="note"
-                  placeholder="For example: producer advice"
+                  placeholder={t("For example: producer advice")}
                 />
               </label>
               <div>

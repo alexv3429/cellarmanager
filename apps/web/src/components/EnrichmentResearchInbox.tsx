@@ -16,6 +16,7 @@ import {
   suggestEnrichmentResearchSource,
 } from "../data/enrichmentResearch"
 import { Notice } from "./Notice"
+import { useLanguage } from "../i18n/useLanguage"
 
 interface EnrichmentResearchInboxProps {
   error: string | null
@@ -173,13 +174,16 @@ function evidenceStrength(value: unknown): string {
   return "Low"
 }
 
-function yearCount(value: number): string {
+type Translator = (key: string, values?: Record<string, string>) => string
+
+function yearCount(value: number, t: Translator): string {
   const years = Math.abs(value)
-  return `${years} ${years === 1 ? "year" : "years"}`
+  return `${years} ${t(years === 1 ? "year" : "years")}`
 }
 
 function maturityAdjustmentSummary(
   ages: Record<string, unknown>,
+  t: Translator,
 ): string[] {
   const firstTrial = Number(ages.first_trial)
   const bestStart = Number(ages.best_start)
@@ -194,37 +198,37 @@ function maturityAdjustmentSummary(
   ) {
     summaries.push(
       firstTrial > 0
-        ? `Delay the first tasting and recommended drinking period by about ${yearCount(firstTrial)}.`
-        : `Bring the first tasting and recommended drinking period forward by about ${yearCount(firstTrial)}.`,
+        ? t("Delay the first tasting and recommended drinking period by about {duration}.", { duration: yearCount(firstTrial, t) })
+        : t("Bring the first tasting and recommended drinking period forward by about {duration}.", { duration: yearCount(firstTrial, t) }),
     )
   } else {
     if (firstTrial !== 0) {
       summaries.push(
         firstTrial > 0
-          ? `Delay the first tasting by about ${yearCount(firstTrial)}.`
-          : `Bring the first tasting forward by about ${yearCount(firstTrial)}.`,
+          ? t("Delay the first tasting by about {duration}.", { duration: yearCount(firstTrial, t) })
+          : t("Bring the first tasting forward by about {duration}.", { duration: yearCount(firstTrial, t) }),
       )
     }
     if (bestStart !== 0 || bestEnd !== 0) {
       if (bestStart === bestEnd) {
         summaries.push(
           bestStart > 0
-            ? `Shift the recommended drinking period about ${yearCount(bestStart)} later.`
-            : `Shift the recommended drinking period about ${yearCount(bestStart)} earlier.`,
+            ? t("Shift the recommended drinking period about {duration} later.", { duration: yearCount(bestStart, t) })
+            : t("Shift the recommended drinking period about {duration} earlier.", { duration: yearCount(bestStart, t) }),
         )
       } else {
         if (bestStart !== 0) {
           summaries.push(
             bestStart > 0
-              ? `Start the recommended drinking period about ${yearCount(bestStart)} later.`
-              : `Start the recommended drinking period about ${yearCount(bestStart)} earlier.`,
+              ? t("Start the recommended drinking period about {duration} later.", { duration: yearCount(bestStart, t) })
+              : t("Start the recommended drinking period about {duration} earlier.", { duration: yearCount(bestStart, t) }),
           )
         }
         if (bestEnd !== 0) {
           summaries.push(
             bestEnd > 0
-              ? `End the recommended drinking period about ${yearCount(bestEnd)} later.`
-              : `End the recommended drinking period about ${yearCount(bestEnd)} earlier.`,
+              ? t("End the recommended drinking period about {duration} later.", { duration: yearCount(bestEnd, t) })
+              : t("End the recommended drinking period about {duration} earlier.", { duration: yearCount(bestEnd, t) }),
           )
         }
       }
@@ -234,17 +238,17 @@ function maturityAdjustmentSummary(
   if (outerHorizon !== 0) {
     summaries.push(
       outerHorizon > 0
-        ? `Extend the final drink-by estimate by about ${yearCount(outerHorizon)}.`
-        : `Bring the final drink-by estimate forward by about ${yearCount(outerHorizon)}.`,
+        ? t("Extend the final drink-by estimate by about {duration}.", { duration: yearCount(outerHorizon, t) })
+        : t("Bring the final drink-by estimate forward by about {duration}.", { duration: yearCount(outerHorizon, t) }),
     )
   }
 
   return summaries.length > 0
     ? summaries
-    : ["Keep the current maturity timeline unchanged."]
+    : [t("Keep the current maturity timeline unchanged.")]
 }
 
-function traitAdjustmentLabel(key: string, value: unknown): string | null {
+function traitAdjustmentLabel(key: string, value: unknown, t: Translator): string | null {
   const adjustment = Number(value)
   if (!Number.isFinite(adjustment) || adjustment === 0) return null
 
@@ -259,9 +263,9 @@ function traitAdjustmentLabel(key: string, value: unknown): string | null {
     concentration: ["more concentrated", "less concentrated"],
   }
   const wording = direction[key]
-  if (!wording) return `${TRAIT_LABELS[key] ?? key}: adjusted`
-  const intensity = Math.abs(adjustment) >= 1.5 ? "Much " : "Slightly "
-  return `${intensity}${adjustment > 0 ? wording[0] : wording[1]}`
+  if (!wording) return t("{trait}: adjusted", { trait: t(TRAIT_LABELS[key] ?? key) })
+  const intensity = Math.abs(adjustment) >= 1.5 ? "Much" : "Slightly"
+  return t("{intensity} {quality}", { intensity: t(intensity), quality: t(adjustment > 0 ? wording[0] : wording[1]) })
 }
 
 function absoluteTraitLabel(value: unknown): string {
@@ -275,6 +279,7 @@ function absoluteTraitLabel(value: unknown): string {
 }
 
 function ProposalSummary({ draft }: { draft: EnrichmentResearchDraft }) {
+  const { t } = useLanguage()
   const proposal = draft.review?.proposal ?? draft.proposal
   const ages = asRecord(proposal.age_adjustments)
   const absoluteAges = asRecord(proposal.ages)
@@ -282,10 +287,10 @@ function ProposalSummary({ draft }: { draft: EnrichmentResearchDraft }) {
     proposal.trait_adjustments ?? proposal.traits,
   )
   const factValue = proposal.value
-  const maturitySummary = ages ? maturityAdjustmentSummary(ages) : []
+  const maturitySummary = ages ? maturityAdjustmentSummary(ages, t) : []
   const traitSummary = traits
     ? Object.entries(traits)
-        .map(([key, value]) => traitAdjustmentLabel(key, value))
+        .map(([key, value]) => traitAdjustmentLabel(key, value, t))
         .filter((value): value is string => value !== null)
     : []
 
@@ -293,17 +298,15 @@ function ProposalSummary({ draft }: { draft: EnrichmentResearchDraft }) {
     <div className="research-proposal">
       <div className="research-proposal__heading">
         <div>
-          <span>{titleForProfileType(proposal.profile_type)}</span>
-          <strong>
-            Evidence strength: {evidenceStrength(proposal.confidence ?? draft.confidence)}
+          <span>{t(titleForProfileType(proposal.profile_type))}</span>
+          <strong>{t("Evidence strength:")}{t(evidenceStrength(proposal.confidence ?? draft.confidence))}
           </strong>
         </div>
         {proposal.first_vintage_year !== undefined ? (
-          <span>
-            Applies to vintages {String(proposal.first_vintage_year)}–
+          <span>{t("Applies to vintages")}{String(proposal.first_vintage_year)}–
             {Number(proposal.final_vintage_year) === 2200
               ? "present day"
-              : String(proposal.final_vintage_year)}
+              : t(String(proposal.final_vintage_year))}
           </span>
         ) : null}
       </div>
@@ -311,7 +314,7 @@ function ProposalSummary({ draft }: { draft: EnrichmentResearchDraft }) {
       {factValue !== undefined ? (
         <dl className="research-proposal__facts">
           <div>
-            <dt>{String(proposal.field_name ?? "Suggested value")}</dt>
+            <dt>{t(String(proposal.field_name ?? "Suggested value"))}</dt>
             <dd>
               {Array.isArray(factValue)
                 ? factValue
@@ -331,27 +334,21 @@ function ProposalSummary({ draft }: { draft: EnrichmentResearchDraft }) {
       {ages || absoluteAges ? (
         ages ? (
           <section className="research-proposal__impact">
-            <strong>Effect on maturity estimates</strong>
-            <p>
-              Each bottle already has guidance from its place and vintage. This
-              producer profile would:
-            </p>
+            <strong>{t("Effect on maturity estimates")}</strong>
+            <p>{t("Each bottle already has guidance from its place and vintage. This producer profile would:")}</p>
             <ul>
               {maturitySummary.map((summary) => (
                 <li key={summary}>{summary}</li>
               ))}
             </ul>
-            <small>
-              These are relative adjustments to each bottle’s estimate—not four
-              separate recommendations or fixed drinking dates.
-            </small>
+            <small>{t("These are relative adjustments to each bottle’s estimate—not four separate recommendations or fixed drinking dates.")}</small>
           </section>
         ) : (
           <dl className="research-proposal__adjustments">
             {Object.keys(AGE_LABELS).map((key) => (
               <div key={key}>
-                <dt>{AGE_LABELS[key]}</dt>
-                <dd>{String(absoluteAges?.[key])} years after vintage</dd>
+                <dt>{t(AGE_LABELS[key])}</dt>
+                <dd>{String(absoluteAges?.[key])}{t(" ")}{t("years after vintage")}</dd>
               </div>
             ))}
           </dl>
@@ -360,7 +357,7 @@ function ProposalSummary({ draft }: { draft: EnrichmentResearchDraft }) {
 
       {traits ? (
         <section className="research-proposal__impact">
-          <strong>Expected wine style</strong>
+          <strong>{t("Expected wine style")}</strong>
           {proposal.trait_adjustments ? (
             traitSummary.length > 0 ? (
               <ul className="research-proposal__style-list">
@@ -369,14 +366,14 @@ function ProposalSummary({ draft }: { draft: EnrichmentResearchDraft }) {
                 ))}
               </ul>
             ) : (
-              <p>No producer-wide difference from the broader profile.</p>
+              <p>{t("No producer-wide difference from the broader profile.")}</p>
             )
           ) : (
             <dl className="research-proposal__traits">
               {Object.entries(traits).map(([key, value]) => (
                 <div key={key}>
-                  <dt>{TRAIT_LABELS[key] ?? key}</dt>
-                  <dd>{absoluteTraitLabel(value)}</dd>
+                  <dt>{t(TRAIT_LABELS[key] ?? key)}</dt>
+                  <dd>{t(absoluteTraitLabel(value))}</dd>
                 </div>
               ))}
             </dl>
@@ -385,7 +382,7 @@ function ProposalSummary({ draft }: { draft: EnrichmentResearchDraft }) {
       ) : null}
 
       <details className="research-proposal__reasoning">
-        <summary>Why this profile was suggested</summary>
+        <summary>{t("Why this profile was suggested")}</summary>
         <p>{String(proposal.rationale ?? draft.rationale)}</p>
       </details>
     </div>
@@ -405,6 +402,7 @@ function ProposalEditor({
   onCancel,
   onSubmit,
 }: ProposalEditorProps) {
+  const { t } = useLanguage()
   const [proposal, setProposal] = useState(() =>
     copyProposal(draft.review?.proposal ?? draft.proposal),
   )
@@ -447,9 +445,7 @@ function ProposalEditor({
   return (
     <form className="research-proposal-editor" onSubmit={submit}>
       <div className="research-proposal-editor__core">
-        <label>
-          Rationale
-          <textarea
+        <label>{t("Rationale")}<textarea
             disabled={disabled}
             onChange={(event) => updateTop("rationale", event.target.value)}
             required
@@ -457,9 +453,7 @@ function ProposalEditor({
             value={String(proposal.rationale ?? draft.rationale)}
           />
         </label>
-        <label>
-          Confidence
-          <input
+        <label>{t("Confidence")}<input
             disabled={disabled}
             max={proposal.profile_type === "producer-era" ? "0.7" : "0.85"}
             min="0"
@@ -469,19 +463,14 @@ function ProposalEditor({
             type="number"
             value={String(proposal.confidence ?? draft.confidence)}
           />
-          <small>
-            0 = uncertain · {proposal.profile_type === "producer-era" ? "0.7" : "0.85"} =
-            strongest allowed evidence for this profile
-          </small>
+          <small>{t("0 = uncertain ·")}{proposal.profile_type === "producer-era" ? "0.7" : "0.85"}{t("= strongest allowed evidence for this profile")}</small>
         </label>
       </div>
 
       {proposal.profile_type === "producer-era" ? (
         <fieldset>
-          <legend>Producer era</legend>
-          <label>
-            First vintage
-            <input
+          <legend>{t("Producer era")}</legend>
+          <label>{t("First vintage")}<input
               disabled={disabled}
               max="2200"
               min="1800"
@@ -491,9 +480,7 @@ function ProposalEditor({
               value={String(proposal.first_vintage_year ?? "")}
             />
           </label>
-          <label>
-            Final vintage
-            <input
+          <label>{t("Final vintage")}<input
               disabled={disabled}
               max="2200"
               min="1800"
@@ -502,15 +489,13 @@ function ProposalEditor({
               type="number"
               value={String(proposal.final_vintage_year ?? "")}
             />
-            <small>Use 2200 for the current ongoing era.</small>
+            <small>{t("Use 2200 for the current ongoing era.")}</small>
           </label>
         </fieldset>
       ) : null}
 
       {fieldName === "country" ? (
-        <label>
-          Suggested country
-          <input
+        <label>{t("Suggested country")}<input
             disabled={disabled}
             onChange={(event) => updateTop("value", event.target.value)}
             required
@@ -518,25 +503,21 @@ function ProposalEditor({
           />
         </label>
       ) : fieldName === "sweetness" ? (
-        <label>
-          Suggested sweetness
-          <select
+        <label>{t("Suggested sweetness")}<select
             disabled={disabled}
             onChange={(event) => updateTop("value", event.target.value)}
             required
             value={String(proposal.value ?? "")}
           >
-            <option value="bone-dry">Bone dry</option>
-            <option value="dry">Dry</option>
-            <option value="off-dry">Off-dry</option>
-            <option value="medium-sweet">Medium-sweet</option>
-            <option value="sweet">Sweet</option>
+            <option value="bone-dry">{t("Bone dry")}</option>
+            <option value="dry">{t("Dry")}</option>
+            <option value="off-dry">{t("Off-dry")}</option>
+            <option value="medium-sweet">{t("Medium-sweet")}</option>
+            <option value="sweet">{t("Sweet")}</option>
           </select>
         </label>
       ) : fieldName === "alcohol" ? (
-        <label>
-          Suggested alcohol (%)
-          <input
+        <label>{t("Suggested alcohol (%)")}<input
             disabled={disabled}
             max="30"
             min="0"
@@ -548,9 +529,7 @@ function ProposalEditor({
           />
         </label>
       ) : fieldName === "grapes" ? (
-        <label>
-          Suggested grapes
-          <textarea
+        <label>{t("Suggested grapes")}<textarea
             disabled={disabled}
             onChange={(event) =>
               updateTop(
@@ -584,7 +563,7 @@ function ProposalEditor({
                   .join("\n")
               : ""}
           />
-          <small>One grape per line; add an optional percentage after “|”.</small>
+          <small>{t("One grape per line; add an optional percentage after “|”.")}</small>
         </label>
       ) : null}
 
@@ -599,7 +578,7 @@ function ProposalEditor({
           <div className="research-proposal-editor__number-grid">
             {Object.entries(ages ?? absoluteAges ?? {}).map(([key, value]) => (
               <label key={key}>
-                {AGE_EDITOR_LABELS[key] ?? key}
+                {t(AGE_EDITOR_LABELS[key] ?? key)}
                 <input
                   disabled={disabled}
                   max={ages ? "10" : "100"}
@@ -624,7 +603,7 @@ function ProposalEditor({
 
       {traits && traitGroup ? (
         <fieldset>
-          <legend>Structural profile</legend>
+          <legend>{t("Structural profile")}</legend>
           <p>
             {traitGroup === "trait_adjustments"
               ? "Small adjustments to the broader wine profile."
@@ -633,7 +612,7 @@ function ProposalEditor({
           <div className="research-proposal-editor__number-grid">
             {Object.entries(traits).map(([key, value]) => (
               <label key={key}>
-                {TRAIT_LABELS[key] ?? key}
+                {t(TRAIT_LABELS[key] ?? key)}
                 <input
                   disabled={disabled}
                   max={traitGroup === "trait_adjustments" ? "2" : "5"}
@@ -652,24 +631,18 @@ function ProposalEditor({
         </fieldset>
       ) : null}
 
-      <label>
-        Note for the trusted curator (optional)
-        <textarea
+      <label>{t("Note for the trusted curator (optional)")}<textarea
           disabled={disabled}
           onChange={(event) => setNote(event.target.value)}
-          placeholder="For example: confirmed during my visit to the producer."
+          placeholder={t("For example: confirmed during my visit to the producer.")}
           rows={3}
           value={note}
         />
       </label>
 
       <div className="research-proposal-editor__actions">
-        <button disabled={disabled} type="submit">
-          Submit my edited proposal
-        </button>
-        <button disabled={disabled} onClick={onCancel} type="button">
-          Cancel editing
-        </button>
+        <button disabled={disabled} type="submit">{t("Submit my edited proposal")}</button>
+        <button disabled={disabled} onClick={onCancel} type="button">{t("Cancel editing")}</button>
       </div>
     </form>
   )
@@ -706,6 +679,7 @@ function ResearchItemCard({
   onInboxChange: (inbox: ResearchInbox) => void
   onOpenWine: (wineId: string) => void
 }) {
+  const { t } = useLanguage()
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [identityCandidates, setIdentityCandidates] = useState<
@@ -774,7 +748,7 @@ function ResearchItemCard({
           candidate.producerKey,
         ),
       )
-      setMessage("Producer identity confirmed. Research has resumed.")
+      setMessage(t("Producer identity confirmed. Research has resumed."))
     } catch (caughtError) {
       setError(
         caughtError instanceof Error
@@ -833,7 +807,7 @@ function ResearchItemCard({
       )
       setSourceUrl("")
       setMessage(
-        "Source submitted. CellarManager will verify it and combine it with other usable evidence.",
+        t("Source submitted. CellarManager will verify it and combine it with other usable evidence."),
       )
     } catch (caughtError) {
       setError(
@@ -853,12 +827,11 @@ function ResearchItemCard({
     >
       <header>
         <div>
-          <span className="research-inbox-card__status">{status.label}</span>
+          <span className="research-inbox-card__status">{t(status.label)}</span>
           <h3>{item.subject.title}</h3>
-          <p>{status.description}</p>
+          <p>{t(status.description)}</p>
         </div>
-        <small>
-          Requested {new Date(item.requestedAt).toLocaleDateString()}
+        <small>{t("Requested")}{new Date(item.requestedAt).toLocaleDateString()}
         </small>
       </header>
 
@@ -867,29 +840,22 @@ function ResearchItemCard({
           {item.subjectType === "producer-profile" ? (
             <>
               <div>
-                <strong>Is this the same producer?</strong>
-                <p>
-                  The exact wine is absent from the reference catalogue, but
-                  its producer can still be identified. Confirming it will not
-                  rename or otherwise change the wine in your cellar.
-                </p>
+                <strong>{t("Is this the same producer?")}</strong>
+                <p>{t("The exact wine is absent from the reference catalogue, but its producer can still be identified. Confirming it will not rename or otherwise change the wine in your cellar.")}</p>
               </div>
               {identityLoading ? (
-                <p>Looking for producer identities…</p>
+                <p>{t("Looking for producer identities…")}</p>
               ) : recommendedCandidate ? (
                 <div className="research-identity-candidates">
                   <article className="research-identity-recommendation">
                     <div>
-                      <small className="research-identity-recommendation__label">
-                        Recommended match
-                      </small>
+                      <small className="research-identity-recommendation__label">{t("Recommended match")}</small>
                       <strong>{producerDisplayName(recommendedCandidate)}</strong>
-                      <small>
-                        Reference catalogue name: {recommendedCandidate.canonicalName}
+                      <small>{t("Reference catalogue name:")}{recommendedCandidate.canonicalName}
                       </small>
                       {recommendedCandidate.examples.length > 0 ? (
                         <div className="research-identity-recommendation__examples">
-                          <span>Known reference wines</span>
+                          <span>{t("Known reference wines")}</span>
                           <ul>
                             {recommendedCandidate.examples.map((example) => (
                               <li key={example}>
@@ -918,16 +884,13 @@ function ResearchItemCard({
 
                   {alternativeCandidates.length > 0 ? (
                     <details className="research-identity-alternatives">
-                      <summary>
-                        Not the same producer? Review other possible matches
-                      </summary>
+                      <summary>{t("Not the same producer? Review other possible matches")}</summary>
                       <div>
                         {alternativeCandidates.map((candidate) => (
                           <article key={candidate.producerKey}>
                             <div>
                               <strong>{producerDisplayName(candidate)}</strong>
-                              <small>
-                                Reference catalogue name: {candidate.canonicalName}
+                              <small>{t("Reference catalogue name:")}{candidate.canonicalName}
                               </small>
                               {candidate.examples.length > 0 ? (
                                 <p>
@@ -958,24 +921,17 @@ function ResearchItemCard({
                   ) : null}
                 </div>
               ) : (
-                <Notice tone="warning">
-                  No plausible producer-level LWIN identity was found.
-                </Notice>
+                <Notice tone="warning">{t("No plausible producer-level LWIN identity was found.")}</Notice>
               )}
             </>
           ) : null}
           <div className="research-inbox-card__identity-footer">
-            <p>
-              If none of these producers is correct, inspect the representative
-              wine or leave this request unchanged.
-            </p>
+            <p>{t("If none of these producers is correct, inspect the representative wine or leave this request unchanged.")}</p>
             <button
               disabled={!isOnline}
               onClick={() => onOpenWine(item.exemplarWineId)}
               type="button"
-            >
-              Inspect the wine
-            </button>
+            >{t("Inspect the wine")}</button>
           </div>
         </div>
       ) : null}
@@ -983,43 +939,31 @@ function ResearchItemCard({
       {item.status === "needs-source-review" ? (
         <section className="research-inbox-card__source-action">
           <div>
-            <strong>CellarManager keeps looking</strong>
-            <p>
-              The normal path is automatic: several credible pages are checked,
-              compared, and cited together when possible. No extracted profile
-              becomes active before your review.
-            </p>
+            <strong>{t("CellarManager keeps looking")}</strong>
+            <p>{t("The normal path is automatic: several credible pages are checked, compared, and cited together when possible. No extracted profile becomes active before your review.")}</p>
           </div>
           <details>
-            <summary>Add a source yourself (advanced)</summary>
+            <summary>{t("Add a source yourself (advanced)")}</summary>
             <form onSubmit={(event) => void submitSource(event)}>
-              <p>
-                Use this when you know a relevant page that discovery may miss,
-                such as a producer page, an appellation body, a technical sheet,
-                or a reputable wine guide.
-              </p>
-              <label>
-                Source type
-                <select
+              <p>{t("Use this when you know a relevant page that discovery may miss, such as a producer page, an appellation body, a technical sheet, or a reputable wine guide.")}</p>
+              <label>{t("Source type")}<select
                   disabled={isSourceSaving || !isOnline}
                   onChange={(event) =>
                     setSourceKind(event.target.value as typeof sourceKind)
                   }
                   value={sourceKind}
                 >
-                  <option value="official">Producer or official site</option>
-                  <option value="institutional">Institution or appellation body</option>
-                  <option value="technical">Importer or technical sheet</option>
-                  <option value="editorial">Reputable editorial guide</option>
-                  <option value="other">Other reliable page</option>
+                  <option value="official">{t("Producer or official site")}</option>
+                  <option value="institutional">{t("Institution or appellation body")}</option>
+                  <option value="technical">{t("Importer or technical sheet")}</option>
+                  <option value="editorial">{t("Reputable editorial guide")}</option>
+                  <option value="other">{t("Other reliable page")}</option>
                 </select>
               </label>
-              <label>
-                Page URL
-                <input
+              <label>{t("Page URL")}<input
                   disabled={isSourceSaving || !isOnline}
                   onChange={(event) => setSourceUrl(event.target.value)}
-                  placeholder="https://example.com/producer-profile"
+                  placeholder={t("https://example.com/producer-profile")}
                   required
                   type="url"
                   value={sourceUrl}
@@ -1028,10 +972,7 @@ function ResearchItemCard({
               <button disabled={isSourceSaving || !isOnline} type="submit">
                 {isSourceSaving ? "Submitting…" : "Check and use this source"}
               </button>
-              <small>
-                CellarManager checks HTTPS safety, redirects, robots rules, and
-                subject relevance. The page text is not stored.
-              </small>
+              <small>{t("CellarManager checks HTTPS safety, redirects, robots rules, and subject relevance. The page text is not stored.")}</small>
             </form>
           </details>
         </section>
@@ -1041,25 +982,20 @@ function ResearchItemCard({
         <>
           <ProposalSummary draft={item.draft} />
           <div className="research-inbox-card__sources">
-            <strong>Evidence checked</strong>
+            <strong>{t("Evidence checked")}</strong>
             <ul>
               {item.draft.sources.map((source) => (
                 <li key={source.url}>
                   <a href={source.url} rel="noreferrer" target="_blank">
                     {source.name}
                   </a>
-                  <small>
-                    Retrieved {new Date(source.retrievedAt).toLocaleDateString()}
+                  <small>{t("Retrieved")}{new Date(source.retrievedAt).toLocaleDateString()}
                     {source.attribution ? ` · ${source.attribution}` : ""}
                   </small>
                 </li>
               ))}
             </ul>
-            <p>
-              The pages are cited, not copied. This is a model proposal based on
-              their structure claims, and it remains inactive until reviewed and
-              published through a new immutable library version.
-            </p>
+            <p>{t("The pages are cited, not copied. This is a model proposal based on their structure claims, and it remains inactive until reviewed and published through a new immutable library version.")}</p>
           </div>
 
           {item.status === "draft-ready" && isEditing ? (
@@ -1075,30 +1011,24 @@ function ResearchItemCard({
                 disabled={isSaving || !isOnline}
                 onClick={() => void review("accepted", null, "")}
                 type="button"
-              >
-                Approve this profile
-              </button>
+              >{t("Approve this profile")}</button>
               <button
                 disabled={isSaving || !isOnline}
                 onClick={() => setIsEditing(true)}
                 type="button"
-              >
-                Adjust the profile
-              </button>
+              >{t("Adjust the profile")}</button>
               <button
                 disabled={isSaving || !isOnline}
                 onClick={() => void review("rejected", null, "")}
                 type="button"
-              >
-                Reject this profile
-              </button>
+              >{t("Reject this profile")}</button>
             </div>
           ) : null}
         </>
       ) : null}
 
-      {message ? <Notice role="status">{message}</Notice> : null}
-      {error ? <Notice role="alert" tone="warning">{error}</Notice> : null}
+      {message ? <Notice role="status">{t(message)}</Notice> : null}
+      {error ? <Notice role="alert" tone="warning">{t(error)}</Notice> : null}
     </article>
   )
 }
@@ -1114,6 +1044,7 @@ export function EnrichmentResearchInbox({
   onOpenWine,
   onRefresh,
 }: EnrichmentResearchInboxProps) {
+  const { t } = useLanguage()
   const items = inbox?.items ?? []
   const { active: activeItems, published: publishedItems } =
     partitionEnrichmentResearchItems(items)
@@ -1131,48 +1062,36 @@ export function EnrichmentResearchInbox({
     >
       <summary>
         <span>
-          <strong className="research-inbox__closed-label">
-            Show research inbox · {activeCount} active
-            {publishedCount > 0 ? ` · ${publishedCount} published` : ""}
-            {unread > 0 ? ` · ${unread} new` : ""}
+          <strong className="research-inbox__closed-label">{t("Show research inbox ·")}{activeCount}{t("active")}{publishedCount > 0 ? t(" · {value1} published", { value1: String(publishedCount) }) : ""}
+            {unread > 0 ? t(" · {value1} new", { value1: String(unread) }) : ""}
           </strong>
-          <strong className="research-inbox__open-label">
-            Hide research inbox · {activeCount} active
-            {publishedCount > 0 ? ` · ${publishedCount} published` : ""}
+          <strong className="research-inbox__open-label">{t("Hide research inbox ·")}{activeCount}{t("active")}{publishedCount > 0 ? t(" · {value1} published", { value1: String(publishedCount) }) : ""}
           </strong>
-          <small>Attributed drafts, your reviews, and publication status</small>
+          <small>{t("Attributed drafts, your reviews, and publication status")}</small>
         </span>
         <span aria-hidden="true" className="research-inbox__chevron">▾</span>
       </summary>
 
       <div className="research-inbox__heading">
         <div>
-          <h2>Research and review</h2>
-          <p>
-            Research can suggest shared knowledge, but it cannot silently change
-            your cellar or publish itself.
-          </p>
+          <h2>{t("Research and review")}</h2>
+          <p>{t("Research can suggest shared knowledge, but it cannot silently change your cellar or publish itself.")}</p>
         </div>
-        <button disabled={isLoading || !isOnline} onClick={onRefresh} type="button">
-          Refresh
-        </button>
+        <button disabled={isLoading || !isOnline} onClick={onRefresh} type="button">{t("Refresh")}</button>
       </div>
 
       {!isOnline ? (
-        <Notice tone="warning">Reconnect to request or review web research.</Notice>
+        <Notice tone="warning">{t("Reconnect to request or review web research.")}</Notice>
       ) : isLoading && inbox === null ? (
-        <p>Loading research requests…</p>
+        <p>{t("Loading research requests…")}</p>
       ) : error ? (
-        <Notice role="alert" tone="warning">{error}</Notice>
+        <Notice role="alert" tone="warning">{t(error)}</Notice>
       ) : totalCount === 0 ? (
-        <p>
-          No research has been requested yet. Use “Request research” in the
-          prioritized queue above.
-        </p>
+        <p>{t("No research has been requested yet. Use “Request research” in the prioritized queue above.")}</p>
       ) : (
         <>
           {activeCount === 0 ? (
-            <p>No active research requests. All requested profiles are published.</p>
+            <p>{t("No active research requests. All requested profiles are published.")}</p>
           ) : (
             <div className="research-inbox__list">
               {activeItems.map((item) => (
@@ -1190,8 +1109,7 @@ export function EnrichmentResearchInbox({
 
           {publishedCount > 0 ? (
             <details className="research-inbox__history">
-              <summary>
-                Published history · {publishedCount} {publishedCount === 1 ? "profile" : "profiles"}
+              <summary>{t("Published history ·")}{publishedCount} {publishedCount === 1 ? "profile" : "profiles"}
               </summary>
               <div className="research-inbox__list">
                 {publishedItems.map((item) => (

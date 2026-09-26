@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import { getHouseholdDevices, manageHouseholdDevice, type DeviceDirectory, type HouseholdDevice } from "../data/householdDevices"
 import type { HouseholdRole } from "../households/householdPermissions"
 import { Notice } from "./Notice"
+import { useLanguage } from "../i18n/useLanguage"
 
 interface Props {
   householdId: string
@@ -22,6 +23,7 @@ export function HouseholdDevicesView(props: Props) {
 }
 
 function DevicesWorkspace({ householdId, householdName, userId, role, isOnline, currentDeviceId, onRevoked }: Props) {
+  const { t } = useLanguage()
   const [directory, setDirectory] = useState<DeviceDirectory | null>(null)
   const [loading, setLoading] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -112,16 +114,16 @@ function DevicesWorkspace({ householdId, householdName, userId, role, isOnline, 
       <div className="household-devices__identity">
         <h3>{device.name}</h3>
         <div className="household-devices__badges">
-          {current ? <span>This browser</span> : null}
-          <span>{device.revokedAt ? "Revoked" : "Active registration"}</span>
+          {current ? <span>{t("This browser")}</span> : null}
+          <span>{device.revokedAt ? t("Revoked") : t("Active registration")}</span>
         </div>
-        <p>{device.accountLabel}{device.userId === userId ? " · You" : ""}</p>
+        <p>{device.accountLabel}{device.userId === userId ? t(" · You") : ""}</p>
         <dl>
-          <div><dt>Registered</dt><dd>{timestamp(device.createdAt)}</dd></div>
-          <div><dt>Last registration contact</dt><dd>{timestamp(device.lastSeenAt)}</dd></div>
-          {device.revokedAt ? <div><dt>Revoked</dt><dd>{timestamp(device.revokedAt)}</dd></div> : null}
+          <div><dt>{t("Registered")}</dt><dd>{timestamp(device.createdAt)}</dd></div>
+          <div><dt>{t("Last registration contact")}</dt><dd>{timestamp(device.lastSeenAt)}</dd></div>
+          {device.revokedAt ? <div><dt>{t("Revoked")}</dt><dd>{timestamp(device.revokedAt)}</dd></div> : null}
         </dl>
-        <small>Registration ID: {device.id}</small>
+        <small>{t("Registration ID:")}{t(" ")}{device.id}</small>
       </div>
       {canManage(device) ? <div className="household-devices__actions">
         {(["rename", "revoke"] as const).map((kind) => <button key={kind} type="button" disabled={busy}
@@ -134,13 +136,13 @@ function DevicesWorkspace({ householdId, householdName, userId, role, isOnline, 
         aria-label={action.kind === "rename" ? "Rename device" : "Confirm revocation"} ref={confirmation} tabIndex={-1}
         onKeyDown={(event) => { if (event.key === "Escape") { event.preventDefault(); cancel() } }}>
         <h3>{action.kind === "rename" ? "Name this registration" : `Revoke ${device.name}?`}</h3>
-        {action.kind === "rename" ? <label>Device name<input maxLength={120} value={name} onChange={(event) => setName(event.target.value)} /></label> : <>
-          {current ? <Notice role="status" tone="warning">This is your current browser. You will lose bottle-change actions here for this household.</Notice> : null}
-          <p>New uploads using this registration will be refused, including bottle changes still queued offline. Unsent changes stay on that browser for review; they are not moved to a new registration.</p>
-          <p>This cannot be undone. It does not sign anyone out, remove household membership, or erase downloaded data. A signed-in member can register another browser. To remove someone’s access, use Members instead.</p>
+        {action.kind === "rename" ? <label>{t("Device name")}<input maxLength={120} value={name} onChange={(event) => setName(event.target.value)} /></label> : <>
+          {current ? <Notice role="status" tone="warning">{t("This is your current browser. You will lose bottle-change actions here for this household.")}</Notice> : null}
+          <p>{t("New uploads using this registration will be refused, including bottle changes still queued offline. Unsent changes stay on that browser for review; they are not moved to a new registration.")}</p>
+          <p>{t("This cannot be undone. It does not sign anyone out, remove household membership, or erase downloaded data. A signed-in member can register another browser. To remove someone’s access, use Members instead.")}</p>
         </>}
         <div className="household-devices__actions">
-          <button type="button" onClick={cancel}>Cancel</button>
+          <button type="button" onClick={cancel}>{t("Cancel")}</button>
           <button type="button" disabled={busy || (action.kind === "rename" && !name.trim())} onClick={() => void submit()}>
             {action.kind === "rename" ? "Save device name" : "Confirm: revoke registration"}
           </button>
@@ -151,19 +153,19 @@ function DevicesWorkspace({ householdId, householdName, userId, role, isOnline, 
   const active = directory?.devices.filter((device) => !device.revokedAt) ?? []
   const revoked = directory?.devices.filter((device) => device.revokedAt) ?? []
   return <main className="household-devices">
-    <header className="household-devices__heading"><div><h1>Devices</h1><p>Browser registrations for {householdName}.</p></div>
-      <button type="button" ref={refreshButton} disabled={!isOnline || loading || busy} onClick={() => void refresh()}>Refresh devices</button>
+    <header className="household-devices__heading"><div><h1>{t("Devices")}</h1><p>{t("Browser registrations for")}{t(" ")}{householdName}.</p></div>
+      <button type="button" ref={refreshButton} disabled={!isOnline || loading || busy} onClick={() => void refresh()}>{t("Refresh devices")}</button>
     </header>
-    <p>Each browser has a separate registration for each household. Owners can manage all registrations; Members can manage only their own.</p>
-    <Notice tone="info">These are not login sessions. Revocation stops stock uploads from that registration, not account access or offline reading. “Last registration contact” is not live activity or a last-sign-in time.</Notice>
-    {!isOnline ? <Notice role="status" tone="warning">Reconnect to view or manage devices. Device changes are never queued offline.</Notice> : <>
+    <p>{t("Each browser has a separate registration for each household. Owners can manage all registrations; Members can manage only their own.")}</p>
+    <Notice tone="info">{t("These are not login sessions. Revocation stops stock uploads from that registration, not account access or offline reading. “Last registration contact” is not live activity or a last-sign-in time.")}</Notice>
+    {!isOnline ? <Notice role="status" tone="warning">{t("Reconnect to view or manage devices. Device changes are never queued offline.")}</Notice> : <>
       {message ? <Notice role={message.tone === "error" ? "alert" : "status"} tone={message.tone}>{message.text}</Notice> : null}
       {busy || loading ? <p role="status">{busy ? "Checking and updating registration…" : "Loading current devices…"}</p> : null}
       {directory ? <>
-        <h2>{active.length} active {active.length === 1 ? "registration" : "registrations"}</h2>
-        {active.length === 0 ? <p>No active registrations are visible for this household.</p> : <ul className="household-devices__list">{active.map(deviceCard)}</ul>}
-        {revoked.length > 0 ? <details className="household-devices__history"><summary>Show revoked registrations ({revoked.length})</summary>
-          <p>Kept to preserve inventory history. Revoked registrations cannot be reactivated.</p>
+        <h2>{active.length}{t(" ")}{t("active")}{t(" ")}{active.length === 1 ? "registration" : "registrations"}</h2>
+        {active.length === 0 ? <p>{t("No active registrations are visible for this household.")}</p> : <ul className="household-devices__list">{active.map(deviceCard)}</ul>}
+        {revoked.length > 0 ? <details className="household-devices__history"><summary>{t("Show revoked registrations (")}{revoked.length})</summary>
+          <p>{t("Kept to preserve inventory history. Revoked registrations cannot be reactivated.")}</p>
           <ul className="household-devices__list">{revoked.map(deviceCard)}</ul>
         </details> : null}
       </> : null}

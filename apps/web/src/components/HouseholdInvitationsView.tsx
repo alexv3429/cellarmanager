@@ -18,6 +18,7 @@ import {
 } from "../data/householdInvitations"
 import { buildHouseholdInvitationUrl } from "../households/invitationToken"
 import { Notice } from "./Notice"
+import { useLanguage } from "../i18n/useLanguage"
 
 interface HouseholdInvitationsViewProps {
   householdId: string
@@ -69,6 +70,7 @@ export function HouseholdInvitationsView({
   isOnline,
   onBackToMembers,
 }: HouseholdInvitationsViewProps) {
+  const { t } = useLanguage()
   const [email, setEmail] = useState("")
   const [invitations, setInvitations] = useState<
     HouseholdInvitation[]
@@ -206,10 +208,10 @@ export function HouseholdInvitationsView({
 
     try {
       await navigator.clipboard.writeText(invitation.url)
-      setMessage("Invitation link copied. Share it via WhatsApp, Telegram, or any app you prefer.")
+      setMessage(t("Invitation link copied. Share it via WhatsApp, Telegram, or any app you prefer."))
     } catch {
       setError(
-        "Copy was blocked by the browser. Select and copy the link manually.",
+        t("Copy was blocked by the browser. Select and copy the link manually."),
       )
     }
   }
@@ -229,19 +231,13 @@ export function HouseholdInvitationsView({
   return (
     <main className="household-invitations">
       <header>
-        {onBackToMembers ? <div><button onClick={onBackToMembers} type="button">Back to members</button></div> : null}
-        <h1>Invite a household member</h1>
-        <p>
-          Invite someone to browse {householdName} with read-only Member access.
-          Only Owners can change stock or shared settings. You can grant Owner
-          access from Members after they join.
-        </p>
+        {onBackToMembers ? <div><button onClick={onBackToMembers} type="button">{t("Back to members")}</button></div> : null}
+        <h1>{t("Invite a household member")}</h1>
+        <p>{t("Invite someone to browse")}{householdName}{t("with read-only Member access. Only Owners can change stock or shared settings. You can grant Owner access from Members after they join.")}</p>
       </header>
 
       {!isOnline ? (
-        <Notice role="status" tone="warning">
-          Reconnect to create or manage invitation links.
-        </Notice>
+        <Notice role="status" tone="warning">{t("Reconnect to create or manage invitation links.")}</Notice>
       ) : null}
 
       {error ? (
@@ -257,26 +253,22 @@ export function HouseholdInvitationsView({
       ) : null}
 
       <form className="household-invitations__form" onSubmit={(event) => void createInvitation(event)}>
-        <label>
-          Member email
-          <input
+        <label>{t("Member email")}<input
             autoComplete="email"
             disabled={!isOnline || busy}
             onChange={(event) => setEmail(event.target.value)}
-            placeholder="member@example.com"
+            placeholder={t("member@example.com")}
             required
             type="email"
             value={email}
           />
         </label>
-        <p>Choose how to share the invitation. Only this email address can use it to join.</p>
+        <p>{t("Choose how to share the invitation. Only this email address can use it to join.")}</p>
         <div className="household-invitations__share-actions">
           <button disabled={!isOnline || busy} type="submit" value="email">
-            {isCreating ? "Preparing invitation…" : "Send invitation by email"}
+            {isCreating ? t("Preparing invitation…") : t("Send invitation by email")}
           </button>
-          <button disabled={!isOnline || busy} type="submit" value="copy">
-            Copy invitation link
-          </button>
+          <button disabled={!isOnline || busy} type="submit" value="copy">{t("Copy invitation link")}</button>
         </div>
       </form>
 
@@ -285,16 +277,10 @@ export function HouseholdInvitationsView({
           aria-labelledby="invitation-link-heading"
           className="household-invitations__share"
         >
-          <h2 id="invitation-link-heading">
-            Invitation for {share.email}
+          <h2 id="invitation-link-heading">{t("Invitation for")}{share.email}
           </h2>
-          <p>
-            Valid until {formatDate(share.expiresAt)}. You can email or copy the same link below.
-            After leaving this page, use the history to create a replacement.
-          </p>
-          <label>
-            Private invitation link
-            <input
+          <p>{t("Valid until")}{formatDate(share.expiresAt)}{t(". You can email or copy the same link below. After leaving this page, use the history to create a replacement.")}</p>
+          <label>{t("Private invitation link")}<input
               onClick={(event) => event.currentTarget.select()}
               readOnly
               value={share.url}
@@ -312,9 +298,7 @@ export function HouseholdInvitationsView({
               onClick={() => void copyInvitationLink()}
               disabled={busy}
               type="button"
-            >
-              Copy invitation link
-            </button>
+            >{t("Copy invitation link")}</button>
           </div>
         </section>
       ) : null}
@@ -325,27 +309,20 @@ export function HouseholdInvitationsView({
       >
         <div className="household-invitations__section-heading">
           <div>
-            <h2 id="household-invitations-heading">
-              Invitation history
-            </h2>
-            <p>
-              Sending again or copying a replacement creates a new link and disables the previous one.
-              Accepted and cancelled invitations remain visible for accountability.
-            </p>
+            <h2 id="household-invitations-heading">{t("Invitation history")}</h2>
+            <p>{t("Sending again or copying a replacement creates a new link and disables the previous one. Accepted and cancelled invitations remain visible for accountability.")}</p>
           </div>
           <button
             disabled={!isOnline || isLoading}
             onClick={() => void loadInvitations()}
             type="button"
-          >
-            Refresh
-          </button>
+          >{t("Refresh")}</button>
         </div>
 
         {isLoading ? (
-          <Notice role="status">Loading invitations…</Notice>
+          <Notice role="status">{t("Loading invitations…")}</Notice>
         ) : invitations.length === 0 ? (
-          <p>No invitations have been created yet.</p>
+          <p>{t("No invitations have been created yet.")}</p>
         ) : (
           <ul className="household-invitations__list">
             {invitations.map((invitation) => (
@@ -355,10 +332,9 @@ export function HouseholdInvitationsView({
                   <span
                     className={`household-invitations__status household-invitations__status--${invitation.status}`}
                   >
-                    {STATUS_LABELS[invitation.status]}
+                    {t(STATUS_LABELS[invitation.status])}
                   </span>
-                  <small>
-                    Created {formatDate(invitation.createdAt)}
+                  <small>{t("Created")}{formatDate(invitation.createdAt)}
                     {invitation.status === "pending"
                       ? ` · expires ${formatDate(invitation.expiresAt)}`
                       : ""}
@@ -390,9 +366,7 @@ export function HouseholdInvitationsView({
                       </button>
                     ) : null}
                     {invitation.canReissue ? (
-                      <button disabled={!isOnline || busy} onClick={() => void reissueInvitation(invitation, "copy")} type="button">
-                        Copy replacement link
-                      </button>
+                      <button disabled={!isOnline || busy} onClick={() => void reissueInvitation(invitation, "copy")} type="button">{t("Copy replacement link")}</button>
                     ) : null}
                     {invitation.canRevoke ? (
                       <button
@@ -404,9 +378,7 @@ export function HouseholdInvitationsView({
                           void cancelInvitation(invitation)
                         }
                         type="button"
-                      >
-                        Cancel invitation
-                      </button>
+                      >{t("Cancel invitation")}</button>
                     ) : null}
                   </div>
                 ) : null}

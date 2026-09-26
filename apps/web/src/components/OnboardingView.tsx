@@ -3,6 +3,7 @@ import { type FormEvent, useState } from "react"
 import { createFirstHousehold } from "../data/onboarding"
 import { Notice } from "./Notice"
 import { AccountLink } from "./AccountNavigation"
+import { useLanguage } from "../i18n/useLanguage"
 
 interface OnboardingViewProps {
   isOnline: boolean
@@ -13,6 +14,7 @@ export function OnboardingView({
   isOnline,
   onSignOut,
 }: OnboardingViewProps) {
+  const { t } = useLanguage()
   const [householdName, setHouseholdName] = useState("")
   const [cellarName, setCellarName] =
     useState("Main cellar")
@@ -40,7 +42,7 @@ export function OnboardingView({
 
     if (!isOnline) {
       setError(
-        "Connect to the internet to create your cellar.",
+        t("Connect to the internet to create your cellar."),
       )
       return
     }
@@ -56,7 +58,7 @@ export function OnboardingView({
 
       setIsCreated(true)
       setMessage(
-        "Cellar created. Waiting for local synchronization…",
+        t("Cellar created. Waiting for local synchronization…"),
       )
     } catch (caughtError: unknown) {
       setError(
@@ -73,7 +75,7 @@ export function OnboardingView({
     setError(null)
 
     if (!isOnline) {
-      setError("Reconnect before signing out.")
+      setError(t("Reconnect before signing out."))
       return
     }
 
@@ -91,23 +93,16 @@ export function OnboardingView({
   return (
     <main className="standalone-page">
       <AccountLink />
-      <h1>Set up your cellar</h1>
+      <h1>{t("Set up your cellar")}</h1>
 
-      <p>
-        Create your private CellarManager household and
-        first storage location.
-      </p>
+      <p>{t("Create your private CellarManager household and first storage location.")}</p>
 
       {!isOnline ? (
-        <Notice role="alert" tone="warning">
-          You must be online to complete initial setup.
-        </Notice>
+        <Notice role="alert" tone="warning">{t("You must be online to complete initial setup.")}</Notice>
       ) : null}
 
       <form onSubmit={handleSubmit}>
-        <label>
-          Household name
-          <input
+        <label>{t("Household name")}<input
             autoComplete="organization"
             disabled={isCreated}
             onChange={(event) =>
@@ -118,9 +113,7 @@ export function OnboardingView({
           />
         </label>
 
-        <label>
-          Cellar name
-          <input
+        <label>{t("Cellar name")}<input
             disabled={isCreated}
             onChange={(event) =>
               setCellarName(event.target.value)
@@ -130,9 +123,7 @@ export function OnboardingView({
           />
         </label>
 
-        <label>
-          First location
-          <input
+        <label>{t("First location")}<input
             disabled={isCreated}
             onChange={(event) =>
               setLocationCode(event.target.value)
@@ -151,10 +142,10 @@ export function OnboardingView({
           type="submit"
         >
           {isCreated
-            ? "Waiting for sync…"
+            ? t("Waiting for sync…")
             : isSubmitting
-              ? "Creating…"
-              : "Create cellar"}
+              ? t("Creating…")
+              : t("Create cellar")}
         </button>
       </form>
 
@@ -174,9 +165,7 @@ export function OnboardingView({
         disabled={!isOnline || isSubmitting}
         onClick={() => void handleSignOut()}
         type="button"
-      >
-        Sign out
-      </button>
+      >{t("Sign out")}</button>
     </main>
   )
 }

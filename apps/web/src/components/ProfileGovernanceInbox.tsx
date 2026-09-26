@@ -13,6 +13,7 @@ import {
   type ProfileRevisionStatus,
 } from "../data/profileGovernance"
 import { Notice } from "./Notice"
+import { useLanguage } from "../i18n/useLanguage"
 
 interface ProfileGovernanceInboxProps {
   isOnline: boolean
@@ -174,6 +175,7 @@ function ProfileRevisionEditor({
   profile,
   replacement = false,
 }: ProfileRevisionEditorProps) {
+  const { t } = useLanguage()
   const keys = useMemo(() => mutableKeys(profile), [profile])
   const [confidence, setConfidence] = useState(String(profile.confidence))
   const [rationale, setRationale] = useState(profile.rationale)
@@ -223,16 +225,11 @@ function ProfileRevisionEditor({
 
   return (
     <details className="profile-governance-editor" open={replacement}>
-      <summary>{replacement ? "Replace the disputed proposal" : "Propose a correction"}</summary>
+      <summary>{replacement ? t("Replace the disputed proposal") : t("Propose a correction")}</summary>
       <form onSubmit={(event) => void submit(event)}>
-        <p>
-          Canonical identity stays unchanged. Edit only reviewed maturity or style
-          values and cite at least one HTTPS source.
-        </p>
+        <p>{t("Canonical identity stays unchanged. Edit only reviewed maturity or style values and cite at least one HTTPS source.")}</p>
         <div className="profile-governance-editor__fields">
-          <label>
-            Evidence strength (0–1)
-            <input
+          <label>{t("Evidence strength (0–1)")}<input
               max="1"
               min="0"
               onChange={(event) => setConfidence(event.target.value)}
@@ -249,7 +246,7 @@ function ProfileRevisionEditor({
             const isTraitAdjustment = ADJUSTMENT_TRAIT_KEYS.includes(key)
             return (
               <label key={key}>
-                {fieldLabel(key)}
+                {t(fieldLabel(key))}
                 <input
                   max={isTags ? undefined : isAgeAdjustment ? 10 : isTraitAdjustment ? 2 : isAge ? 100 : 5}
                   min={isTags ? undefined : isAgeAdjustment ? -5 : isTraitAdjustment ? -2 : 0}
@@ -262,14 +259,12 @@ function ProfileRevisionEditor({
                   type={isTags ? "text" : "number"}
                   value={values[key]}
                 />
-                {isTags ? <small>Comma-separated terms.</small> : null}
+                {isTags ? <small>{t("Comma-separated terms.")}</small> : null}
               </label>
             )
           })}
         </div>
-        <label>
-          Revised reasoning
-          <textarea
+        <label>{t("Revised reasoning")}<textarea
             minLength={10}
             onChange={(event) => setRationale(event.target.value)}
             required
@@ -277,18 +272,16 @@ function ProfileRevisionEditor({
             value={rationale}
           />
         </label>
-        <label>
-          Supporting HTTPS sources
-          <textarea
+        <label>{t("Supporting HTTPS sources")}<textarea
             onChange={(event) => setSources(event.target.value)}
-            placeholder="One HTTPS link per line"
+            placeholder={t("One HTTPS link per line")}
             required
             rows={2}
             value={sources}
           />
         </label>
         <button disabled={!isOnline || isSaving} type="submit">
-          {isSaving ? "Submitting…" : replacement ? "Submit replacement" : "Submit proposal"}
+          {isSaving ? t("Submitting…") : replacement ? t("Submit replacement") : t("Submit proposal")}
         </button>
         {error ? <Notice role="alert" tone="warning">{error}</Notice> : null}
       </form>
@@ -307,6 +300,7 @@ function RevisionDecisionForm({
   onSaved,
   revision,
 }: RevisionDecisionFormProps) {
+  const { t } = useLanguage()
   const [verdict, setVerdict] = useState<"approve" | "disagree">("approve")
   const [rationale, setRationale] = useState("")
   const [sources, setSources] = useState("")
@@ -341,40 +335,34 @@ function RevisionDecisionForm({
 
   return (
     <details className="profile-governance-decision">
-      <summary>Record a curator decision</summary>
+      <summary>{t("Record a curator decision")}</summary>
       <form onSubmit={(event) => void submit(event)}>
-        <label>
-          Decision
-          <select
+        <label>{t("Decision")}<select
             onChange={(event) => setVerdict(event.target.value as "approve" | "disagree")}
             value={verdict}
           >
-            <option value="approve">Approve the proposed values</option>
-            <option value="disagree">Disagree and block publication</option>
+            <option value="approve">{t("Approve the proposed values")}</option>
+            <option value="disagree">{t("Disagree and block publication")}</option>
           </select>
         </label>
-        <label>
-          Decision rationale
-          <textarea
+        <label>{t("Decision rationale")}<textarea
             minLength={10}
             onChange={(event) => setRationale(event.target.value)}
-            placeholder="Explain why the evidence supports or contradicts the proposal."
+            placeholder={t("Explain why the evidence supports or contradicts the proposal.")}
             required
             rows={3}
             value={rationale}
           />
         </label>
-        <label>
-          Additional HTTPS sources (optional)
-          <textarea
+        <label>{t("Additional HTTPS sources (optional)")}<textarea
             onChange={(event) => setSources(event.target.value)}
-            placeholder="One HTTPS link per line"
+            placeholder={t("One HTTPS link per line")}
             rows={2}
             value={sources}
           />
         </label>
         <button disabled={!isOnline || isSaving} type="submit">
-          {isSaving ? "Recording…" : "Record decision"}
+          {isSaving ? t("Recording…") : t("Record decision")}
         </button>
         {error ? <Notice role="alert" tone="warning">{error}</Notice> : null}
       </form>
@@ -389,6 +377,7 @@ interface DismissCaseFormProps {
 }
 
 function DismissCaseForm({ caseId, isOnline, onSaved }: DismissCaseFormProps) {
+  const { t } = useLanguage()
   const [rationale, setRationale] = useState("")
   const [source, setSource] = useState("")
   const [isSaving, setIsSaving] = useState(false)
@@ -419,30 +408,26 @@ function DismissCaseForm({ caseId, isOnline, onSaved }: DismissCaseFormProps) {
 
   return (
     <details className="profile-governance-dismissal">
-      <summary>Close without changing the profile</summary>
+      <summary>{t("Close without changing the profile")}</summary>
       <form onSubmit={(event) => void submit(event)}>
-        <label>
-          Resolution
-          <textarea
+        <label>{t("Resolution")}<textarea
             minLength={10}
             onChange={(event) => setRationale(event.target.value)}
-            placeholder="Explain why the current published profile remains appropriate."
+            placeholder={t("Explain why the current published profile remains appropriate.")}
             required
             rows={3}
             value={rationale}
           />
         </label>
-        <label>
-          Supporting HTTPS sources (optional)
-          <input
+        <label>{t("Supporting HTTPS sources (optional)")}<input
             onChange={(event) => setSource(event.target.value)}
-            placeholder="https://…"
+            placeholder={t("https://…")}
             type="url"
             value={source}
           />
         </label>
         <button disabled={!isOnline || isSaving} type="submit">
-          {isSaving ? "Closing…" : "Close with no change"}
+          {isSaving ? t("Closing…") : t("Close with no change")}
         </button>
         {error ? <Notice role="alert" tone="warning">{error}</Notice> : null}
       </form>
@@ -451,36 +436,37 @@ function DismissCaseForm({ caseId, isOnline, onSaved }: DismissCaseFormProps) {
 }
 
 function RevisionComparison({ revision }: { revision: ProfileRevision }) {
+  const { t } = useLanguage()
   const changes = changedValues(revision)
   return (
     <section className="profile-governance-revision">
       <header>
         <div>
           <span className={`profile-governance-status profile-governance-status--${revision.status}`}>
-            {statusLabel(revision.status)}
+            {t(statusLabel(revision.status))}
           </span>
-          <strong>Proposed by {revision.proposedBy}</strong>
+          <strong>{t("Proposed by")}{t(" ")}{revision.proposedBy}</strong>
         </div>
         <small>{new Date(revision.proposedAt).toLocaleString()}</small>
       </header>
       <div className="profile-governance-diff">
-        <h4>Proposed changes</h4>
+        <h4>{t("Proposed changes")}</h4>
         {changes.length === 0 ? (
-          <p>No changed value is visible.</p>
+          <p>{t("No changed value is visible.")}</p>
         ) : (
           <div className="profile-governance-diff__rows">
             {changes.map(({ key, before, after }) => (
               <div className="profile-governance-diff__row" key={key}>
-                <strong>{fieldLabel(key)}</strong>
-                <del><small>Current</small>{formatValue(key, before)}</del>
-                <ins><small>Proposed</small>{formatValue(key, after)}</ins>
+                <strong>{t(fieldLabel(key))}</strong>
+                <del><small>{t("Current")}</small>{t(formatValue(key, before))}</del>
+                <ins><small>{t("Proposed")}</small>{t(formatValue(key, after))}</ins>
               </div>
             ))}
           </div>
         )}
       </div>
       <div className="profile-governance-sources">
-        <strong>Sources cited for this revision</strong>
+        <strong>{t("Sources cited for this revision")}</strong>
         <ul>
           {revision.evidenceUrls.map((url) => (
             <li key={url}><a href={url} rel="noreferrer" target="_blank">{url}</a></li>
@@ -489,7 +475,7 @@ function RevisionComparison({ revision }: { revision: ProfileRevision }) {
       </div>
       {revision.decisions.length > 0 ? (
         <div className="profile-governance-decisions">
-          <strong>Recorded decisions</strong>
+          <strong>{t("Recorded decisions")}</strong>
           <ol>
             {revision.decisions.map((decision) => (
               <li key={decision.id}>
@@ -504,8 +490,7 @@ function RevisionComparison({ revision }: { revision: ProfileRevision }) {
         </div>
       ) : null}
       {revision.publishedProfile ? (
-        <Notice tone="success">
-          Published in shared library version {revision.publishedProfile.knowledgeVersion.number}
+        <Notice tone="success">{t("Published in shared library version")}{revision.publishedProfile.knowledgeVersion.number}
           {revision.publishedAt ? ` on ${new Date(revision.publishedAt).toLocaleString()}` : ""}.
         </Notice>
       ) : null}
@@ -520,6 +505,7 @@ interface GovernanceCardProps {
 }
 
 function GovernanceCard({ isOnline, item, onSaved }: GovernanceCardProps) {
+  const { t } = useLanguage()
   const activeRevision = item.revisions.find((revision) =>
     revision.status === "proposed" ||
     revision.status === "approved" ||
@@ -536,37 +522,37 @@ function GovernanceCard({ isOnline, item, onSaved }: GovernanceCardProps) {
         <div>
           <span className="research-inbox-card__status">
             {item.status === "open"
-              ? "New report"
+              ? t("New report")
               : item.status === "reviewing"
-                ? "Under governance review"
+                ? t("Under governance review")
                 : item.status === "resolved"
-                  ? "Published resolution"
-                  : "Closed — no change"}
+                  ? t("Published resolution")
+                  : t("Closed — no change")}
           </span>
           <h3>{item.subjectTitle}</h3>
-          <p>{item.reporterCount} {item.reporterCount === 1 ? "reporter" : "reporters"} raised this shared-profile review.</p>
+          <p>{item.reporterCount} {item.reporterCount === 1 ? t("reporter") : t("reporters")}{t(" ")}{t("raised this shared-profile review.")}</p>
         </div>
-        <small>Opened {new Date(item.openedAt).toLocaleDateString()}</small>
+        <small>{t("Opened")}{t(" ")}{new Date(item.openedAt).toLocaleDateString()}</small>
       </header>
 
       {item.resolutionSummary ? (
         <Notice tone={item.status === "resolved" ? "success" : undefined}>
-          <strong>Outcome:</strong> {item.resolutionSummary}
+          <strong>{t("Outcome:")}</strong> {item.resolutionSummary}
         </Notice>
       ) : null}
 
       <section className="profile-governance-reports">
-        <h4>Reported concerns</h4>
-        <p>Reporter identities, accounts, wines, and cellars are not disclosed.</p>
+        <h4>{t("Reported concerns")}</h4>
+        <p>{t("Reporter identities, accounts, wines, and cellars are not disclosed.")}</p>
         <ol>
           {item.reports.map((report, index) => (
             <li key={`${report.createdAt}-${index}`}>
-              <strong>{reportKindLabel(report.kind)}</strong>
+              <strong>{t(reportKindLabel(report.kind))}</strong>
               <p>{report.comment}</p>
               <div>
                 <small>{new Date(report.createdAt).toLocaleString()}</small>
                 {report.evidenceUrl ? (
-                  <a href={report.evidenceUrl} rel="noreferrer" target="_blank">Open reporter source</a>
+                  <a href={report.evidenceUrl} rel="noreferrer" target="_blank">{t("Open reporter source")}</a>
                 ) : null}
               </div>
             </li>
@@ -575,17 +561,17 @@ function GovernanceCard({ isOnline, item, onSaved }: GovernanceCardProps) {
       </section>
 
       <details className="profile-governance-current">
-        <summary>Current published profile · library version {item.currentProfile.knowledgeVersion.number}</summary>
+        <summary>{t("Current published profile · library version")}{t(" ")}{item.currentProfile.knowledgeVersion.number}</summary>
         <p>{item.currentProfile.rationale}</p>
         <dl>
-          <div><dt>Evidence strength</dt><dd>{formatValue("confidence", item.currentProfile.confidence)}</dd></div>
+          <div><dt>{t("Evidence strength")}</dt><dd>{t(formatValue("confidence", item.currentProfile.confidence))}</dd></div>
           {profileValues(item.currentProfile).map(({ key, value }) => (
-            <div key={key}><dt>{fieldLabel(key)}</dt><dd>{formatValue(key, value)}</dd></div>
+            <div key={key}><dt>{t(fieldLabel(key))}</dt><dd>{t(formatValue(key, value))}</dd></div>
           ))}
         </dl>
         {item.currentProfile.evidence.length > 0 ? (
           <div className="profile-governance-sources">
-            <strong>Evidence retained by the current profile</strong>
+            <strong>{t("Evidence retained by the current profile")}</strong>
             <ul>
               {item.currentProfile.evidence.map((evidence) => (
                 <li key={`${evidence.url}-${evidence.claimType}`}>
@@ -601,11 +587,7 @@ function GovernanceCard({ isOnline, item, onSaved }: GovernanceCardProps) {
         <>
           <RevisionComparison revision={activeRevision} />
           {activeRevision.status === "approved" ? (
-            <Notice tone="success">
-              This revision has an approval and is waiting for the independent
-              publication Worker. A curator disagreement recorded before publication
-              will still block it.
-            </Notice>
+            <Notice tone="success">{t("This revision has an approval and is waiting for the independent publication Worker. A curator disagreement recorded before publication will still block it.")}</Notice>
           ) : null}
           <RevisionDecisionForm
             isOnline={isOnline}
@@ -637,7 +619,7 @@ function GovernanceCard({ isOnline, item, onSaved }: GovernanceCardProps) {
 
       {history.length > 0 ? (
         <details className="profile-governance-history">
-          <summary>Immutable revision history · {history.length}</summary>
+          <summary>{t("Immutable revision history ·")}{t(" ")}{history.length}</summary>
           <div>
             {history.map((revision) => (
               <RevisionComparison key={revision.id} revision={revision} />
@@ -648,7 +630,7 @@ function GovernanceCard({ isOnline, item, onSaved }: GovernanceCardProps) {
 
       {item.events.length > 0 ? (
         <details className="profile-governance-audit">
-          <summary>Audit trail · {item.events.length} events</summary>
+          <summary>{t("Audit trail ·")}{t(" ")}{item.events.length}{t(" ")}{t("events")}</summary>
           <ol>
             {item.events.map((event, index) => (
               <li key={`${event.occurredAt}-${event.type}-${index}`}>
@@ -664,6 +646,7 @@ function GovernanceCard({ isOnline, item, onSaved }: GovernanceCardProps) {
 }
 
 export function ProfileGovernanceInbox({ isOnline }: ProfileGovernanceInboxProps) {
+  const { t } = useLanguage()
   const [inbox, setInbox] = useState<GovernanceInbox | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -726,35 +709,28 @@ export function ProfileGovernanceInbox({ isOnline }: ProfileGovernanceInboxProps
     <details className="research-inbox profile-governance-inbox">
       <summary>
         <span>
-          <strong className="research-inbox__closed-label">
-            Show shared profile governance · {groups.active.length} active
-          </strong>
-          <strong className="research-inbox__open-label">
-            Hide shared profile governance · {groups.active.length} active
-          </strong>
-          <small>Curator-only reports, revisions, decisions, and publication history</small>
+          <strong className="research-inbox__closed-label">{t("Show shared profile governance ·")}{groups.active.length}{t("active")}</strong>
+          <strong className="research-inbox__open-label">{t("Hide shared profile governance ·")}{groups.active.length}{t("active")}</strong>
+          <small>{t("Curator-only reports, revisions, decisions, and publication history")}</small>
         </span>
         <span aria-hidden="true" className="research-inbox__chevron">▾</span>
       </summary>
 
       <div className="research-inbox__heading">
         <div>
-          <h2>Shared profile governance</h2>
-          <p>
-            Propose evidence-backed corrections. Any curator disagreement blocks
-            publication; the active library changes only through a new immutable version.
-          </p>
+          <h2>{t("Shared profile governance")}</h2>
+          <p>{t("Propose evidence-backed corrections. Any curator disagreement blocks publication; the active library changes only through a new immutable version.")}</p>
         </div>
         <button disabled={!isOnline || isLoading} onClick={() => void refresh()} type="button">
-          {isLoading ? "Refreshing…" : "Refresh"}
+          {isLoading ? t("Refreshing…") : t("Refresh")}
         </button>
       </div>
 
       {error ? <Notice role="alert" tone="warning">{error}</Notice> : null}
-      {!isOnline ? <Notice tone="warning">Reconnect to review shared profiles.</Notice> : null}
+      {!isOnline ? <Notice tone="warning">{t("Reconnect to review shared profiles.")}</Notice> : null}
 
       {groups.active.length === 0 ? (
-        <p>No shared profile currently needs a curator decision.</p>
+        <p>{t("No shared profile currently needs a curator decision.")}</p>
       ) : (
         <div className="profile-governance-list">
           {groups.active.map((item) => (
@@ -770,7 +746,7 @@ export function ProfileGovernanceInbox({ isOnline }: ProfileGovernanceInboxProps
 
       {groups.closed.length > 0 ? (
         <details className="profile-governance-closed">
-          <summary>Published and closed cases · {groups.closed.length}</summary>
+          <summary>{t("Published and closed cases ·")}{t(" ")}{groups.closed.length}</summary>
           <div className="profile-governance-list">
             {groups.closed.map((item) => (
               <GovernanceCard

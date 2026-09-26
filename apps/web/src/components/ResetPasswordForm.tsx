@@ -6,6 +6,7 @@ import {
 } from "../auth/authEmailFlow"
 import { supabase } from "../data/supabase"
 import { Notice } from "./Notice"
+import { useLanguage } from "../i18n/useLanguage"
 
 interface ResetPasswordFormProps {
   onComplete: () => void
@@ -20,6 +21,7 @@ function getResetErrorMessage(error: unknown): string {
 export function ResetPasswordForm({
   onComplete,
 }: ResetPasswordFormProps) {
+  const { t } = useLanguage()
   const [password, setPassword] = useState("")
   const [confirmation, setConfirmation] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -72,28 +74,22 @@ export function ResetPasswordForm({
   if (isComplete) {
     return (
       <main className="standalone-page">
-        <h1>CellarManager</h1>
-        <Notice role="status" tone="success">
-          Your password has been updated.
-        </Notice>
-        <button onClick={onComplete} type="button">
-          Continue to CellarManager
-        </button>
+        <h1>{t("CellarManager")}</h1>
+        <Notice role="status" tone="success">{t("Your password has been updated.")}</Notice>
+        <button onClick={onComplete} type="button">{t("Continue to CellarManager")}</button>
       </main>
     )
   }
 
   return (
     <main className="standalone-page">
-      <h1>CellarManager</h1>
-      <p>Choose a new password for your account.</p>
+      <h1>{t("CellarManager")}</h1>
+      <p>{t("Choose a new password for your account.")}</p>
 
       <form onSubmit={handleSubmit}>
-        <h2>Reset password</h2>
+        <h2>{t("Reset password")}</h2>
 
-        <label>
-          New password
-          <input
+        <label>{t("New password")}<input
             autoComplete="new-password"
             disabled={isSubmitting}
             minLength={6}
@@ -106,9 +102,7 @@ export function ResetPasswordForm({
           />
         </label>
 
-        <label>
-          Confirm new password
-          <input
+        <label>{t("Confirm new password")}<input
             autoComplete="new-password"
             disabled={isSubmitting}
             minLength={6}
@@ -123,8 +117,8 @@ export function ResetPasswordForm({
 
         <button disabled={isSubmitting} type="submit">
           {isSubmitting
-            ? "Updating password…"
-            : "Update password"}
+            ? t("Updating password…")
+            : t("Update password")}
         </button>
 
         {error ? (

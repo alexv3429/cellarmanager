@@ -10,6 +10,7 @@ import { getHouseholdRoleLabel, type HouseholdRole } from "../households/househo
 import { Notice } from "./Notice"
 import { HouseholdLifecycle } from "./HouseholdLifecycle"
 import type { OwnHouseholdAccess } from "../data/householdLifecycle"
+import { useLanguage } from "../i18n/useLanguage"
 
 interface HouseholdMembersViewProps {
   householdId: string
@@ -39,6 +40,7 @@ export function HouseholdMembersView(props: HouseholdMembersViewProps) {
 }
 
 function MembersWorkspace({ householdId, householdName, userId, role, isOnline, onInvite, onAccessChanged }: HouseholdMembersViewProps) {
+  const { t } = useLanguage()
   const [members, setMembers] = useState<HouseholdMember[]>([])
   const [phase, setPhase] = useState<"loading" | "ready" | "error">("loading")
   const [action, setAction] = useState<MemberAction | null>(null)
@@ -160,30 +162,30 @@ function MembersWorkspace({ householdId, householdName, userId, role, isOnline, 
   return (
     <main className="household-members">
       <header className="household-members__heading">
-        <div><h1>Household members</h1><p>Who has access to {householdName}.</p></div>
+        <div><h1>{t("Household members")}</h1><p>{t("Who has access to")}{t(" ")}{householdName}.</p></div>
         <div className="household-members__actions">
-          <button disabled={!isOnline || busy || phase === "loading"} onClick={() => void refresh()} ref={refreshButton} type="button">Refresh members</button>
-          {canManage ? <button disabled={busy} onClick={onInvite} type="button">Invite member</button> : null}
+          <button disabled={!isOnline || busy || phase === "loading"} onClick={() => void refresh()} ref={refreshButton} type="button">{t("Refresh members")}</button>
+          {canManage ? <button disabled={busy} onClick={onInvite} type="button">{t("Invite member")}</button> : null}
         </div>
       </header>
 
       <details className="household-members__role-help">
-        <summary>What can Owners and Members do?</summary>
+        <summary>{t("What can Owners and Members do?")}</summary>
         <div className="household-members__roles">
-        <p><strong>Owner</strong><span>Manages wines, stock, cellar setup, and who has access. A household can have several Owners.</span></p>
-        <p><strong>Member</strong><span>Browses the shared cellar and keeps personal notes and preferences. Cannot change stock or shared settings.</span></p>
+        <p><strong>{t("Owner")}</strong><span>{t("Manages wines, stock, cellar setup, and who has access. A household can have several Owners.")}</span></p>
+        <p><strong>{t("Member")}</strong><span>{t("Browses the shared cellar and keeps personal notes and preferences. Cannot change stock or shared settings.")}</span></p>
         </div>
       </details>
 
-      {!isOnline ? <Notice role="status" tone="warning">Reconnect to view the current member list or manage access. Membership changes are never queued offline.</Notice> : (
+      {!isOnline ? <Notice role="status" tone="warning">{t("Reconnect to view the current member list or manage access. Membership changes are never queued offline.")}</Notice> : (
         <>
           {message ? <Notice role={message.tone === "error" ? "alert" : "status"} tone={message.tone}>{message.text}</Notice> : null}
-          {busy ? <p role="status">Checking and updating access…</p> : null}
-          {phase === "loading" && !busy ? <p role="status">Loading current members…</p> : null}
+          {busy ? <p role="status">{t("Checking and updating access…")}</p> : null}
+          {phase === "loading" && !busy ? <p role="status">{t("Loading current members…")}</p> : null}
           {phase === "ready" ? (
             <>
-              <h2>{members.length} {members.length === 1 ? "person" : "people"} with access</h2>
-              {!canManage ? <p>Only Owners can invite people or change their access.</p> : null}
+              <h2>{members.length} {members.length === 1 ? "person" : "people"}{t(" ")}{t("with access")}</h2>
+              {!canManage ? <p>{t("Only Owners can invite people or change their access.")}</p> : null}
               <ul className="household-members__list">
                 {members.map((member) => {
                   const label = householdMemberLabel(member)
@@ -191,10 +193,10 @@ function MembersWorkspace({ householdId, householdName, userId, role, isOnline, 
                   return (
                     <li key={member.id}>
                       <div className="household-members__person">
-                        <div><strong>{label}</strong>{isSelf ? <span className="household-members__badge">You</span> : null}<span className="household-members__badge">{getHouseholdRoleLabel(member.role)}</span></div>
+                        <div><strong>{label}</strong>{isSelf ? <span className="household-members__badge">{t("You")}</span> : null}<span className="household-members__badge">{getHouseholdRoleLabel(member.role)}</span></div>
                         {member.email && member.displayName ? <span>{member.email}</span> : null}
-                        <small>Joined {new Date(member.joinedAt).toLocaleDateString()}</small>
-                        {isSelf ? <small>To transfer ownership or leave, use Your access below.</small> : null}
+                        <small>{t("Joined")}{t(" ")}{new Date(member.joinedAt).toLocaleDateString()}</small>
+                        {isSelf ? <small>{t("To transfer ownership or leave, use Your access below.")}</small> : null}
                       </div>
                       {canManage && !isSelf ? (
                         <div className="household-members__actions">
@@ -209,17 +211,17 @@ function MembersWorkspace({ householdId, householdName, userId, role, isOnline, 
                       {canManage && action?.member.id === member.id ? (
                         <div aria-label={`${actionLabel(action.kind)} for ${label}`} className="household-members__confirmation" ref={confirmation} role="region" tabIndex={-1}
                           onKeyDown={(event) => { if (event.key === "Escape") { event.preventDefault(); cancel() } }}>
-                          <h3>{actionLabel(action.kind)} for {label}?</h3>
-                          {action.kind === "owner" ? <p>They will be able to add, move, and remove bottles, edit the cellar, and manage other people's access—including yours. Your own Owner role stays unchanged.</p> : action.kind === "member" ? <p>They will keep read-only cellar access and personal notes, but lose stock editing, setup, and member management. Stock changes still queued on their devices will no longer be accepted as Member.</p> : (
+                          <h3>{actionLabel(action.kind)}{t(" ")}{t("for")}{t(" ")}{label}?</h3>
+                          {action.kind === "owner" ? <p>{t("They will be able to add, move, and remove bottles, edit the cellar, and manage other people's access—including yours. Your own Owner role stays unchanged.")}</p> : action.kind === "member" ? <p>{t("They will keep read-only cellar access and personal notes, but lose stock editing, setup, and member management. Stock changes still queued on their devices will no longer be accepted as Member.")}</p> : (
                             <>
-                              <p>This removes access to {householdName}, not their account. Their registered devices are revoked. A new invitation will be needed to rejoin.</p>
-                              <p><strong>Their private notes and preferences for this household are deleted.</strong> Shared notes, cellar stock, and attributed inventory history are preserved.</p>
-                              <p>Server access stops immediately. Already-synchronized data on offline devices may remain readable until those devices reconnect.</p>
+                              <p>{t("This removes access to")}{t(" ")}{householdName}{t(", not their account. Their registered devices are revoked. A new invitation will be needed to rejoin.")}</p>
+                              <p><strong>{t("Their private notes and preferences for this household are deleted.")}</strong>{t(" ")}{t("Shared notes, cellar stock, and attributed inventory history are preserved.")}</p>
+                              <p>{t("Server access stops immediately. Already-synchronized data on offline devices may remain readable until those devices reconnect.")}</p>
                             </>
                           )}
                           <div className="household-members__actions">
-                            <button onClick={cancel} type="button">Cancel</button>
-                            <button onClick={() => void confirm()} type="button">Confirm: {actionLabel(action.kind).toLowerCase()}</button>
+                            <button onClick={cancel} type="button">{t("Cancel")}</button>
+                            <button onClick={() => void confirm()} type="button">{t("Confirm:")}{t(" ")}{actionLabel(action.kind).toLowerCase()}</button>
                           </div>
                         </div>
                       ) : null}

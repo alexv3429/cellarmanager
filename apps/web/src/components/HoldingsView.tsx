@@ -49,6 +49,7 @@ import {
   type RemoveReason,
 } from "../data/powersync/inventoryOperations"
 import { Notice } from "./Notice"
+import { useLanguage } from "../i18n/useLanguage"
 
 interface HoldingsViewProps {
   userId: string
@@ -162,6 +163,7 @@ export function HoldingsView({
   onOpenWine,
 }: HoldingsViewProps) {
 
+  const { t } = useLanguage()
   const {
     data: authoritativeHoldings,
     error: holdingsError,
@@ -523,7 +525,7 @@ export function HoldingsView({
     setOperationError(null)
 
     if (!selectedAddLocation) {
-      setOperationError("Select a destination location")
+      setOperationError(t("Select a destination location"))
       return
     }
 
@@ -532,7 +534,7 @@ export function HoldingsView({
       cleanedAddCuvee.length === 0
     ) {
       setOperationError(
-        "Producer and cuvée are required",
+        t("Producer and cuvée are required"),
       )
       return
     }
@@ -543,7 +545,7 @@ export function HoldingsView({
     }
 
     if (addColor.length === 0) {
-      setOperationError("Select a wine color")
+      setOperationError(t("Select a wine color"))
       return
     }
 
@@ -554,7 +556,7 @@ export function HoldingsView({
 
     if (ambiguousWineIdentity) {
       setOperationError(
-        "Multiple catalog wines share this identity. Select the existing reference explicitly before adding stock.",
+        t("Multiple catalog wines share this identity. Select the existing reference explicitly before adding stock."),
       )
       return
     }
@@ -566,7 +568,7 @@ export function HoldingsView({
       quantity <= 0
     ) {
       setOperationError(
-        "Quantity must be a positive integer",
+        t("Quantity must be a positive integer"),
       )
       return
     }
@@ -578,7 +580,7 @@ export function HoldingsView({
 
     if (!deviceId) {
       setOperationError(
-        "This browser is not registered for this household yet",
+        t("This browser is not registered for this household yet"),
       )
       return
     }
@@ -661,7 +663,7 @@ export function HoldingsView({
 
     if (!deviceId) {
       setOperationError(
-        "This browser is not registered for this household yet",
+        t("This browser is not registered for this household yet"),
       )
       return
     }
@@ -716,13 +718,13 @@ export function HoldingsView({
       ]
 
     if (!destination) {
-      setOperationError("Select a destination location")
+      setOperationError(t("Select a destination location"))
       return
     }
 
     if (!deviceId) {
       setOperationError(
-        "This browser is not registered for this household yet",
+        t("This browser is not registered for this household yet"),
       )
       return
     }
@@ -771,7 +773,7 @@ export function HoldingsView({
 
     if (!deviceId) {
       setOperationError(
-        "This browser is not registered for this household yet",
+        t("This browser is not registered for this household yet"),
       )
       return
     }
@@ -808,14 +810,14 @@ export function HoldingsView({
 
   return (
     <main className="inventory-view">
-      <h1>Inventory</h1>
+      <h1>{t("Inventory")}</h1>
 
       {isLoading ? (
-        <Notice>Opening local database…</Notice>
+        <Notice>{t("Opening local database…")}</Notice>
       ) : null}
 
       {isFetching && !isLoading ? (
-        <Notice>Refreshing holdings…</Notice>
+        <Notice>{t("Refreshing holdings…")}</Notice>
       ) : null}
 
       {error ? (
@@ -839,17 +841,13 @@ export function HoldingsView({
       <details className="inventory-add-panel">
         <summary>
           <span className="inventory-add-panel__summary">
-            <strong>Add bottles</strong>
-            <small>
-              Queue stock for an existing or new wine
-            </small>
+            <strong>{t("Add bottles")}</strong>
+            <small>{t("Queue stock for an existing or new wine")}</small>
           </span>
         </summary>
 
       <form className="add-bottles-form" onSubmit={(event) => void handleAdd(event)}>
-        <label>
-          Producer / winery
-          <input
+        <label>{t("Producer / winery")}<input
             list="add-producer-suggestions"
             onChange={(event) =>
               setAddProducer(event.target.value)
@@ -865,9 +863,7 @@ export function HoldingsView({
           ))}
         </datalist>
 
-        <label>
-          Cuvée
-          <input
+        <label>{t("Cuvée")}<input
             list="add-cuvee-suggestions"
             onChange={(event) =>
               setAddCuvee(event.target.value)
@@ -883,15 +879,13 @@ export function HoldingsView({
           ))}
         </datalist>
 
-        <label>
-          Vintage
-          <input
+        <label>{t("Vintage")}<input
             inputMode="numeric"
             list="add-vintage-suggestions"
             onChange={(event) =>
               setAddVintage(event.target.value)
             }
-            placeholder="NV"
+            placeholder={t("NV")}
             value={addVintage}
           />
         </label>
@@ -905,32 +899,28 @@ export function HoldingsView({
           ))}
         </datalist>
 
-        <label>
-          Color
-          <select
+        <label>{t("Color")}<select
             onChange={(event) =>
               setAddColor(event.target.value)
             }
             required
             value={addColor}
           >
-            <option value="">Select color…</option>
-            <option value="red">Red</option>
-            <option value="white">White</option>
-            <option value="rose">Rosé</option>
-            <option value="sparkling">Sparkling</option>
-            <option value="other">Other</option>
+            <option value="">{t("Select color…")}</option>
+            <option value="red">{t("Red")}</option>
+            <option value="white">{t("White")}</option>
+            <option value="rose">{t("Rosé")}</option>
+            <option value="sparkling">{t("Sparkling")}</option>
+            <option value="other">{t("Other")}</option>
           </select>
         </label>
 
-        <label>
-          Appellation
-          <input
+        <label>{t("Appellation")}<input
             list="add-appellation-suggestions"
             onChange={(event) =>
               setAddAppellation(event.target.value)
             }
-            placeholder="Optional"
+            placeholder={t("Optional")}
             value={addAppellation}
           />
         </label>
@@ -944,14 +934,12 @@ export function HoldingsView({
           ))}
         </datalist>
 
-        <label>
-          Area / region
-          <input
+        <label>{t("Area / region")}<input
             list="add-area-suggestions"
             onChange={(event) =>
               setAddArea(event.target.value)
             }
-            placeholder="Optional"
+            placeholder={t("Optional")}
             value={addArea}
           />
         </label>
@@ -962,9 +950,7 @@ export function HoldingsView({
           ))}
         </datalist>
 
-        <label>
-          Bottle format (ml)
-          <input
+        <label>{t("Bottle format (ml)")}<input
             inputMode="numeric"
             list="add-format-suggestions"
             min="1"
@@ -979,14 +965,12 @@ export function HoldingsView({
         </label>
 
         <datalist id="add-format-suggestions">
-          <option value="500">50 cl</option>
-          <option value="750">75 cl</option>
-          <option value="1500">150 cl / magnum</option>
+          <option value="500">{t("50 cl")}</option>
+          <option value="750">{t("75 cl")}</option>
+          <option value="1500">{t("150 cl / magnum")}</option>
         </datalist>
 
-        <label>
-          Quantity
-          <input
+        <label>{t("Quantity")}<input
             min="1"
             onChange={(event) =>
               setAddQuantity(event.target.value)
@@ -998,9 +982,7 @@ export function HoldingsView({
           />
         </label>
 
-        <label>
-          Location
-          <select
+        <label>{t("Location")}<select
             onChange={(event) =>
               setAddLocationId(event.target.value)
             }
@@ -1050,36 +1032,30 @@ export function HoldingsView({
           }
           type="submit"
         >
-          {adding ? "Queuing…" : "Add bottles"}
+          {adding ? t("Queuing…") : t("Add bottles")}
         </button>
       </form>
       </details>
 
-      <h2>Holdings</h2>
+      <h2>{t("Holdings")}</h2>
 
       <section
         aria-labelledby="inventory-filters-heading"
         className="inventory-filters"
       >
-        <h3 id="inventory-filters-heading">
-          Find bottles
-        </h3>
+        <h3 id="inventory-filters-heading">{t("Find bottles")}</h3>
 
-        <label>
-          Search
-          <input
+        <label>{t("Search")}<input
             onChange={(event) =>
               setInventorySearch(event.target.value)
             }
-            placeholder="Producer, cuvée, appellation, area, vintage, cellar…"
+            placeholder={t("Producer, cuvée, appellation, area, vintage, cellar…")}
             type="search"
             value={inventorySearch}
           />
         </label>
 
-        <label>
-          Cellar
-          <select
+        <label>{t("Cellar")}<select
             onChange={(event) => {
               const nextCellarFilter = event.target.value
 
@@ -1096,7 +1072,7 @@ export function HoldingsView({
             }}
             value={cellarFilter}
           >
-            <option value="ALL">All cellars</option>
+            <option value="ALL">{t("All cellars")}</option>
             {cellars.map((cellar) => (
               <option key={cellar.id} value={cellar.id}>
                 {cellar.name}
@@ -1105,9 +1081,7 @@ export function HoldingsView({
           </select>
         </label>
 
-        <label>
-          Location
-          <select
+        <label>{t("Location")}<select
             onChange={(event) =>
               setLocationFilter(event.target.value)
             }
@@ -1115,8 +1089,8 @@ export function HoldingsView({
           >
             <option value="ALL">
               {cellarFilter === "ALL"
-                ? "All locations"
-                : "All locations in cellar"}
+                ? t("All locations")
+                : t("All locations in cellar")}
             </option>
             {availableLocationFilters.map((location) => (
               <option key={location.id} value={location.id}>
@@ -1134,44 +1108,41 @@ export function HoldingsView({
             setLocationFilter("ALL")
           }}
           type="button"
-        >
-          Clear filters
-        </button>
+        >{t("Clear filters")}</button>
       </section>
 
       <p
         aria-live="polite"
         className="inventory-results-summary"
-      >
-        Showing {visibleBottleCount} of {totalBottleCount} bottles
-        {" · "}
-        {visibleWineCount} of {totalWineCount} wines
-        {" · "}
-        {visibleHoldings.length} of {holdings.length} positions
-        {" · "}
-        {pendingOperations.length} pending operation
-        {pendingOperations.length === 1 ? "" : "s"}
-      </p>
+      >{t("inventory.resultsSummary", {
+        shownBottles: String(visibleBottleCount),
+        totalBottles: String(totalBottleCount),
+        shownWines: String(visibleWineCount),
+        totalWines: String(totalWineCount),
+        shownPositions: String(visibleHoldings.length),
+        totalPositions: String(holdings.length),
+        pendingOperations: pendingOperations.length === 1
+          ? t("inventory.pendingOperationOne")
+          : t("inventory.pendingOperationsMany", { count: String(pendingOperations.length) }),
+      })}</p>
 
       {!isLoading && holdings.length === 0 ? (
-        <p>No synchronized holdings found.</p>
+        <p>{t("No synchronized holdings found.")}</p>
       ) : null}
 
       {!isLoading &&
       holdings.length > 0 &&
       visibleHoldings.length === 0 ? (
-        <p>No holdings match the current filters.</p>
+        <p>{t("No holdings match the current filters.")}</p>
       ) : null}
 
       <table className="inventory-table">
-        <caption className="visually-hidden">
-          Filtered cellar inventory
-        </caption>
+        <caption className="visually-hidden">{t("Filtered cellar inventory")}</caption>
         <thead>
           <tr>
-            <th scope="col">Wine</th>
-            <th scope="col">Holding</th>
-            <th scope="col">Actions</th>
+            <th scope="col">{t("Wine")}</th>
+            <th scope="col">{t("Holding")}</th>
+            <th scope="col">{t("Actions")}</th>
           </tr>
         </thead>
 
@@ -1226,7 +1197,7 @@ export function HoldingsView({
 
             return (
               <tr key={holding.id}>
-                <td data-label="Wine">
+                <td data-label={t("Wine")}>
                   {isPendingNewWine ? (
                     <div>
                       {holding.producer} — {holding.cuvee}
@@ -1246,36 +1217,33 @@ export function HoldingsView({
                     {[
                       holding.appellation,
                       holding.area,
-                      holding.color,
+                      t(holding.color),
                       formatWineVolume(holding.format_ml),
                     ]
                       .filter(Boolean)
                       .join(" · ")}
                   </small>
                 </td>
-                <td className="inventory-holding" data-label="Holding">
+                <td className="inventory-holding" data-label={t("Holding")}>
                   <div>
-                    <strong>{holding.vintage ?? "NV"}</strong>
+                    <strong>{holding.vintage ?? t("NV")}</strong>
                     {" · "}
                     {currentLocationLabel}
                   </div>
                   <small>
-                    {holding.quantity} bottle
-                    {holding.quantity === 1 ? "" : "s"}
+                    {holding.quantity}{t(" ")}{t("bottle")}{holding.quantity === 1 ? "" : "s"}
                     {holding.pending_delta !== 0 ? (
                       <span>
                         {" · "}
                         {holding.pending_delta > 0 ? "+" : ""}
-                        {holding.pending_delta} pending
-                      </span>
+                        {holding.pending_delta}{t("pending")}</span>
                     ) : null}
-                    {" · "}
-                    Rev {holding.revision}
+                    {" · "}{t("Rev")}{t(" ")}{holding.revision}
                   </small>
                 </td>
                 <td
                   className="inventory-actions"
-                  data-label="Actions"
+                  data-label={t("Actions")}
                 >
                   <div className="inventory-action-cell-content">
                     <div
@@ -1303,9 +1271,7 @@ export function HoldingsView({
                             : undefined
                         }
                         type="button"
-                      >
-                        Add more
-                      </button>
+                      >{t("Add more")}</button>
 
                       <button
                         aria-controls={actionPanelId}
@@ -1332,9 +1298,7 @@ export function HoldingsView({
                               : undefined
                         }
                         type="button"
-                      >
-                        Move
-                      </button>
+                      >{t("Move")}</button>
 
                       <button
                         aria-controls={actionPanelId}
@@ -1357,9 +1321,7 @@ export function HoldingsView({
                             : undefined
                         }
                         type="button"
-                      >
-                        Consume/remove
-                      </button>
+                      >{t("Consume/remove")}</button>
                     </div>
 
                     {activeAction ? (
@@ -1406,9 +1368,7 @@ export function HoldingsView({
                             }
                           }}
                         >
-                          <label>
-                            Quantity
-                            <input
+                          <label>{t("Quantity")}<input
                               aria-describedby={`${actionPanelId}-quantity-help`}
                               disabled={actionsBusy}
                               inputMode="numeric"
@@ -1431,9 +1391,7 @@ export function HoldingsView({
                           </label>
 
                           {activeAction === "move" ? (
-                            <label>
-                              Destination
-                              <select
+                            <label>{t("Destination")}<select
                                 disabled={actionsBusy}
                                 onChange={(event) =>
                                   setMoveDestinationId(
@@ -1458,9 +1416,7 @@ export function HoldingsView({
                           ) : null}
 
                           {activeAction === "remove" ? (
-                            <label>
-                              Reason
-                              <select
+                            <label>{t("Reason")}<select
                                 disabled={actionsBusy}
                                 onChange={(event) =>
                                   setHoldingRemoveReason(
@@ -1470,21 +1426,11 @@ export function HoldingsView({
                                 }
                                 value={holdingRemoveReason}
                               >
-                                <option value="DRANK">
-                                  Drank
-                                </option>
-                                <option value="GIFTED">
-                                  Gifted
-                                </option>
-                                <option value="BROKEN">
-                                  Broken
-                                </option>
-                                <option value="LOST">
-                                  Lost
-                                </option>
-                                <option value="OTHER">
-                                  Other
-                                </option>
+                                <option value="DRANK">{t("Drank")}</option>
+                                <option value="GIFTED">{t("Gifted")}</option>
+                                <option value="BROKEN">{t("Broken")}</option>
+                                <option value="LOST">{t("Lost")}</option>
+                                <option value="OTHER">{t("Other")}</option>
                               </select>
                             </label>
                           ) : null}
@@ -1522,9 +1468,7 @@ export function HoldingsView({
                                 setActiveHoldingAction(null)
                               }
                               type="button"
-                            >
-                              Close
-                            </button>
+                            >{t("Close")}</button>
                           </div>
                         </form>
 

@@ -88,7 +88,7 @@ export function AppShell({
   syncError,
   view,
 }: AppShellProps) {
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
   const permissions = getHouseholdPermissions(activeHouseholdRole)
   const status = useStatus()
   const {
@@ -147,7 +147,11 @@ export function AppShell({
     uploading: status.uploading,
   })
   const lastSyncLabel = status.lastSyncedAt
-    ? `Last complete sync ${status.lastSyncedAt.toLocaleString()}`
+    ? t("shell.lastCompleteSync", {
+        date: status.lastSyncedAt.toLocaleString(
+          language === "fr" ? "fr-FR" : "en-US",
+        ),
+      })
     : null
 
   async function signOut() {
@@ -213,16 +217,16 @@ export function AppShell({
 
       <header className="app-shell__header">
         <div className="app-shell__toolbar">
-          <div className="app-shell__brand">CellarManager</div>
+          <div className="app-shell__brand">{t("CellarManager")}</div>
           <ShellDisclosure className={`app-shell__sync app-shell__sync--${syncPresentation.tone}`}
-            accessibleLabel={`${t("shell.sync")}: ${syncPresentation.label}`} open={openPanel === "sync"}
+            accessibleLabel={`${t("shell.sync")}: ${t(syncPresentation.label)}`} open={openPanel === "sync"}
             onToggle={() => setOpenPanel(openPanel === "sync" ? null : "sync")} onClose={() => setOpenPanel(null)}
-            label={<><span aria-hidden="true" className="app-shell__sync-dot" /><span aria-live="polite">{syncPresentation.label}</span></>}>
+            label={<><span aria-hidden="true" className="app-shell__sync-dot" /><span aria-live="polite">{t(syncPresentation.label)}</span></>}>
             <strong>{t("shell.syncDevice")}</strong>
-            <p>{syncPresentation.detail}</p>
-            <p>Device: {deviceStatus}</p>
+            <p>{t(syncPresentation.detail)}</p>
+            <p>{t("Device:")}{t(" ")}{t(deviceStatus)}</p>
             {lastSyncLabel ? <small>{lastSyncLabel}</small> : null}
-            {isOfflineAccess ? <p>Local access only · authentication will refresh after reconnection.</p> : null}
+            {isOfflineAccess ? <p>{t("Local access only · authentication will refresh after reconnection.")}</p> : null}
             <a className="app-shell__account-link" href={getAppViewPath("activity")} onClick={(event) => navigate(event, "activity")}>{t("shell.activityQueue")}</a>
           </ShellDisclosure>
 
@@ -236,7 +240,7 @@ export function AppShell({
 
           <ShellDisclosure className="app-shell__settings" accessibleLabel={t("shell.settings")} label={t("shell.settings")} open={openPanel === "settings"}
             onToggle={() => setOpenPanel(openPanel === "settings" ? null : "settings")} onClose={() => setOpenPanel(null)}>
-            <nav aria-label="Settings" className="app-shell__settings-links">
+            <nav aria-label={t("Settings")} className="app-shell__settings-links">
               <span className="app-shell__settings-label">{t("shell.personal")}</span>
               <AccountLink />
               <span className="app-shell__settings-label">{t("shell.household")}</span>
@@ -244,7 +248,7 @@ export function AppShell({
                 href={getAppViewPath("members")} onClick={(event) => navigate(event, "members")}>{t("shell.members")}</a>
               <a aria-current={view === "devices" ? "page" : undefined} className="app-shell__account-link"
                 href={getAppViewPath("devices")} onClick={(event) => navigate(event, "devices")}>{t("shell.devices")}</a>
-              <button className="app-shell__sign-out" onClick={() => void signOut()} title={isOnline ? undefined : "Reconnect before signing out"} type="button">{t("shell.signOut")}</button>
+              <button className="app-shell__sign-out" onClick={() => void signOut()} title={isOnline ? undefined : t("Reconnect before signing out")} type="button">{t("shell.signOut")}</button>
             </nav>
           </ShellDisclosure>
         </div>
@@ -314,7 +318,7 @@ export function AppShell({
       signOutError ||
       deviceRegistration.error || deviceRevoked ? (
         <div className="app-shell__alerts">
-          {deviceRevoked ? <Notice role="status" tone="warning">This browser’s registration was revoked for this household. Bottle changes are unavailable here; reading is still allowed. Queued changes are kept locally and are not transferred to a new registration. Open Devices to review its status.</Notice> : null}
+          {deviceRevoked ? <Notice role="status" tone="warning">{t("This browser’s registration was revoked for this household. Bottle changes are unavailable here; reading is still allowed. Queued changes are kept locally and are not transferred to a new registration. Open Devices to review its status.")}</Notice> : null}
           {selectionNotice ? <Notice role="status" tone="warning">{selectionNotice}</Notice> : null}
           {selectionWarning ? <Notice role="status" tone="warning">{selectionWarning}</Notice> : null}
           {householdError ? (
@@ -324,9 +328,8 @@ export function AppShell({
           ) : null}
 
           {effectiveSyncError ? (
-            <Notice role="alert" tone="error">
-              Synchronization paused: {effectiveSyncError}
-              <p><button type="button" onClick={() => onViewChange("activity")}>Review this browser’s queue</button></p>
+            <Notice role="alert" tone="error">{t("Synchronization paused:")} {effectiveSyncError}
+              <p><button type="button" onClick={() => onViewChange("activity")}>{t("Review this browser’s queue")}</button></p>
             </Notice>
           ) : null}
 
@@ -344,9 +347,7 @@ export function AppShell({
                   deviceRegistration.retryRegistration
                 }
                 type="button"
-              >
-                Retry device registration
-              </button>
+              >{t("Retry device registration")}</button>
             </Notice>
           ) : null}
         </div>

@@ -12,7 +12,7 @@ crosses a milestone boundary.
 | `v0.3` | A cellar can live safely in CellarManager through daily manual use or guarded CSV import | Released (`v0.3.0`) |
 | `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable evidence | Released (`v0.4.0`) |
 | `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | Released (`v0.5.0`) |
-| `v0.6` | The app is usable in English or French, and adding or identifying wine requires dramatically less typing | Planned |
+| `v0.6` | The app is usable in English or French, and adding or identifying wine requires dramatically less typing | In progress (0.6.1 complete; 0.6.2 in progress) |
 | `v0.7` | CellarManager explains what happened to the cellar and what the collection means over time | Planned |
 | `v1.0` | A self-host can install, trust, upgrade, recover, and maintain CellarManager for years | Planned |
 
@@ -361,38 +361,41 @@ French localization is scheduled before camera, OCR, and barcode work so those
 new flows launch on a properly localized foundation. English remains fully
 supported. Language is a per-user preference, not a household setting, and is
 available across that user's devices when explicitly selected. With no saved
-override, the app uses the device locale: English locales select English,
+override, the app uses the browser locale: English locales select English,
 French locales select French (`fr-FR`), and any other locale falls back to
-English. **Account** provides English, French, and **Use device language**;
+English. **Account** provides English, French, and **Use browser language**;
 an explicit choice is saved per user and overrides automatic detection on all
-their devices. Untranslated interface strings fall back to English. Cellar
-labels, wine names, source claims, and user-authored notes remain data and are
-not silently translated.
+their devices. Cellar labels, wine names, source claims, and user-authored notes
+remain data and are not silently translated.
 
 | Step | Scope |
 |---|---|
-| 0.6.1 | Localization foundation, device-locale detection, and persistent per-user English/French/device language preference |
-| 0.6.2 | French translation of primary cellar, account, and collaboration workflows |
-| 0.6.3 | Remaining French coverage, locale formatting, accessibility, and acceptance |
+| 0.6.1 | Localization foundation, browser-locale detection, and persistent per-user English/French/browser language preference — complete |
+| 0.6.2 | French translation of the complete app-owned interface and auth messages, with an automated untranslated-string coverage gate — in progress |
+| 0.6.3 | Locale-sensitive date/number formatting, accessibility review, mobile/desktop acceptance, and v0.6 readiness |
 
 Step 0.6.1 introduces typed message lookup with English fallback, sets the
 document language from the effective preference, and translates the shared
 navigation and Account settings. Account language choices are verified and
 stored in the authenticated user's presentation metadata, so they follow that
 account across devices; a per-account local copy is used only when the account
-is opened offline. **Use device language** stores the automatic-detection choice
-instead of pinning the current locale. Device detection accepts English and
+is opened offline. **Use browser language** stores the automatic-detection choice
+instead of pinning the current locale. Browser detection accepts English and
 French locale tags and safely falls back to English for all other locales.
-Untranslated screens intentionally remain in English until 0.6.2. No household
-permission or cellar data changes and no database migration are introduced.
+Step 0.6.2 translates every app-owned label, explanation, validation and error
+message, accessible name, and invitation/recovery template controlled by this
+project. A static coverage test fails if rendered source text or a literal
+translation key lacks French copy. No household permission or cellar data
+changes and no database migration are introduced.
 
-Acceptance covers the complete app-owned interface, including empty,
-loading, validation, and error states; date, number, and plural formatting; and
-mobile and desktop layouts. App-owned invitation and recovery messages are
-included where their templates are controlled by this project. User content
-and externally sourced wine names or advice are not machine-translated. Tests
-must cover device-locale detection, unsupported-locale fallback, saved override
-and reset to device language, missing French strings, and English fallback.
+Acceptance for the language milestone covers the complete app-owned interface,
+including empty, loading, validation, and error states; date, number, and plural
+formatting; and mobile and desktop layouts. App-owned invitation and recovery
+messages are included where their templates are controlled by this project.
+User content and externally sourced wine names or advice are not translated.
+Tests cover browser-locale detection, unsupported-locale fallback, saved
+override and reset to browser language, missing French strings, and English
+fallback.
 
 After localization, camera, OCR, and barcode workflows extend the v0.4 provider
 boundary and feed the same normalization and candidate-resolution principles

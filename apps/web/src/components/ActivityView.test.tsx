@@ -4,6 +4,8 @@ import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { ActivityView } from "./ActivityView"
 import type { InventoryActivityRow } from "../data/activityView"
+import { LanguageContext } from "../i18n/LanguageContext"
+import { translate } from "../i18n/messages"
 const query = vi.hoisted(() => ({ rows: [] as InventoryActivityRow[] }))
 vi.mock("@powersync/react", () => ({ useQuery: () => ({ data: query.rows, error: null, isLoading: false }) }))
 vi.mock("./InventoryQueueReview", () => ({ InventoryQueueReview: () => <section>Own browser queue</section> }))
@@ -23,6 +25,18 @@ beforeEach(() => {
 })
 afterEach(async () => { await act(async () => root.unmount()); container.remove(); vi.unstubAllGlobals() })
 async function render() { await act(async () => root.render(<ActivityView householdId="home" userId="self" isOnline onOpenWine={onOpenWine} />)) }
+async function renderFrench() {
+  await act(async () => root.render(
+    <LanguageContext.Provider value={{
+      language: "fr",
+      preference: "fr",
+      setSavedPreference: () => undefined,
+      t: (key, values) => translate("fr", key, values),
+    }}>
+      <ActivityView householdId="home" userId="self" isOnline onOpenWine={onOpenWine} />
+    </LanguageContext.Provider>,
+  ))
+}
 async function click(text: string) {
   const button = [...container.querySelectorAll("button")].find((b) => b.textContent === text)!
   expect(button).toBeDefined(); await act(async () => button.click())
@@ -36,6 +50,26 @@ describe("rejected-operation UX", () => {
     expect(container.textContent).toContain("No stock change was applied by this request")
     const details = container.querySelector("details")!
     expect(details.open).toBe(false); expect(details.textContent).toContain("rejected-request")
+  })
+  it("localizes activity actions, status, wine color and missing device on French UI", async () => {
+    query.rows = [{
+      ...row,
+      operation_type: "ADD",
+      status: "ACCEPTED",
+      color: "white",
+      device_name: null,
+      destination_cellar_name: "Marseille ArteVino",
+      destination_code: "2F",
+      source_cellar_name: null,
+      source_code: null,
+    }]
+    await renderFrench()
+    expect(container.textContent).toContain("Ajout de 2 bouteilles à Marseille ArteVino / 2F")
+    expect(container.textContent).toContain("2020 · blanc · 75 cl")
+    expect(container.textContent).toContain("Synchronisé")
+    expect(container.textContent).toContain("Appareil inconnu")
+    expect(container.textContent).not.toContain("Added")
+    expect(container.textContent).not.toContain("Unknown device")
   })
   it("filters rejected changes and opens current canonical stock without creating an operation", async () => {
     await render(); await click("Show rejected changes")

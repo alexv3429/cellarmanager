@@ -20,6 +20,7 @@ import {
   type WineMergeResult,
 } from "../data/wineDuplicates"
 import { Notice } from "./Notice"
+import { useLanguage } from "../i18n/useLanguage"
 
 interface PendingOperationRow {
   wine_id: string
@@ -175,6 +176,7 @@ function DuplicateGroupCard({
   positionsByWineId,
   onMerge,
 }: DuplicateGroupCardProps) {
+  const { t } = useLanguage()
   const [targetWineId, setTargetWineId] = useState("")
   const [sourceWineId, setSourceWineId] = useState("")
   const [resolutionChoices, setResolutionChoices] = useState<
@@ -266,13 +268,13 @@ function DuplicateGroupCard({
     <li className="wine-duplicate-card">
       <div className="wine-duplicate-card__heading">
         <div>
-          <strong>{group.wines.length} possible duplicate entries</strong>
+          <strong>{group.wines.length}{t(" ")}{t("possible duplicate entries")}</strong>
           <span>{basisLabel(group)}</span>
         </div>
         <span className="wine-duplicate-card__basis">
           {group.basis === "confirmed-reference"
-            ? "Confirmed reference"
-            : "Catalog identity"}
+            ? t("Confirmed reference")
+            : t("Catalog identity")}
         </span>
       </div>
 
@@ -294,17 +296,15 @@ function DuplicateGroupCard({
               {wine.area ? ` · ${wine.area}` : ""}
             </span>
             <small>
-              {wine.quantity} bottle{wine.quantity === 1 ? "" : "s"} ·{" "}
-              {wine.position_count} position
-              {wine.position_count === 1 ? "" : "s"} · ID {wine.id.slice(0, 8)}
+              {wine.quantity}{t(" ")}{t("bottle")}{wine.quantity === 1 ? "" : "s"} ·{" "}
+              {wine.position_count}{t("position")}{wine.position_count === 1 ? "" : "s"}{t(" ")}{t("· ID")}{t(" ")}{wine.id.slice(0, 8)}
             </small>
             {(positionsByWineId.get(wine.id) ?? []).length > 0 ? (
               <ul className="wine-duplicate-record__positions">
                 {(positionsByWineId.get(wine.id) ?? []).map((position) => (
                   <li key={position.location_id}>
                     {position.cellar_name} / {position.location_code} ·{" "}
-                    {position.quantity} bottle
-                    {position.quantity === 1 ? "" : "s"}
+                    {position.quantity}{t("bottle")}{position.quantity === 1 ? "" : "s"}
                   </li>
                 ))}
               </ul>
@@ -343,9 +343,7 @@ function DuplicateGroupCard({
                   </ins>
                   {selectedSource && selectedTarget ? (
                     <div className="wine-duplicate-diff__resolution">
-                      <label>
-                        Final value
-                        <select
+                      <label>{t("Final value")}<select
                           disabled={isBusy}
                           onChange={(event) => {
                             setResolutionChoices((current) => ({
@@ -357,18 +355,15 @@ function DuplicateGroupCard({
                           }}
                           value={choice}
                         >
-                          <option value="target">
-                            Keep {differenceValueLabel(difference, difference.targetValue)}
+                          <option value="target">{t("Keep")}{differenceValueLabel(difference, difference.targetValue)}
                           </option>
-                          <option value="source">
-                            Use {differenceValueLabel(difference, difference.sourceValue)}
+                          <option value="source">{t("Use")}{differenceValueLabel(difference, difference.sourceValue)}
                           </option>
-                          <option value="custom">Enter another value…</option>
+                          <option value="custom">{t("Enter another value…")}</option>
                         </select>
                       </label>
                       {choice === "custom" ? (
-                        <label>
-                          Corrected {difference.label.toLowerCase()}
+                        <label>{t("Corrected")}{difference.label.toLowerCase()}
                           <input
                             disabled={isBusy}
                             inputMode={difference.input === "text" ? "text" : "numeric"}
@@ -394,16 +389,11 @@ function DuplicateGroupCard({
           </div>
         </section>
       ) : (
-        <p className="wine-duplicate-card__same-values">
-          The visible catalog fields are identical. The separate IDs and stock
-          positions are the only difference.
-        </p>
+        <p className="wine-duplicate-card__same-values">{t("The visible catalog fields are identical. The separate IDs and stock positions are the only difference.")}</p>
       )}
 
       <div className="wine-duplicate-card__choices">
-        <label>
-          Keep this entry
-          <select
+        <label>{t("Keep this entry")}<select
             disabled={isBusy}
             onChange={(event) => {
               const nextTarget = event.target.value
@@ -413,7 +403,7 @@ function DuplicateGroupCard({
             }}
             value={targetWineId}
           >
-            <option value="">Choose the entry to keep</option>
+            <option value="">{t("Choose the entry to keep")}</option>
             {group.wines.map((wine) => (
               <option key={wine.id} value={wine.id}>
                 {wineOptionLabel(wine)}
@@ -422,9 +412,7 @@ function DuplicateGroupCard({
           </select>
         </label>
 
-        <label>
-          Merge this entry into it
-          <select
+        <label>{t("Merge this entry into it")}<select
             disabled={isBusy || targetWineId.length === 0}
             onChange={(event) => {
               setSourceWineId(event.target.value)
@@ -432,7 +420,7 @@ function DuplicateGroupCard({
             }}
             value={sourceWineId}
           >
-            <option value="">Choose one duplicate</option>
+            <option value="">{t("Choose one duplicate")}</option>
             {group.wines
               .filter((wine) => wine.id !== targetWineId)
               .map((wine) => (
@@ -447,21 +435,14 @@ function DuplicateGroupCard({
       {targetWineId && sourceWineId ? (
         <div className="wine-duplicate-card__confirmation">
           <p>
-            <strong>{selectedTarget?.producer} — {selectedTarget?.cuvee}</strong>{" "}
-            will remain as one catalog entry with {totalSelectedBottles} bottle
-            {totalSelectedBottles === 1 ? "" : "s"} across{" "}
-            {combinedPositions.size} position
-            {combinedPositions.size === 1 ? "" : "s"}. Your final values above
-            are recorded with the merge. Observations are consolidated, while
-            past inventory activity keeps its original identity.
-          </p>
+            <strong>{selectedTarget?.producer} — {selectedTarget?.cuvee}</strong>{" "}{t("will remain as one catalog entry with")}{totalSelectedBottles}{t("bottle")}{totalSelectedBottles === 1 ? "" : "s"}{t(" ")}{t("across")}{" "}
+            {combinedPositions.size}{t("position")}{combinedPositions.size === 1 ? "" : "s"}{t(". Your final values above are recorded with the merge. Observations are consolidated, while past inventory activity keeps its original identity.")}</p>
           {combinedPositions.size > 0 ? (
             <ul>
               {[...combinedPositions.values()].map((position) => (
                 <li key={position.location_id}>
                   {position.cellar_name} / {position.location_code} ·{" "}
-                  {position.quantity} bottle
-                  {position.quantity === 1 ? "" : "s"}
+                  {position.quantity}{t("bottle")}{position.quantity === 1 ? "" : "s"}
                 </li>
               ))}
             </ul>
@@ -472,18 +453,12 @@ function DuplicateGroupCard({
               disabled={isBusy}
               onChange={(event) => setConfirmed(event.target.checked)}
               type="checkbox"
-            />
-            I reviewed both entries and understand that this merge is recorded
-            in the audit history.
-          </label>
+            />{t("I reviewed both entries and understand that this merge is recorded in the audit history.")}</label>
         </div>
       ) : null}
 
       {selectedHasPendingOperation ? (
-        <Notice tone="warning">
-          Wait for pending inventory operations on these entries to synchronize
-          before merging.
-        </Notice>
+        <Notice tone="warning">{t("Wait for pending inventory operations on these entries to synchronize before merging.")}</Notice>
       ) : null}
 
       {resolutionError ? (
@@ -502,7 +477,7 @@ function DuplicateGroupCard({
         onClick={submitMerge}
         type="button"
       >
-        {isBusy ? "Merging…" : "Merge reviewed entries"}
+        {isBusy ? t("Merging…") : t("Merge reviewed entries")}
       </button>
     </li>
   )
@@ -513,6 +488,7 @@ export function WineDuplicateReview({
   isOnline,
   wines,
 }: WineDuplicateReviewProps) {
+  const { t } = useLanguage()
   const { data: pendingOperations } = useQuery<PendingOperationRow>(
     PENDING_OPERATIONS_QUERY,
     [householdId],
@@ -580,28 +556,19 @@ export function WineDuplicateReview({
     <details className="wine-duplicate-review">
       <summary>
         <span>
-          <strong>
-            Review possible duplicates · {duplicateGroups.length} group
-            {duplicateGroups.length === 1 ? "" : "s"}
+          <strong>{t("Review possible duplicates ·")}{duplicateGroups.length}{t("group")}{duplicateGroups.length === 1 ? "" : t("s")}
           </strong>
-          <small>
-            Conservative suggestions only; every merge requires your explicit
-            choice.
-          </small>
+          <small>{t("Conservative suggestions only; every merge requires your explicit choice.")}</small>
         </span>
         <span aria-hidden="true" className="wine-duplicate-review__chevron">
           ▾
         </span>
       </summary>
 
-      <p>
-        CellarManager compares physical catalog identity and confirmed shared
-        references. Different vintages, colors, or bottle formats are never
-        suggested as duplicates.
-      </p>
+      <p>{t("CellarManager compares physical catalog identity and confirmed shared references. Different vintages, colors, or bottle formats are never suggested as duplicates.")}</p>
 
       {!isOnline ? (
-        <Notice tone="warning">Reconnect to merge catalog entries.</Notice>
+        <Notice tone="warning">{t("Reconnect to merge catalog entries.")}</Notice>
       ) : null}
       {message ? (
         <Notice role="status" tone="success">{message}</Notice>
@@ -611,7 +578,7 @@ export function WineDuplicateReview({
       ) : null}
 
       {duplicateGroups.length === 0 ? (
-        <p>No conservative duplicate candidates were detected.</p>
+        <p>{t("No conservative duplicate candidates were detected.")}</p>
       ) : (
         <ol className="wine-duplicate-review__list">
           {duplicateGroups.map((group) => (
