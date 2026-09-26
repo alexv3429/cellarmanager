@@ -1,7 +1,7 @@
 import { supabase } from "./supabase"
 
 export const CAPTURE_PHOTO_BUCKET = "capture-labels"
-export const CAPTURE_PHOTO_MAX_BYTES = 6 * 1000 * 1000
+export const CAPTURE_PHOTO_MAX_BYTES = 6 * 1024 * 1024
 export const CAPTURE_PHOTO_MAX_COUNT = 2
 
 export type CapturePhotoErrorKind = "invalid" | "limit" | "permission" | "offline" | "upload" | "delete"

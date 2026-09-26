@@ -8,7 +8,7 @@ values (
     'capture-labels',
     'capture-labels',
     false,
-    6000000,
+    6291456,
     array['image/jpeg', 'image/png']::text[]
 )
 on conflict (id) do nothing;
@@ -20,7 +20,7 @@ begin
     select * into v_bucket from storage.buckets where id = 'capture-labels';
     if not found
        or v_bucket.public is distinct from false
-       or v_bucket.file_size_limit is distinct from 6000000
+       or v_bucket.file_size_limit is distinct from 6291456
        or v_bucket.allowed_mime_types is distinct from array['image/jpeg', 'image/png']::text[] then
         raise exception 'The capture-labels bucket already exists with an unexpected configuration';
     end if;
@@ -50,12 +50,12 @@ create table private.capture_assets (
     id uuid primary key default gen_random_uuid(),
     session_id uuid not null references private.capture_sessions(id) on delete cascade,
     object_name text not null unique,
-    declared_bytes bigint not null check (declared_bytes between 1 and 6000000),
+    declared_bytes bigint not null check (declared_bytes between 1 and 6291456),
     content_type text not null check (content_type in ('image/jpeg', 'image/png')),
     state text not null default 'reserved' check (state in ('reserved', 'uploaded')),
     uploaded_bytes bigint,
     uploaded_at timestamptz,
-    check (uploaded_bytes is null or uploaded_bytes between 1 and 6000000),
+    check (uploaded_bytes is null or uploaded_bytes between 1 and 6291456),
     check ((state = 'reserved' and uploaded_bytes is null and uploaded_at is null)
         or (state = 'uploaded' and uploaded_bytes is not null and uploaded_at is not null))
 );
@@ -81,7 +81,7 @@ revoke all on private.capture_sessions, private.capture_assets, private.capture_
 
 -- Used only by Storage RLS. A path is valid only for the current initiating
 -- Owner, the exact reserved object key, and the currently allowed lifecycle.
-create function private.capture_object_operation_allowed(
+create function storage.capture_object_operation_allowed(
     p_object_name text,
     p_expected_state text
 )
@@ -106,9 +106,9 @@ as $$
     );
 $$;
 
-revoke all on function private.capture_object_operation_allowed(text, text)
+revoke all on function storage.capture_object_operation_allowed(text, text)
     from public, anon, authenticated;
-grant execute on function private.capture_object_operation_allowed(text, text)
+grant execute on function storage.capture_object_operation_allowed(text, text)
     to authenticated;
 
 do $$
@@ -135,7 +135,7 @@ on storage.objects
 for insert to authenticated
 with check (
     bucket_id = 'capture-labels'
-    and private.capture_object_operation_allowed(name, 'uploading')
+    and storage.capture_object_operation_allowed(name, 'uploading')
 );
 
 -- Supabase Storage's upload path performs a narrowly-scoped metadata read on
@@ -147,7 +147,7 @@ for select to authenticated
 using (
     bucket_id = 'capture-labels'
     and storage.allow_only_operation('storage.object.upload')
-    and private.capture_object_operation_allowed(name, 'uploading')
+    and storage.capture_object_operation_allowed(name, 'uploading')
 );
 
 create policy capture_label_cancel_delete
@@ -155,7 +155,7 @@ on storage.objects
 for delete to authenticated
 using (
     bucket_id = 'capture-labels'
-    and private.capture_object_operation_allowed(name, 'deletion_pending')
+    and storage.capture_object_operation_allowed(name, 'deletion_pending')
 );
 
 create function public.create_capture_session(
@@ -219,8 +219,8 @@ begin
         raise exception using errcode = 'P0001', message = 'Photo capture hourly limit reached; try again later';
     end if;
 
-    -- Reserve the accepted 8 MiB original plus a future 5 MiB normalized
-    -- derivative per slot, although this step accepts only 6 MB uploads.
+    -- Reserve 8 MiB for an original plus a future 5 MiB normalized derivative
+    -- per slot, although this step accepts only 6 MiB uploads.
     v_reserved_bytes := v_image_count * 13631488;
     select coalesce(sum(reserved_bytes), 0) into v_account_reserved
     from private.capture_sessions
@@ -250,7 +250,7 @@ begin
         end if;
         v_declared_bytes := (v_asset->>'size_bytes')::bigint;
         if coalesce(v_content_type, '') not in ('image/jpeg', 'image/png')
-           or v_declared_bytes not between 1 and 6000000 then
+           or v_declared_bytes not between 1 and 6291456 then
             raise exception using errcode = '22023', message = 'Photos must be JPEG or PNG files no larger than 6 MB';
         end if;
         v_object_name := gen_random_uuid()::text;

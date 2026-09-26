@@ -10,7 +10,7 @@ select ok(not has_table_privilege('authenticated', 'private.capture_assets', 'se
 select ok(has_function_privilege('service_role', 'public.claim_capture_cleanup(integer)', 'execute'), 'Only the service worker can claim expired cleanup');
 select ok(not has_function_privilege('authenticated', 'public.claim_capture_cleanup(integer)', 'execute'), 'Clients cannot claim cleanup jobs');
 select is((select public from storage.buckets where id = 'capture-labels'), false, 'Capture bucket is private');
-select is((select file_size_limit from storage.buckets where id = 'capture-labels'), 6000000::bigint, 'Capture bucket enforces the six MB upload cap');
+select is((select file_size_limit from storage.buckets where id = 'capture-labels'), 6291456::bigint, 'Capture bucket enforces the six MiB upload cap');
 select ok((select allowed_mime_types = array['image/jpeg', 'image/png']::text[] from storage.buckets where id = 'capture-labels'), 'Capture bucket allows only JPEG and PNG MIME types');
 select ok((select count(*) = 1 from pg_policies where schemaname = 'storage' and tablename = 'objects' and policyname = 'capture_label_upload_insert'), 'Storage insert is guarded by the exact active capture key');
 select ok((select count(*) = 1 from pg_policies where schemaname = 'storage' and tablename = 'objects' and policyname = 'capture_label_upload_response_select'), 'Upload metadata reads are operation restricted');
@@ -47,7 +47,7 @@ select throws_ok(
     '22023', 'Photos must be JPEG or PNG files no larger than 6 MB', 'Unsupported image MIME types are rejected'
 );
 select throws_ok(
-    $$select public.create_capture_session('00000000-0000-4000-8000-000000000100', '[{"content_type":"image/jpeg","size_bytes":6000001}]'::jsonb)$$,
+    $$select public.create_capture_session('00000000-0000-4000-8000-000000000100', '[{"content_type":"image/jpeg","size_bytes":6291457}]'::jsonb)$$,
     '22023', 'Photos must be JPEG or PNG files no larger than 6 MB', 'Oversized files are rejected server-side'
 );
 select throws_ok(
@@ -81,7 +81,7 @@ select throws_ok(
     'P0001', 'Capture limit reached; cancel or finish an earlier photo capture', 'Concurrent-safe ten-session active limit is enforced'
 );
 select ok(
-    private.capture_object_operation_allowed((select response->'objects'->0->>'object_name' from capture_created), 'uploading'),
+    storage.capture_object_operation_allowed((select response->'objects'->0->>'object_name' from capture_created), 'uploading'),
     'The initiating Owner is authorized for the exact live upload slot'
 );
 reset role;
@@ -105,16 +105,16 @@ set local role authenticated;
 
 set local request.jwt.claim.sub = '00000000-0000-4000-8000-000000009987';
 select ok(
-    not private.capture_object_operation_allowed((select response->'objects'->0->>'object_name' from capture_created), 'uploading'),
+    not storage.capture_object_operation_allowed((select response->'objects'->0->>'object_name' from capture_created), 'uploading'),
     'A household Member cannot use an Owner capture upload key'
 );
 select ok(
-    not private.capture_object_operation_allowed((select response->'objects'->0->>'object_name' from capture_created), 'deletion_pending'),
+    not storage.capture_object_operation_allowed((select response->'objects'->0->>'object_name' from capture_created), 'deletion_pending'),
     'A household Member cannot delete an Owner capture object'
 );
 set local request.jwt.claim.sub = '00000000-0000-4000-8000-000000000002';
 select ok(
-    not private.capture_object_operation_allowed((select response->'objects'->0->>'object_name' from capture_created), 'uploading'),
+    not storage.capture_object_operation_allowed((select response->'objects'->0->>'object_name' from capture_created), 'uploading'),
     'A different household Owner cannot access this capture object'
 );
 reset role;
@@ -130,7 +130,7 @@ create temporary table cancel_result as
 select public.cancel_capture_session((select (response->>'session_id')::uuid from capture_created)) as response;
 select is(jsonb_array_length(response->'object_names'), 2, 'Cancellation returns only the two exact paths needed for Storage API deletion') from cancel_result;
 select ok(
-    private.capture_object_operation_allowed((select response->'objects'->0->>'object_name' from capture_created), 'deletion_pending'),
+    storage.capture_object_operation_allowed((select response->'objects'->0->>'object_name' from capture_created), 'deletion_pending'),
     'Owner can delete an exact object only after closing the capture'
 );
 select is(
