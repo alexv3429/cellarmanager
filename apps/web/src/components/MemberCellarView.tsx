@@ -91,7 +91,7 @@ export function MemberCellarView({ householdId, isOnline, onOpenWine }: {
         </label>
         <label>{t("Wine color")}<select value={color} onChange={(event) => { setColor(event.target.value); setVisibleLimit(30) }}>
             <option value="">{t("All colors")}</option>
-            {[...new Set(rows.map((row) => row.color))].sort().map((value) => <option key={value}>{value}</option>)}
+            {[...new Set(rows.map((row) => row.color))].sort().map((value) => <option key={value} value={value}>{t(value)}</option>)}
           </select>
         </label>
         <label>{t("Storage cellar")}<select value={cellar} onChange={(event) => { setCellar(event.target.value); setVisibleLimit(30) }}>
@@ -113,10 +113,10 @@ export function MemberCellarView({ householdId, isOnline, onOpenWine }: {
         {visible.slice(0, visibleLimit).map(({ wine, quantity, positions }) => {
           const advice = maturityByWine.get(wine.id)
           return <article className="member-cellar__wine" key={wine.id}>
-            <div><h2>{wine.producer} — {wine.cuvee}</h2><p>{wine.vintage ?? "NV"} · {wine.color} · {formatWineVolume(wine.format_ml)}</p><p>{[wine.appellation, wine.area].filter(Boolean).join(" · ")}</p></div>
+            <div><h2>{wine.producer} — {wine.cuvee}</h2><p>{wine.vintage ?? t("NV")} · {t(wine.color)} · {formatWineVolume(wine.format_ml)}</p><p>{[wine.appellation, wine.area].filter(Boolean).join(" · ")}</p></div>
             <strong>{quantity}{t(" ")}{t("bottle")}{quantity === 1 ? "" : "s"}</strong>
             {positions.length ? <ul aria-label={t("Bottle locations")}>{positions.map((position, index) => <li key={index}>{position.cellar_name} / {position.location_code} · {position.quantity}{t(" ")}{t("bottle")}{position.quantity === 1 ? "" : "s"}</li>)}</ul> : <p>{t("No bottles currently in stock.")}</p>}
-            {advice?.stateLabel ? <p>{advice.stateLabel}{advice.drinkByYear ? ` · suggested drink-by ${advice.drinkByYear}` : ""}</p> : null}
+            {advice?.stateLabel ? <p>{t(advice.stateLabel)}{advice.drinkByYear ? ` · ${t("Suggested drink-by")} ${advice.drinkByYear}` : ""}</p> : null}
             <button type="button" onClick={() => onOpenWine(wine.id)}>{t("View wine")}</button>
           </article>
         })}

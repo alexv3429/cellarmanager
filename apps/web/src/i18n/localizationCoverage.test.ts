@@ -11,6 +11,7 @@ const textAttributes = new Set([
   "aria-description",
   "aria-label",
   "aria-valuetext",
+  "data-label",
   "placeholder",
   "title",
 ])

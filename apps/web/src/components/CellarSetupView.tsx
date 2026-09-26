@@ -700,9 +700,10 @@ function OwnerCellarSetupView({
                     {hasSearch &&
                     visibleCellar.locations.length !==
                       cellar.locations.length ? (
-                      <p className="cellar-card__filter-summary">{t("Showing")}{formatLocationCount(
-                          visibleCellar.locations.length,
-                        )}{t(" ")}{t("of")}{t(" ")}{cellar.locations.length}{t(". Clear the search to change display order.")}</p>
+                      <p className="cellar-card__filter-summary">{t("cellar.locationFilterSummary", {
+                        shown: String(visibleCellar.locations.length),
+                        total: String(cellar.locations.length),
+                      })}{t(". Clear the search to change display order.")}</p>
                     ) : null}
 
                     {visibleCellar.locations.length === 0 ? (

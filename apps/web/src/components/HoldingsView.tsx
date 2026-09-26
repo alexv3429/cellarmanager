@@ -1114,11 +1114,17 @@ export function HoldingsView({
       <p
         aria-live="polite"
         className="inventory-results-summary"
-      >{t("Showing")}{visibleBottleCount}{t(" ")}{t("of")}{t(" ")}{totalBottleCount}{t("bottles")}{" · "}
-        {visibleWineCount}{t(" ")}{t("of")}{t(" ")}{totalWineCount}{t("wines")}{" · "}
-        {visibleHoldings.length}{t(" ")}{t("of")}{t(" ")}{holdings.length}{t("positions")}{" · "}
-        {pendingOperations.length}{t("pending operation")}{pendingOperations.length === 1 ? "" : t("s")}
-      </p>
+      >{t("inventory.resultsSummary", {
+        shownBottles: String(visibleBottleCount),
+        totalBottles: String(totalBottleCount),
+        shownWines: String(visibleWineCount),
+        totalWines: String(totalWineCount),
+        shownPositions: String(visibleHoldings.length),
+        totalPositions: String(holdings.length),
+        pendingOperations: pendingOperations.length === 1
+          ? t("inventory.pendingOperationOne")
+          : t("inventory.pendingOperationsMany", { count: String(pendingOperations.length) }),
+      })}</p>
 
       {!isLoading && holdings.length === 0 ? (
         <p>{t("No synchronized holdings found.")}</p>
@@ -1191,7 +1197,7 @@ export function HoldingsView({
 
             return (
               <tr key={holding.id}>
-                <td data-label="Wine">
+                <td data-label={t("Wine")}>
                   {isPendingNewWine ? (
                     <div>
                       {holding.producer} — {holding.cuvee}
@@ -1211,33 +1217,33 @@ export function HoldingsView({
                     {[
                       holding.appellation,
                       holding.area,
-                      holding.color,
+                      t(holding.color),
                       formatWineVolume(holding.format_ml),
                     ]
                       .filter(Boolean)
                       .join(" · ")}
                   </small>
                 </td>
-                <td className="inventory-holding" data-label="Holding">
+                <td className="inventory-holding" data-label={t("Holding")}>
                   <div>
-                    <strong>{holding.vintage ?? "NV"}</strong>
+                    <strong>{holding.vintage ?? t("NV")}</strong>
                     {" · "}
                     {currentLocationLabel}
                   </div>
                   <small>
-                    {holding.quantity}{t("bottle")}{holding.quantity === 1 ? "" : "s"}
+                    {holding.quantity}{t(" ")}{t("bottle")}{holding.quantity === 1 ? "" : "s"}
                     {holding.pending_delta !== 0 ? (
                       <span>
                         {" · "}
                         {holding.pending_delta > 0 ? "+" : ""}
                         {holding.pending_delta}{t("pending")}</span>
                     ) : null}
-                    {" · "}{t("Rev")}{holding.revision}
+                    {" · "}{t("Rev")}{t(" ")}{holding.revision}
                   </small>
                 </td>
                 <td
                   className="inventory-actions"
-                  data-label="Actions"
+                  data-label={t("Actions")}
                 >
                   <div className="inventory-action-cell-content">
                     <div

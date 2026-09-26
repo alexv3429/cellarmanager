@@ -825,7 +825,7 @@ export function WineDetailView({
       <header className="wine-detail-hero">
         <div>
           <p className="wine-detail-hero__eyebrow">
-            {wine.vintage ?? t("NV")} · {wine.color} ·{" "}
+            {wine.vintage ?? t("NV")} · {t(wine.color)} ·{" "}
             {formatWineVolume(wine.format_ml)}
           </p>
           <h1>{wine.producer}</h1>
@@ -836,9 +836,9 @@ export function WineDetailView({
 
         <div className="wine-detail-total" aria-live="polite">
           <strong>{totalBottles}</strong>
-          <span>{t("bottle")}{totalBottles === 1 ? "" : t("s")}{t("in stock")}</span>
+          <span>{t("bottle")}{totalBottles === 1 ? "" : t("s")}{t(" ")}{t("in stock")}</span>
           <small>
-            {holdings.length}{t("physical position")}{holdings.length === 1 ? "" : t("s")}
+            {holdings.length}{t(" ")}{t("physical position")}{holdings.length === 1 ? "" : t("s")}
             {pendingOperations.length > 0
               ? t(" · {value1} pending operation{value2}", { value1: String(pendingOperations.length), value2: String(pendingOperations.length === 1 ? "" : "s") })
               : ""}
@@ -998,11 +998,11 @@ export function WineDetailView({
             </div>
             <div>
               <dt>{t("Vintage")}</dt>
-              <dd>{wine.vintage ?? "NV"}</dd>
+              <dd>{wine.vintage ?? t("NV")}</dd>
             </div>
             <div>
               <dt>{t("Color")}</dt>
-              <dd>{wine.color}</dd>
+              <dd>{t(wine.color)}</dd>
             </div>
             <div>
               <dt>{t("Appellation")}</dt>

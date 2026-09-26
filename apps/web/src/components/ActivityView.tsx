@@ -245,7 +245,7 @@ export function ActivityView({
         >{t("Clear filters")}</button>
       </section>
 
-      <p aria-live="polite" className="activity-results-summary">{t("Showing")}{visibleActivity.length}{t(" ")}{t("of")}{t(" ")}{activity.length}{t("latest operations. Activity is limited to the most recent 100.")}</p>
+      <p aria-live="polite" className="activity-results-summary">{t("activity.resultsSummary", { shown: String(visibleActivity.length), total: String(activity.length) })}</p>
 
       {isLoading ? (
         <Notice role="status">{t("Loading activity…")}</Notice>

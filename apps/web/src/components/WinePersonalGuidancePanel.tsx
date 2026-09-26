@@ -16,6 +16,7 @@ import {
 } from "../data/winePersonalGuidance"
 import { Notice } from "./Notice"
 import { useLanguage } from "../i18n/useLanguage"
+import { formatLegacyGuidanceNote } from "../i18n/legacyGuidanceNote"
 
 interface WinePersonalGuidancePanelProps {
   canManageCellar?: boolean
@@ -128,7 +129,7 @@ export function WinePersonalGuidancePanel({
   isOnline,
   wineId,
 }: WinePersonalGuidancePanelProps) {
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
   const [result, setResult] = useState<WinePersonalGuidance | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [busyAction, setBusyAction] = useState<string | null>(null)
@@ -375,14 +376,14 @@ export function WinePersonalGuidancePanel({
               <div>
                 <span className="wine-personal-guidance__eyebrow">{t("Serving")}</span>
                 <h3>
-                  {override ? "Your serving guidance" : "Serving estimate"}
+                  {override ? t("Your serving guidance") : t("Serving estimate")}
                 </h3>
               </div>
               {serving ? (
                 <span className="wine-serving__source">
                   {override
-                    ? "Owner-adjusted"
-                    : `${model?.confidenceLabel ?? "Unknown"} confidence`}
+                    ? t("Owner-adjusted")
+                    : t(`${model?.confidenceLabel ?? "Unknown"} confidence`)}
                 </span>
               ) : null}
             </div>
@@ -400,7 +401,7 @@ export function WinePersonalGuidancePanel({
                     <dd>
                       {serving.aerationMinMinutes === 0 &&
                       serving.aerationMaxMinutes === 0
-                        ? "None"
+                        ? t("None")
                         : `${serving.aerationMinMinutes}–${serving.aerationMaxMinutes} min`}
                     </dd>
                   </div>
@@ -415,8 +416,8 @@ export function WinePersonalGuidancePanel({
                   <details className="wine-serving__explanation">
                     <summary>{t("Why this serving estimate?")}</summary>
                     <ul>
-                      {model.reasons.map((reason) => (
-                        <li key={reason}>{reason}</li>
+                  {model.reasons.map((reason) => (
+                        <li key={reason}>{t(reason)}</li>
                       ))}
                     </ul>
                     {model.warnings.length > 0 ? (
@@ -424,7 +425,7 @@ export function WinePersonalGuidancePanel({
                         <strong>{t("Keep in mind")}</strong>
                         <ul>
                           {model.warnings.map((warning) => (
-                            <li key={warning}>{warning}</li>
+                            <li key={warning}>{t(warning)}</li>
                           ))}
                         </ul>
                       </>
@@ -441,14 +442,14 @@ export function WinePersonalGuidancePanel({
                 }
               >
                 {result.serving.demandStatus === "needs-review"
-                  ? "No reviewed structural profile can support serving advice yet. You can still enter your own guidance."
-                  : "Serving guidance is being prepared."}
+                  ? t("No reviewed structural profile can support serving advice yet. You can still enter your own guidance.")
+                  : t("Serving guidance is being prepared.")}
               </Notice>
             )}
 
             {canManageCellar ? <details className="wine-serving__override" key={override?.updatedAt ?? "model"}>
               <summary>
-                {override ? "Edit your serving guidance" : "Adjust serving guidance"}
+                {override ? t("Edit your serving guidance") : t("Adjust serving guidance")}
               </summary>
               <p>{t("Your values take priority for this household; the reviewed estimate remains unchanged.")}</p>
               <form onSubmit={(event) => void submitServingOverride(event)}>
@@ -510,7 +511,7 @@ export function WinePersonalGuidancePanel({
                 </label>
                 <div>
                   <button disabled={busyAction !== null} type="submit">
-                    {busyAction === "serving" ? "Saving…" : "Save my guidance"}
+                    {busyAction === "serving" ? t("Saving…") : t("Save my guidance")}
                   </button>
                   {override ? (
                     <button
@@ -519,8 +520,8 @@ export function WinePersonalGuidancePanel({
                       type="button"
                     >
                       {busyAction === "clear-serving"
-                        ? "Clearing…"
-                        : "Use estimate again"}
+                        ? t("Clearing…")
+                        : t("Use estimate again")}
                     </button>
                   ) : null}
                 </div>
@@ -547,7 +548,7 @@ export function WinePersonalGuidancePanel({
               >
                 <div className="wine-observation-form__heading">
                   <strong>
-                    {editingObservation ? "Edit observation" : "New observation"}
+                    {editingObservation ? t("Edit observation") : t("New observation")}
                   </strong>
                   <span>{t("Keep source facts and your own impression explicit.")}</span>
                 </div>
@@ -665,8 +666,8 @@ export function WinePersonalGuidancePanel({
                     name="note"
                     placeholder={
                       observationType === "producer-guidance"
-                        ? "What did the producer say, and for which vintage or period?"
-                        : "What did you observe?"
+                          ? t("What did the producer say, and for which vintage or period?")
+                        : t("What did you observe?")
                     }
                     required
                     rows={4}
@@ -676,10 +677,10 @@ export function WinePersonalGuidancePanel({
                 <div className="wine-observation-form__actions">
                   <button disabled={busyAction !== null} type="submit">
                     {busyAction === "observation"
-                      ? "Saving…"
+                      ? t("Saving…")
                       : editingObservation
-                        ? "Save changes"
-                        : "Add observation"}
+                        ? t("Save changes")
+                        : t("Add observation")}
                   </button>
                   <button
                     disabled={busyAction !== null}
@@ -712,11 +713,11 @@ export function WinePersonalGuidancePanel({
                         <div>
                           <strong>{t(observationTypeLabel(observation.type))}</strong>
                           <span>
-                            {new Date(`${observation.observedOn}T12:00:00`).toLocaleDateString()}
+                            {new Date(`${observation.observedOn}T12:00:00`).toLocaleDateString(language === "fr" ? "fr-FR" : "en-US")}
                             {` · ${
                               observation.visibility === "personal"
-                                ? "Only me"
-                                : "Household"
+                                ? t("Only me")
+                                : t("Household")
                             }`}
                           </span>
                         </div>
@@ -727,7 +728,7 @@ export function WinePersonalGuidancePanel({
                           >{t("Edit")}</button>
                         ) : null}
                       </header>
-                      {observation.note ? <p>{observation.note}</p> : null}
+                      {observation.note ? <p>{formatLegacyGuidanceNote(observation.note, t)}</p> : null}
                       <div className="wine-observations__facts">
                         {observation.maturityAssessment ? (
                           <span>{t("Maturity:")}{t(maturityLabel(observation.maturityAssessment))}

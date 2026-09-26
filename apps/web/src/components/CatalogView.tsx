@@ -1241,8 +1241,12 @@ export function CatalogView({
       <p className="catalog-results-summary" ref={catalogResultsRef}>
         {activeCurationItem ? (
           <strong>{t("Queue filter:")}{t(" ")}{activeCurationItem.title} · </strong>
-        ) : null}{t("Showing")}{visibleWines.length}{t(" ")}{t("of")}{t(" ")}{catalogWines.length}{t("wines")}{" · "}
-        {visibleBottles}{t(" ")}{t("of")}{t(" ")}{totalBottles}{t("bottles")}{isOnline && !maturityLoading && !maturityError
+        ) : null}{t("catalog.resultsSummary", {
+          shownWines: String(visibleWines.length),
+          totalWines: String(catalogWines.length),
+          shownBottles: String(visibleBottles),
+          totalBottles: String(totalBottles),
+        })}{isOnline && !maturityLoading && !maturityError
           ? t(" · {value1} assessed · {value2} need input or review", { value1: String(maturityOverview.filter((item) => item.state !== null).length), value2: String(maturityOverview.filter((item) => item.demandStatus === "needs-review").length) })
           : ""}
       </p>
@@ -1285,7 +1289,7 @@ export function CatalogView({
 
             return (
               <tr key={wine.id}>
-                <td data-label="Producer">
+                <td data-label={t("Producer")}>
                   {isEditing ? (
                     <input
                       aria-label={`Producer for ${wine.producer} ${wine.cuvee}`}
@@ -1303,7 +1307,7 @@ export function CatalogView({
                   )}
                 </td>
 
-                <td data-label="Cuvée">
+                <td data-label={t("Cuvée")}>
                   {isEditing ? (
                     <input
                       aria-label={`Cuvée for ${wine.producer} ${wine.cuvee}`}
@@ -1323,17 +1327,17 @@ export function CatalogView({
                         <span
                           className={`maturity-badge maturity-badge--${maturity.state}`}
                         >
-                          {maturity.stateLabel}
+                          {maturity.stateLabel ? t(maturity.stateLabel) : ""}
                           {maturity.drinkByYear
-                            ? ` · by ${maturity.drinkByYear}`
+                            ? ` · ${t("Suggested drink-by")} ${maturity.drinkByYear}`
                             : ""}
                           {maturity.isPersonalized
-                            ? ` · ${maturityCalibrationLabel(
+                            ? ` · ${t(maturityCalibrationLabel(
                                 maturity.personalYearShift,
-                              ).toLowerCase()} for you`
+                              ))} ${t("for you")}`
                             : ""}
                           {maturity.moveNeeded
-                            ? " · move suggested"
+                            ? ` · ${t("move suggested")}`
                             : ""}
                         </span>
                       ) : maturity?.assessmentReason ? (
@@ -1343,7 +1347,7 @@ export function CatalogView({
                           )}
                         </span>
                       ) : null}
-                      <span className="catalog-wine-coverage">{t("Core facts")}{factCoverage.presentCoreFactCount}/3
+                      <span className="catalog-wine-coverage">{t("Core facts")}{t(" ")}{factCoverage.presentCoreFactCount}/3
                         {isOnline && !maturityLoading
                           ? ` · ${profileCoverageLabel(maturity)}`
                           : ""}
@@ -1352,7 +1356,7 @@ export function CatalogView({
                   )}
                 </td>
 
-                <td data-label="Vintage">
+                <td data-label={t("Vintage")}>
                   {isEditing ? (
                     <input
                       aria-label={`Vintage for ${wine.producer} ${wine.cuvee}`}
@@ -1371,7 +1375,7 @@ export function CatalogView({
                   )}
                 </td>
 
-                <td data-label="Color">
+                <td data-label={t("Color")}>
                   {isEditing ? (
                     <input
                       aria-label={`Color for ${wine.producer} ${wine.cuvee}`}
@@ -1386,11 +1390,11 @@ export function CatalogView({
                       value={editColor}
                     />
                   ) : (
-                    wine.color
+                    t(wine.color)
                   )}
                 </td>
 
-                <td data-label="Appellation">
+                <td data-label={t("Appellation")}>
                   {isEditing ? (
                     <input
                       aria-label={`Appellation for ${wine.producer} ${wine.cuvee}`}
@@ -1409,7 +1413,7 @@ export function CatalogView({
                   )}
                 </td>
 
-                <td data-label="Area">
+                <td data-label={t("Area")}>
                   {isEditing ? (
                     <input
                       aria-label={`Area for ${wine.producer} ${wine.cuvee}`}
@@ -1428,7 +1432,7 @@ export function CatalogView({
                   )}
                 </td>
 
-                <td data-label="Format">
+                <td data-label={t("Format")}>
                   {isEditing ? (
                     <input
                       aria-label={`Format in millilitres for ${wine.producer} ${wine.cuvee}`}
@@ -1450,9 +1454,9 @@ export function CatalogView({
                   )}
                 </td>
 
-                <td data-label="Current bottles">{wine.quantity}</td>
+                <td data-label={t("Current bottles")}>{wine.quantity}</td>
 
-                <td data-label="Actions">
+                <td data-label={t("Actions")}>
                   {isEditing ? (
                     <div className="catalog-table__actions">
                       <button

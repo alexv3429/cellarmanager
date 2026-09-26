@@ -215,12 +215,12 @@ export function AppShell({
         <div className="app-shell__toolbar">
           <div className="app-shell__brand">{t("CellarManager")}</div>
           <ShellDisclosure className={`app-shell__sync app-shell__sync--${syncPresentation.tone}`}
-            accessibleLabel={`${t("shell.sync")}: ${syncPresentation.label}`} open={openPanel === "sync"}
+            accessibleLabel={`${t("shell.sync")}: ${t(syncPresentation.label)}`} open={openPanel === "sync"}
             onToggle={() => setOpenPanel(openPanel === "sync" ? null : "sync")} onClose={() => setOpenPanel(null)}
-            label={<><span aria-hidden="true" className="app-shell__sync-dot" /><span aria-live="polite">{syncPresentation.label}</span></>}>
+            label={<><span aria-hidden="true" className="app-shell__sync-dot" /><span aria-live="polite">{t(syncPresentation.label)}</span></>}>
             <strong>{t("shell.syncDevice")}</strong>
-            <p>{syncPresentation.detail}</p>
-            <p>{t("Device:")}{t(" ")}{deviceStatus}</p>
+            <p>{t(syncPresentation.detail)}</p>
+            <p>{t("Device:")}{t(" ")}{t(deviceStatus)}</p>
             {lastSyncLabel ? <small>{lastSyncLabel}</small> : null}
             {isOfflineAccess ? <p>{t("Local access only · authentication will refresh after reconnection.")}</p> : null}
             <a className="app-shell__account-link" href={getAppViewPath("activity")} onClick={(event) => navigate(event, "activity")}>{t("shell.activityQueue")}</a>
