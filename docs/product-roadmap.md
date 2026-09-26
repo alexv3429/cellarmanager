@@ -12,7 +12,7 @@ crosses a milestone boundary.
 | `v0.3` | A cellar can live safely in CellarManager through daily manual use or guarded CSV import | Released (`v0.3.0`) |
 | `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable evidence | Released (`v0.4.0`) |
 | `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | Released (`v0.5.0`) |
-| `v0.6` | The app is usable in English or French, and adding or identifying wine requires dramatically less typing | In progress (0.6.1 complete; 0.6.2 in progress) |
+| `v0.6` | The app is usable in English or French, and adding or identifying wine requires dramatically less typing | In progress (0.6.1–0.6.3 complete; 0.6.4 in progress) |
 | `v0.7` | CellarManager explains what happened to the cellar and what the collection means over time | Planned |
 | `v1.0` | A self-host can install, trust, upgrade, recover, and maintain CellarManager for years | Planned |
 
@@ -372,7 +372,7 @@ remain data and are not silently translated.
 |---|---|
 | 0.6.1 | Localization foundation, browser-locale detection, and persistent per-user English/French/browser language preference — complete |
 | 0.6.2 | French translation of the complete app-owned interface and auth messages, with an automated untranslated-string coverage gate — complete |
-| 0.6.3 | Locale-sensitive date/number formatting, accessibility review, mobile/desktop acceptance, and v0.6 readiness — in progress |
+| 0.6.3 | Locale-sensitive date/number formatting, document-language accessibility metadata, and owner acceptance — complete |
 
 Step 0.6.1 introduces typed message lookup with English fallback, sets the
 document language from the effective preference, and translates the shared
@@ -401,8 +401,10 @@ Step 0.6.3 uses the saved account language for dates, times, and numeric counts
 instead of inheriting whichever locale the current browser happens to use. The
 shared formatters preserve the user's local time zone while selecting French or
 English conventions. The effective language is also kept on the document root
-for assistive technology. This step remains open until representative phone and
-desktop layouts and keyboard/screen-reader behavior have been accepted.
+for assistive technology. PR #136 was accepted and merged on 2026-09-26 after
+automated formatting tests and CI passed. The owner accepted without a separate
+manual screen-reader or device-matrix exercise; this records that acceptance,
+not a claim that such a manual audit was performed.
 
 After localization, camera, OCR, and barcode workflows extend the v0.4 provider
 boundary and feed the same normalization and candidate-resolution principles
@@ -411,11 +413,14 @@ established by CSV import:
 `photo/OCR/barcode -> normalized candidate -> review -> match/create -> wine`
 
 Recognition and enrichment output is always a candidate for human approval,
-never inventory authority.
+never inventory authority. Step 0.6.4 records the cross-modal architecture and
+its boundaries before image upload, recognition providers, or inventory flows
+are implemented. See [`capture-assisted-entry.md`](capture-assisted-entry.md)
+and [ADR 005](adr/005-capture-assisted-wine-entry.md).
 
 | Step | Scope |
 |---|---|
-| 0.6.4 | Capture architecture extending the v0.4 enrichment boundary |
+| 0.6.4 | Capture architecture extending the v0.4 enrichment boundary — in progress |
 | 0.6.5 | Image/storage security model |
 | 0.6.6 | Camera and photo upload |
 | 0.6.7 | Image preprocessing |
