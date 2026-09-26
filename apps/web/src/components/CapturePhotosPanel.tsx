@@ -98,7 +98,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
     try {
       await uploadCapturePhotos(householdId, files)
       setFiles([])
-      setMessage(t("Photos uploaded. They are private and will be deleted after 24 hours unless processed sooner."))
+      setMessage(t("Photos uploaded. They are private and will be deleted within 24 hours."))
       await refresh()
     } catch (uploadError) {
       setFiles([])

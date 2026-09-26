@@ -119,7 +119,7 @@ export const frenchText: Readonly<Record<string, string>> = {
   "{count} photos selected": "{count} photos sélectionnées",
   "Upload photos": "Envoyer les photos",
   "Uploading…": "Envoi en cours…",
-  "Photos uploaded. They are private and will be deleted after 24 hours unless processed sooner.": "Photos envoyées. Elles restent privées et seront supprimées sous 24 heures, sauf si elles sont traitées avant.",
+  "Photos uploaded. They are private and will be deleted within 24 hours.": "Les photos envoyées restent privées et sont supprimées sous 24 heures.",
   "Temporary photo captures": "Photos temporaires",
   "Photos stored privately; image processing is not available yet.": "Photos stockées de façon privée ; leur traitement n’est pas encore disponible.",
   "Upload incomplete": "Envoi incomplet",
