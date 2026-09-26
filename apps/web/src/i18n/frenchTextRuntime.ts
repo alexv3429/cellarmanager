@@ -552,6 +552,7 @@ export const frenchTextRuntime: Readonly<Record<string, string>> = {
   "white": "blanc",
   "rose": "rosé",
   "rosé": "rosé",
+  "other": "autre",
   "sparkling": "effervescent",
   "sweet": "doux",
   "fortified": "vin de liqueur",

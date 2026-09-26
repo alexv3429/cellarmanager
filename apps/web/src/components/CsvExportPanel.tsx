@@ -337,7 +337,12 @@ export function CsvExportPanel({
             type="checkbox"
           />
           <span>
-            <strong>{t("Include")}{zeroStockWineCount} {zeroStockWineCount === 1 ? t("wine") : t("wines")}{t("with no bottles")}</strong>
+            <strong>{t(
+              zeroStockWineCount === 1
+                ? "csv.export.includeZeroStockOne"
+                : "csv.export.includeZeroStockMany",
+              { count: String(zeroStockWineCount) },
+            )}</strong>
             <small>{t("Useful for a complete catalog copy. These wines can be imported again as catalog entries without adding bottles.")}</small>
           </span>
         </label>
