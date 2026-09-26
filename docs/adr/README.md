@@ -11,6 +11,7 @@ it was introduced.
 | [003](003-v01-data-migration.md) | Accepted (historical) | One-off, reconciliation-backed v0.1 migration |
 | [004](004-wine-reference-and-enrichment-evidence.md) | Accepted | Shared wine identity, plural evidence, reviewed matching, and explicit enrichment fallbacks |
 | [005](005-capture-assisted-wine-entry.md) | Accepted | Multimodal wine capture produces reviewable candidates; only explicit owner action reaches the existing cellar and inventory workflows |
+| [006](006-capture-image-storage-security.md) | Accepted | Capture images are private, owner-authorized, purpose-limited temporary assets with bounded processing and deletion |
 
 Create a new numbered ADR before changing a stable contract from
 [`../product-roadmap.md`](../product-roadmap.md). Do not rewrite an accepted ADR

@@ -39,7 +39,7 @@ permissions make shared cellar writes Owner-only. See
 - Keep images and recognition data private and purpose-limited. Do not place
   images or raw provider responses in shared references, synchronized wine
   facts, or model-training data. Exact asset security and lifecycle rules are
-  a prerequisite of 0.6.5.
+  a prerequisite of 0.6.5; see [ADR 006](006-capture-image-storage-security.md).
 - Keep recognition adapters, provider credentials, and external lookup
   server-side. No OCR/image provider is approved by this architecture; external
   use requires the same source and rights review as other enrichment inputs.

@@ -34,6 +34,7 @@ retains only the evidence needed to understand its released migration history.
 - [`profile-revision-governance.md`](profile-revision-governance.md) - scoped curator eligibility, structured diffs, disagreement rules, immutable supersession, and trusted publication
 - [`personal-maturity-calibration.md`](personal-maturity-calibration.md) - private account timing preference, canonical comparison, reset, and manual-window precedence
 - [`capture-assisted-entry.md`](capture-assisted-entry.md) - provider-neutral photo/OCR/barcode candidate flow and owner-controlled cellar boundary
+- [`capture-storage-security.md`](capture-storage-security.md) - private image handling, authorization, validation, provider gates, and short retention
 - [`v04-acceptance.md`](v04-acceptance.md) - final rich-library production acceptance and release gates
 - [`v05-acceptance.md`](v05-acceptance.md) - shared-household production acceptance and release gates
 - [`wine-duplicate-merge.md`](wine-duplicate-merge.md) - conservative duplicate candidates, explicit owner merge, stock consolidation, and immutable audit history
