@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { useRegisterSW } from "virtual:pwa-register/react"
 
 import { getPwaPromptMode } from "./pwaPrompt"
+import { useLanguage } from "../i18n/useLanguage"
 
 interface InstallPromptEvent extends Event {
   prompt: () => Promise<void>
@@ -12,6 +13,7 @@ interface InstallPromptEvent extends Event {
 }
 
 export function PwaUpdatePrompt() {
+  const { t } = useLanguage()
   const {
     offlineReady: [offlineReady, setOfflineReady],
     needRefresh: [needRefresh, setNeedRefresh],
@@ -97,18 +99,18 @@ export function PwaUpdatePrompt() {
     >
       <strong>
         {mode === "install"
-          ? "Install CellarManager"
+          ? t("Install CellarManager")
           : mode === "update"
-            ? "Update available"
-            : "Ready offline"}
+            ? t("Update available")
+            : t("Ready offline")}
       </strong>
 
       <p>
         {mode === "install"
-          ? "Add the app to this device for quick access and reliable offline startup."
+          ? t("Add the app to this device for quick access and reliable offline startup.")
           : mode === "update"
-            ? "Reload to use the latest CellarManager version."
-            : "CellarManager can now open without a network connection."}
+            ? t("Reload to use the latest CellarManager version.")
+            : t("CellarManager can now open without a network connection.")}
       </p>
 
       <div className="pwa-notice__actions">
@@ -118,19 +120,15 @@ export function PwaUpdatePrompt() {
               void updateServiceWorker(true)
             }}
             type="button"
-          >
-            Update now
-          </button>
+          >{t("Update now")}</button>
         ) : null}
 
         {mode === "install" ? (
-          <button onClick={() => void install()} type="button">
-            Install app
-          </button>
+          <button onClick={() => void install()} type="button">{t("Install app")}</button>
         ) : null}
 
         <button onClick={close} type="button">
-          {mode === "install" ? "Not now" : "Dismiss"}
+          {mode === "install" ? t("Not now") : t("Dismiss")}
         </button>
       </div>
     </aside>

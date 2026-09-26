@@ -10,6 +10,7 @@ import {
   type WineReferenceReview,
 } from "../data/wineReferenceMatching"
 import { Notice } from "./Notice"
+import { useLanguage } from "../i18n/useLanguage"
 
 interface WineReferenceMatchReviewProps {
   isOnline: boolean
@@ -57,6 +58,7 @@ export function WineReferenceMatchReview({
   isOnline,
   wine,
 }: WineReferenceMatchReviewProps) {
+  const { t } = useLanguage()
   const [review, setReview] =
     useState<WineReferenceReview | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -125,7 +127,7 @@ export function WineReferenceMatchReview({
 
   async function refreshReview() {
     if (!isOnline) {
-      setError("Reconnect before searching the reference library.")
+      setError(t("Reconnect before searching the reference library."))
       return
     }
 
@@ -135,7 +137,7 @@ export function WineReferenceMatchReview({
 
     try {
       setReview(await getWineReferenceReview(wine.id, true))
-      setMessage("Reference suggestions refreshed.")
+      setMessage(t("Reference suggestions refreshed."))
     } catch (caughtError: unknown) {
       setError(
         caughtError instanceof Error
@@ -152,7 +154,7 @@ export function WineReferenceMatchReview({
     decision: WineReferenceDecision,
   ) {
     if (!isOnline) {
-      setError("Reconnect before reviewing a reference match.")
+      setError(t("Reconnect before reviewing a reference match."))
       return
     }
 
@@ -225,8 +227,8 @@ export function WineReferenceMatchReview({
               className={`wine-reference-strength wine-reference-strength--${candidate.matchStrength}`}
             >
               {candidate.matchStrength === "strong"
-                ? "Strong candidate"
-                : "Possible candidate"}
+                ? t("Strong candidate")
+                : t("Possible candidate")}
             </span>
             <h4>{candidateTitle(candidate)}</h4>
           </div>
@@ -239,10 +241,9 @@ export function WineReferenceMatchReview({
           </p>
         ) : null}
 
-        <p className="wine-reference-candidate__evidence">
-          Producer {percentage(candidate.evidence.producerScore)} · Wine name {percentage(candidate.evidence.productScore)}
+        <p className="wine-reference-candidate__evidence">{t("Producer")}{percentage(candidate.evidence.producerScore)}{t(" ")}{t("· Wine name")}{t(" ")}{percentage(candidate.evidence.productScore)}
           {candidate.evidence.producerPreferred
-            ? " · Remembered producer"
+            ? t(" · Remembered producer")
             : ""}
         </p>
 
@@ -256,7 +257,7 @@ export function WineReferenceMatchReview({
           </ul>
         ) : null}
 
-        <small>LWIN7 {candidate.lwin7}</small>
+        <small>{t("LWIN7")}{t(" ")}{candidate.lwin7}</small>
 
         {!rejected && showRememberProducer ? (
           <label className="wine-reference-candidate__remember">
@@ -265,9 +266,7 @@ export function WineReferenceMatchReview({
               disabled={isBusy}
               onChange={() => toggleRemember(candidate.lwin7)}
               type="checkbox"
-            />
-            Remember that “{wine.producer}” means “{producerName}” for this household
-          </label>
+            />{t("Remember that “")}{wine.producer}{t("” means “")}{producerName}{t("” for this household")}</label>
         ) : null}
 
         <div className="wine-reference-candidate__actions">
@@ -277,10 +276,10 @@ export function WineReferenceMatchReview({
             type="button"
           >
             {activeLwin7 === candidate.lwin7
-              ? "Saving…"
+              ? t("Saving…")
               : rejected
-                ? "Confirm instead"
-                : "Confirm match"}
+                ? t("Confirm instead")
+                : t("Confirm match")}
           </button>
 
           {!rejected ? (
@@ -288,9 +287,7 @@ export function WineReferenceMatchReview({
               disabled={isBusy || !isOnline}
               onClick={() => void decide(candidate, "rejected")}
               type="button"
-            >
-              Not this wine
-            </button>
+            >{t("Not this wine")}</button>
           ) : null}
         </div>
       </article>
@@ -311,10 +308,8 @@ export function WineReferenceMatchReview({
     <div className="wine-reference-review">
       <div className="wine-reference-review__heading">
         <div>
-          <h3>Reference library match</h3>
-          <p>
-            Suggestions come from the attributed Liv-ex LWIN dictionary. Nothing is linked without your confirmation.
-          </p>
+          <h3>{t("Reference library match")}</h3>
+          <p>{t("Suggestions come from the attributed Liv-ex LWIN dictionary. Nothing is linked without your confirmation.")}</p>
         </div>
 
         <button
@@ -322,14 +317,12 @@ export function WineReferenceMatchReview({
           onClick={() => void refreshReview()}
           type="button"
         >
-          {isLoading ? "Searching…" : "Refresh suggestions"}
+          {isLoading ? t("Searching…") : t("Refresh suggestions")}
         </button>
       </div>
 
       {!isOnline ? (
-        <Notice tone="warning">
-          Reference matching requires a connection. Your wine and inventory remain available offline.
-        </Notice>
+        <Notice tone="warning">{t("Reference matching requires a connection. Your wine and inventory remain available offline.")}</Notice>
       ) : null}
 
       {error ? (
@@ -345,19 +338,17 @@ export function WineReferenceMatchReview({
       ) : null}
 
       {isLoading && review === null ? (
-        <Notice role="status">Searching the reference library…</Notice>
+        <Notice role="status">{t("Searching the reference library…")}</Notice>
       ) : null}
 
       {review?.status === "unavailable" ? (
-        <Notice tone="warning">
-          The LWIN reference snapshot has not been loaded on this server yet. Try again after the reference-data import.
-        </Notice>
+        <Notice tone="warning">{t("The LWIN reference snapshot has not been loaded on this server yet. Try again after the reference-data import.")}</Notice>
       ) : null}
 
       {review?.matchedReference ? (
         <div className="wine-reference-current">
           <div>
-            <span>Confirmed reference</span>
+            <span>{t("Confirmed reference")}</span>
             <strong>
               {review.matchedReference.producerName} · {review.matchedReference.productName}
             </strong>
@@ -376,18 +367,14 @@ export function WineReferenceMatchReview({
                 void decide(matchedCandidate, "rejected")
               }
               type="button"
-            >
-              Remove this match
-            </button>
+            >{t("Remove this match")}</button>
           ) : null}
         </div>
       ) : null}
 
       {review?.status === "unmatched" &&
       review.candidates.length === 0 ? (
-        <Notice>
-          No plausible LWIN candidate was found. The wine remains unchanged and can be reviewed again after a future reference refresh.
-        </Notice>
+        <Notice>{t("No plausible LWIN candidate was found. The wine remains unchanged and can be reviewed again after a future reference refresh.")}</Notice>
       ) : null}
 
       {review?.status === "unmatched" &&
@@ -406,7 +393,7 @@ export function WineReferenceMatchReview({
             onClick={() => setShowRejected((current) => !current)}
             type="button"
           >
-            {showRejected ? "Hide" : "Review"} rejected suggestion{review.rejectedCandidates.length === 1 ? "" : "s"} ({review.rejectedCandidates.length})
+            {showRejected ? "Hide" : "Review"}{t(" ")}{t("rejected suggestion")}{review.rejectedCandidates.length === 1 ? "" : "s"} ({review.rejectedCandidates.length})
           </button>
 
           {showRejected ? (
@@ -420,9 +407,7 @@ export function WineReferenceMatchReview({
       ) : null}
 
       {review?.sourceUpdatedThrough ? (
-        <small className="wine-reference-review__source">
-          LWIN source updated through {review.sourceUpdatedThrough.slice(0, 10)} · Matching scores guide review; they are not factual confidence percentages.
-        </small>
+        <small className="wine-reference-review__source">{t("LWIN source updated through")}{review.sourceUpdatedThrough.slice(0, 10)}{t("· Matching scores guide review; they are not factual confidence percentages.")}</small>
       ) : null}
     </div>
   )

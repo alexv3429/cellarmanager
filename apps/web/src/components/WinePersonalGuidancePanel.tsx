@@ -15,6 +15,7 @@ import {
   type WineServingMethod,
 } from "../data/winePersonalGuidance"
 import { Notice } from "./Notice"
+import { useLanguage } from "../i18n/useLanguage"
 
 interface WinePersonalGuidancePanelProps {
   canManageCellar?: boolean
@@ -127,6 +128,7 @@ export function WinePersonalGuidancePanel({
   isOnline,
   wineId,
 }: WinePersonalGuidancePanelProps) {
+  const { t } = useLanguage()
   const [result, setResult] = useState<WinePersonalGuidance | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [busyAction, setBusyAction] = useState<string | null>(null)
@@ -265,7 +267,7 @@ export function WinePersonalGuidancePanel({
     try {
       setResult(await deleteWineObservation(observation.id))
       closeObservationForm()
-      setMessage("Observation deleted.")
+      setMessage(t("Observation deleted."))
     } catch (caughtError: unknown) {
       setError(
         caughtError instanceof Error
@@ -300,7 +302,7 @@ export function WinePersonalGuidancePanel({
           wineId,
         }),
       )
-      setMessage("Your serving guidance now takes priority over the estimate.")
+      setMessage(t("Your serving guidance now takes priority over the estimate."))
     } catch (caughtError: unknown) {
       setError(
         caughtError instanceof Error
@@ -322,7 +324,7 @@ export function WinePersonalGuidancePanel({
     setMessage(null)
     try {
       setResult(await clearWineServingOverride(wineId))
-      setMessage("The reviewed serving estimate is active again.")
+      setMessage(t("The reviewed serving estimate is active again."))
     } catch (caughtError: unknown) {
       setError(
         caughtError instanceof Error
@@ -346,21 +348,15 @@ export function WinePersonalGuidancePanel({
     >
       <div className="wine-detail-section-heading">
         <div>
-          <h2 id="wine-personal-guidance-heading">Notes and serving</h2>
-          <p>
-            Your observations stay in this household. They never silently
-            change the reviewed shared profile.
-          </p>
+          <h2 id="wine-personal-guidance-heading">{t("Notes and serving")}</h2>
+          <p>{t("Your observations stay in this household. They never silently change the reviewed shared profile.")}</p>
         </div>
       </div>
 
       {!isOnline ? (
-        <Notice tone="warning">
-          Notes and serving guidance require a connection. Wine and inventory
-          remain available offline.
-        </Notice>
+        <Notice tone="warning">{t("Notes and serving guidance require a connection. Wine and inventory remain available offline.")}</Notice>
       ) : null}
-      {isLoading ? <Notice role="status">Loading your notes…</Notice> : null}
+      {isLoading ? <Notice role="status">{t("Loading your notes…")}</Notice> : null}
       {error ? (
         <Notice role="alert" tone="error">
           {error}
@@ -377,7 +373,7 @@ export function WinePersonalGuidancePanel({
           <div className="wine-serving">
             <div className="wine-serving__heading">
               <div>
-                <span className="wine-personal-guidance__eyebrow">Serving</span>
+                <span className="wine-personal-guidance__eyebrow">{t("Serving")}</span>
                 <h3>
                   {override ? "Your serving guidance" : "Serving estimate"}
                 </h3>
@@ -395,13 +391,12 @@ export function WinePersonalGuidancePanel({
               <>
                 <dl className="wine-serving__summary">
                   <div>
-                    <dt>Temperature</dt>
+                    <dt>{t("Temperature")}</dt>
                     <dd>
-                      {serving.temperatureMinC}–{serving.temperatureMaxC} °C
-                    </dd>
+                      {serving.temperatureMinC}–{serving.temperatureMaxC}{t("°C")}</dd>
                   </div>
                   <div>
-                    <dt>Aeration</dt>
+                    <dt>{t("Aeration")}</dt>
                     <dd>
                       {serving.aerationMinMinutes === 0 &&
                       serving.aerationMaxMinutes === 0
@@ -410,15 +405,15 @@ export function WinePersonalGuidancePanel({
                     </dd>
                   </div>
                   <div>
-                    <dt>Handling</dt>
-                    <dd>{servingMethodLabel(serving.method)}</dd>
+                    <dt>{t("Handling")}</dt>
+                    <dd>{t(servingMethodLabel(serving.method))}</dd>
                   </div>
                 </dl>
 
                 {override?.note ? <p>{override.note}</p> : null}
                 {!override && model ? (
                   <details className="wine-serving__explanation">
-                    <summary>Why this serving estimate?</summary>
+                    <summary>{t("Why this serving estimate?")}</summary>
                     <ul>
                       {model.reasons.map((reason) => (
                         <li key={reason}>{reason}</li>
@@ -426,7 +421,7 @@ export function WinePersonalGuidancePanel({
                     </ul>
                     {model.warnings.length > 0 ? (
                       <>
-                        <strong>Keep in mind</strong>
+                        <strong>{t("Keep in mind")}</strong>
                         <ul>
                           {model.warnings.map((warning) => (
                             <li key={warning}>{warning}</li>
@@ -455,14 +450,9 @@ export function WinePersonalGuidancePanel({
               <summary>
                 {override ? "Edit your serving guidance" : "Adjust serving guidance"}
               </summary>
-              <p>
-                Your values take priority for this household; the reviewed
-                estimate remains unchanged.
-              </p>
+              <p>{t("Your values take priority for this household; the reviewed estimate remains unchanged.")}</p>
               <form onSubmit={(event) => void submitServingOverride(event)}>
-                <label>
-                  Minimum temperature (°C)
-                  <input
+                <label>{t("Minimum temperature (°C)")}<input
                     defaultValue={serving?.temperatureMinC ?? 12}
                     max="30"
                     min="0"
@@ -472,9 +462,7 @@ export function WinePersonalGuidancePanel({
                     type="number"
                   />
                 </label>
-                <label>
-                  Maximum temperature (°C)
-                  <input
+                <label>{t("Maximum temperature (°C)")}<input
                     defaultValue={serving?.temperatureMaxC ?? 16}
                     max="30"
                     min="0"
@@ -484,9 +472,7 @@ export function WinePersonalGuidancePanel({
                     type="number"
                   />
                 </label>
-                <label>
-                  Minimum aeration (minutes)
-                  <input
+                <label>{t("Minimum aeration (minutes)")}<input
                     defaultValue={serving?.aerationMinMinutes ?? 0}
                     max="360"
                     min="0"
@@ -496,9 +482,7 @@ export function WinePersonalGuidancePanel({
                     type="number"
                   />
                 </label>
-                <label>
-                  Maximum aeration (minutes)
-                  <input
+                <label>{t("Maximum aeration (minutes)")}<input
                     defaultValue={serving?.aerationMaxMinutes ?? 15}
                     max="360"
                     min="0"
@@ -508,23 +492,19 @@ export function WinePersonalGuidancePanel({
                     type="number"
                   />
                 </label>
-                <label>
-                  Handling
-                  <select defaultValue={serving?.method ?? "none"} name="method">
+                <label>{t("Handling")}<select defaultValue={serving?.method ?? "none"} name="method">
                     {SERVING_METHODS.map((method) => (
                       <option key={method.value} value={method.value}>
-                        {method.label}
+                        {t(method.label)}
                       </option>
                     ))}
                   </select>
                 </label>
-                <label className="wine-serving__override-note">
-                  Note (optional)
-                  <textarea
+                <label className="wine-serving__override-note">{t("Note (optional)")}<textarea
                     defaultValue={override?.note ?? ""}
                     maxLength={2000}
                     name="note"
-                    placeholder="For example: producer recommended one hour in a carafe"
+                    placeholder={t("For example: producer recommended one hour in a carafe")}
                     rows={3}
                   />
                 </label>
@@ -551,15 +531,11 @@ export function WinePersonalGuidancePanel({
           <div className="wine-observations">
             <div className="wine-observations__heading">
               <div>
-                <span className="wine-personal-guidance__eyebrow">
-                  Experience
-                </span>
-                <h3>Your observations</h3>
+                <span className="wine-personal-guidance__eyebrow">{t("Experience")}</span>
+                <h3>{t("Your observations")}</h3>
               </div>
               {!observationFormOpen ? (
-                <button onClick={() => beginObservation(null)} type="button">
-                  Add observation
-                </button>
+                <button onClick={() => beginObservation(null)} type="button">{t("Add observation")}</button>
               ) : null}
             </div>
 
@@ -573,13 +549,9 @@ export function WinePersonalGuidancePanel({
                   <strong>
                     {editingObservation ? "Edit observation" : "New observation"}
                   </strong>
-                  <span>
-                    Keep source facts and your own impression explicit.
-                  </span>
+                  <span>{t("Keep source facts and your own impression explicit.")}</span>
                 </div>
-                <label>
-                  Type
-                  <select
+                <label>{t("Type")}<select
                     name="observationType"
                     onChange={(event) =>
                       setObservationType(event.target.value as WineObservationType)
@@ -588,44 +560,38 @@ export function WinePersonalGuidancePanel({
                   >
                     {OBSERVATION_TYPES.map((type) => (
                       <option key={type.value} value={type.value}>
-                        {type.label}
+                        {t(type.label)}
                       </option>
                     ))}
                   </select>
                 </label>
-                <label>
-                  Date
-                  <input
+                <label>{t("Date")}<input
                     defaultValue={editingObservation?.observedOn ?? localToday()}
                     name="observedOn"
                     required
                     type="date"
                   />
                 </label>
-                <label>
-                  Visibility
-                  <select
+                <label>{t("Visibility")}<select
                     defaultValue={editingObservation?.visibility ?? "household"}
                     name="visibility"
                   >
-                    <option value="household">Shared with household</option>
-                    <option value="personal">Only me</option>
+                    <option value="household">{t("Shared with household")}</option>
+                    <option value="personal">{t("Only me")}</option>
                   </select>
                 </label>
 
                 {observationType === "tasting" ||
                 observationType === "maturity" ||
                 observationType === "producer-guidance" ? (
-                  <label>
-                    Maturity impression (optional)
-                    <select
+                  <label>{t("Maturity impression (optional)")}<select
                       defaultValue={editingObservation?.maturityAssessment ?? ""}
                       name="maturityAssessment"
                     >
-                      <option value="">Not assessed</option>
+                      <option value="">{t("Not assessed")}</option>
                       {MATURITY_OPTIONS.map((option) => (
                         <option key={option.value} value={option.value}>
-                          {option.label}
+                          {t(option.label)}
                         </option>
                       ))}
                     </select>
@@ -634,24 +600,20 @@ export function WinePersonalGuidancePanel({
 
                 {observationType === "pairing" ? (
                   <>
-                    <label>
-                      Dish
-                      <input
+                    <label>{t("Dish")}<input
                         defaultValue={editingObservation?.pairingDish ?? ""}
                         maxLength={200}
                         name="pairingDish"
                         required
                       />
                     </label>
-                    <label>
-                      Result
-                      <select
+                    <label>{t("Result")}<select
                         defaultValue={editingObservation?.pairingVerdict ?? "good"}
                         name="pairingVerdict"
                       >
                         {PAIRING_OPTIONS.map((option) => (
                           <option key={option.value} value={option.value}>
-                            {option.label}
+                            {t(option.label)}
                           </option>
                         ))}
                       </select>
@@ -661,7 +623,7 @@ export function WinePersonalGuidancePanel({
 
                 {observationType === "tasting" ? (
                   <fieldset className="wine-observation-form__ratings">
-                    <legend>Structure ratings (optional)</legend>
+                    <legend>{t("Structure ratings (optional)")}</legend>
                     {(
                       [
                         ["Body", "bodyRating", editingObservation?.ratings.body],
@@ -685,7 +647,7 @@ export function WinePersonalGuidancePanel({
                       <label key={name}>
                         {label}
                         <select defaultValue={value ?? ""} name={name}>
-                          <option value="">Not rated</option>
+                          <option value="">{t("Not rated")}</option>
                           {[1, 2, 3, 4, 5].map((rating) => (
                             <option key={rating} value={rating}>
                               {rating} / 5
@@ -697,9 +659,7 @@ export function WinePersonalGuidancePanel({
                   </fieldset>
                 ) : null}
 
-                <label className="wine-observation-form__note">
-                  Note
-                  <textarea
+                <label className="wine-observation-form__note">{t("Note")}<textarea
                     defaultValue={editingObservation?.note ?? ""}
                     maxLength={5000}
                     name="note"
@@ -725,9 +685,7 @@ export function WinePersonalGuidancePanel({
                     disabled={busyAction !== null}
                     onClick={closeObservationForm}
                     type="button"
-                  >
-                    Cancel
-                  </button>
+                  >{t("Cancel")}</button>
                   {editingObservation ? (
                     <button
                       className="wine-observation-form__delete"
@@ -752,7 +710,7 @@ export function WinePersonalGuidancePanel({
                     <li key={observation.id}>
                       <header>
                         <div>
-                          <strong>{observationTypeLabel(observation.type)}</strong>
+                          <strong>{t(observationTypeLabel(observation.type))}</strong>
                           <span>
                             {new Date(`${observation.observedOn}T12:00:00`).toLocaleDateString()}
                             {` · ${
@@ -766,21 +724,17 @@ export function WinePersonalGuidancePanel({
                           <button
                             onClick={() => beginObservation(observation)}
                             type="button"
-                          >
-                            Edit
-                          </button>
+                          >{t("Edit")}</button>
                         ) : null}
                       </header>
                       {observation.note ? <p>{observation.note}</p> : null}
                       <div className="wine-observations__facts">
                         {observation.maturityAssessment ? (
-                          <span>
-                            Maturity: {maturityLabel(observation.maturityAssessment)}
+                          <span>{t("Maturity:")}{t(maturityLabel(observation.maturityAssessment))}
                           </span>
                         ) : null}
                         {observation.pairingDish && observation.pairingVerdict ? (
-                          <span>
-                            Pairing: {observation.pairingDish} —{" "}
+                          <span>{t("Pairing:")}{observation.pairingDish} —{" "}
                             {pairingLabel(observation.pairingVerdict)}
                           </span>
                         ) : null}
@@ -793,10 +747,7 @@ export function WinePersonalGuidancePanel({
                 })}
               </ol>
             ) : !observationFormOpen ? (
-              <p className="wine-observations__empty">
-                No observations yet. Add a tasting note or record producer
-                guidance when you learn something useful about this wine.
-              </p>
+              <p className="wine-observations__empty">{t("No observations yet. Add a tasting note or record producer guidance when you learn something useful about this wine.")}</p>
             ) : null}
           </div>
         </>

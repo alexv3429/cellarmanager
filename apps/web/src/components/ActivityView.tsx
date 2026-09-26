@@ -13,6 +13,7 @@ import {
 import { Notice } from "./Notice"
 import { describeInventoryRejection } from "../data/inventoryRecovery"
 import { InventoryQueueReview } from "./InventoryQueueReview"
+import { useLanguage } from "../i18n/useLanguage"
 
 interface ActivityViewProps {
   householdId: string
@@ -96,6 +97,7 @@ export function ActivityView({
   isOnline,
   onOpenWine,
 }: ActivityViewProps) {
+  const { t } = useLanguage()
   const {
     data: activityRows,
     error,
@@ -137,66 +139,54 @@ export function ActivityView({
     <main>
       <div className="activity-heading">
         <div>
-          <h1>Activity</h1>
-          <p>
-            Recent inventory changes from every synchronized
-            device in this household.
-          </p>
+          <h1>{t("Activity")}</h1>
+          <p>{t("Recent inventory changes from every synchronized device in this household.")}</p>
         </div>
       </div>
 
       <InventoryQueueReview householdId={householdId} userId={userId} isOnline={isOnline} />
 
       {error ? (
-        <Notice role="alert" tone="error">
-          Unable to load activity: {String(error)}
+        <Notice role="alert" tone="error">{t("Unable to load activity:")}{String(error)}
         </Notice>
       ) : null}
 
       <section
-        aria-label="Activity summary"
+        aria-label={t("Activity summary")}
         className="activity-summary"
       >
         <div>
           <strong>{summary.totalCount}</strong>
-          <span>Recent operations</span>
+          <span>{t("Recent operations")}</span>
         </div>
         <div>
           <strong>{summary.pendingCount}</strong>
-          <span>Queued</span>
+          <span>{t("Queued")}</span>
         </div>
         <div>
           <strong>{summary.rejectedCount}</strong>
-          <span>Rejected</span>
+          <span>{t("Rejected")}</span>
         </div>
         <div>
           <strong>{summary.acceptedCount}</strong>
-          <span>Synced</span>
+          <span>{t("Synced")}</span>
         </div>
       </section>
 
       {summary.pendingCount > 0 ? (
         <Notice role="status" tone="warning">
           <strong>
-            {summary.pendingCount} local {summary.pendingCount === 1 ? "change is" : "changes are"} waiting for server confirmation
-          </strong>
-          <p>
-            These are not yet confirmed stock changes. Temporary connection failures retry automatically.
-            If an upload is blocked by access or registration changes, review this browser’s queue above.
-          </p>
+            {summary.pendingCount}{t(" ")}{t("local")}{t(" ")}{summary.pendingCount === 1 ? "change is" : "changes are"}{t("waiting for server confirmation")}</strong>
+          <p>{t("These are not yet confirmed stock changes. Temporary connection failures retry automatically. If an upload is blocked by access or registration changes, review this browser’s queue above.")}</p>
         </Notice>
       ) : null}
 
       {summary.rejectedCount > 0 ? (
         <Notice role="status" tone="error">
           <strong>
-            {summary.rejectedCount} {summary.rejectedCount === 1 ? "change was" : "changes were"} rejected
-          </strong>
-          <p>
-            These are historical rejections, not changes still waiting to upload.
-            They did not change stock. Review the explanation and current stock before making a separate new request.
-          </p>
-          <button type="button" onClick={() => { setStatus("REJECTED"); setOperationType("ALL"); setSearch("") }}>Show rejected changes</button>
+            {summary.rejectedCount} {summary.rejectedCount === 1 ? "change was" : "changes were"}{t("rejected")}</strong>
+          <p>{t("These are historical rejections, not changes still waiting to upload. They did not change stock. Review the explanation and current stock before making a separate new request.")}</p>
+          <button type="button" onClick={() => { setStatus("REJECTED"); setOperationType("ALL"); setSearch("") }}>{t("Show rejected changes")}</button>
         </Notice>
       ) : null}
 
@@ -204,23 +194,17 @@ export function ActivityView({
         aria-labelledby="activity-filters-heading"
         className="activity-filters"
       >
-        <h2 id="activity-filters-heading">
-          Filter recent activity
-        </h2>
+        <h2 id="activity-filters-heading">{t("Filter recent activity")}</h2>
 
-        <label>
-          Search
-          <input
+        <label>{t("Search")}<input
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Wine, cellar, location, device, error…"
+            placeholder={t("Wine, cellar, location, device, error…")}
             type="search"
             value={search}
           />
         </label>
 
-        <label>
-          Operation
-          <select
+        <label>{t("Operation")}<select
             onChange={(event) =>
               setOperationType(
                 event.target.value as ActivityFilterValue,
@@ -228,16 +212,14 @@ export function ActivityView({
             }
             value={operationType}
           >
-            <option value="ALL">All operations</option>
-            <option value="ADD">Add</option>
-            <option value="MOVE">Move</option>
-            <option value="REMOVE">Remove</option>
+            <option value="ALL">{t("All operations")}</option>
+            <option value="ADD">{t("Add")}</option>
+            <option value="MOVE">{t("Move")}</option>
+            <option value="REMOVE">{t("Remove")}</option>
           </select>
         </label>
 
-        <label>
-          Synchronization
-          <select
+        <label>{t("Synchronization")}<select
             onChange={(event) =>
               setStatus(
                 event.target.value as ActivityStatusFilter,
@@ -245,10 +227,10 @@ export function ActivityView({
             }
             value={status}
           >
-            <option value="ALL">All states</option>
-            <option value="PENDING">Queued</option>
-            <option value="ACCEPTED">Synced</option>
-            <option value="REJECTED">Rejected</option>
+            <option value="ALL">{t("All states")}</option>
+            <option value="PENDING">{t("Queued")}</option>
+            <option value="ACCEPTED">{t("Synced")}</option>
+            <option value="REJECTED">{t("Rejected")}</option>
           </select>
         </label>
 
@@ -260,28 +242,23 @@ export function ActivityView({
             setStatus("ALL")
           }}
           type="button"
-        >
-          Clear filters
-        </button>
+        >{t("Clear filters")}</button>
       </section>
 
-      <p aria-live="polite" className="activity-results-summary">
-        Showing {visibleActivity.length} of {activity.length} latest
-        operations. Activity is limited to the most recent 100.
-      </p>
+      <p aria-live="polite" className="activity-results-summary">{t("Showing")}{visibleActivity.length}{t(" ")}{t("of")}{t(" ")}{activity.length}{t("latest operations. Activity is limited to the most recent 100.")}</p>
 
       {isLoading ? (
-        <Notice role="status">Loading activity…</Notice>
+        <Notice role="status">{t("Loading activity…")}</Notice>
       ) : null}
 
       {!isLoading && activity.length === 0 ? (
-        <p>No inventory activity found.</p>
+        <p>{t("No inventory activity found.")}</p>
       ) : null}
 
       {!isLoading &&
       activity.length > 0 &&
       visibleActivity.length === 0 ? (
-        <p>No activity matches the current filters.</p>
+        <p>{t("No activity matches the current filters.")}</p>
       ) : null}
 
       <ol className="activity-list">
@@ -327,30 +304,25 @@ export function ActivityView({
               {item.device_name ?? "Unknown device"}
               {item.reasonLabel ? (
                 <>
-                  <span aria-hidden="true"> · </span>
-                  Reason: {item.reasonLabel}
+                  <span aria-hidden="true"> · </span>{t("Reason:")}{item.reasonLabel}
                 </>
               ) : null}
             </p>
 
             {item.status === "PENDING" ? (
-              <p className="activity-card__pending">
-                Stored locally and queued for automatic retry.
-              </p>
+              <p className="activity-card__pending">{t("Stored locally and queued for automatic retry.")}</p>
             ) : null}
 
             {item.status === "REJECTED" ? (
               <div className="activity-card__error">
                 <strong>{describeInventoryRejection(item.error_code).title}</strong>
                 <p>{describeInventoryRejection(item.error_code).explanation}</p>
-                <p><strong>No stock change was applied by this request.</strong> {describeInventoryRejection(item.error_code).nextStep}</p>
-                {item.catalog_wine_id ? <button type="button" onClick={() => onOpenWine(item.catalog_wine_id as string)}>
-                  Review current stock
-                </button> : <p>The wine is not available in the synchronized catalog yet. Wait for synchronization or ask an Owner to review the catalog.</p>}
-                <details><summary>Show technical details</summary><dl>
-                  <div><dt>Request ID</dt><dd>{item.id}</dd></div>
-                  <div><dt>Server code</dt><dd>{item.error_code ?? "Not provided"}</dd></div>
-                  <div><dt>Server message</dt><dd>{item.error_message ?? "Not provided"}</dd></div>
+                <p><strong>{t("No stock change was applied by this request.")}</strong> {describeInventoryRejection(item.error_code).nextStep}</p>
+                {item.catalog_wine_id ? <button type="button" onClick={() => onOpenWine(item.catalog_wine_id as string)}>{t("Review current stock")}</button> : <p>{t("The wine is not available in the synchronized catalog yet. Wait for synchronization or ask an Owner to review the catalog.")}</p>}
+                <details><summary>{t("Show technical details")}</summary><dl>
+                  <div><dt>{t("Request ID")}</dt><dd>{item.id}</dd></div>
+                  <div><dt>{t("Server code")}</dt><dd>{item.error_code ?? "Not provided"}</dd></div>
+                  <div><dt>{t("Server message")}</dt><dd>{item.error_message ?? "Not provided"}</dd></div>
                 </dl></details>
               </div>
             ) : null}

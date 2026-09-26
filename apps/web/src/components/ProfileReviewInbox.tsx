@@ -10,6 +10,7 @@ import {
   type ProfileReviewStatus,
 } from "../data/profileReviews"
 import { Notice } from "./Notice"
+import { useLanguage } from "../i18n/useLanguage"
 
 interface ProfileReviewInboxProps {
   householdId: string
@@ -68,6 +69,7 @@ function ProfileReviewCard({
   onInboxChange,
   onOpenWine,
 }: ProfileReviewCardProps) {
+  const { t } = useLanguage()
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -108,47 +110,42 @@ function ProfileReviewCard({
       <header>
         <div>
           <span className="research-inbox-card__status">
-            {statusLabel(item.status)}
+            {t(statusLabel(item.status))}
           </span>
           <h3>{item.subjectTitle}</h3>
-          <p>
-            {item.joinedExisting
+              <p>
+            {t(item.joinedExisting
               ? "Your report joined an existing review of this shared profile."
-              : "Your report opened a review of this shared profile."}
+              : "Your report opened a review of this shared profile.")}
           </p>
         </div>
-        <small>
-          Requested {new Date(item.requestedAt).toLocaleDateString()}
+        <small>{t("Requested")}{new Date(item.requestedAt).toLocaleDateString()}
         </small>
       </header>
 
       {item.resolutionSummary ? (
         <Notice tone={item.status === "resolved" ? "success" : undefined}>
-          <strong>Outcome:</strong> {item.resolutionSummary}
+          <strong>{t("Outcome:")}</strong> {item.resolutionSummary}
         </Notice>
       ) : item.status === "reviewing" ? (
-        <p>A trusted reviewer is checking the published profile and evidence.</p>
+        <p>{t("A trusted reviewer is checking the published profile and evidence.")}</p>
       ) : (
-        <p>The published profile remains active while this request is reviewed.</p>
+        <p>{t("The published profile remains active while this request is reviewed.")}</p>
       )}
 
       <details className="profile-review-card__thread">
-        <summary>Your private report · {item.messages.length} {item.messages.length === 1 ? "message" : "messages"}</summary>
-        <p>
-          Only your own notes are shown here. Other reporters remain private.
-        </p>
+        <summary>{t("Your private report ·")}{t(" ")}{item.messages.length} {item.messages.length === 1 ? t("message") : t("messages")}</summary>
+        <p>{t("Only your own notes are shown here. Other reporters remain private.")}</p>
         <ol>
           {item.messages.map((message) => (
             <li key={message.id}>
               <div>
-                <strong>{messageKindLabel(message.kind)}</strong>
+                <strong>{t(messageKindLabel(message.kind))}</strong>
                 <small>{new Date(message.createdAt).toLocaleString()}</small>
               </div>
               <p>{message.comment}</p>
               {message.evidenceUrl ? (
-                <a href={message.evidenceUrl} rel="noreferrer" target="_blank">
-                  Open supporting source
-                </a>
+                <a href={message.evidenceUrl} rel="noreferrer" target="_blank">{t("Open supporting source")}</a>
               ) : null}
             </li>
           ))}
@@ -156,31 +153,25 @@ function ProfileReviewCard({
       </details>
 
       <div className="research-inbox-card__actions">
-        <button onClick={() => onOpenWine(item.wineId)} type="button">
-          Open wine
-        </button>
+        <button onClick={() => onOpenWine(item.wineId)} type="button">{t("Open wine")}</button>
       </div>
 
       {isActive ? (
         <details className="profile-review-card__follow-up">
-          <summary>Add information or evidence</summary>
+          <summary>{t("Add information or evidence")}</summary>
           <form onSubmit={(event) => void addInformation(event)}>
-            <label>
-              Additional information
-              <textarea
+            <label>{t("Additional information")}<textarea
                 minLength={10}
                 name="comment"
-                placeholder="What else should the reviewer know?"
+                placeholder={t("What else should the reviewer know?")}
                 required
                 rows={3}
               />
             </label>
-            <label>
-              Supporting HTTPS link (optional)
-              <input
+            <label>{t("Supporting HTTPS link (optional)")}<input
                 name="evidenceUrl"
                 pattern="https://.*"
-                placeholder="https://…"
+                placeholder={t("https://…")}
                 type="url"
               />
             </label>
@@ -200,6 +191,7 @@ export function ProfileReviewInbox({
   isOnline,
   onOpenWine,
 }: ProfileReviewInboxProps) {
+  const { t } = useLanguage()
   const [inbox, setInbox] = useState<ReviewInbox | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -285,43 +277,32 @@ export function ProfileReviewInbox({
     >
       <summary>
         <span>
-          <strong className="research-inbox__closed-label">
-            Show profile review requests · {groups.active.length} active
-            {groups.closed.length > 0 ? ` · ${groups.closed.length} closed` : ""}
-            {unread > 0 ? ` · ${unread} new` : ""}
+          <strong className="research-inbox__closed-label">{t("Show profile review requests ·")}{groups.active.length}{t("active")}{groups.closed.length > 0 ? t(" · {value1} closed", { value1: String(groups.closed.length) }) : ""}
+            {unread > 0 ? t(" · {value1} new", { value1: String(unread) }) : ""}
           </strong>
-          <strong className="research-inbox__open-label">
-            Hide profile review requests · {groups.active.length} active
-            {groups.closed.length > 0 ? ` · ${groups.closed.length} closed` : ""}
+          <strong className="research-inbox__open-label">{t("Hide profile review requests ·")}{groups.active.length}{t("active")}{groups.closed.length > 0 ? t(" · {value1} closed", { value1: String(groups.closed.length) }) : ""}
           </strong>
-          <small>Your reports, supporting evidence, and visible outcomes</small>
+          <small>{t("Your reports, supporting evidence, and visible outcomes")}</small>
         </span>
         <span aria-hidden="true" className="research-inbox__chevron">▾</span>
       </summary>
 
       <div className="research-inbox__heading">
         <div>
-          <h2>Published profile reviews</h2>
-          <p>
-            Reports are reviewed before any new shared-library version can be published.
-          </p>
+          <h2>{t("Published profile reviews")}</h2>
+          <p>{t("Reports are reviewed before any new shared-library version can be published.")}</p>
         </div>
-        <button disabled={!isOnline || isLoading} onClick={() => void refresh()} type="button">
-          Refresh
-        </button>
+        <button disabled={!isOnline || isLoading} onClick={() => void refresh()} type="button">{t("Refresh")}</button>
       </div>
 
       {!isOnline ? (
-        <Notice tone="warning">Reconnect to view or update profile reviews.</Notice>
+        <Notice tone="warning">{t("Reconnect to view or update profile reviews.")}</Notice>
       ) : isLoading && inbox === null ? (
-        <p>Loading profile review requests…</p>
+        <p>{t("Loading profile review requests…")}</p>
       ) : error ? (
         <Notice role="alert" tone="warning">{error}</Notice>
       ) : (inbox?.items.length ?? 0) === 0 ? (
-        <p>
-          No profile has been reported. Open a wine, expand “Why this estimate?”,
-          and choose “Report an issue” beside the relevant profile.
-        </p>
+        <p>{t("No profile has been reported. Open a wine, expand “Why this estimate?”, and choose “Report an issue” beside the relevant profile.")}</p>
       ) : (
         <>
           {groups.active.length > 0 ? (
@@ -338,12 +319,12 @@ export function ProfileReviewInbox({
               ))}
             </div>
           ) : (
-            <p>No active profile reviews.</p>
+            <p>{t("No active profile reviews.")}</p>
           )}
 
           {groups.closed.length > 0 ? (
             <details className="research-inbox__history">
-              <summary>Show resolved review history · {groups.closed.length}</summary>
+              <summary>{t("Show resolved review history ·")}{t(" ")}{groups.closed.length}</summary>
               <div className="research-inbox__list">
                 {groups.closed.map((item) => (
                   <ProfileReviewCard

@@ -10,6 +10,7 @@ import {
 } from "../auth/signUpFlow"
 import { supabase } from "../data/supabase"
 import { Notice } from "./Notice"
+import { useLanguage } from "../i18n/useLanguage"
 
 type AuthMode =
   | "sign-in"
@@ -90,6 +91,7 @@ function getAuthErrorMessage(error: unknown): string {
 export function LoginForm({
   invitationContext,
 }: LoginFormProps = {}) {
+  const { t } = useLanguage()
   const [mode, setMode] =
     useState<AuthMode>(() =>
       invitationContext?.accountExists
@@ -245,40 +247,25 @@ export function LoginForm({
   ) {
     return (
       <main className="standalone-page invitation-auth">
-        <p className="invitation-auth__eyebrow">
-          Invitation to {invitationContext.householdName}
+        <p className="invitation-auth__eyebrow">{t("Invitation to")}{invitationContext.householdName}
         </p>
-        <h1>Check your email</h1>
+        <h1>{t("Check your email")}</h1>
 
         <ol
-          aria-label="Joining progress"
+          aria-label={t("Joining progress")}
           className="invitation-auth__steps"
         >
           <li className="invitation-auth__step--complete">
-            <span>1</span>
-            Account created
-          </li>
+            <span>1</span>{t("Account created")}</li>
           <li aria-current="step">
-            <span>2</span>
-            Confirm email
-          </li>
+            <span>2</span>{t("Confirm email")}</li>
           <li>
-            <span>3</span>
-            Join household
-          </li>
+            <span>3</span>{t("Join household")}</li>
         </ol>
 
-        <Notice role="status" tone="success">
-          We sent a confirmation link to {email.trim()}.
-          Open it in this browser to return here and finish
-          joining {invitationContext.householdName}. Check your
-          Spam folder if it does not arrive.
-        </Notice>
+        <Notice role="status" tone="success">{t("We sent a confirmation link to")}{email.trim()}{t(". Open it in this browser to return here and finish joining")}{invitationContext.householdName}{t(". Check your Spam folder if it does not arrive.")}</Notice>
 
-        <p>
-          CellarManager has remembered this private invitation;
-          you will not need to copy its link again on this browser.
-        </p>
+        <p>{t("CellarManager has remembered this private invitation; you will not need to copy its link again on this browser.")}</p>
 
         <div className="invitation-auth__waiting-actions">
           <button
@@ -287,18 +274,14 @@ export function LoginForm({
               changeMode("sign-in")
             }}
             type="button"
-          >
-            I already confirmed my account
-          </button>
+          >{t("I already confirmed my account")}</button>
           <button
             onClick={() => {
               setIsAwaitingInvitationConfirmation(false)
               changeMode("resend-confirmation")
             }}
             type="button"
-          >
-            Send the email again
-          </button>
+          >{t("Send the email again")}</button>
         </div>
       </main>
     )
@@ -310,16 +293,11 @@ export function LoginForm({
     >
       {invitationContext ? (
         <>
-          <p className="invitation-auth__eyebrow">
-            Household invitation
-          </p>
-          <h1>Join {invitationContext.householdName}</h1>
-          <p>
-            Create your account, confirm your email, then approve
-            joining the shared cellar.
-          </p>
+          <p className="invitation-auth__eyebrow">{t("Household invitation")}</p>
+          <h1>{t("Join")}{t(" ")}{invitationContext.householdName}</h1>
+          <p>{t("Create your account, confirm your email, then approve joining the shared cellar.")}</p>
           <ol
-            aria-label="Joining progress"
+            aria-label={t("Joining progress")}
             className="invitation-auth__steps"
           >
             <li aria-current="step">
@@ -335,48 +313,38 @@ export function LoginForm({
                 : "Confirm email"}
             </li>
             <li>
-              <span>3</span>
-              Join household
-            </li>
+              <span>3</span>{t("Join household")}</li>
           </ol>
-          <p className="invitation-auth__expiry">
-            Private invitation · Valid until {new Date(
+          <p className="invitation-auth__expiry">{t("Private invitation · Valid until")}{new Date(
               invitationContext.expiresAt,
             ).toLocaleString()}
           </p>
         </>
       ) : (
         <>
-          <h1>CellarManager</h1>
-          <p>Local-first wine cellar inventory.</p>
+          <h1>{t("CellarManager")}</h1>
+          <p>{t("Local-first wine cellar inventory.")}</p>
         </>
       )}
 
       <form onSubmit={handleSubmit}>
         <h2>
           {invitationContext && mode === "sign-up"
-            ? "Create your CellarManager account"
+            ? t("Create your CellarManager account")
             : invitationContext && mode === "sign-in"
-              ? "Sign in to continue"
+              ? t("Sign in to continue")
               : getAuthModeTitle(mode)}
         </h2>
 
         {mode === "forgot-password" ? (
-          <p>
-            We will email you a secure link to choose a new
-            password.
-          </p>
+          <p>{t("We will email you a secure link to choose a new password.")}</p>
         ) : null}
 
         {mode === "resend-confirmation" ? (
-          <p>
-            Enter the address used to create your account.
-          </p>
+          <p>{t("Enter the address used to create your account.")}</p>
         ) : null}
 
-        <label>
-          Email
-          <input
+        <label>{t("Email")}<input
             autoComplete="email"
             disabled={isSubmitting}
             onChange={(event) =>
@@ -388,16 +356,12 @@ export function LoginForm({
             value={email}
           />
           {invitationContext ? (
-            <small>
-              This address comes from the private invitation link.
-            </small>
+            <small>{t("This address comes from the private invitation link.")}</small>
           ) : null}
         </label>
 
         {mode === "sign-in" || mode === "sign-up" ? (
-          <label>
-            Password
-            <input
+          <label>{t("Password")}<input
               autoComplete={
                 mode === "sign-up"
                   ? "new-password"
@@ -434,18 +398,14 @@ export function LoginForm({
                 changeMode("forgot-password")
               }
               type="button"
-            >
-              Forgot password?
-            </button>
+            >{t("Forgot password?")}</button>
             <button
               disabled={isSubmitting}
               onClick={() =>
                 changeMode("resend-confirmation")
               }
               type="button"
-            >
-              Send confirmation email again
-            </button>
+            >{t("Send confirmation email again")}</button>
           </div>
         ) : null}
 
@@ -465,10 +425,10 @@ export function LoginForm({
       <p className="standalone-page__mode-switch">
         {mode === "sign-in"
           ? invitationContext
-            ? "Need a CellarManager account?"
-            : "New to CellarManager?"
+            ? t("Need a CellarManager account?")
+            : t("New to CellarManager?")
           : mode === "sign-up"
-            ? "Already have an account?"
+            ? t("Already have an account?")
             : null}
         {mode === "sign-in" || mode === "sign-up"
           ? " "
@@ -484,13 +444,13 @@ export function LoginForm({
         >
           {mode === "sign-in"
             ? invitationContext
-              ? "Create one to join"
-              : "Create account"
+              ? t("Create one to join")
+              : t("Create account")
             : mode === "sign-up"
               ? invitationContext
-                ? "Sign in instead"
-                : "Sign in"
-              : "Back to sign in"}
+                ? t("Sign in instead")
+                : t("Sign in")
+              : t("Back to sign in")}
         </button>
       </p>
     </main>

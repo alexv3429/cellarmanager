@@ -41,6 +41,7 @@ import { WineFactsPanel } from "./WineFactsPanel"
 import { WineReferenceMatchReview } from "./WineReferenceMatchReview"
 import { WineMaturityPanel } from "./WineMaturityPanel"
 import { WinePersonalGuidancePanel } from "./WinePersonalGuidancePanel"
+import { useLanguage } from "../i18n/useLanguage"
 
 interface WineDetailViewProps {
   canManageCellar: boolean
@@ -187,6 +188,7 @@ export function WineDetailView({
   userId,
   wineId,
 }: WineDetailViewProps) {
+  const { t } = useLanguage()
   const {
     data: wines,
     error: wineError,
@@ -424,13 +426,13 @@ export function WineDetailView({
     )
 
     if (!wine || !destination) {
-      setOperationError("Select a destination location")
+      setOperationError(t("Select a destination location"))
       return
     }
 
     if (!deviceId) {
       setOperationError(
-        "This browser is not registered for this household yet",
+        t("This browser is not registered for this household yet"),
       )
       return
     }
@@ -481,13 +483,13 @@ export function WineDetailView({
     )
 
     if (!destination) {
-      setOperationError("Select a destination location")
+      setOperationError(t("Select a destination location"))
       return
     }
 
     if (!deviceId) {
       setOperationError(
-        "This browser is not registered for this household yet",
+        t("This browser is not registered for this household yet"),
       )
       return
     }
@@ -533,7 +535,7 @@ export function WineDetailView({
 
     if (!deviceId) {
       setOperationError(
-        "This browser is not registered for this household yet",
+        t("This browser is not registered for this household yet"),
       )
       return
     }
@@ -606,12 +608,12 @@ export function WineDetailView({
       <div className="inventory-action-panel" id={panelId}>
         <strong>
           {isNewPositionAdd
-            ? "Add bottles"
+            ? t("Add bottles")
             : action === "add"
-              ? `Add bottles to ${currentLocationLabel}`
+              ? t("Add bottles to {value1}", { value1: String(currentLocationLabel) })
               : action === "move"
-                ? `Move bottles from ${currentLocationLabel}`
-                : `Consume or remove from ${currentLocationLabel}`}
+                ? t("Move bottles from {value1}", { value1: String(currentLocationLabel) })
+                : t("Consume or remove from {value1}", { value1: String(currentLocationLabel) })}
         </strong>
 
         <form
@@ -645,9 +647,7 @@ export function WineDetailView({
             }
           }}
         >
-          <label>
-            Quantity
-            <input
+          <label>{t("Quantity")}<input
               aria-describedby={`${panelId}-quantity-help`}
               disabled={isBusy}
               inputMode="numeric"
@@ -688,9 +688,7 @@ export function WineDetailView({
           ) : null}
 
           {action === "remove" ? (
-            <label>
-              Reason
-              <select
+            <label>{t("Reason")}<select
                 disabled={isBusy}
                 onChange={(event) =>
                   setRemoveReason(
@@ -699,19 +697,19 @@ export function WineDetailView({
                 }
                 value={removeReason}
               >
-                <option value="DRANK">Drank</option>
-                <option value="GIFTED">Gifted</option>
-                <option value="BROKEN">Broken</option>
-                <option value="LOST">Lost</option>
-                <option value="OTHER">Other</option>
+                <option value="DRANK">{t("Drank")}</option>
+                <option value="GIFTED">{t("Gifted")}</option>
+                <option value="BROKEN">{t("Broken")}</option>
+                <option value="LOST">{t("Lost")}</option>
+                <option value="OTHER">{t("Other")}</option>
               </select>
             </label>
           ) : null}
 
           <small id={`${panelId}-quantity-help`}>
             {action === "add"
-              ? "Enter a positive whole number."
-              : `Up to ${holding?.quantity ?? 0} bottle${holding?.quantity === 1 ? "" : "s"} available.`}
+              ? t("Enter a positive whole number.")
+              : t("Up to {value1} bottle{value2} available.", { value1: String(holding?.quantity ?? 0), value2: String(holding?.quantity === 1 ? "" : "s") })}
           </small>
 
           <div className="inventory-action-form__buttons">
@@ -725,21 +723,19 @@ export function WineDetailView({
               type="submit"
             >
               {submittingAction === action
-                ? "Queuing…"
+                ? t("Queuing…")
                 : action === "add"
-                  ? "Queue add"
+                  ? t("Queue add")
                   : action === "move"
-                    ? "Queue move"
-                    : "Queue removal"}
+                    ? t("Queue move")
+                    : t("Queue removal")}
             </button>
 
             <button
               disabled={isBusy}
               onClick={() => setActiveAction(null)}
               type="button"
-            >
-              Close
-            </button>
+            >{t("Close")}</button>
           </div>
         </form>
 
@@ -771,10 +767,9 @@ export function WineDetailView({
           className="wine-detail-view__back"
           onClick={onBack}
           type="button"
-        >
-          ← Back to {returnViewLabel(returnView)}
+        >{t("← Back to")} {t(returnViewLabel(returnView))}
         </button>
-        <Notice>Opening wine details…</Notice>
+        <Notice>{t("Opening wine details…")}</Notice>
       </main>
     )
   }
@@ -786,8 +781,7 @@ export function WineDetailView({
           className="wine-detail-view__back"
           onClick={onBack}
           type="button"
-        >
-          ← Back to {returnViewLabel(returnView)}
+        >{t("← Back to")} {t(returnViewLabel(returnView))}
         </button>
         <Notice role="alert" tone="error">
           {String(error)}
@@ -803,13 +797,10 @@ export function WineDetailView({
           className="wine-detail-view__back"
           onClick={onBack}
           type="button"
-        >
-          ← Back to {returnViewLabel(returnView)}
+        >{t("← Back to")} {t(returnViewLabel(returnView))}
         </button>
-        <h1>Wine not found</h1>
-        <Notice role="alert" tone="warning">
-          This wine is not available in the active household.
-        </Notice>
+        <h1>{t("Wine not found")}</h1>
+        <Notice role="alert" tone="warning">{t("This wine is not available in the active household.")}</Notice>
       </main>
     )
   }
@@ -817,9 +808,7 @@ export function WineDetailView({
   if (wine.merged_into_wine_id) {
     return (
       <main className="wine-detail-view">
-        <Notice>
-          This catalog entry was merged. Opening the active wine…
-        </Notice>
+        <Notice>{t("This catalog entry was merged. Opening the active wine…")}</Notice>
       </main>
     )
   }
@@ -830,14 +819,13 @@ export function WineDetailView({
         className="wine-detail-view__back"
         onClick={onBack}
         type="button"
-      >
-        ← Back to {returnViewLabel(returnView)}
+      >{t("← Back to")} {t(returnViewLabel(returnView))}
       </button>
 
       <header className="wine-detail-hero">
         <div>
           <p className="wine-detail-hero__eyebrow">
-            {wine.vintage ?? "NV"} · {wine.color} ·{" "}
+            {wine.vintage ?? t("NV")} · {wine.color} ·{" "}
             {formatWineVolume(wine.format_ml)}
           </p>
           <h1>{wine.producer}</h1>
@@ -848,24 +836,18 @@ export function WineDetailView({
 
         <div className="wine-detail-total" aria-live="polite">
           <strong>{totalBottles}</strong>
-          <span>
-            bottle{totalBottles === 1 ? "" : "s"} in stock
-          </span>
+          <span>{t("bottle")}{totalBottles === 1 ? "" : t("s")}{t("in stock")}</span>
           <small>
-            {holdings.length} physical position
-            {holdings.length === 1 ? "" : "s"}
+            {holdings.length}{t("physical position")}{holdings.length === 1 ? "" : t("s")}
             {pendingOperations.length > 0
-              ? ` · ${pendingOperations.length} pending operation${pendingOperations.length === 1 ? "" : "s"}`
+              ? t(" · {value1} pending operation{value2}", { value1: String(pendingOperations.length), value2: String(pendingOperations.length === 1 ? "" : "s") })
               : ""}
           </small>
         </div>
       </header>
 
       {!isOnline ? (
-        <Notice tone="warning">
-          Offline · inventory actions remain available, but wine
-          reference editing is disabled.
-        </Notice>
+        <Notice tone="warning">{t("Offline · inventory actions remain available, but wine reference editing is disabled.")}</Notice>
       ) : null}
 
       {editMessage ? (
@@ -898,8 +880,8 @@ export function WineDetailView({
       >
         <div className="wine-detail-section-heading">
           <div>
-            <h2 id="wine-reference-heading">Wine reference</h2>
-            <p>Identity and metadata synchronized for this wine.</p>
+            <h2 id="wine-reference-heading">{t("Wine reference")}</h2>
+            <p>{t("Identity and metadata synchronized for this wine.")}</p>
           </div>
 
           {canManageCellar && !isEditing ? (
@@ -912,9 +894,7 @@ export function WineDetailView({
                   : "Reconnect before editing"
               }
               type="button"
-            >
-              Edit wine
-            </button>
+            >{t("Edit wine")}</button>
           ) : null}
         </div>
 
@@ -923,9 +903,7 @@ export function WineDetailView({
             className="wine-detail-edit-form"
             onSubmit={(event) => void saveWine(event)}
           >
-            <label>
-              Producer / winery
-              <input
+            <label>{t("Producer / winery")}<input
                 disabled={isSaving}
                 onChange={(event) =>
                   setEditProducer(event.target.value)
@@ -935,9 +913,7 @@ export function WineDetailView({
               />
             </label>
 
-            <label>
-              Cuvée
-              <input
+            <label>{t("Cuvée")}<input
                 disabled={isSaving}
                 onChange={(event) =>
                   setEditCuvee(event.target.value)
@@ -947,22 +923,18 @@ export function WineDetailView({
               />
             </label>
 
-            <label>
-              Vintage
-              <input
+            <label>{t("Vintage")}<input
                 disabled={isSaving}
                 inputMode="numeric"
                 onChange={(event) =>
                   setEditVintage(event.target.value)
                 }
-                placeholder="NV"
+                placeholder={t("NV")}
                 value={editVintage}
               />
             </label>
 
-            <label>
-              Color
-              <input
+            <label>{t("Color")}<input
                 disabled={isSaving}
                 onChange={(event) =>
                   setEditColor(event.target.value)
@@ -972,21 +944,17 @@ export function WineDetailView({
               />
             </label>
 
-            <label>
-              Appellation
-              <input
+            <label>{t("Appellation")}<input
                 disabled={isSaving}
                 onChange={(event) =>
                   setEditAppellation(event.target.value)
                 }
-                placeholder="Optional"
+                placeholder={t("Optional")}
                 value={editAppellation}
               />
             </label>
 
-            <label>
-              Bottle format (ml)
-              <input
+            <label>{t("Bottle format (ml)")}<input
                 disabled={isSaving}
                 inputMode="numeric"
                 min="1"
@@ -1015,35 +983,33 @@ export function WineDetailView({
                   setEditError(null)
                 }}
                 type="button"
-              >
-                Cancel
-              </button>
+              >{t("Cancel")}</button>
             </div>
           </form>
         ) : (
           <dl className="wine-detail-metadata">
             <div>
-              <dt>Producer</dt>
+              <dt>{t("Producer")}</dt>
               <dd>{wine.producer}</dd>
             </div>
             <div>
-              <dt>Cuvée</dt>
+              <dt>{t("Cuvée")}</dt>
               <dd>{wine.cuvee}</dd>
             </div>
             <div>
-              <dt>Vintage</dt>
+              <dt>{t("Vintage")}</dt>
               <dd>{wine.vintage ?? "NV"}</dd>
             </div>
             <div>
-              <dt>Color</dt>
+              <dt>{t("Color")}</dt>
               <dd>{wine.color}</dd>
             </div>
             <div>
-              <dt>Appellation</dt>
+              <dt>{t("Appellation")}</dt>
               <dd>{wine.appellation ?? "—"}</dd>
             </div>
             <div>
-              <dt>Format</dt>
+              <dt>{t("Format")}</dt>
               <dd>{formatWineVolume(wine.format_ml)}</dd>
             </div>
           </dl>
@@ -1074,9 +1040,9 @@ export function WineDetailView({
       >
         <div className="wine-detail-section-heading">
           <div>
-            <h2 id="wine-stock-heading">Stock positions</h2>
+            <h2 id="wine-stock-heading">{t("Stock positions")}</h2>
             <p>
-              {canManageCellar ? "Projected local stock, including queued offline operations." : "Synchronized bottle quantities and storage locations. Only an Owner can add, move, or remove bottles."}
+              {canManageCellar ? t("Projected local stock, including queued offline operations.") : t("Synchronized bottle quantities and storage locations. Only an Owner can add, move, or remove bottles.")}
             </p>
           </div>
 
@@ -1100,22 +1066,15 @@ export function WineDetailView({
               )
             }
             type="button"
-          >
-            Add bottles
-          </button> : null}
+          >{t("Add bottles")}</button> : null}
         </div>
 
         {canManageCellar && !deviceId && locations.length > 0 ? (
-          <Notice tone="warning">
-            Inventory actions will be available when device
-            registration finishes.
-          </Notice>
+          <Notice tone="warning">{t("Inventory actions will be available when device registration finishes.")}</Notice>
         ) : null}
 
         {canManageCellar && locations.length === 0 ? (
-          <Notice tone="warning">
-            Create a cellar location before adding bottles.
-          </Notice>
+          <Notice tone="warning">{t("Create a cellar location before adding bottles.")}</Notice>
         ) : null}
 
         {renderActionPanel(
@@ -1125,7 +1084,7 @@ export function WineDetailView({
         )}
 
         {holdings.length === 0 ? (
-          <p>No bottles are currently held for this wine.</p>
+          <p>{t("No bottles are currently held for this wine.")}</p>
         ) : (
           <div className="wine-detail-positions">
             {holdings.map((holding) => {
@@ -1150,18 +1109,16 @@ export function WineDetailView({
                   <div className="wine-detail-position__summary">
                     <div>
                       <h3>{currentLocationLabel}</h3>
-                      {canManageCellar ? <small>Revision {holding.revision}</small> : null}
+                      {canManageCellar ? <small>{t("Revision")}{t(" ")}{holding.revision}</small> : null}
                     </div>
                     <div className="wine-detail-position__quantity">
                       <strong>{holding.quantity}</strong>
-                      <span>
-                        bottle{holding.quantity === 1 ? "" : "s"}
+                      <span>{t("bottle")}{holding.quantity === 1 ? "" : "s"}
                       </span>
                       {holding.pending_delta !== 0 ? (
                         <small>
                           {holding.pending_delta > 0 ? "+" : ""}
-                          {holding.pending_delta} pending
-                        </small>
+                          {holding.pending_delta}{t("pending")}</small>
                       ) : null}
                     </div>
                   </div>
@@ -1186,9 +1143,7 @@ export function WineDetailView({
                         )
                       }
                       type="button"
-                    >
-                      Add more
-                    </button>
+                    >{t("Add more")}</button>
 
                     <button
                       aria-controls={`wine-action-${holding.id}`}
@@ -1215,9 +1170,7 @@ export function WineDetailView({
                           : undefined
                       }
                       type="button"
-                    >
-                      Move
-                    </button>
+                    >{t("Move")}</button>
 
                     <button
                       aria-controls={`wine-action-${holding.id}`}
@@ -1238,9 +1191,7 @@ export function WineDetailView({
                         )
                       }
                       type="button"
-                    >
-                      Consume/remove
-                    </button>
+                    >{t("Consume/remove")}</button>
                   </div> : null}
 
                   {renderActionPanel(

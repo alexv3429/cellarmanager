@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react"
 import { INVENTORY_REQUEST_FIELDS, getStoppedInventoryUploads, stopInventoryUpload, type QueuedInventoryRequest, type StoppedInventoryUpload } from "../data/inventoryRecovery"
 import { rememberInventoryUploadReceipt } from "../data/powersync/inventoryUploadReceipts"
 import { Notice } from "./Notice"
+import { useLanguage } from "../i18n/useLanguage"
 
 interface Props { userId: string; householdId: string | null; isOnline: boolean; onlyWhenQueued?: boolean }
 export const QUEUE_QUERY = `
@@ -40,6 +41,7 @@ export function InventoryQueueReview(props: Props) {
   return <QueueWorkspace key={`${props.userId}:${props.householdId}:${props.isOnline}`} {...props} />
 }
 function QueueWorkspace({ userId, householdId, isOnline, onlyWhenQueued = false }: Props) {
+  const { t } = useLanguage()
   const { data: rows, error, isLoading } = useQuery<QueuedInventoryRequest>(QUEUE_QUERY, [userId])
   const [selected, setSelected] = useState<QueuedInventoryRequest | null>(null)
   const [busy, setBusy] = useState(false)
@@ -105,37 +107,37 @@ function QueueWorkspace({ userId, householdId, isOnline, onlyWhenQueued = false 
   if (onlyWhenQueued && !error && !isLoading && visible.length === 0 && !message) return null
   return <section className={`inventory-queue-review${onlyWhenQueued ? " standalone-page" : ""}`} aria-labelledby="queue-review-heading">
     <div className="inventory-queue-review__heading"><div>
-      <h2 id="queue-review-heading" tabIndex={-1} ref={heading}>Queued on this browser</h2>
-      <p>Your requests across all households, oldest first. A blocked request can hold up later uploads.</p>
-    </div><span className="activity-status activity-status--warning">{visible.length}{visible.length === 100 ? "+" : ""} queued</span></div>
-    <p>Temporary connection failures retry automatically. If access changed or a request is no longer needed, review it below. Stopping is online-only and never undoes accepted stock changes.</p>
-    {error ? <Notice tone="error" role="alert">Unable to read this browser’s queue: {String(error)}</Notice> : null}
-    {isLoading ? <p role="status">Loading queued requests…</p> : null}
+      <h2 id="queue-review-heading" tabIndex={-1} ref={heading}>{t("Queued on this browser")}</h2>
+      <p>{t("Your requests across all households, oldest first. A blocked request can hold up later uploads.")}</p>
+    </div><span className="activity-status activity-status--warning">{visible.length}{visible.length === 100 ? "+" : ""}{t(" ")}{t("queued")}</span></div>
+    <p>{t("Temporary connection failures retry automatically. If access changed or a request is no longer needed, review it below. Stopping is online-only and never undoes accepted stock changes.")}</p>
+    {error ? <Notice tone="error" role="alert">{t("Unable to read this browser’s queue:")}{t(" ")}{String(error)}</Notice> : null}
+    {isLoading ? <p role="status">{t("Loading queued requests…")}</p> : null}
     {message ? <Notice tone={message.tone} role={message.tone === "error" ? "alert" : "status"}>{message.text}</Notice> : null}
-    {!isOnline ? <Notice tone="warning">Reconnect before stopping a request. The server must first check whether it was already accepted.</Notice> : null}
-    {!isLoading && !error && visible.length === 0 ? <p>No unreviewed requests are queued on this browser.</p> : null}
+    {!isOnline ? <Notice tone="warning">{t("Reconnect before stopping a request. The server must first check whether it was already accepted.")}</Notice> : null}
+    {!isLoading && !error && visible.length === 0 ? <p>{t("No unreviewed requests are queued on this browser.")}</p> : null}
     <ol className="inventory-queue-review__list">{visible.map((request) => <li key={request.id}>
       <div><h3>{request.wine_label ?? "Wine request"}</h3><p><strong>{requestAction(request)}</strong> · {locations(request)}</p>
         <p>{request.household_label ?? "Previous household"}{request.household_id !== householdId ? " · Another household" : ""} · {request.device_label ?? "Original registration"}</p>
-        <small>Requested {new Date(request.created_at_client).toLocaleString()} · ID {request.id.slice(0, 8)}</small></div>
+        <small>{t("Requested")}{t(" ")}{new Date(request.created_at_client).toLocaleString()}{t(" ")}{t("· ID")}{t(" ")}{request.id.slice(0, 8)}</small></div>
       <button type="button" disabled={!isOnline || busy || !!error} aria-label={`Review queued request: ${request.wine_label ?? request.id}`}
-        onClick={(event) => { trigger.current = event.currentTarget; setSelected(request); setMessage(null) }}>Review request</button>
-      {selected?.id === request.id ? <div className="inventory-queue-review__confirmation" role="region" aria-label="Stop queued request" tabIndex={-1} ref={panel}
+        onClick={(event) => { trigger.current = event.currentTarget; setSelected(request); setMessage(null) }}>{t("Review request")}</button>
+      {selected?.id === request.id ? <div className="inventory-queue-review__confirmation" role="region" aria-label={t("Stop queued request")} tabIndex={-1} ref={panel}
         onKeyDown={(event) => { if (event.key === "Escape" && !busy) cancel() }}>
-        <h3>Stop this request?</h3>
+        <h3>{t("Stop this request?")}</h3>
         <p>{requestAction(request)} · {request.wine_label} · {locations(request)}</p>
-        <p>The server checks this exact ID first. If already accepted, its stock change is kept. Otherwise it is stopped permanently. The original request is retained privately; nothing is moved to another user or device.</p>
-        <div className="inventory-recovery-actions"><button type="button" disabled={busy} onClick={cancel}>Keep queued</button>
+        <p>{t("The server checks this exact ID first. If already accepted, its stock change is kept. Otherwise it is stopped permanently. The original request is retained privately; nothing is moved to another user or device.")}</p>
+        <div className="inventory-recovery-actions"><button type="button" disabled={busy} onClick={cancel}>{t("Keep queued")}</button>
           <button type="button" disabled={!isOnline || busy} onClick={() => void confirm()}>{busy ? "Checking server…" : "Confirm: stop this request"}</button></div>
       </div> : null}
     </li>)}</ol>
-    <details className="inventory-queue-review__history"><summary>Show my stopped requests{householdId ? " for this household" : ""}</summary>
-      <p>Private history of requests stopped before acceptance. Already accepted or rejected requests remain in the inventory journal.</p>
-      <button type="button" disabled={!isOnline || busy} onClick={() => void refreshHistory()}>Refresh stopped-request history</button>
-      {!isOnline ? <p>Reconnect to load the server’s private history.</p> : historyError ? <Notice tone="warning">{historyError}</Notice> : <>
-        {history.length === 0 ? <p>No stopped requests found.</p> : <ul>{history.map((item) => <li key={item.operation_id}>
-          <strong>{item.request.wine_label ?? "Wine request"}</strong> — {requestAction(item.request)} · Stopped {new Date(item.stopped_at).toLocaleString()}
-          <small>Request ID: {item.operation_id}</small>
+    <details className="inventory-queue-review__history"><summary>{t("Show my stopped requests")}{householdId ? t(" for this household") : ""}</summary>
+      <p>{t("Private history of requests stopped before acceptance. Already accepted or rejected requests remain in the inventory journal.")}</p>
+      <button type="button" disabled={!isOnline || busy} onClick={() => void refreshHistory()}>{t("Refresh stopped-request history")}</button>
+      {!isOnline ? <p>{t("Reconnect to load the server’s private history.")}</p> : historyError ? <Notice tone="warning">{historyError}</Notice> : <>
+        {history.length === 0 ? <p>{t("No stopped requests found.")}</p> : <ul>{history.map((item) => <li key={item.operation_id}>
+          <strong>{item.request.wine_label ?? "Wine request"}</strong> — {requestAction(item.request)}{t(" ")}{t("· Stopped")}{t(" ")}{new Date(item.stopped_at).toLocaleString()}
+          <small>{t("Request ID:")}{t(" ")}{item.operation_id}</small>
         </li>)}</ul>}
       </>}
     </details>

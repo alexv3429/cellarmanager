@@ -374,11 +374,9 @@ function ReadyAuthenticatedApp({
           />
         ) : (
           <main>
-            <h1>Household invitations</h1>
-            <Notice role="status" tone="warning">
-              Only a household Owner can invite members.
-            </Notice>
-            <button onClick={() => changeView("members")} type="button">View members</button>
+            <h1>{t("Household invitations")}</h1>
+            <Notice role="status" tone="warning">{t("Only a household Owner can invite members.")}</Notice>
+            <button onClick={() => changeView("members")} type="button">{t("View members")}</button>
           </main>
         )
       ) : null}
@@ -408,6 +406,7 @@ function AuthenticatedApp({
   isOnline,
   userId,
 }: AuthenticatedAppProps) {
+  const { t } = useLanguage()
   const powerSyncStatus = useStatus()
 
   const {
@@ -436,10 +435,8 @@ function AuthenticatedApp({
   if (householdGate === "loading") {
     return (
       <main className="standalone-page">
-        <h1>CellarManager</h1>
-        <Notice role="status">
-          Loading household data…
-        </Notice>
+        <h1>{t("CellarManager")}</h1>
+        <Notice role="status">{t("Loading household data…")}</Notice>
       </main>
     )
   }
@@ -447,11 +444,11 @@ function AuthenticatedApp({
   if (householdGate === "error") {
     return (
       <main className="standalone-page">
-        <h1>CellarManager</h1>
+        <h1>{t("CellarManager")}</h1>
         <Notice role="alert" tone="error">
           {currentSyncError ??
             householdError ??
-            "Unable to load household data"}
+            t("Unable to load household data")}
         </Notice>
         <InventoryQueueReview userId={userId} householdId={null} isOnline={isOnline} onlyWhenQueued />
       </main>
@@ -461,11 +458,8 @@ function AuthenticatedApp({
   if (householdGate === "offline-unavailable") {
     return (
       <main className="standalone-page">
-        <h1>CellarManager</h1>
-        <Notice role="alert" tone="warning">
-          Household data is not available offline on this
-          device. Reconnect to finish loading your account.
-        </Notice>
+        <h1>{t("CellarManager")}</h1>
+        <Notice role="alert" tone="warning">{t("Household data is not available offline on this device. Reconnect to finish loading your account.")}</Notice>
       </main>
     )
   }
@@ -486,10 +480,8 @@ function AuthenticatedApp({
   if (!activeHouseholdId) {
     return (
       <main className="standalone-page">
-        <h1>CellarManager</h1>
-        <Notice role="alert" tone="error">
-          Unable to resolve the active household.
-        </Notice>
+        <h1>{t("CellarManager")}</h1>
+        <Notice role="alert" tone="error">{t("Unable to resolve the active household.")}</Notice>
       </main>
     )
   }
@@ -523,6 +515,7 @@ export default function App() {
 }
 
 function AppContent({ auth }: { auth: ReturnType<typeof useSession> }) {
+  const { t } = useLanguage()
   const isAccountRoute = useAccountRoute()
   const {
     session,
@@ -622,8 +615,8 @@ function AppContent({ auth }: { auth: ReturnType<typeof useSession> }) {
   if (isLoading) {
     return (
       <main className="standalone-page">
-        <h1>CellarManager</h1>
-        <Notice role="status">Loading session…</Notice>
+        <h1>{t("CellarManager")}</h1>
+        <Notice role="status">{t("Loading session…")}</Notice>
       </main>
     )
   }
@@ -631,7 +624,7 @@ function AppContent({ auth }: { auth: ReturnType<typeof useSession> }) {
   if (sessionError && !userId) {
     return (
       <main className="standalone-page">
-        <h1>CellarManager</h1>
+        <h1>{t("CellarManager")}</h1>
         <Notice role="alert" tone="error">
           {sessionError}
         </Notice>
@@ -650,11 +643,8 @@ function AppContent({ auth }: { auth: ReturnType<typeof useSession> }) {
 
     return (
       <main className="standalone-page">
-        <h1>CellarManager</h1>
-        <Notice role="status" tone="warning">
-          Reconnect to the internet to use this password reset
-          link.
-        </Notice>
+        <h1>{t("CellarManager")}</h1>
+        <Notice role="status" tone="warning">{t("Reconnect to the internet to use this password reset link.")}</Notice>
       </main>
     )
   }
@@ -694,7 +684,7 @@ function AppContent({ auth }: { auth: ReturnType<typeof useSession> }) {
     if (syncError) {
       return (
         <main className="standalone-page">
-          <h1>CellarManager</h1>
+          <h1>{t("CellarManager")}</h1>
           <Notice role="alert" tone="error">
             {syncError}
           </Notice>
@@ -704,10 +694,8 @@ function AppContent({ auth }: { auth: ReturnType<typeof useSession> }) {
 
     return (
       <main className="standalone-page">
-        <h1>CellarManager</h1>
-        <Notice role="status">
-          Preparing local cellar data…
-        </Notice>
+        <h1>{t("CellarManager")}</h1>
+        <Notice role="status">{t("Preparing local cellar data…")}</Notice>
       </main>
     )
   }

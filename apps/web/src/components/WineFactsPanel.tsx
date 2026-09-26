@@ -12,6 +12,7 @@ import {
   type WineGrapeDraft,
 } from "../data/wineFacts"
 import { Notice } from "./Notice"
+import { useLanguage } from "../i18n/useLanguage"
 
 interface WineFactsPanelProps {
   canManageCellar?: boolean
@@ -39,6 +40,7 @@ export function WineFactsPanel({
   isOnline,
   wine,
 }: WineFactsPanelProps) {
+  const { t } = useLanguage()
   const parsed = (() => {
     try {
       return { facts: parseWineFacts(wine), error: null }
@@ -185,7 +187,7 @@ export function WineFactsPanel({
     setMessage(null)
 
     if (!isOnline) {
-      setError("Reconnect before editing wine facts.")
+      setError(t("Reconnect before editing wine facts."))
       return
     }
 
@@ -205,7 +207,7 @@ export function WineFactsPanel({
 
       await updateWineFacts(wine.id, nextFacts)
       setIsEditing(false)
-      setMessage("Wine facts saved. Waiting for synchronization.")
+      setMessage(t("Wine facts saved. Waiting for synchronization."))
     } catch (caughtError: unknown) {
       setError(
         caughtError instanceof Error
@@ -236,11 +238,8 @@ export function WineFactsPanel({
     >
       <div className="wine-detail-section-heading">
         <div>
-          <h2 id="wine-facts-heading">Wine facts</h2>
-          <p>
-            Origin, composition, style, and label details for this
-            catalog wine.
-          </p>
+          <h2 id="wine-facts-heading">{t("Wine facts")}</h2>
+          <p>{t("Origin, composition, style, and label details for this catalog wine.")}</p>
         </div>
 
         {canManageCellar && !isEditing ? (
@@ -251,17 +250,12 @@ export function WineFactsPanel({
               isOnline ? undefined : "Reconnect before editing"
             }
             type="button"
-          >
-            Edit facts
-          </button>
+          >{t("Edit facts")}</button>
         ) : null}
       </div>
 
       {!isOnline ? (
-        <Notice tone="warning">
-          Wine facts remain visible offline. Reconnect before editing
-          them.
-        </Notice>
+        <Notice tone="warning">{t("Wine facts remain visible offline. Reconnect before editing them.")}</Notice>
       ) : null}
 
       {parsed.error ? (
@@ -283,15 +277,13 @@ export function WineFactsPanel({
       ) : null}
 
       {suggestionError ? (
-        <Notice role="status" tone="warning">
-          Reviewed reference suggestions are temporarily unavailable.
-        </Notice>
+        <Notice role="status" tone="warning">{t("Reviewed reference suggestions are temporarily unavailable.")}</Notice>
       ) : null}
 
       {suggestions?.status === "available" && suggestions.values ? (
         <aside className="wine-facts__suggestions">
           <div>
-            <strong>Reviewed fact suggestions</strong>
+            <strong>{t("Reviewed fact suggestions")}</strong>
             <p>
               {[
                 suggestions.values.country,
@@ -337,9 +329,7 @@ export function WineFactsPanel({
                 </li>
               ))}
             </ul>
-            <small>
-              Nothing is applied until you review and save it.
-            </small>
+            <small>{t("Nothing is applied until you review and save it.")}</small>
           </div>
 
           {canManageCellar && !isEditing ? (
@@ -347,16 +337,10 @@ export function WineFactsPanel({
               disabled={!isOnline}
               onClick={() => startEditing(true)}
               type="button"
-            >
-              Fill missing reviewed facts
-            </button>
+            >{t("Fill missing reviewed facts")}</button>
           ) : null}
 
-          <small className="wine-facts__suggestions-scope">
-            Suggestions combine reviewed references and published,
-            attributable web research. Typical appellation grapes never
-            claim an exact blend without bottle-level evidence.
-          </small>
+          <small className="wine-facts__suggestions-scope">{t("Suggestions combine reviewed references and published, attributable web research. Typical appellation grapes never claim an exact blend without bottle-level evidence.")}</small>
         </aside>
       ) : null}
 
@@ -366,55 +350,44 @@ export function WineFactsPanel({
           onSubmit={(event) => void saveFacts(event)}
         >
           <div className="wine-facts__origin-fields">
-            <label>
-              Country
-              <input
+            <label>{t("Country")}<input
                 disabled={isSaving}
                 onChange={(event) => setCountry(event.target.value)}
-                placeholder="France"
+                placeholder={t("France")}
                 value={country}
               />
             </label>
 
-            <label>
-              Region
-              <input
+            <label>{t("Region")}<input
                 disabled={isSaving}
                 onChange={(event) => setRegion(event.target.value)}
-                placeholder="Burgundy"
+                placeholder={t("Burgundy")}
                 value={region}
               />
             </label>
 
-            <label>
-              Classification
-              <input
+            <label>{t("Classification")}<input
                 disabled={isSaving}
                 onChange={(event) =>
                   setClassification(event.target.value)
                 }
-                placeholder="Premier Cru, DOCG…"
+                placeholder={t("Premier Cru, DOCG…")}
                 value={classification}
               />
             </label>
 
-            <label>
-              Vineyard / site
-              <input
+            <label>{t("Vineyard / site")}<input
                 disabled={isSaving}
                 onChange={(event) => setVineyard(event.target.value)}
-                placeholder="Climat, vineyard, parcel…"
+                placeholder={t("Climat, vineyard, parcel…")}
                 value={vineyard}
               />
             </label>
           </div>
 
           <fieldset className="wine-facts__grapes">
-            <legend>Grape composition</legend>
-            <p>
-              Percentages are optional. A known partial composition may
-              total less than 100%.
-            </p>
+            <legend>{t("Grape composition")}</legend>
+            <p>{t("Percentages are optional. A known partial composition may total less than 100%.")}</p>
 
             <div className="wine-facts__grape-list">
               {grapes.map((grape, index) => (
@@ -423,23 +396,20 @@ export function WineFactsPanel({
                   key={`${index}-${grapes.length}`}
                 >
                   <label>
-                    <span className="visually-hidden">
-                      Grape {index + 1}
+                    <span className="visually-hidden">{t("Grape")}{index + 1}
                     </span>
                     <input
                       disabled={isSaving}
                       onChange={(event) =>
                         updateGrape(index, "name", event.target.value)
                       }
-                      placeholder="Grape variety"
+                      placeholder={t("Grape variety")}
                       value={grape.name}
                     />
                   </label>
 
                   <label className="wine-facts__percentage">
-                    <span className="visually-hidden">
-                      Grape {index + 1} percentage
-                    </span>
+                    <span className="visually-hidden">{t("Grape")}{index + 1}{t("percentage")}</span>
                     <input
                       disabled={isSaving}
                       inputMode="decimal"
@@ -450,7 +420,7 @@ export function WineFactsPanel({
                           event.target.value,
                         )
                       }
-                      placeholder="% optional"
+                      placeholder={t("% optional")}
                       value={grape.percentage}
                     />
                   </label>
@@ -469,9 +439,7 @@ export function WineFactsPanel({
                       })
                     }
                     type="button"
-                  >
-                    Remove
-                  </button>
+                  >{t("Remove")}</button>
                 </div>
               ))}
             </div>
@@ -485,20 +453,16 @@ export function WineFactsPanel({
                 ])
               }
               type="button"
-            >
-              Add grape
-            </button>
+            >{t("Add grape")}</button>
           </fieldset>
 
           <div className="wine-facts__style-fields">
-            <label>
-              Sweetness
-              <select
+            <label>{t("Sweetness")}<select
                 disabled={isSaving}
                 onChange={(event) => setSweetness(event.target.value)}
                 value={sweetness}
               >
-                <option value="">Not set</option>
+                <option value="">{t("Not set")}</option>
                 {SWEETNESS_CATEGORIES.map((category) => (
                   <option key={category} value={category}>
                     {sweetnessLabel(category)}
@@ -507,38 +471,31 @@ export function WineFactsPanel({
               </select>
             </label>
 
-            <label>
-              Alcohol (% vol.)
-              <input
+            <label>{t("Alcohol (% vol.)")}<input
                 disabled={isSaving}
                 inputMode="decimal"
                 onChange={(event) =>
                   setAlcoholPercent(event.target.value)
                 }
-                placeholder="13.5"
+                placeholder={t("13.5")}
                 value={alcoholPercent}
               />
             </label>
 
-            <label className="wine-facts__certifications-field">
-              Certifications
-              <textarea
+            <label className="wine-facts__certifications-field">{t("Certifications")}<textarea
                 disabled={isSaving}
                 onChange={(event) =>
                   setCertifications(event.target.value)
                 }
-                placeholder="Organic, Demeter, HVE…"
+                placeholder={t("Organic, Demeter, HVE…")}
                 rows={2}
                 value={certifications}
               />
-              <small>Separate labels with commas or new lines.</small>
+              <small>{t("Separate labels with commas or new lines.")}</small>
             </label>
           </div>
 
-          <Notice tone="info">
-            These remain household-maintained facts. Reviewed enrichment
-            can fill missing fields only after you choose and save them.
-          </Notice>
+          <Notice tone="info">{t("These remain household-maintained facts. Reviewed enrichment can fill missing fields only after you choose and save them.")}</Notice>
 
           <div className="wine-facts__actions">
             <button disabled={!isOnline || isSaving} type="submit">
@@ -551,32 +508,30 @@ export function WineFactsPanel({
                 setError(null)
               }}
               type="button"
-            >
-              Cancel
-            </button>
+            >{t("Cancel")}</button>
           </div>
         </form>
       ) : facts && hasFacts ? (
         <div className="wine-facts__content">
           <dl className="wine-facts__metadata">
             <div>
-              <dt>Country</dt>
+              <dt>{t("Country")}</dt>
               <dd>{facts.country ?? "—"}</dd>
             </div>
             <div>
-              <dt>Region</dt>
+              <dt>{t("Region")}</dt>
               <dd>{facts.region ?? "—"}</dd>
             </div>
             <div>
-              <dt>Classification</dt>
+              <dt>{t("Classification")}</dt>
               <dd>{facts.classification ?? "—"}</dd>
             </div>
             <div>
-              <dt>Vineyard / site</dt>
+              <dt>{t("Vineyard / site")}</dt>
               <dd>{facts.vineyard ?? "—"}</dd>
             </div>
             <div>
-              <dt>Sweetness</dt>
+              <dt>{t("Sweetness")}</dt>
               <dd>
                 {facts.sweetnessCategory
                   ? sweetnessLabel(facts.sweetnessCategory)
@@ -584,7 +539,7 @@ export function WineFactsPanel({
               </dd>
             </div>
             <div>
-              <dt>Alcohol</dt>
+              <dt>{t("Alcohol")}</dt>
               <dd>
                 {facts.alcoholPercent === null
                   ? "—"
@@ -595,7 +550,7 @@ export function WineFactsPanel({
 
           <div className="wine-facts__lists">
             <div>
-              <h3>Grapes</h3>
+              <h3>{t("Grapes")}</h3>
               {facts.grapeComposition.length > 0 ? (
                 <ul className="wine-facts__tags">
                   {facts.grapeComposition.map((grape) => (
@@ -608,12 +563,12 @@ export function WineFactsPanel({
                   ))}
                 </ul>
               ) : (
-                <p>Not set</p>
+                <p>{t("Not set")}</p>
               )}
             </div>
 
             <div>
-              <h3>Certifications</h3>
+              <h3>{t("Certifications")}</h3>
               {facts.certifications.length > 0 ? (
                 <ul className="wine-facts__tags">
                   {facts.certifications.map((certification) => (
@@ -623,18 +578,15 @@ export function WineFactsPanel({
                   ))}
                 </ul>
               ) : (
-                <p>Not set</p>
+                <p>{t("Not set")}</p>
               )}
             </div>
           </div>
         </div>
       ) : facts ? (
         <div className="wine-facts__empty">
-          <p>No additional facts recorded yet.</p>
-          <small>
-            Add only what you know; missing values stay unknown rather
-            than being guessed.
-          </small>
+          <p>{t("No additional facts recorded yet.")}</p>
+          <small>{t("Add only what you know; missing values stay unknown rather than being guessed.")}</small>
         </div>
       ) : null}
     </section>

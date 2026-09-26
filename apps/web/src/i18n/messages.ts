@@ -1,3 +1,5 @@
+import { frenchText } from "./frenchText"
+
 export const englishMessages = {
   "common.skipMain": "Skip to main content",
   "shell.sync": "Sync",
@@ -37,8 +39,8 @@ export const englishMessages = {
   "account.saving": "Saving…",
   "account.nameSaved": "Display name saved. Reopen Members to see the updated name.",
   "account.language": "Language",
-  "account.languageHelp": "Choose the language for this account on all your devices, or follow this device’s language. Untranslated screens remain in English for now.",
-  "account.languageDevice": "Use device language",
+  "account.languageHelp": "Choose the language for this account on all your devices, or follow this browser’s preferred language.",
+  "account.languageDevice": "Use browser language",
   "account.languageEnglish": "English",
   "account.languageFrench": "Français",
   "account.languageSave": "Save language",
@@ -93,8 +95,8 @@ export const frenchMessages: Partial<Record<MessageKey, string>> = {
   "account.saving": "Enregistrement…",
   "account.nameSaved": "Nom enregistré. Rouvrez la section Membres pour voir le changement.",
   "account.language": "Langue",
-  "account.languageHelp": "Choisissez la langue de ce compte sur tous vos appareils, ou utilisez la langue de cet appareil. Les écrans non traduits restent en anglais pour le moment.",
-  "account.languageDevice": "Utiliser la langue de l’appareil",
+  "account.languageHelp": "Choisissez la langue de ce compte sur tous vos appareils, ou utilisez la langue préférée de ce navigateur.",
+  "account.languageDevice": "Utiliser la langue du navigateur",
   "account.languageEnglish": "English",
   "account.languageFrench": "Français",
   "account.languageSave": "Enregistrer la langue",
@@ -108,7 +110,12 @@ export const frenchMessages: Partial<Record<MessageKey, string>> = {
   "account.passwordHint": "Vous ne recevez pas l’e-mail ? Vérifiez les courriers indésirables et attendez une minute avant de recharger la page pour réessayer. Vos bouteilles, adhésions et préférences personnelles de vin ne sont pas modifiées.",
 }
 
-export function translate(language: "en" | "fr", key: MessageKey, values?: Record<string, string>): string {
-  const template = language === "fr" ? frenchMessages[key] ?? englishMessages[key] : englishMessages[key]
+export function translate(language: "en" | "fr", key: string, values?: Record<string, string>): string {
+  const source = englishMessages[key as MessageKey] ?? key
+  const template = language === "fr" ? frenchMessages[key as MessageKey] ?? frenchText[source] ?? source : source
   return values ? template.replace(/\{(\w+)\}/g, (match, name: string) => values[name] ?? match) : template
+}
+
+export function translateSource(language: "en" | "fr", source: string): string {
+  return translate(language, source)
 }

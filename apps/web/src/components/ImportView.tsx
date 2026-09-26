@@ -68,6 +68,7 @@ import { ImportRowEditor } from "./ImportRowEditor"
 import { ImportColumnSplit } from "./ImportColumnSplit"
 import { isCsvSplitConfigured, type CsvColumnSplit } from "../data/csvColumnSplit"
 import { Notice } from "./Notice"
+import { useLanguage } from "../i18n/useLanguage"
 
 const FILE_SIZE_LIMIT_BYTES = 20_000_000
 type CuveePreparationMode = CsvCuveeFallback["mode"]
@@ -219,6 +220,7 @@ function CompactImportPreviewCard({
 }: {
   result: CsvImportPreviewRow
 }) {
+  const { t } = useLanguage()
   const { row, storage } = result
 
   return (
@@ -230,8 +232,7 @@ function CompactImportPreviewCard({
           <strong>
             {row.fields.producer} — {row.fields.cuvee}
           </strong>
-          <span>
-            Source record {row.recordNumber}
+          <span>{t("Source record")}{row.recordNumber}
             <span aria-hidden="true"> · </span>
             {sourceLineLabel(
               row.sourceLineStart,
@@ -269,66 +270,66 @@ function CompactImportPreviewCard({
 
       <div className="import-final-preview-card__plan">
         <section>
-          <span>Wine</span>
+          <span>{t("Wine")}</span>
           <strong>
-            {row.fields.vintage ?? "NV"} · {row.fields.color} · {formatWineVolume(row.fields.formatMl ?? 0)}
+            {row.fields.vintage ?? t("NV")} · {row.fields.color} · {formatWineVolume(row.fields.formatMl ?? 0)}
           </strong>
           <span
             className={`import-plan-action import-plan-action--${result.wineAction}`}
           >
             {result.wineAction === "reuse"
-              ? "Reuse catalog wine"
+              ? t("Reuse catalog wine")
               : result.wineAction === "create"
-                ? "Create catalog wine"
-                : "Unresolved"}
+                ? t("Create catalog wine")
+                : t("Unresolved")}
           </span>
         </section>
 
         <span aria-hidden="true">→</span>
 
         <section>
-          <span>Destination</span>
+          <span>{t("Destination")}</span>
           <strong>
             {storage?.cellar && storage.location
-              ? `${storage.cellar.name} / ${storage.location.code}`
-              : row.fields.quantity === 0 ? "Catalog only · no storage needed" : "Unresolved"}
+              ? t("{value1} / {value2}", { value1: String(storage.cellar.name), value2: String(storage.location.code) })
+              : row.fields.quantity === 0 ? t("Catalog only · no storage needed") : t("Unresolved")}
           </strong>
         </section>
 
         <span aria-hidden="true">→</span>
 
         <section>
-          <span>Quantity</span>
+          <span>{t("Quantity")}</span>
           <strong>
-            {row.fields.quantity ?? "Invalid"} {row.fields.quantity === 1 ? "bottle" : "bottles"}
+            {row.fields.quantity ?? t("Invalid")} {row.fields.quantity === 1 ? t("bottle") : t("bottles")}
           </strong>
         </section>
       </div>
 
       <details>
-        <summary>Details and source values</summary>
+        <summary>{t("Details and source values")}</summary>
         <dl className="import-final-preview-card__details">
           <div>
-            <dt>Catalog reference</dt>
-            <dd>{result.existingWine?.id ?? "New or unresolved"}</dd>
+            <dt>{t("Catalog reference")}</dt>
+            <dd>{result.existingWine?.id ?? t("New or unresolved")}</dd>
           </div>
           <div>
-            <dt>Source storage</dt>
+            <dt>{t("Source storage")}</dt>
             <dd>
-              {row.fields.cellar ?? "Empty"} / {row.fields.location ?? "Empty"}
+              {row.fields.cellar ?? t("Empty")} / {row.fields.location ?? t("Empty")}
             </dd>
           </div>
           <div>
-            <dt>Projected occupancy</dt>
+            <dt>{t("Projected occupancy")}</dt>
             <dd>
               {storage?.location
-                ? `${storage.currentBottleCount} + ${storage.importBottleCount} = ${storage.projectedBottleCount}`
-                : row.fields.quantity === 0 ? "No stock change" : "Unresolved"}
+                ? t("{value1} + {value2} = {value3}", { value1: String(storage.currentBottleCount), value2: String(storage.importBottleCount), value3: String(storage.projectedBottleCount) })
+                : row.fields.quantity === 0 ? t("No stock change") : t("Unresolved")}
             </dd>
           </div>
           <div>
-            <dt>Capacity</dt>
-            <dd>{storage?.location?.capacity ?? "Not set"}</dd>
+            <dt>{t("Capacity")}</dt>
+            <dd>{storage?.location?.capacity ?? t("Not set")}</dd>
           </div>
         </dl>
 
@@ -354,18 +355,15 @@ export function ImportView({
   canImportInventory,
   ...props
 }: ImportViewProps & { canImportInventory: boolean }) {
+  const { t } = useLanguage()
   if (!canImportInventory) {
     return (
       <main className="import-view">
         <div className="import-view__intro">
-          <h1>Cellar data</h1>
-          <p>Download a portable copy of this shared cellar.</p>
+          <h1>{t("Cellar data")}</h1>
+          <p>{t("Download a portable copy of this shared cellar.")}</p>
         </div>
-        <Notice role="status">
-          Spreadsheet imports are reserved for household Owners.
-          As a Member, you can export the cellar and browse wines,
-          quantities, and locations in Cellar.
-        </Notice>
+        <Notice role="status">{t("Spreadsheet imports are reserved for household Owners. As a Member, you can export the cellar and browse wines, quantities, and locations in Cellar.")}</Notice>
         <CsvExportPanel householdId={props.householdId} isOnline={props.isOnline} />
       </main>
     )
@@ -438,6 +436,7 @@ export function ImportWorkspace({
   storageIsLoading,
   storageLocations,
 }: ImportWorkspaceProps) {
+  const { t } = useLanguage()
   const [dataMode, setDataMode] = useState<
     "export" | "import"
   >("import")
@@ -1288,7 +1287,7 @@ export function ImportWorkspace({
     availableDefaultDefinitions.length > 0 ? (
       <div className="import-mapping-default-add">
         <label>
-          <span>CellarManager field</span>
+          <span>{t("CellarManager field")}</span>
           <select
             disabled={importIsLocked}
             onChange={(event) =>
@@ -1298,27 +1297,27 @@ export function ImportWorkspace({
             }
             value={defaultField}
           >
-            <option value="">Choose a field</option>
+            <option value="">{t("Choose a field")}</option>
             {availableDefaultDefinitions.map((definition) => (
               <option
                 key={definition.field}
                 value={definition.field}
               >
-                {definition.label}
-                {definition.required ? " (required)" : ""}
+                {t(definition.label)}
+                {definition.required ? ` ${t("(required)")}` : ""}
               </option>
             ))}
           </select>
         </label>
         <label>
-          <span>Default for empty cells</span>
+          <span>{t("Default for empty cells")}</span>
           <input
             disabled={importIsLocked}
             onChange={(event) =>
               setDefaultValue(event.target.value)
             }
             placeholder={
-              defaultField === "formatMl" ? "750 ml" : undefined
+              defaultField === "formatMl" ? t("750 ml") : undefined
             }
             value={defaultValue}
           />
@@ -1331,9 +1330,7 @@ export function ImportWorkspace({
           }
           onClick={addFieldDefault}
           type="button"
-        >
-          Set default
-        </button>
+        >{t("Set default")}</button>
       </div>
     ) : null
   const importConfirmationBlocker = destinationIsCreating
@@ -1399,15 +1396,12 @@ export function ImportWorkspace({
   return (
     <main className="import-view">
       <div className="import-view__intro">
-        <h1>Cellar data</h1>
-        <p>
-          Import bottles from a spreadsheet or download a portable copy
-          of this cellar.
-        </p>
+        <h1>{t("Cellar data")}</h1>
+        <p>{t("Import bottles from a spreadsheet or download a portable copy of this cellar.")}</p>
       </div>
 
       <div
-        aria-label="Cellar data action"
+        aria-label={t("Cellar data action")}
         className="import-view__mode-switch"
         role="group"
       >
@@ -1415,17 +1409,13 @@ export function ImportWorkspace({
           aria-pressed={dataMode === "import"}
           onClick={() => setDataMode("import")}
           type="button"
-        >
-          Import file
-        </button>
+        >{t("Import file")}</button>
         <button
           aria-pressed={dataMode === "export"}
           disabled={destinationIsCreating}
           onClick={() => setDataMode("export")}
           type="button"
-        >
-          Export cellar
-        </button>
+        >{t("Export cellar")}</button>
       </div>
 
       {dataMode === "export" ? (
@@ -1437,37 +1427,29 @@ export function ImportWorkspace({
         <>
 
       <div className="import-view__intro import-view__intro--workflow">
-        <h2>Import bottles</h2>
-        <p>
-          Mapping and preparation do not change the cellar.
-          Creating a destination in stage 8 is the only explicit
-          setup write before final confirmation.
-        </p>
+        <h2>{t("Import bottles")}</h2>
+        <p>{t("Mapping and preparation do not change the cellar. Creating a destination in stage 8 is the only explicit setup write before final confirmation.")}</p>
       </div>
 
       {hasRecoveredPendingImport ? (
         <section className="import-result-panel">
           <div>
-            <h2>Previous import awaiting verification</h2>
-            <p>
-              This device retained the exact receipt and row IDs
-              from an interrupted import. Do not upload the file
-              again until this receipt is resolved.
-            </p>
+            <h2>{t("Previous import awaiting verification")}</h2>
+            <p>{t("This device retained the exact receipt and row IDs from an interrupted import. Do not upload the file again until this receipt is resolved.")}</p>
           </div>
 
           <dl className="import-complete-panel__receipt">
             <div>
-              <dt>Import receipt</dt>
+              <dt>{t("Import receipt")}</dt>
               <dd>{commitPlan.importId}</dd>
             </div>
             <div>
-              <dt>Pending plan</dt>
+              <dt>{t("Pending plan")}</dt>
               <dd>
                 {commitPlan.rows.reduce(
                   (total, row) => total + row.quantity,
                   0,
-                )} bottles · {commitPlan.rows.length} source {commitPlan.rows.length === 1 ? "row" : "rows"}
+                )}{t(" ")}{t("bottles ·")}{t(" ")}{commitPlan.rows.length}{t(" ")}{t("source")}{t(" ")}{commitPlan.rows.length === 1 ? "row" : "rows"}
               </dd>
             </div>
           </dl>
@@ -1477,9 +1459,7 @@ export function ImportWorkspace({
               {commitError}
             </Notice>
           ) : (
-            <Notice role="status">
-              Checking whether the import committed…
-            </Notice>
+            <Notice role="status">{t("Checking whether the import committed…")}</Notice>
           )}
 
           <button
@@ -1497,19 +1477,16 @@ export function ImportWorkspace({
       {hasRecoveredPendingImport ? null : preparationIsCollapsed ? (
         <section className="import-preparation-summary-panel">
           <div>
-            <h2>Preparation complete</h2>
+            <h2>{t("Preparation complete")}</h2>
             <p>
-              {fileName} · {cleaningSummary.totalRowCount} {cleaningSummary.totalRowCount === 1 ? "row" : "rows"} · {matchingSummary.existingRowCount} existing · {matchingSummary.newRowCount} new · {storageSummary.readyRowCount - catalogOnlyStorageRows} stocked rows assigned · {catalogOnlyStorageRows} catalog only
-              {` · ${excludedRecords.size} excluded · ${Object.values(rowCorrections).filter((row) => Object.keys(row).length > 0).length} corrected`}
+              {fileName} · {cleaningSummary.totalRowCount} {cleaningSummary.totalRowCount === 1 ? "row" : "rows"} · {matchingSummary.existingRowCount}{t(" ")}{t("existing ·")}{t(" ")}{matchingSummary.newRowCount}{t(" ")}{t("new ·")}{t(" ")}{storageSummary.readyRowCount - catalogOnlyStorageRows}{t(" ")}{t("stocked rows assigned ·")}{t(" ")}{catalogOnlyStorageRows}{t("catalog only")}{` · ${excludedRecords.size} excluded · ${Object.values(rowCorrections).filter((row) => Object.keys(row).length > 0).length} corrected`}
             </p>
           </div>
           <button
             disabled={importIsLocked}
             onClick={() => setPreparationExpanded(true)}
             type="button"
-          >
-            Review or edit stages 1–6
-          </button>
+          >{t("Review or edit stages 1–6")}</button>
         </section>
       ) : (
         <>
@@ -1518,19 +1495,16 @@ export function ImportWorkspace({
         className="import-file-panel"
       >
         <div>
-          <h2 id="import-file-heading">1. Choose a file</h2>
-          <p>
-            Excel (.xlsx) or UTF-8 CSV up to 20 MB. CSV files may use
-            comma, semicolon, or tab delimiters.
-          </p>
+          <h2 id="import-file-heading">{t("1. Choose a file")}</h2>
+          <p>{t("Excel (.xlsx) or UTF-8 CSV up to 20 MB. CSV files may use comma, semicolon, or tab delimiters.")}</p>
         </div>
 
         {!fileName ? (
           <div className="import-file-picker">
-            <span>Spreadsheet file</span>
+            <span>{t("Spreadsheet file")}</span>
             <input
               accept=".xlsx,.csv,.tsv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,text/tab-separated-values"
-              aria-label="Spreadsheet file"
+              aria-label={t("Spreadsheet file")}
               hidden
               key={fileInputKey}
               onChange={(event) => void selectFile(event)}
@@ -1540,9 +1514,7 @@ export function ImportWorkspace({
             <button
               onClick={() => fileInput.current?.click()}
               type="button"
-            >
-              Choose file
-            </button>
+            >{t("Choose file")}</button>
           </div>
         ) : null}
 
@@ -1552,16 +1524,14 @@ export function ImportWorkspace({
               <strong>{fileName}</strong>
               {document ? (
                 <span>
-                  {document.rows.length} source {document.rows.length === 1 ? "row" : "rows"}
+                  {document.rows.length}{t(" ")}{t("source")}{t(" ")}{document.rows.length === 1 ? "row" : "rows"}
                   <span aria-hidden="true"> · </span>
                   {document.worksheetName ? `Worksheet: ${document.worksheetName}` : `${delimiterLabel(document.delimiter)} delimiter`}
                   {excludedRecords.size > 0 ? ` · ${excludedRecords.size} rows excluded` : ""}
                 </span>
               ) : null}
             </div>
-            <button disabled={importIsLocked} onClick={resetImport} type="button">
-              Choose another file
-            </button>
+            <button disabled={importIsLocked} onClick={resetImport} type="button">{t("Choose another file")}</button>
           </div>
         ) : null}
       </section>
@@ -1578,40 +1548,29 @@ export function ImportWorkspace({
           className="import-delimiter-panel"
         >
           <div>
-            <h2 id="delimiter-heading">
-              Select the delimiter
-            </h2>
-            <p>
-              Automatic detection was inconclusive. Choose the
-              character that separates columns in this file.
-            </p>
+            <h2 id="delimiter-heading">{t("Select the delimiter")}</h2>
+            <p>{t("Automatic detection was inconclusive. Choose the character that separates columns in this file.")}</p>
           </div>
           <div className="import-delimiter-actions">
             <button
               onClick={() => selectDelimiter(",")}
               type="button"
-            >
-              Comma
-            </button>
+            >{t("Comma")}</button>
             <button
               onClick={() => selectDelimiter(";")}
               type="button"
-            >
-              Semicolon
-            </button>
+            >{t("Semicolon")}</button>
             <button
               onClick={() => selectDelimiter("\t")}
               type="button"
-            >
-              Tab
-            </button>
+            >{t("Tab")}</button>
           </div>
         </section>
       ) : null}
 
       {document && document.issues.length > 0 ? (
         <Notice role="alert" tone="error">
-          <strong>File structure needs attention</strong>
+          <strong>{t("File structure needs attention")}</strong>
           <ul className="import-issue-list">
             {document.issues.map((parseIssue, index) => (
               <li key={`${parseIssue.code}:${index}`}>
@@ -1632,17 +1591,11 @@ export function ImportWorkspace({
         >
           <div className="import-section-heading">
             <div>
-              <h2 id="mapping-heading">
-                2. Map columns
-              </h2>
-              <p>
-                Suggestions use header names only. Review every
-                assignment; values remain unchanged.
-              </p>
+              <h2 id="mapping-heading">{t("2. Map columns")}</h2>
+              <p>{t("Suggestions use header names only. Review every assignment; values remain unchanged.")}</p>
             </div>
             <span className="import-section-heading__status">
-              {mapping.filter(Boolean).length} of {mapping.length} columns mapped
-              {defaultDefinitions.length > 0
+              {mapping.filter(Boolean).length}{t(" ")}{t("of")}{t(" ")}{mapping.length}{t("columns mapped")}{defaultDefinitions.length > 0
                 ? ` · ${defaultDefinitions.length} shared ${defaultDefinitions.length === 1 ? "value" : "values"}`
                 : ""}
             </span>
@@ -1653,25 +1606,15 @@ export function ImportWorkspace({
             className="import-mapping-defaults"
           >
             <div>
-              <h3 id="mapping-defaults-heading">
-                Defaults for missing values
-              </h3>
-              <p>
-                Fill empty cells or missing columns without replacing existing values.
-                For example, use 750 ml for a blank Bottle format; an explicit 1500 ml stays unchanged.
-                Zero is a value, not an empty cell.
-              </p>
+              <h3 id="mapping-defaults-heading">{t("Defaults for missing values")}</h3>
+              <p>{t("Fill empty cells or missing columns without replacing existing values. For example, use 750 ml for a blank Bottle format; an explicit 1500 ml stays unchanged. Zero is a value, not an empty cell.")}</p>
             </div>
 
             {defaultDefinitions.length > 0 ? (
               <div className="import-mapping-default-applied">
                 <div>
-                  <strong>
-                    Fill blanks only
-                  </strong>
-                  <span>
-                    Explicit source values and your row corrections take priority.
-                  </span>
+                  <strong>{t("Fill blanks only")}</strong>
+                  <span>{t("Explicit source values and your row corrections take priority.")}</span>
                 </div>
                 <div className="import-mapping-default-list">
                   {defaultDefinitions.map((definition) => (
@@ -1680,9 +1623,9 @@ export function ImportWorkspace({
                       key={definition.field}
                     >
                       <label>
-                        <span>{definition.label}</span>
+                        <span>{t(definition.label)}</span>
                         <input
-                          aria-label={`${definition.label} default for empty cells`}
+                          aria-label={`${t(definition.label)} ${t("default for empty cells")}`}
                           disabled={importIsLocked}
                           onChange={(event) =>
                             updateFieldDefault(
@@ -1695,16 +1638,14 @@ export function ImportWorkspace({
                           }
                         />
                       </label>
-                      <small>{preparedRows.allRows.filter((row) => !row.excluded && row.defaultsApplied.includes(definition.field)).length} included rows use this default</small>
+                      <small>{preparedRows.allRows.filter((row) => !row.excluded && row.defaultsApplied.includes(definition.field)).length}{t(" ")}{t("included rows use this default")}</small>
                       <button
                         disabled={importIsLocked}
                         onClick={() =>
                           removeFieldDefault(definition.field)
                         }
                         type="button"
-                      >
-                        Remove
-                      </button>
+                      >{t("Remove")}</button>
                     </div>
                   ))}
                 </div>
@@ -1714,19 +1655,15 @@ export function ImportWorkspace({
             {hasMissingRequiredDefault ? (
               <div className="import-mapping-default-required">
                 <div>
-                  <strong>Complete the missing required field</strong>
-                  <span>
-                    Map a source column, set a default, or configure a column split below.
-                  </span>
+                  <strong>{t("Complete the missing required field")}</strong>
+                  <span>{t("Map a source column, set a default, or configure a column split below.")}</span>
                 </div>
                 {defaultAddControls}
               </div>
             ) : availableDefaultDefinitions.length > 0 ? (
               <details className="import-mapping-default-more">
-                <summary>Set another default for empty cells</summary>
-                <p>
-                  Use a default for a missing column or blanks in a mapped column.
-                </p>
+                <summary>{t("Set another default for empty cells")}</summary>
+                <p>{t("Use a default for a missing column or blanks in a mapped column.")}</p>
                 {defaultAddControls}
               </details>
             ) : null}
@@ -1738,18 +1675,12 @@ export function ImportWorkspace({
               className="import-cuvee-fallback"
             >
               <div>
-                <h3 id="cuvee-fallback-heading">
-                  Missing Cuvée / wine name
-                </h3>
-                <p>
-                  If the file has no Cuvée column, or some cells are empty,
-                  choose how to name those wines. Existing names and your
-                  row corrections remain unchanged.
-                </p>
+                <h3 id="cuvee-fallback-heading">{t("Missing Cuvée / wine name")}</h3>
+                <p>{t("If the file has no Cuvée column, or some cells are empty, choose how to name those wines. Existing names and your row corrections remain unchanged.")}</p>
               </div>
               <div className="import-cuvee-fallback__controls">
                 <label>
-                  <span>How should missing cuvées be filled?</span>
+                  <span>{t("How should missing cuvées be filled?")}</span>
                   <select
                     disabled={importIsLocked}
                     onChange={(event) =>
@@ -1759,21 +1690,15 @@ export function ImportWorkspace({
                     }
                     value={cuveeFallbackMode}
                   >
-                    <option value="none">
-                      Keep the row blocked
-                    </option>
-                    <option value="fixed">
-                      One fixed value
-                    </option>
-                    <option value="color">Copy Color</option>
-                    <option value="appellation">
-                      Copy Appellation
-                    </option>
+                    <option value="none">{t("Keep the row blocked")}</option>
+                    <option value="fixed">{t("One fixed value")}</option>
+                    <option value="color">{t("Copy Color")}</option>
+                    <option value="appellation">{t("Copy Appellation")}</option>
                   </select>
                 </label>
                 {cuveeFallbackMode === "fixed" ? (
                   <label>
-                    <span>Fixed Cuvée value</span>
+                    <span>{t("Fixed Cuvée value")}</span>
                     <input
                       disabled={importIsLocked}
                       onChange={(event) =>
@@ -1781,7 +1706,7 @@ export function ImportWorkspace({
                           event.target.value,
                         )
                       }
-                      placeholder="Generic"
+                      placeholder={t("Generic")}
                       value={cuveeFallbackValue}
                     />
                   </label>
@@ -1790,25 +1715,25 @@ export function ImportWorkspace({
             </section>
           ) : null}
 
-          <section className="import-column-split-settings" aria-label="Split a column">
-            <h3>Split a column</h3>
-            <p>One source column can contain two values, such as producer / cuvée or cellar / location. Choose their fields, then review and apply each split in step 4. Nothing is applied automatically.</p>
-            {!columnSplit ? <button type="button" disabled={importIsLocked} onClick={() => updateColumnSplit({ sourceColumnIndex: 0, firstField: mapping[0] ?? "producer", secondField: mapping[0] === "cellar" ? "location" : mapping[0] === "cuvee" ? "producer" : "cuvee", separator: " - " })}>Split a column</button> : <>
+          <section className="import-column-split-settings" aria-label={t("Split a column")}>
+            <h3>{t("Split a column")}</h3>
+            <p>{t("One source column can contain two values, such as producer / cuvée or cellar / location. Choose their fields, then review and apply each split in step 4. Nothing is applied automatically.")}</p>
+            {!columnSplit ? <button type="button" disabled={importIsLocked} onClick={() => updateColumnSplit({ sourceColumnIndex: 0, firstField: mapping[0] ?? "producer", secondField: mapping[0] === "cellar" ? "location" : mapping[0] === "cuvee" ? "producer" : "cuvee", separator: " - " })}>{t("Split a column")}</button> : <>
               <div className="import-row-editor__fields">
-                <label><span>Source column to split</span><select disabled={importIsLocked} value={columnSplit.sourceColumnIndex} onChange={(event) => updateColumnSplit({ ...columnSplit, sourceColumnIndex: Number(event.target.value) })}>
+                <label><span>{t("Source column to split")}</span><select disabled={importIsLocked} value={columnSplit.sourceColumnIndex} onChange={(event) => updateColumnSplit({ ...columnSplit, sourceColumnIndex: Number(event.target.value) })}>
                   {document.header.values.map((header, index) => <option key={index} value={index}>{index + 1}. {header || "Untitled column"}</option>)}
                 </select></label>
-                <label><span>First part goes to</span><select disabled={importIsLocked} value={columnSplit.firstField} onChange={(event) => updateColumnSplit({ ...columnSplit, firstField: event.target.value as CsvImportField })}>
-                  {CSV_IMPORT_FIELD_DEFINITIONS.map(({ field, label }) => <option key={field} value={field}>{label}</option>)}
+                <label><span>{t("First part goes to")}</span><select disabled={importIsLocked} value={columnSplit.firstField} onChange={(event) => updateColumnSplit({ ...columnSplit, firstField: event.target.value as CsvImportField })}>
+                  {CSV_IMPORT_FIELD_DEFINITIONS.map(({ field, label }) => <option key={field} value={field}>{t(label)}</option>)}
                 </select></label>
-                <label><span>Second part goes to</span><select disabled={importIsLocked} value={columnSplit.secondField} onChange={(event) => updateColumnSplit({ ...columnSplit, secondField: event.target.value as CsvImportField })}>
-                  {CSV_IMPORT_FIELD_DEFINITIONS.map(({ field, label }) => <option key={field} value={field}>{label}</option>)}
+                <label><span>{t("Second part goes to")}</span><select disabled={importIsLocked} value={columnSplit.secondField} onChange={(event) => updateColumnSplit({ ...columnSplit, secondField: event.target.value as CsvImportField })}>
+                  {CSV_IMPORT_FIELD_DEFINITIONS.map(({ field, label }) => <option key={field} value={field}>{t(label)}</option>)}
                 </select></label>
-                <label><span>Separator</span><input disabled={importIsLocked} value={columnSplit.separator} onChange={(event) => updateColumnSplit({ ...columnSplit, separator: event.target.value })} maxLength={30} placeholder="e.g. / or -" /><small>Use the exact separator, including spaces. Leave blank for manual separation.</small></label>
+                <label><span>{t("Separator")}</span><input disabled={importIsLocked} value={columnSplit.separator} onChange={(event) => updateColumnSplit({ ...columnSplit, separator: event.target.value })} maxLength={30} placeholder={t("e.g. / or -")} /><small>{t("Use the exact separator, including spaces. Leave blank for manual separation.")}</small></label>
               </div>
-              {!splitIsConfigured ? <Notice tone="error">Choose two different destination fields.</Notice> : null}
-              <button type="button" disabled={importIsLocked} onClick={() => updateColumnSplit(null)}>Stop splitting this column</button>
-              <small>Confirmed row corrections stay in place. Use Reset all row corrections in step 4 to remove them.</small>
+              {!splitIsConfigured ? <Notice tone="error">{t("Choose two different destination fields.")}</Notice> : null}
+              <button type="button" disabled={importIsLocked} onClick={() => updateColumnSplit(null)}>{t("Stop splitting this column")}</button>
+              <small>{t("Confirmed row corrections stay in place. Use Reset all row corrections in step 4 to remove them.")}</small>
             </>}
           </section>
 
@@ -1829,8 +1754,7 @@ export function ImportWorkspace({
                     key={`${sourceHeader}:${sourceColumnIndex}`}
                   >
                     <div>
-                      <span>
-                        Source column {sourceColumnIndex + 1}
+                      <span>{t("Source column")}{sourceColumnIndex + 1}
                       </span>
                       <strong>
                         {sourceHeader || "Untitled column"}
@@ -1838,7 +1762,7 @@ export function ImportWorkspace({
                     </div>
 
                     <label>
-                      <span>CellarManager field</span>
+                      <span>{t("CellarManager field")}</span>
                       <select
                         onChange={(event) =>
                           mapColumn(
@@ -1850,18 +1774,16 @@ export function ImportWorkspace({
                           mapping[sourceColumnIndex] ?? ""
                         }
                       >
-                        <option value="">
-                          Do not map
-                        </option>
+                        <option value="">{t("Do not map")}</option>
                         {CSV_IMPORT_FIELD_DEFINITIONS.map(
                           (definition) => (
                             <option
                               key={definition.field}
                               value={definition.field}
                             >
-                              {definition.label}
+                              {t(definition.label)}
                               {definition.required
-                                ? " (required)"
+                                ? ` ${t("(required)")}`
                                 : ""}
                             </option>
                           ),
@@ -1870,7 +1792,7 @@ export function ImportWorkspace({
                     </label>
 
                     <div className="import-mapping-card__samples">
-                      <span>Sample values</span>
+                      <span>{t("Sample values")}</span>
                       {sampleValues.length > 0 ? (
                         <ul>
                           {sampleValues.map((value, index) => (
@@ -1880,7 +1802,7 @@ export function ImportWorkspace({
                           ))}
                         </ul>
                       ) : (
-                        <em>No non-empty sample values</em>
+                        <em>{t("No non-empty sample values")}</em>
                       )}
                     </div>
                   </article>
@@ -1891,7 +1813,7 @@ export function ImportWorkspace({
 
           {mappingIssues.length > 0 ? (
             <Notice role="status" tone="warning">
-              <strong>Complete the mapping</strong>
+              <strong>{t("Complete the mapping")}</strong>
               <ul className="import-issue-list">
                 {mappingIssues.map((mappingIssue) => (
                   <li
@@ -1913,12 +1835,8 @@ export function ImportWorkspace({
         >
           <div className="import-section-heading">
             <div>
-              <h2 id="preview-heading">
-                3. Check the sample
-              </h2>
-              <p>
-                First {sampleRows.length} source {sampleRows.length === 1 ? "row" : "rows"}, shown with the current mapping.
-              </p>
+              <h2 id="preview-heading">{t("3. Check the sample")}</h2>
+              <p>{t("First")}{sampleRows.length}{t(" ")}{t("source")}{t(" ")}{sampleRows.length === 1 ? "row" : "rows"}{t(", shown with the current mapping.")}</p>
             </div>
           </div>
 
@@ -1929,8 +1847,7 @@ export function ImportWorkspace({
                 key={row.recordNumber}
               >
                 <header>
-                  <strong>
-                    Source record {row.recordNumber}
+                  <strong>{t("Source record")}{row.recordNumber}
                   </strong>
                   <span>
                     {sourceLineLabel(
@@ -1949,8 +1866,8 @@ export function ImportWorkspace({
                         ? []
                         : [
                             <div key={definition.field}>
-                              <dt>{definition.label}</dt>
-                              <dd>{value || "Empty"}</dd>
+                              <dt>{t(definition.label)}</dt>
+                              <dd>{value || t("Empty")}</dd>
                             </div>,
                           ]
                     },
@@ -1959,8 +1876,7 @@ export function ImportWorkspace({
 
                 {row.unmapped.length > 0 ? (
                   <details>
-                    <summary>
-                      Preserved unmapped values ({row.unmapped.length})
+                    <summary>{t("Preserved unmapped values (")}{row.unmapped.length})
                     </summary>
                     <dl>
                       {row.unmapped.map((sourceValue) => (
@@ -1992,15 +1908,8 @@ export function ImportWorkspace({
         >
           <div className="import-section-heading">
             <div>
-              <h2 id="cleaning-heading">
-                4. Clean and validate
-              </h2>
-              <p>
-                Whitespace, color casing, vintage, metric
-                bottle formats, and quantities are normalized. NM
-                is treated as NV. Source values remain available
-                for comparison.
-              </p>
+              <h2 id="cleaning-heading">{t("4. Clean and validate")}</h2>
+              <p>{t("Whitespace, color casing, vintage, metric bottle formats, and quantities are normalized. NM is treated as NV. Source values remain available for comparison.")}</p>
             </div>
             <span className="import-section-heading__status">
               {cleaningSummary.invalidRowCount === 0
@@ -2010,37 +1919,32 @@ export function ImportWorkspace({
           </div>
 
           <div
-            aria-label="Cleaning summary"
+            aria-label={t("Cleaning summary")}
             className="import-cleaning-summary"
           >
             <div>
               <strong>{cleaningSummary.totalRowCount}</strong>
-              <span>Included rows</span>
+              <span>{t("Included rows")}</span>
             </div>
             <div>
               <strong>{cleaningSummary.readyRowCount}</strong>
-              <span>Ready rows</span>
+              <span>{t("Ready rows")}</span>
             </div>
             <div>
               <strong>{cleaningSummary.invalidRowCount}</strong>
-              <span>Invalid rows</span>
+              <span>{t("Invalid rows")}</span>
             </div>
             <div>
               <strong>{cleaningSummary.changedValueCount}</strong>
-              <span>Normalized values</span>
+              <span>{t("Normalized values")}</span>
             </div>
           </div>
 
           {cleaningSummary.issueCount > 0 ? (
             <Notice role="alert" tone="error">
-              <strong>
-                Correct {cleaningSummary.issueCount} source {cleaningSummary.issueCount === 1 ? "issue" : "issues"}
+              <strong>{t("Correct")}{cleaningSummary.issueCount}{t(" ")}{t("source")}{t(" ")}{cleaningSummary.issueCount === 1 ? "issue" : "issues"}
               </strong>
-              <p>
-                Edit the affected rows below, replace a value in
-                several rows, or exclude entries you do not want to
-                import. Your changes are validated before you can continue.
-              </p>
+              <p>{t("Edit the affected rows below, replace a value in several rows, or exclude entries you do not want to import. Your changes are validated before you can continue.")}</p>
             </Notice>
           ) : (
             <Notice role="status" tone="success">
@@ -2068,14 +1972,8 @@ export function ImportWorkspace({
         >
           <div className="import-section-heading">
             <div>
-              <h2 id="matching-heading">
-                5. Match catalog wines
-              </h2>
-              <p>
-                Producer, cuvée, vintage, color, and bottle
-                format form the conservative wine identity.
-                Appellation and area are supporting metadata.
-              </p>
+              <h2 id="matching-heading">{t("5. Match catalog wines")}</h2>
+              <p>{t("Producer, cuvée, vintage, color, and bottle format form the conservative wine identity. Appellation and area are supporting metadata.")}</p>
             </div>
             <span className="import-section-heading__status">
               {catalogIsLoading
@@ -2089,59 +1987,45 @@ export function ImportWorkspace({
           </div>
 
           {catalogIsLoading ? (
-            <Notice role="status">
-              Checking the synchronized catalog for the active
-              household…
-            </Notice>
+            <Notice role="status">{t("Checking the synchronized catalog for the active household…")}</Notice>
           ) : catalogError ? (
             <Notice role="alert" tone="error">
-              <strong>Unable to check the wine catalog</strong>
+              <strong>{t("Unable to check the wine catalog")}</strong>
               <p>{String(catalogError)}</p>
             </Notice>
           ) : (
             <>
               <div
-                aria-label="Wine matching summary"
+                aria-label={t("Wine matching summary")}
                 className="import-matching-summary"
               >
                 <div>
                   <strong>{matchingSummary.totalRowCount}</strong>
-                  <span>Total rows</span>
+                  <span>{t("Total rows")}</span>
                 </div>
                 <div>
                   <strong>{matchingSummary.existingRowCount}</strong>
-                  <span>Existing matches</span>
+                  <span>{t("Existing matches")}</span>
                 </div>
                 <div>
                   <strong>{matchingSummary.newRowCount}</strong>
-                  <span>New rows</span>
+                  <span>{t("New rows")}</span>
                 </div>
                 <div>
                   <strong>{matchingSummary.ambiguousRowCount}</strong>
-                  <span>Ambiguous rows</span>
+                  <span>{t("Ambiguous rows")}</span>
                 </div>
               </div>
 
-              <p className="import-matching-display-note">
-                Showing {displayedMatchingResults.length} of {matchingSummary.totalRowCount} rows. Ambiguous rows appear first; matching is read-only.
-              </p>
+              <p className="import-matching-display-note">{t("Showing")}{displayedMatchingResults.length}{t(" ")}{t("of")}{t(" ")}{matchingSummary.totalRowCount}{t("rows. Ambiguous rows appear first; matching is read-only.")}</p>
 
               {matchingSummary.ambiguousRowCount > 0 ? (
                 <Notice role="alert" tone="warning">
-                  <strong>
-                    Resolve {matchingSummary.ambiguousRowCount} ambiguous {matchingSummary.ambiguousRowCount === 1 ? "row" : "rows"} before import
-                  </strong>
-                  <p>
-                    Every exact catalog candidate is shown below.
-                    Explicit candidate selection will be added in
-                    the issue-resolution step.
-                  </p>
+                  <strong>{t("Resolve")}{matchingSummary.ambiguousRowCount}{t(" ")}{t("ambiguous")}{t(" ")}{matchingSummary.ambiguousRowCount === 1 ? "row" : "rows"}{t("before import")}</strong>
+                  <p>{t("Every exact catalog candidate is shown below. Explicit candidate selection will be added in the issue-resolution step.")}</p>
                 </Notice>
               ) : (
-                <Notice role="status" tone="success">
-                  Every source row is classified as an existing or
-                  new wine.
-                </Notice>
+                <Notice role="status" tone="success">{t("Every source row is classified as an existing or new wine.")}</Notice>
               )}
 
               <div className="import-matching-list">
@@ -2155,8 +2039,7 @@ export function ImportWorkspace({
                     >
                       <header>
                         <div>
-                          <strong>
-                            Source record {row.recordNumber}
+                          <strong>{t("Source record")}{row.recordNumber}
                           </strong>
                           <span>
                             {sourceLineLabel(
@@ -2176,23 +2059,23 @@ export function ImportWorkspace({
 
                       <dl className="import-matching-card__identity">
                         <div>
-                          <dt>Producer</dt>
+                          <dt>{t("Producer")}</dt>
                           <dd>{row.fields.producer}</dd>
                         </div>
                         <div>
-                          <dt>Cuvée</dt>
+                          <dt>{t("Cuvée")}</dt>
                           <dd>{row.fields.cuvee}</dd>
                         </div>
                         <div>
-                          <dt>Vintage</dt>
+                          <dt>{t("Vintage")}</dt>
                           <dd>{row.fields.vintage ?? "NV"}</dd>
                         </div>
                         <div>
-                          <dt>Color</dt>
+                          <dt>{t("Color")}</dt>
                           <dd>{row.fields.color}</dd>
                         </div>
                         <div>
-                          <dt>Bottle format</dt>
+                          <dt>{t("Bottle format")}</dt>
                           <dd>
                             {formatWineVolume(
                               row.fields.formatMl ?? 0,
@@ -2218,13 +2101,13 @@ export function ImportWorkspace({
                         </p>
                         <dl className="import-matching-card__metadata">
                           <div>
-                            <dt>Source appellation</dt>
+                            <dt>{t("Source appellation")}</dt>
                             <dd>
                               {row.fields.appellation ?? "Empty"}
                             </dd>
                           </div>
                           <div>
-                            <dt>Source area</dt>
+                            <dt>{t("Source area")}</dt>
                             <dd>
                               {row.fields.area ?? "Empty"}
                             </dd>
@@ -2244,20 +2127,20 @@ export function ImportWorkspace({
                                 </strong>
                                 <dl>
                                   <div>
-                                    <dt>Appellation</dt>
+                                    <dt>{t("Appellation")}</dt>
                                     <dd>
                                       {candidate.appellation ??
                                         "Empty"}
                                     </dd>
                                   </div>
                                   <div>
-                                    <dt>Area</dt>
+                                    <dt>{t("Area")}</dt>
                                     <dd>
                                       {candidate.area ?? "Empty"}
                                     </dd>
                                   </div>
                                   <div>
-                                    <dt>Reference ID</dt>
+                                    <dt>{t("Reference ID")}</dt>
                                     <dd>{candidate.id}</dd>
                                   </div>
                                 </dl>
@@ -2283,15 +2166,8 @@ export function ImportWorkspace({
         >
           <div className="import-section-heading">
             <div>
-              <h2 id="storage-heading">
-                6. Reconcile storage and quantity
-              </h2>
-              <p>
-                Cellar and location names are matched inside the
-                active household. Quantities are aggregated by
-                location and compared with current occupancy and
-                optional configured capacity.
-              </p>
+              <h2 id="storage-heading">{t("6. Reconcile storage and quantity")}</h2>
+              <p>{t("Cellar and location names are matched inside the active household. Quantities are aggregated by location and compared with current occupancy and optional configured capacity.")}</p>
             </div>
             <span className="import-section-heading__status">
               {storageIsLoading
@@ -2305,81 +2181,63 @@ export function ImportWorkspace({
           </div>
 
           {storageIsLoading ? (
-            <Notice role="status">
-              Checking synchronized cellars, locations, holdings,
-              and capacities…
-            </Notice>
+            <Notice role="status">{t("Checking synchronized cellars, locations, holdings, and capacities…")}</Notice>
           ) : storageError ? (
             <Notice role="alert" tone="error">
-              <strong>Unable to check cellar storage</strong>
+              <strong>{t("Unable to check cellar storage")}</strong>
               <p>{String(storageError)}</p>
             </Notice>
           ) : (
             <>
               <div
-                aria-label="Storage reconciliation summary"
+                aria-label={t("Storage reconciliation summary")}
                 className="import-storage-summary"
               >
                 <div>
                   <strong>{storageSummary.totalBottleCount}</strong>
-                  <span>Total bottles</span>
+                  <span>{t("Total bottles")}</span>
                 </div>
                 <div>
                   <strong>
                     {storageSummary.assignedBottleCount}
                   </strong>
-                  <span>Assigned bottles</span>
+                  <span>{t("Assigned bottles")}</span>
                 </div>
                 <div>
                   <strong>{storageSummary.readyRowCount - catalogOnlyStorageRows}</strong>
-                  <span>Stocked rows assigned</span>
+                  <span>{t("Stocked rows assigned")}</span>
                 </div>
                 <div>
                   <strong>
                     {storageSummary.unresolvedRowCount}
                   </strong>
-                  <span>Unresolved rows</span>
+                  <span>{t("Unresolved rows")}</span>
                 </div>
               </div>
 
-              {catalogOnlyStorageRows > 0 ? <p>{catalogOnlyStorageRows} catalog-only rows need no storage and add no bottles.</p> : null}
-              <p className="import-storage-display-note">
-                Showing {displayedStorageResults.length} of {storageSummary.totalRowCount} rows. Unresolved storage and capacity warnings appear first; source context is unchanged.
-              </p>
+              {catalogOnlyStorageRows > 0 ? <p>{catalogOnlyStorageRows}{t(" ")}{t("catalog-only rows need no storage and add no bottles.")}</p> : null}
+              <p className="import-storage-display-note">{t("Showing")}{displayedStorageResults.length}{t(" ")}{t("of")}{t(" ")}{storageSummary.totalRowCount}{t("rows. Unresolved storage and capacity warnings appear first; source context is unchanged.")}</p>
 
               {storageSummary.unresolvedRowCount > 0 ? (
                 <Notice role="alert" tone="warning">
-                  <strong>
-                    Assign storage for {storageSummary.unresolvedRowCount} {storageSummary.unresolvedRowCount === 1 ? "row" : "rows"} before import
-                  </strong>
-                  <p>
-                    You do not need to leave the import or create every cellar beforehand.
-                    In step 8, review the grouped destinations and confirm which cellars and locations to create or reuse.
-                  </p>
-                  <button type="button" onClick={() => window.document.getElementById("import-storage-groups")?.scrollIntoView?.({ behavior: "smooth", block: "start" })}>Review storage groups</button>
+                  <strong>{t("Assign storage for")}{storageSummary.unresolvedRowCount} {storageSummary.unresolvedRowCount === 1 ? "row" : "rows"}{t("before import")}</strong>
+                  <p>{t("You do not need to leave the import or create every cellar beforehand. In step 8, review the grouped destinations and confirm which cellars and locations to create or reuse.")}</p>
+                  <button type="button" onClick={() => window.document.getElementById("import-storage-groups")?.scrollIntoView?.({ behavior: "smooth", block: "start" })}>{t("Review storage groups")}</button>
                 </Notice>
               ) : (
-                <Notice role="status" tone="success">
-                  Every stocked row has an active cellar and location.
-                  Catalog-only rows need no storage.
-                </Notice>
+                <Notice role="status" tone="success">{t("Every stocked row has an active cellar and location. Catalog-only rows need no storage.")}</Notice>
               )}
 
               {storageSummary.capacityWarningLocationCount > 0 ? (
                 <Notice role="status" tone="warning">
-                  <strong>
-                    Review {storageSummary.capacityWarningLocationCount} capacity {storageSummary.capacityWarningLocationCount === 1 ? "warning" : "warnings"}
+                  <strong>{t("Review")}{storageSummary.capacityWarningLocationCount}{t(" ")}{t("capacity")}{t(" ")}{storageSummary.capacityWarningLocationCount === 1 ? "warning" : "warnings"}
                   </strong>
-                  <p>
-                    Capacity is an advisory setup value. The
-                    projected totals include current bottles plus
-                    every matched row in this file.
-                  </p>
+                  <p>{t("Capacity is an advisory setup value. The projected totals include current bottles plus every matched row in this file.")}</p>
                 </Notice>
               ) : null}
 
               <details className="import-storage-details">
-                <summary>Inspect row-level storage details ({displayedStorageResults.length} of {storageSummary.totalRowCount})</summary>
+                <summary>{t("Inspect row-level storage details (")}{displayedStorageResults.length}{t(" ")}{t("of")}{t(" ")}{storageSummary.totalRowCount})</summary>
               <div className="import-storage-list">
                 {displayedStorageResults.map((result) => {
                   const hasWarning = result.issues.some(
@@ -2400,8 +2258,7 @@ export function ImportWorkspace({
                     >
                       <header>
                         <div>
-                          <strong>
-                            Source record {result.row.recordNumber}
+                          <strong>{t("Source record")}{result.row.recordNumber}
                           </strong>
                           <span>
                             {sourceLineLabel(
@@ -2442,19 +2299,19 @@ export function ImportWorkspace({
 
                       <dl className="import-storage-card__values">
                         <div>
-                          <dt>Source cellar</dt>
+                          <dt>{t("Source cellar")}</dt>
                           <dd>
                             {result.row.fields.cellar ?? "Empty"}
                           </dd>
                         </div>
                         <div>
-                          <dt>Source location</dt>
+                          <dt>{t("Source location")}</dt>
                           <dd>
                             {result.row.fields.location ?? "Empty"}
                           </dd>
                         </div>
                         <div>
-                          <dt>Matched storage</dt>
+                          <dt>{t("Matched storage")}</dt>
                           <dd>
                             {result.cellar && result.location
                               ? `${result.cellar.name} / ${result.location.code}`
@@ -2462,7 +2319,7 @@ export function ImportWorkspace({
                           </dd>
                         </div>
                         <div>
-                          <dt>Row quantity</dt>
+                          <dt>{t("Row quantity")}</dt>
                           <dd>{result.quantity ?? "Invalid"}</dd>
                         </div>
                       </dl>
@@ -2470,22 +2327,22 @@ export function ImportWorkspace({
                       {result.location ? (
                         <dl className="import-storage-card__occupancy">
                           <div>
-                            <dt>Current</dt>
+                            <dt>{t("Current")}</dt>
                             <dd>{result.currentBottleCount}</dd>
                           </div>
                           <span aria-hidden="true">+</span>
                           <div>
-                            <dt>This file</dt>
+                            <dt>{t("This file")}</dt>
                             <dd>{result.importBottleCount}</dd>
                           </div>
                           <span aria-hidden="true">=</span>
                           <div>
-                            <dt>Projected</dt>
+                            <dt>{t("Projected")}</dt>
                             <dd>{result.projectedBottleCount}</dd>
                           </div>
                           <span aria-hidden="true">/</span>
                           <div>
-                            <dt>Capacity</dt>
+                            <dt>{t("Capacity")}</dt>
                             <dd>
                               {result.location.capacity ?? "Not set"}
                             </dd>
@@ -2507,9 +2364,7 @@ export function ImportWorkspace({
           <button
             onClick={() => setPreparationExpanded(false)}
             type="button"
-          >
-            Collapse preparation stages
-          </button>
+          >{t("Collapse preparation stages")}</button>
         </div>
       ) : null}
         </>
@@ -2522,14 +2377,8 @@ export function ImportWorkspace({
         >
           <div className="import-section-heading">
             <div>
-              <h2 id="final-preview-heading">
-                7. Review detected issues
-              </h2>
-              <p>
-                This first preview preserves the decisions found
-                from the source file. Blocking rows are shown here and
-                resolved explicitly in the next stage.
-              </p>
+              <h2 id="final-preview-heading">{t("7. Review detected issues")}</h2>
+              <p>{t("This first preview preserves the decisions found from the source file. Blocking rows are shown here and resolved explicitly in the next stage.")}</p>
             </div>
             <span className="import-section-heading__status">
               {initialImportPreviewSummary.blockedRowCount > 0
@@ -2539,47 +2388,32 @@ export function ImportWorkspace({
           </div>
 
           <div
-            aria-label="Initial import preview summary"
+            aria-label={t("Initial import preview summary")}
             className="import-checkpoint-summary"
           >
             <span>
-              <strong>{initialImportPreviewSummary.totalBottleCount}</strong> bottles
-            </span>
+              <strong>{initialImportPreviewSummary.totalBottleCount}</strong>{t("bottles")}</span>
             <span>
-              <strong>{initialImportPreviewSummary.newWineCount}</strong> new wines
-            </span>
+              <strong>{initialImportPreviewSummary.newWineCount}</strong>{t("new wines")}</span>
             <span>
-              <strong>{initialImportPreviewSummary.existingWineCount}</strong> existing wines
-            </span>
+              <strong>{initialImportPreviewSummary.existingWineCount}</strong>{t("existing wines")}</span>
             <span>
-              <strong>{initialImportPreviewSummary.destinationCount}</strong> destinations
-            </span>
+              <strong>{initialImportPreviewSummary.destinationCount}</strong>{t("destinations")}</span>
             <span>
-              <strong>{initialImportPreviewSummary.blockedRowCount}</strong> blocked rows
-            </span>
+              <strong>{initialImportPreviewSummary.blockedRowCount}</strong>{t("blocked rows")}</span>
           </div>
 
           {initialImportPreviewSummary.blockedRowCount > 0 ? (
             <Notice role="alert" tone="warning">
-              <strong>
-                Resolve {initialImportPreviewSummary.blockedRowCount} {initialImportPreviewSummary.blockedRowCount === 1 ? "row" : "rows"} before import
-              </strong>
-              <p>
-                No catalog candidate or destination is selected
-                silently. Every blocker has a decision control in
-                stage 8 below.
-              </p>
+              <strong>{t("Resolve")}{initialImportPreviewSummary.blockedRowCount} {initialImportPreviewSummary.blockedRowCount === 1 ? "row" : "rows"}{t("before import")}</strong>
+              <p>{t("No catalog candidate or destination is selected silently. Every blocker has a decision control in stage 8 below.")}</p>
             </Notice>
           ) : (
-            <Notice role="status" tone="success">
-              All rows were resolved directly from the source file and
-              synchronized cellar data.
-            </Notice>
+            <Notice role="status" tone="success">{t("All rows were resolved directly from the source file and synchronized cellar data.")}</Notice>
           )}
 
           <details className="import-all-preview-rows">
-            <summary>
-              Review the complete first preview ({displayedInitialPreviewRows.length} {displayedInitialPreviewRows.length === 1 ? "row" : "rows"})
+            <summary>{t("Review the complete first preview (")}{displayedInitialPreviewRows.length} {displayedInitialPreviewRows.length === 1 ? "row" : "rows"})
             </summary>
             <div className="import-final-preview-list">
               {displayedInitialPreviewRows.map((result) => (
@@ -2600,15 +2434,8 @@ export function ImportWorkspace({
         >
           <div className="import-section-heading">
             <div>
-              <h2 id="resolution-heading">
-                8. Resolve import issues
-              </h2>
-              <p>
-                Choose only the decisions the source file could not make
-                safely. Selections update the second preview
-                without writing bottles. Creating a destination
-                explicitly saves only its cellar setup.
-              </p>
+              <h2 id="resolution-heading">{t("8. Resolve import issues")}</h2>
+              <p>{t("Choose only the decisions the source file could not make safely. Selections update the second preview without writing bottles. Creating a destination explicitly saves only its cellar setup.")}</p>
             </div>
             <span className="import-section-heading__status">
               {resolutionIsComplete
@@ -2634,13 +2461,10 @@ export function ImportWorkspace({
           />
 
           {rowsNeedingResolution.length === 0 ? (
-            <Notice role="status" tone="success">
-              No manual decisions are required. The resolved
-              preview is ready for review.
-            </Notice>
+            <Notice role="status" tone="success">{t("No manual decisions are required. The resolved preview is ready for review.")}</Notice>
           ) : (
             <details className="import-storage-details" open={rowsNeedingResolution.some((row) => row.wineMatch?.classification === "ambiguous")}>
-              <summary>Review individual rows and exceptions ({rowsNeedingResolution.length})</summary>
+              <summary>{t("Review individual rows and exceptions (")}{rowsNeedingResolution.length})</summary>
             <div className="import-resolution-list">
               {rowsNeedingResolution.map((result) => {
                 const recordNumber = result.row.recordNumber
@@ -2664,8 +2488,7 @@ export function ImportWorkspace({
                         <strong>
                           {result.row.fields.producer} — {result.row.fields.cuvee}
                         </strong>
-                        <span>
-                          Source record {recordNumber}
+                        <span>{t("Source record")}{recordNumber}
                           <span aria-hidden="true"> · </span>
                           {result.row.fields.quantity} {result.row.fields.quantity === 1 ? "bottle" : "bottles"}
                         </span>
@@ -2698,11 +2521,8 @@ export function ImportWorkspace({
 
                     {needsWine ? (
                       <fieldset>
-                        <legend>Catalog reference</legend>
-                        <p>
-                          Choose the existing wine represented by
-                          this source row.
-                        </p>
+                        <legend>{t("Catalog reference")}</legend>
+                        <p>{t("Choose the existing wine represented by this source row.")}</p>
                         <div className="import-resolution-candidates">
                           {result.wineMatch?.candidates.map(
                             (candidate) => (
@@ -2737,7 +2557,7 @@ export function ImportWorkspace({
                                     {candidate.appellation ?? "No appellation"}
                                   </strong>
                                   <small>
-                                    {candidate.area ?? "No area"} · Reference {candidate.id}
+                                    {candidate.area ?? "No area"}{t(" ")}{t("· Reference")}{t(" ")}{candidate.id}
                                   </small>
                                 </span>
                               </label>
@@ -2749,7 +2569,7 @@ export function ImportWorkspace({
 
                     {needsStorage ? (
                       <label className="import-resolution-destination">
-                        <span>Destination</span>
+                        <span>{t("Destination")}</span>
                         <select
                           disabled={importIsLocked}
                           onChange={(event) => {
@@ -2771,22 +2591,19 @@ export function ImportWorkspace({
                             resolutionSelections.locationIdByRecord[recordNumber] ?? ""
                           }
                         >
-                          <option value="">
-                            Choose an active location
-                          </option>
+                          <option value="">{t("Choose an active location")}</option>
                           {storageOptions.map(
                             ({ cellar, location }) => (
                               <option
                                 key={location.id}
                                 value={location.id}
                               >
-                                {cellar.name} / {location.code} · {location.bottle_count} current · capacity {location.capacity ?? "not set"}
+                                {cellar.name} / {location.code} · {location.bottle_count}{t(" ")}{t("current · capacity")}{t(" ")}{location.capacity ?? "not set"}
                               </option>
                             ),
                           )}
                         </select>
-                        <small>
-                          Source value: {result.row.fields.cellar ?? "Empty"} / {result.row.fields.location ?? "Empty"}
+                        <small>{t("Source value:")}{result.row.fields.cellar ?? "Empty"} / {result.row.fields.location ?? "Empty"}
                         </small>
                       </label>
                     ) : null}
@@ -2806,14 +2623,8 @@ export function ImportWorkspace({
         >
           <div className="import-section-heading">
             <div>
-              <h2 id="resolved-preview-heading">
-                9. Review the resolved preview
-              </h2>
-              <p>
-                Confirm the final wine, destination, and quantity
-                plan produced after issue resolution. The next
-                stage writes this complete plan as one transaction.
-              </p>
+              <h2 id="resolved-preview-heading">{t("9. Review the resolved preview")}</h2>
+              <p>{t("Confirm the final wine, destination, and quantity plan produced after issue resolution. The next stage writes this complete plan as one transaction.")}</p>
             </div>
             <span className="import-section-heading__status">
               {resolutionIsComplete
@@ -2823,63 +2634,54 @@ export function ImportWorkspace({
           </div>
 
           <div
-            aria-label="Resolved import preview summary"
+            aria-label={t("Resolved import preview summary")}
             className="import-final-preview-summary"
           >
             <div>
               <strong>{resolvedImportPreviewSummary.totalBottleCount}</strong>
-              <span>Total bottles</span>
+              <span>{t("Total bottles")}</span>
             </div>
             <div>
               <strong>{resolvedImportPreviewSummary.readyBottleCount}</strong>
-              <span>Ready bottles</span>
+              <span>{t("Ready bottles")}</span>
             </div>
             <div>
               <strong>{resolvedImportPreviewSummary.newWineCount}</strong>
-              <span>New wines</span>
+              <span>{t("New wines")}</span>
             </div>
             <div>
               <strong>{resolvedImportPreviewSummary.existingWineCount}</strong>
-              <span>Existing wines</span>
+              <span>{t("Existing wines")}</span>
             </div>
             <div>
               <strong>{resolvedImportPreviewSummary.destinationCount}</strong>
-              <span>Destinations</span>
+              <span>{t("Destinations")}</span>
             </div>
             {resolvedImportPreviewSummary.catalogOnlyRowCount > 0 ? <div>
               <strong>{resolvedImportPreviewSummary.catalogOnlyRowCount}</strong>
-              <span>Catalog-only rows · no stock change</span>
+              <span>{t("Catalog-only rows · no stock change")}</span>
             </div> : null}
             <div>
               <strong>{resolvedImportPreviewSummary.blockedRowCount}</strong>
-              <span>Blocked rows</span>
+              <span>{t("Blocked rows")}</span>
             </div>
           </div>
 
           {resolutionIsComplete ? (
             <Notice role="status" tone="success">
-              <strong>The resolved import plan is complete</strong>
-              <p>
-                Review the compact rows below. No bottles have been
-                imported.
-              </p>
+              <strong>{t("The resolved import plan is complete")}</strong>
+              <p>{t("Review the compact rows below. No bottles have been imported.")}</p>
             </Notice>
           ) : (
-            <Notice role="alert" tone="warning">
-              Complete every decision in stage 8 before import can
-              proceed.
-            </Notice>
+            <Notice role="alert" tone="warning">{t("Complete every decision in stage 8 before import can proceed.")}</Notice>
           )}
 
           {resolvedImportPreviewSummary.warningLocationCount > 0 ? (
             <Notice role="status" tone="warning">
-              {resolvedImportPreviewSummary.warningLocationCount} destination {resolvedImportPreviewSummary.warningLocationCount === 1 ? "has" : "have"} an advisory capacity warning. These rows remain ready.
-            </Notice>
+              {resolvedImportPreviewSummary.warningLocationCount}{t(" ")}{t("destination")}{t(" ")}{resolvedImportPreviewSummary.warningLocationCount === 1 ? "has" : "have"}{t("an advisory capacity warning. These rows remain ready.")}</Notice>
           ) : null}
 
-          <p className="import-final-preview-display-note">
-            Showing {displayedResolvedPreviewRows.length} of {resolvedImportPreviewSummary.totalRowCount} rows. Blockers and warnings appear first; details stay collapsed by default.
-          </p>
+          <p className="import-final-preview-display-note">{t("Showing")}{displayedResolvedPreviewRows.length}{t(" ")}{t("of")}{t(" ")}{resolvedImportPreviewSummary.totalRowCount}{t("rows. Blockers and warnings appear first; details stay collapsed by default.")}</p>
 
           <div className="import-final-preview-list">
             {displayedResolvedPreviewRows.map((result) => (
@@ -2898,9 +2700,7 @@ export function ImportWorkspace({
           className="import-result-panel"
         >
           <div>
-            <h2 id="import-result-heading">
-              10. Confirm and import
-            </h2>
+            <h2 id="import-result-heading">{t("10. Confirm and import")}</h2>
             <p id="import-confirmation-readiness">
               {importConfirmationBlocker?.message ??
                 (resolvedImportPreviewSummary.warningLocationCount > 0
@@ -2920,14 +2720,10 @@ export function ImportWorkspace({
 
           {commitError ? (
             <Notice role="alert" tone="error">
-              <strong>Import cannot continue yet</strong>
+              <strong>{t("Import cannot continue yet")}</strong>
               <p>{commitError}</p>
               {commitPlan ? (
-                <p>
-                  The original receipt is locked. Retry this same
-                  plan so a lost response cannot add the import
-                  twice.
-                </p>
+                <p>{t("The original receipt is locked. Retry this same plan so a lost response cannot add the import twice.")}</p>
               ) : null}
             </Notice>
           ) : null}
@@ -2935,15 +2731,12 @@ export function ImportWorkspace({
           {confirmationIsOpen && commitPlan ? (
             <div className="import-confirmation">
               <div>
-                <h3>Final confirmation</h3>
-                <p>
-                  This will add {commitPlan.rows.reduce((total, row) => total + row.quantity, 0)} {commitPlan.rows.reduce((total, row) => total + row.quantity, 0) === 1 ? "bottle" : "bottles"} across {commitPlan.rows.length} source {commitPlan.rows.length === 1 ? "row" : "rows"}. It may create {new Set(commitPlan.rows.filter((row) => row.wineAction === "create").map((row) => row.requestedWineId)).size} catalog {new Set(commitPlan.rows.filter((row) => row.wineAction === "create").map((row) => row.requestedWineId)).size === 1 ? "wine" : "wines"}.
+                <h3>{t("Final confirmation")}</h3>
+                <p>{t("This will add")} {commitPlan.rows.reduce((total, row) => total + row.quantity, 0)} {commitPlan.rows.reduce((total, row) => total + row.quantity, 0) === 1 ? t("bottle") : t("bottles")} {t("across")} {commitPlan.rows.length} {t("source")} {commitPlan.rows.length === 1 ? t("row") : t("rows")}{t(". It may create")} {new Set(commitPlan.rows.filter((row) => row.wineAction === "create").map((row) => row.requestedWineId)).size} {t("catalog")} {new Set(commitPlan.rows.filter((row) => row.wineAction === "create").map((row) => row.requestedWineId)).size === 1 ? t("wine") : t("wines")}.
                 </p>
-                {commitPlan.rows.some((row) => row.quantity === 0) ? <p>{commitPlan.rows.filter((row) => row.quantity === 0).length} catalog-only rows add or match wines without adding bottles or changing existing stock.</p> : null}
+                {commitPlan.rows.some((row) => row.quantity === 0) ? <p>{commitPlan.rows.filter((row) => row.quantity === 0).length}{t(" ")}{t("catalog-only rows add or match wines without adding bottles or changing existing stock.")}</p> : null}
                 <p>
-                  {excludedRecords.size} source rows are excluded. The included batch succeeds or rolls back. It
-                  does not replace or remove existing bottles.
-                </p>
+                  {excludedRecords.size} {t("source rows are excluded. The included batch succeeds or rolls back. It does not replace or remove existing bottles.")}</p>
               </div>
 
               <label className="import-confirmation__acknowledgement">
@@ -2957,10 +2750,7 @@ export function ImportWorkspace({
                   }
                   type="checkbox"
                 />
-                <span>
-                  I reviewed the wines, destinations, quantities,
-                  and any capacity warnings above.
-                </span>
+                <span>{t("I reviewed the wines, destinations, quantities, and any capacity warnings above.")}</span>
               </label>
 
               <div className="import-confirmation__actions">
@@ -2971,9 +2761,7 @@ export function ImportWorkspace({
                     setConfirmationAccepted(false)
                   }}
                   type="button"
-                >
-                  Back to preview
-                </button>
+                >{t("Back to preview")}</button>
                 <button
                   disabled={
                     !confirmationAccepted || isCommitting
@@ -3000,38 +2788,30 @@ export function ImportWorkspace({
           className="import-complete-panel"
         >
           <div>
-            <h2 id="import-complete-heading">
-              Import complete
-            </h2>
-            <p>
-              The complete spreadsheet batch was committed. Inventory and
-              catalog views will update as synchronization arrives.
-            </p>
+            <h2 id="import-complete-heading">{t("Import complete")}</h2>
+            <p>{t("The complete spreadsheet batch was committed. Inventory and catalog views will update as synchronization arrives.")}</p>
           </div>
 
           <Notice role="status" tone="success">
             <strong>
-              {commitResult.importedBottleCount} {commitResult.importedBottleCount === 1 ? "bottle" : "bottles"} imported
-            </strong>
+              {commitResult.importedBottleCount} {commitResult.importedBottleCount === 1 ? "bottle" : "bottles"}{t("imported")}</strong>
             <p>
-              {commitResult.importedRowCount} source {commitResult.importedRowCount === 1 ? "row" : "rows"} · {commitResult.createdWineCount} new {commitResult.createdWineCount === 1 ? "wine" : "wines"} · {commitResult.reusedWineCount} reused {commitResult.reusedWineCount === 1 ? "wine" : "wines"}
+              {commitResult.importedRowCount}{t(" ")}{t("source")}{t(" ")}{commitResult.importedRowCount === 1 ? "row" : "rows"} · {commitResult.createdWineCount}{t(" ")}{t("new")}{t(" ")}{commitResult.createdWineCount === 1 ? "wine" : "wines"} · {commitResult.reusedWineCount}{t(" ")}{t("reused")}{t(" ")}{commitResult.reusedWineCount === 1 ? "wine" : "wines"}
             </p>
           </Notice>
 
           <dl className="import-complete-panel__receipt">
             <div>
-              <dt>Import receipt</dt>
+              <dt>{t("Import receipt")}</dt>
               <dd>{commitResult.importId}</dd>
             </div>
             <div>
-              <dt>File</dt>
+              <dt>{t("File")}</dt>
               <dd>{fileName ?? "Spreadsheet import"}</dd>
             </div>
           </dl>
 
-          <button onClick={resetImport} type="button">
-            Import another file
-          </button>
+          <button onClick={resetImport} type="button">{t("Import another file")}</button>
         </section>
       ) : null}
         </>

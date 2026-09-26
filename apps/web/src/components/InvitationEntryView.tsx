@@ -8,6 +8,7 @@ import {
 } from "../data/householdInvitations"
 import { LoginForm } from "./LoginForm"
 import { Notice } from "./Notice"
+import { useLanguage } from "../i18n/useLanguage"
 
 interface InvitationEntryViewProps {
   hasAuthenticatedSession: boolean
@@ -38,6 +39,7 @@ export function InvitationEntryView({
   token,
   userId,
 }: InvitationEntryViewProps) {
+  const { t } = useLanguage()
   const [preview, setPreview] =
     useState<HouseholdInvitationPreview | null>(null)
   const [accepted, setAccepted] =
@@ -118,21 +120,14 @@ export function InvitationEntryView({
   if (accepted) {
     return (
       <main className="standalone-page invitation-entry">
-        <h1>Household joined</h1>
-        <Notice role="status" tone="success">
-          You are now a Member of {accepted.householdName}.
+        <h1>{t("Household joined")}</h1>
+        <Notice role="status" tone="success">{t("You are now a Member of")}{accepted.householdName}.
         </Notice>
-        <p>
-          Members can browse wines, quantities, and locations, use
-          pairing advice, and keep their own notes and preferences.
-          Only an Owner can change the shared cellar.
-        </p>
+        <p>{t("Members can browse wines, quantities, and locations, use pairing advice, and keep their own notes and preferences. Only an Owner can change the shared cellar.")}</p>
         <button
           onClick={() => window.location.replace("/")}
           type="button"
-        >
-          Open CellarManager
-        </button>
+        >{t("Open CellarManager")}</button>
       </main>
     )
   }
@@ -140,8 +135,8 @@ export function InvitationEntryView({
   if (isLoading) {
     return (
       <main className="standalone-page invitation-entry">
-        <h1>Household invitation</h1>
-        <Notice role="status">Checking invitation…</Notice>
+        <h1>{t("Household invitation")}</h1>
+        <Notice role="status">{t("Checking invitation…")}</Notice>
       </main>
     )
   }
@@ -149,10 +144,8 @@ export function InvitationEntryView({
   if (!isOnline) {
     return (
       <main className="standalone-page invitation-entry">
-        <h1>Household invitation</h1>
-        <Notice role="status" tone="warning">
-          Reconnect to review and accept this invitation.
-        </Notice>
+        <h1>{t("Household invitation")}</h1>
+        <Notice role="status" tone="warning">{t("Reconnect to review and accept this invitation.")}</Notice>
       </main>
     )
   }
@@ -160,14 +153,12 @@ export function InvitationEntryView({
   if (error || !preview) {
     return (
       <main className="standalone-page invitation-entry">
-        <h1>Invitation unavailable</h1>
+        <h1>{t("Invitation unavailable")}</h1>
         <Notice role="alert" tone="error">
           {error ??
-            "This invitation link is invalid or no longer available."}
+            t("This invitation link is invalid or no longer available.")}
         </Notice>
-        <button onClick={leaveInvitation} type="button">
-          Continue to CellarManager
-        </button>
+        <button onClick={leaveInvitation} type="button">{t("Continue to CellarManager")}</button>
       </main>
     )
   }
@@ -182,13 +173,11 @@ export function InvitationEntryView({
 
     return (
       <main className="standalone-page invitation-entry">
-        <h1>Invitation unavailable</h1>
+        <h1>{t("Invitation unavailable")}</h1>
         <Notice role="status" tone="warning">
           {statusMessage}
         </Notice>
-        <button onClick={leaveInvitation} type="button">
-          Continue to CellarManager
-        </button>
+        <button onClick={leaveInvitation} type="button">{t("Continue to CellarManager")}</button>
       </main>
     )
   }
@@ -209,22 +198,17 @@ export function InvitationEntryView({
 
   return (
     <main className="standalone-page invitation-entry">
-      <h1>Join {preview.householdName}</h1>
+      <h1>{t("Join")}{t(" ")}{preview.householdName}</h1>
       <section className="invitation-entry__summary">
-        <h2>Household invitation</h2>
-        <p>
-          You were invited as a <strong>Member</strong>. Members
-          can view the shared cellar, use pairing advice, and keep
-          their own notes and preferences. Bottle changes, imports,
-          cellar setup, and household access are reserved for Owners.
-        </p>
+        <h2>{t("Household invitation")}</h2>
+        <p>{t("You were invited as a")}<strong>{t("Member")}</strong>{t(". Members can view the shared cellar, use pairing advice, and keep their own notes and preferences. Bottle changes, imports, cellar setup, and household access are reserved for Owners.")}</p>
         <dl>
           <div>
-            <dt>Invited email</dt>
+            <dt>{t("Invited email")}</dt>
             <dd>{preview.emailHint}</dd>
           </div>
           <div>
-            <dt>Expires</dt>
+            <dt>{t("Expires")}</dt>
             <dd>{formatDate(preview.expiresAt)}</dd>
           </div>
         </dl>
@@ -232,9 +216,7 @@ export function InvitationEntryView({
 
       {preview.accountMatches === false ? (
         <Notice role="alert" tone="warning">
-          <p>
-            This invitation belongs to another email address.
-            Sign out, then use the invited account ({preview.emailHint}).
+          <p>{t("This invitation belongs to another email address. Sign out, then use the invited account (")}{preview.emailHint}).
           </p>
           <button
             disabled={isSigningOut}
@@ -259,9 +241,7 @@ export function InvitationEntryView({
             disabled={isAccepting}
             onClick={leaveInvitation}
             type="button"
-          >
-            Not now
-          </button>
+          >{t("Not now")}</button>
         </div>
       )}
 

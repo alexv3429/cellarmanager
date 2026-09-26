@@ -17,6 +17,7 @@ import {
 } from "../data/inventoryProjection"
 import { getHouseholdMaturityOverview } from "../data/wineMaturity"
 import { Notice } from "./Notice"
+import { useLanguage } from "../i18n/useLanguage"
 
 const EXPORT_WINES_QUERY = `
   select
@@ -137,6 +138,7 @@ export function CsvExportPanel({
   householdId: string
   isOnline: boolean
 }) {
+  const { t } = useLanguage()
   const {
     data: wines,
     error: winesError,
@@ -293,36 +295,31 @@ export function CsvExportPanel({
     >
       <div className="csv-export-panel__heading">
         <div>
-          <h2 id="csv-export-heading">Export cellar</h2>
-          <p>
-            Download a readable Excel workbook of your wines, bottle
-            quantities, and storage locations. CSV remains available
-            when you need it.
-          </p>
+          <h2 id="csv-export-heading">{t("Export cellar")}</h2>
+          <p>{t("Download a readable Excel workbook of your wines, bottle quantities, and storage locations. CSV remains available when you need it.")}</p>
         </div>
       </div>
 
       {queryError ? (
-        <Notice role="alert" tone="error">
-          Unable to prepare the export: {errorMessage(queryError)}
+        <Notice role="alert" tone="error">{t("Unable to prepare the export:")}{errorMessage(queryError)}
         </Notice>
       ) : null}
 
       <dl className="csv-export-panel__summary">
         <div>
-          <dt>Wines</dt>
+          <dt>{t("Wines")}</dt>
           <dd>{isLoading ? "…" : wineCount}</dd>
         </div>
         <div>
-          <dt>Bottles</dt>
+          <dt>{t("Bottles")}</dt>
           <dd>{isLoading ? "…" : bottleCount}</dd>
         </div>
         <div>
-          <dt>Positions</dt>
+          <dt>{t("Positions")}</dt>
           <dd>{isLoading ? "…" : positionCount}</dd>
         </div>
         <div>
-          <dt>Queued changes</dt>
+          <dt>{t("Queued changes")}</dt>
           <dd>{isLoading ? "…" : pendingOperations.length}</dd>
         </div>
       </dl>
@@ -340,13 +337,8 @@ export function CsvExportPanel({
             type="checkbox"
           />
           <span>
-            <strong>
-              Include {zeroStockWineCount} {zeroStockWineCount === 1 ? "wine" : "wines"} with no bottles
-            </strong>
-            <small>
-              Useful for a complete catalog copy. These wines can be imported
-              again as catalog entries without adding bottles.
-            </small>
+            <strong>{t("Include")}{zeroStockWineCount} {zeroStockWineCount === 1 ? t("wine") : t("wines")}{t("with no bottles")}</strong>
+            <small>{t("Useful for a complete catalog copy. These wines can be imported again as catalog entries without adding bottles.")}</small>
           </span>
         </label>
 
@@ -362,8 +354,8 @@ export function CsvExportPanel({
             type="button"
           >
             {isLoading || isExportingXlsx
-              ? "Preparing Excel file…"
-              : "Download Excel file"}
+              ? t("Preparing Excel file…")
+              : t("Download Excel file")}
           </button>
           <button
             disabled={
@@ -374,26 +366,14 @@ export function CsvExportPanel({
             }
             onClick={exportCsv}
             type="button"
-          >
-            Download CSV instead
-          </button>
+          >{t("Download CSV instead")}</button>
         </div>
       </div>
 
-      <p className="csv-export-panel__note">
-        The file can be created offline from the latest synchronized
-        cellar, including queued changes. When connected, the Excel
-        workbook also includes a dated snapshot of your current drinking
-        windows. Rich wine details and confirmed reference IDs are
-        retained as well.
-      </p>
+      <p className="csv-export-panel__note">{t("The file can be created offline from the latest synchronized cellar, including queued changes. When connected, the Excel workbook also includes a dated snapshot of your current drinking windows. Rich wine details and confirmed reference IDs are retained as well.")}</p>
 
       {includeZeroStockWines ? (
-        <Notice tone="warning">
-          Wines with no bottles are included for catalog reference. They
-          cannot be added by the spreadsheet importer until they have a
-          positive quantity.
-        </Notice>
+        <Notice tone="warning">{t("Wines with no bottles are included for catalog reference. They cannot be added by the spreadsheet importer until they have a positive quantity.")}</Notice>
       ) : null}
 
       {exportMessage ? (

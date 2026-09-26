@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import { getHouseholdMembers, householdMemberLabel, type HouseholdMember } from "../data/householdMembers"
 import { getOwnHouseholdAccess, leaveHousehold, transferHouseholdOwnership, type OwnHouseholdAccess } from "../data/householdLifecycle"
 import { Notice } from "./Notice"
+import { useLanguage } from "../i18n/useLanguage"
 
 interface Props {
   householdId: string
@@ -15,6 +16,7 @@ interface Props {
 type Action = { kind: "leave" } | { kind: "transfer"; successor: HouseholdMember }
 
 export function HouseholdLifecycle({ householdId, householdName, self, members, disabled, onAccessChanged }: Props) {
+  const { t } = useLanguage()
   const [successorId, setSuccessorId] = useState("")
   const [action, setAction] = useState<Action | null>(null)
   const [busy, setBusy] = useState(false)
@@ -55,7 +57,7 @@ export function HouseholdLifecycle({ householdId, householdName, self, members, 
   async function checkAccess() {
     if (inFlight.current || disabled) return
     inFlight.current = true; setBusy(true)
-    try { await reconcile() } catch { if (active.current) setMessage("Your access could not be checked. Reconnect and check again; do not repeat the transfer or departure yet.") }
+    try { await reconcile() } catch { if (active.current) setMessage(t("Your access could not be checked. Reconnect and check again; do not repeat the transfer or departure yet.")) }
     finally { inFlight.current = false; if (active.current) { setBusy(false); heading.current?.focus() } }
   }
 
@@ -72,7 +74,7 @@ export function HouseholdLifecycle({ householdId, householdName, self, members, 
       if (!actor || actor.role !== self.role || (selected.kind === "transfer" && (
         actor.role !== "owner" || !successor || successor.userId !== selected.successor.userId || successor.role !== selected.successor.role
       )) || (selected.kind === "leave" && actor.role === "owner" && !fresh.some((member) => member.id !== actor.id && member.role === "owner"))) {
-        setMessage("Access changed while you were reviewing. Nothing was submitted. Use Refresh members and review again.")
+        setMessage(t("Access changed while you were reviewing. Nothing was submitted. Use Refresh members and review again."))
         return
       }
       submitted = true
@@ -97,49 +99,49 @@ export function HouseholdLifecycle({ householdId, householdName, self, members, 
   }
 
   return <section className="household-lifecycle" aria-labelledby="household-lifecycle-heading">
-    <h2 id="household-lifecycle-heading" ref={heading} tabIndex={-1}>Your access</h2>
-    <p>Change your own relationship with {householdName}. These actions never delete the shared cellar or your account.</p>
+    <h2 id="household-lifecycle-heading" ref={heading} tabIndex={-1}>{t("Your access")}</h2>
+    <p>{t("Change your own relationship with")}{t(" ")}{householdName}{t(". These actions never delete the shared cellar or your account.")}</p>
     {message ? <Notice role="status" tone="warning">{message}</Notice> : null}
-    {busy ? <p role="status">Checking your household access…</p> : null}
-    {uncertain ? <button type="button" disabled={disabled || busy} onClick={() => void checkAccess()}>Check my current access</button> : null}
+    {busy ? <p role="status">{t("Checking your household access…")}</p> : null}
+    {uncertain ? <button type="button" disabled={disabled || busy} onClick={() => void checkAccess()}>{t("Check my current access")}</button> : null}
     {!uncertain ? <div className="household-lifecycle__choices" hidden={action !== null}>
       {self.role === "owner" ? <div>
-        <h3>Transfer ownership</h3>
-        <p>Hand management to another collaborator and stay as a read-only Member. Your private notes and preferences stay with you. Other Owners remain Owners.</p>
+        <h3>{t("Transfer ownership")}</h3>
+        <p>{t("Hand management to another collaborator and stay as a read-only Member. Your private notes and preferences stay with you. Other Owners remain Owners.")}</p>
         {others.length ? <>
-          <label htmlFor="ownership-successor">New Owner</label>
+          <label htmlFor="ownership-successor">{t("New Owner")}</label>
           <select id="ownership-successor" value={successorId} disabled={disabled || busy} onChange={(event) => setSuccessorId(event.target.value)}>
-            <option value="">Choose a collaborator</option>
+            <option value="">{t("Choose a collaborator")}</option>
             {others.map((member) => <option key={member.id} value={member.id}>{householdMemberLabel(member)} · {member.role === "owner" ? "Owner" : "Member"}</option>)}
           </select>
           <button type="button" disabled={disabled || busy || !others.some((member) => member.id === successorId)} onClick={(event) => {
             const successor = others.find((member) => member.id === successorId)
             if (successor) select({ kind: "transfer", successor }, event.currentTarget)
-          }}>Review ownership transfer</button>
-        </> : <p>Invite someone first. They must accept and appear in the member list before you can transfer ownership.</p>}
+          }}>{t("Review ownership transfer")}</button>
+        </> : <p>{t("Invite someone first. They must accept and appear in the member list before you can transfer ownership.")}</p>}
       </div> : null}
       <div>
-        <h3>Leave household</h3>
-        <p>Give up access to this household. Rejoining requires a new invitation.</p>
-        {!canLeave ? <p>You are the only Owner. Transfer ownership before leaving.</p> : null}
-        <button type="button" disabled={disabled || busy || !canLeave} onClick={(event) => select({ kind: "leave" }, event.currentTarget)}>Review leaving household</button>
+        <h3>{t("Leave household")}</h3>
+        <p>{t("Give up access to this household. Rejoining requires a new invitation.")}</p>
+        {!canLeave ? <p>{t("You are the only Owner. Transfer ownership before leaving.")}</p> : null}
+        <button type="button" disabled={disabled || busy || !canLeave} onClick={(event) => select({ kind: "leave" }, event.currentTarget)}>{t("Review leaving household")}</button>
       </div>
     </div> : null}
-    {action ? <div className="household-members__confirmation" ref={confirmation} tabIndex={-1} role="region" aria-label="Confirm your access change"
+    {action ? <div className="household-members__confirmation" ref={confirmation} tabIndex={-1} role="region" aria-label={t("Confirm your access change")}
       onKeyDown={(event) => { if (event.key === "Escape") { event.preventDefault(); cancel() } }}>
       <h3>{action.kind === "transfer" ? `Transfer ownership to ${householdMemberLabel(action.successor)}?` : `Leave ${householdName}?`}</h3>
       {action.kind === "transfer" ? <>
         {action.successor.displayName && action.successor.email ? <p>{action.successor.email}</p> : null}
-        <p>They will manage stock, cellar settings and access—including yours. <strong>You will lose Owner controls and stay as a read-only Member.</strong> Only another Owner can restore your Owner role.</p>
-        <p>Your private notes and preferences are preserved. Leaving afterward is a separate decision.</p>
+        <p>{t("They will manage stock, cellar settings and access—including yours.")}{t(" ")}<strong>{t("You will lose Owner controls and stay as a read-only Member.")}</strong>{t(" ")}{t("Only another Owner can restore your Owner role.")}</p>
+        <p>{t("Your private notes and preferences are preserved. Leaving afterward is a separate decision.")}</p>
       </> : <>
-        <p><strong>Your private notes and preferences for this household will be deleted.</strong> Your registered devices will be revoked, and you will lose access immediately.</p>
-        <p>Shared notes, stock and attributed history remain. Your account and other households are unchanged. A new invitation is required to return.</p>
-        <p>Data already synchronized to an offline device may remain there until it reconnects; this is not a remote wipe.</p>
+        <p><strong>{t("Your private notes and preferences for this household will be deleted.")}</strong>{t(" ")}{t("Your registered devices will be revoked, and you will lose access immediately.")}</p>
+        <p>{t("Shared notes, stock and attributed history remain. Your account and other households are unchanged. A new invitation is required to return.")}</p>
+        <p>{t("Data already synchronized to an offline device may remain there until it reconnects; this is not a remote wipe.")}</p>
       </>}
-      <p>Sync any wanted stock changes on all your devices first. Still-queued requests may become blocked; they are never transferred to another user. You can review them in Activity.</p>
+      <p>{t("Sync any wanted stock changes on all your devices first. Still-queued requests may become blocked; they are never transferred to another user. You can review them in Activity.")}</p>
       <div className="household-members__actions">
-        <button type="button" onClick={cancel}>Cancel</button>
+        <button type="button" onClick={cancel}>{t("Cancel")}</button>
         <button type="button" onClick={() => void confirm()} disabled={disabled || busy}>{action.kind === "transfer" ? "Confirm: transfer ownership" : "Confirm: leave household"}</button>
       </div>
     </div> : null}

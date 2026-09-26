@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import type { Session } from "@supabase/supabase-js"
 import { isLanguagePreference, readLocalLanguagePreference, resolveLanguage, writeLocalLanguagePreference, type LanguagePreference } from "./language"
-import { translate, type MessageKey } from "./messages"
+import { translate } from "./messages"
 import { LanguageContext, type LanguageContextValue } from "./LanguageContext"
 
 export function LanguageProvider({ children, userId, session, isOnline }: {
@@ -57,7 +57,7 @@ export function LanguageProvider({ children, userId, session, isOnline }: {
     catch { /* Auth metadata remains the cross-device source of truth. */ }
   }, [userId])
 
-  const t = useCallback((key: MessageKey, values?: Record<string, string>) => translate(language, key, values), [language])
+  const t = useCallback((key: string, values?: Record<string, string>) => translate(language, key, values), [language])
 
   const value = useMemo<LanguageContextValue>(() => ({
     language,
