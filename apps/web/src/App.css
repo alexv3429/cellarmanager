@@ -7751,7 +7751,13 @@
   }
 
   .pairing-builder__colors > div {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.25rem), 1fr));
+  }
+
+  .app-shell__content .pairing-builder__colors label {
+    gap: 6px;
+    padding-inline: 8px;
+    white-space: nowrap;
   }
 
   .pairing-builder__sliders label {
