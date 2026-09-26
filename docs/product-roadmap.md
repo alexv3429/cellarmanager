@@ -371,8 +371,8 @@ remain data and are not silently translated.
 | Step | Scope |
 |---|---|
 | 0.6.1 | Localization foundation, browser-locale detection, and persistent per-user English/French/browser language preference — complete |
-| 0.6.2 | French translation of the complete app-owned interface and auth messages, with an automated untranslated-string coverage gate — in progress |
-| 0.6.3 | Locale-sensitive date/number formatting, accessibility review, mobile/desktop acceptance, and v0.6 readiness |
+| 0.6.2 | French translation of the complete app-owned interface and auth messages, with an automated untranslated-string coverage gate — complete |
+| 0.6.3 | Locale-sensitive date/number formatting, accessibility review, mobile/desktop acceptance, and v0.6 readiness — in progress |
 
 Step 0.6.1 introduces typed message lookup with English fallback, sets the
 document language from the effective preference, and translates the shared
@@ -396,6 +396,13 @@ User content and externally sourced wine names or advice are not translated.
 Tests cover browser-locale detection, unsupported-locale fallback, saved
 override and reset to browser language, missing French strings, and English
 fallback.
+
+Step 0.6.3 uses the saved account language for dates, times, and numeric counts
+instead of inheriting whichever locale the current browser happens to use. The
+shared formatters preserve the user's local time zone while selecting French or
+English conventions. The effective language is also kept on the document root
+for assistive technology. This step remains open until representative phone and
+desktop layouts and keyboard/screen-reader behavior have been accepted.
 
 After localization, camera, OCR, and barcode workflows extend the v0.4 provider
 boundary and feed the same normalization and candidate-resolution principles

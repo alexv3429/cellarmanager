@@ -19,6 +19,7 @@ import {
 import { buildHouseholdInvitationUrl } from "../households/invitationToken"
 import { Notice } from "./Notice"
 import { useLanguage } from "../i18n/useLanguage"
+import { formatLocalizedDateTime } from "../i18n/formatting"
 
 interface HouseholdInvitationsViewProps {
   householdId: string
@@ -48,10 +49,6 @@ function errorMessage(error: unknown): string {
     : "Unable to update household invitations"
 }
 
-function formatDate(value: string): string {
-  return new Date(value).toLocaleString()
-}
-
 function shareableInvitation(
   invitation: CreatedHouseholdInvitation,
 ): ShareableInvitation {
@@ -70,7 +67,7 @@ export function HouseholdInvitationsView({
   isOnline,
   onBackToMembers,
 }: HouseholdInvitationsViewProps) {
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
   const [email, setEmail] = useState("")
   const [invitations, setInvitations] = useState<
     HouseholdInvitation[]
@@ -279,7 +276,7 @@ export function HouseholdInvitationsView({
         >
           <h2 id="invitation-link-heading">{t("Invitation for")}{share.email}
           </h2>
-          <p>{t("Valid until")}{formatDate(share.expiresAt)}{t(". You can email or copy the same link below. After leaving this page, use the history to create a replacement.")}</p>
+          <p>{t("Valid until")}{t(" ")}{formatLocalizedDateTime(share.expiresAt, language)}{t(". You can email or copy the same link below. After leaving this page, use the history to create a replacement.")}</p>
           <label>{t("Private invitation link")}<input
               onClick={(event) => event.currentTarget.select()}
               readOnly
@@ -334,15 +331,15 @@ export function HouseholdInvitationsView({
                   >
                     {t(STATUS_LABELS[invitation.status])}
                   </span>
-                  <small>{t("Created")}{formatDate(invitation.createdAt)}
+                  <small>{t("Created")}{t(" ")}{formatLocalizedDateTime(invitation.createdAt, language)}
                     {invitation.status === "pending"
-                      ? ` · expires ${formatDate(invitation.expiresAt)}`
+                      ? ` · ${t("expires")} ${formatLocalizedDateTime(invitation.expiresAt, language)}`
                       : ""}
                   </small>
                   {deliveries.filter((delivery) => delivery.invitationId === invitation.id).map((delivery) => (
                     <small key={delivery.invitationId}>
                       {{ sending: "Email sending", sent: "Email sent", failed: "Email not sent", unconfirmed: "Email delivery unconfirmed — check the inbox before resending" }[delivery.status]}
-                      {` · ${formatDate(delivery.attemptedAt)}`}
+                      {` · ${formatLocalizedDateTime(delivery.attemptedAt, language)}`}
                     </small>
                   ))}
                 </div>

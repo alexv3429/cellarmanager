@@ -21,6 +21,7 @@ import {
 } from "../data/winePairing"
 import { Notice } from "./Notice"
 import { useLanguage } from "../i18n/useLanguage"
+import { formatLocalizedNumber } from "../i18n/formatting"
 
 interface PairingViewProps {
   householdId: string
@@ -230,7 +231,7 @@ export function PairingView({
   isOnline,
   onOpenWine,
 }: PairingViewProps) {
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
   const [dishes, setDishes] = useState<PairingDishProfile[]>([])
   const [selectedDishKey, setSelectedDishKey] = useState("")
   const [dishAttributes, setDishAttributes] =
@@ -764,14 +765,14 @@ export function PairingView({
                   </div>
 
                   <div className="pairing-result-card__locations">
-                    <strong>{suggestion.quantity}{t(" ")}{t("bottle(s) in stock")}</strong>
+                    <strong>{formatLocalizedNumber(suggestion.quantity, language)}{t(" ")}{t("bottle(s) in stock")}</strong>
                     <ul>
                       {suggestion.locations.map((location) => (
                         <li
                           key={`${location.cellar}:${location.location}`}
                         >
                           {location.cellar} / {location.location} ·{" "}
-                          {location.quantity}
+                          {formatLocalizedNumber(location.quantity, language)}
                         </li>
                       ))}
                     </ul>

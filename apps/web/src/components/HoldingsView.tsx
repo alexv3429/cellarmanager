@@ -50,6 +50,7 @@ import {
 } from "../data/powersync/inventoryOperations"
 import { Notice } from "./Notice"
 import { useLanguage } from "../i18n/useLanguage"
+import { formatLocalizedNumber } from "../i18n/formatting"
 
 interface HoldingsViewProps {
   userId: string
@@ -163,7 +164,7 @@ export function HoldingsView({
   onOpenWine,
 }: HoldingsViewProps) {
 
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
   const {
     data: authoritativeHoldings,
     error: holdingsError,
@@ -1115,15 +1116,15 @@ export function HoldingsView({
         aria-live="polite"
         className="inventory-results-summary"
       >{t("inventory.resultsSummary", {
-        shownBottles: String(visibleBottleCount),
-        totalBottles: String(totalBottleCount),
-        shownWines: String(visibleWineCount),
-        totalWines: String(totalWineCount),
-        shownPositions: String(visibleHoldings.length),
-        totalPositions: String(holdings.length),
+        shownBottles: formatLocalizedNumber(visibleBottleCount, language),
+        totalBottles: formatLocalizedNumber(totalBottleCount, language),
+        shownWines: formatLocalizedNumber(visibleWineCount, language),
+        totalWines: formatLocalizedNumber(totalWineCount, language),
+        shownPositions: formatLocalizedNumber(visibleHoldings.length, language),
+        totalPositions: formatLocalizedNumber(holdings.length, language),
         pendingOperations: pendingOperations.length === 1
           ? t("inventory.pendingOperationOne")
-          : t("inventory.pendingOperationsMany", { count: String(pendingOperations.length) }),
+          : t("inventory.pendingOperationsMany", { count: formatLocalizedNumber(pendingOperations.length, language) }),
       })}</p>
 
       {!isLoading && holdings.length === 0 ? (
@@ -1231,12 +1232,12 @@ export function HoldingsView({
                     {currentLocationLabel}
                   </div>
                   <small>
-                    {holding.quantity}{t(" ")}{t("bottle")}{holding.quantity === 1 ? "" : "s"}
+                    {formatLocalizedNumber(holding.quantity, language)}{t(" ")}{t("bottle")}{holding.quantity === 1 ? "" : "s"}
                     {holding.pending_delta !== 0 ? (
                       <span>
                         {" · "}
                         {holding.pending_delta > 0 ? "+" : ""}
-                        {holding.pending_delta}{t("pending")}</span>
+                        {formatLocalizedNumber(holding.pending_delta, language)}{t("pending")}</span>
                     ) : null}
                     {" · "}{t("Rev")}{t(" ")}{holding.revision}
                   </small>

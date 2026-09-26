@@ -69,6 +69,7 @@ import { ImportColumnSplit } from "./ImportColumnSplit"
 import { isCsvSplitConfigured, type CsvColumnSplit } from "../data/csvColumnSplit"
 import { Notice } from "./Notice"
 import { useLanguage } from "../i18n/useLanguage"
+import { formatLocalizedNumber } from "../i18n/formatting"
 
 const FILE_SIZE_LIMIT_BYTES = 20_000_000
 type CuveePreparationMode = CsvCuveeFallback["mode"]
@@ -220,7 +221,7 @@ function CompactImportPreviewCard({
 }: {
   result: CsvImportPreviewRow
 }) {
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
   const { row, storage } = result
 
   return (
@@ -322,9 +323,9 @@ function CompactImportPreviewCard({
           <div>
             <dt>{t("Projected occupancy")}</dt>
             <dd>
-              {storage?.location
-                ? t("{value1} + {value2} = {value3}", { value1: String(storage.currentBottleCount), value2: String(storage.importBottleCount), value3: String(storage.projectedBottleCount) })
-                : row.fields.quantity === 0 ? t("No stock change") : t("Unresolved")}
+              {storage?.location && storage.currentBottleCount !== null && storage.importBottleCount !== null && storage.projectedBottleCount !== null
+                ? t("{value1} + {value2} = {value3}", { value1: formatLocalizedNumber(storage.currentBottleCount, language), value2: formatLocalizedNumber(storage.importBottleCount, language), value3: formatLocalizedNumber(storage.projectedBottleCount, language) })
+                : storage?.location ? t("Unknown") : row.fields.quantity === 0 ? t("No stock change") : t("Unresolved")}
             </dd>
           </div>
           <div>
@@ -436,7 +437,7 @@ export function ImportWorkspace({
   storageIsLoading,
   storageLocations,
 }: ImportWorkspaceProps) {
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
   const [dataMode, setDataMode] = useState<
     "export" | "import"
   >("import")
@@ -2175,8 +2176,8 @@ export function ImportWorkspace({
                 : storageError
                   ? "Storage unavailable"
                   : storageSummary.unresolvedRowCount > 0
-                    ? `${storageSummary.unresolvedRowCount} ${storageSummary.unresolvedRowCount === 1 ? "row needs" : "rows need"} storage`
-                    : `${storageSummary.assignedBottleCount} bottles assigned`}
+                    ? `${formatLocalizedNumber(storageSummary.unresolvedRowCount, language)} ${storageSummary.unresolvedRowCount === 1 ? "row needs" : "rows need"} storage`
+                    : `${formatLocalizedNumber(storageSummary.assignedBottleCount, language)} bottles assigned`}
             </span>
           </div>
 
@@ -2194,17 +2195,17 @@ export function ImportWorkspace({
                 className="import-storage-summary"
               >
                 <div>
-                  <strong>{storageSummary.totalBottleCount}</strong>
+                  <strong>{formatLocalizedNumber(storageSummary.totalBottleCount, language)}</strong>
                   <span>{t("Total bottles")}</span>
                 </div>
                 <div>
                   <strong>
-                    {storageSummary.assignedBottleCount}
+                    {formatLocalizedNumber(storageSummary.assignedBottleCount, language)}
                   </strong>
                   <span>{t("Assigned bottles")}</span>
                 </div>
                 <div>
-                  <strong>{storageSummary.readyRowCount - catalogOnlyStorageRows}</strong>
+                  <strong>{formatLocalizedNumber(storageSummary.readyRowCount - catalogOnlyStorageRows, language)}</strong>
                   <span>{t("Stocked rows assigned")}</span>
                 </div>
                 <div>
@@ -2320,7 +2321,7 @@ export function ImportWorkspace({
                         </div>
                         <div>
                           <dt>{t("Row quantity")}</dt>
-                          <dd>{result.quantity ?? "Invalid"}</dd>
+                          <dd>{result.quantity === null ? "Invalid" : formatLocalizedNumber(result.quantity, language)}</dd>
                         </div>
                       </dl>
 
@@ -2328,23 +2329,23 @@ export function ImportWorkspace({
                         <dl className="import-storage-card__occupancy">
                           <div>
                             <dt>{t("Current")}</dt>
-                            <dd>{result.currentBottleCount}</dd>
+                            <dd>{result.currentBottleCount === null ? t("Unknown") : formatLocalizedNumber(result.currentBottleCount, language)}</dd>
                           </div>
                           <span aria-hidden="true">+</span>
                           <div>
                             <dt>{t("This file")}</dt>
-                            <dd>{result.importBottleCount}</dd>
+                            <dd>{result.importBottleCount === null ? t("Unknown") : formatLocalizedNumber(result.importBottleCount, language)}</dd>
                           </div>
                           <span aria-hidden="true">=</span>
                           <div>
                             <dt>{t("Projected")}</dt>
-                            <dd>{result.projectedBottleCount}</dd>
+                            <dd>{result.projectedBottleCount === null ? t("Unknown") : formatLocalizedNumber(result.projectedBottleCount, language)}</dd>
                           </div>
                           <span aria-hidden="true">/</span>
                           <div>
                             <dt>{t("Capacity")}</dt>
                             <dd>
-                              {result.location.capacity ?? "Not set"}
+                              {result.location.capacity === null ? "Not set" : formatLocalizedNumber(result.location.capacity, language)}
                             </dd>
                           </div>
                         </dl>
@@ -2392,13 +2393,13 @@ export function ImportWorkspace({
             className="import-checkpoint-summary"
           >
             <span>
-              <strong>{initialImportPreviewSummary.totalBottleCount}</strong>{t("bottles")}</span>
+              <strong>{formatLocalizedNumber(initialImportPreviewSummary.totalBottleCount, language)}</strong>{t("bottles")}</span>
             <span>
-              <strong>{initialImportPreviewSummary.newWineCount}</strong>{t("new wines")}</span>
+              <strong>{formatLocalizedNumber(initialImportPreviewSummary.newWineCount, language)}</strong>{t("new wines")}</span>
             <span>
-              <strong>{initialImportPreviewSummary.existingWineCount}</strong>{t("existing wines")}</span>
+              <strong>{formatLocalizedNumber(initialImportPreviewSummary.existingWineCount, language)}</strong>{t("existing wines")}</span>
             <span>
-              <strong>{initialImportPreviewSummary.destinationCount}</strong>{t("destinations")}</span>
+              <strong>{formatLocalizedNumber(initialImportPreviewSummary.destinationCount, language)}</strong>{t("destinations")}</span>
             <span>
               <strong>{initialImportPreviewSummary.blockedRowCount}</strong>{t("blocked rows")}</span>
           </div>
@@ -2628,8 +2629,8 @@ export function ImportWorkspace({
             </div>
             <span className="import-section-heading__status">
               {resolutionIsComplete
-                ? `${resolvedImportPreviewSummary.readyBottleCount} bottles ready`
-                : `${resolvedImportPreviewSummary.blockedRowCount} blocked`}
+                ? `${formatLocalizedNumber(resolvedImportPreviewSummary.readyBottleCount, language)} bottles ready`
+                : `${formatLocalizedNumber(resolvedImportPreviewSummary.blockedRowCount, language)} blocked`}
             </span>
           </div>
 
@@ -2638,19 +2639,19 @@ export function ImportWorkspace({
             className="import-final-preview-summary"
           >
             <div>
-              <strong>{resolvedImportPreviewSummary.totalBottleCount}</strong>
+              <strong>{formatLocalizedNumber(resolvedImportPreviewSummary.totalBottleCount, language)}</strong>
               <span>{t("Total bottles")}</span>
             </div>
             <div>
-              <strong>{resolvedImportPreviewSummary.readyBottleCount}</strong>
+              <strong>{formatLocalizedNumber(resolvedImportPreviewSummary.readyBottleCount, language)}</strong>
               <span>{t("Ready bottles")}</span>
             </div>
             <div>
-              <strong>{resolvedImportPreviewSummary.newWineCount}</strong>
+              <strong>{formatLocalizedNumber(resolvedImportPreviewSummary.newWineCount, language)}</strong>
               <span>{t("New wines")}</span>
             </div>
             <div>
-              <strong>{resolvedImportPreviewSummary.existingWineCount}</strong>
+              <strong>{formatLocalizedNumber(resolvedImportPreviewSummary.existingWineCount, language)}</strong>
               <span>{t("Existing wines")}</span>
             </div>
             <div>
@@ -2794,9 +2795,9 @@ export function ImportWorkspace({
 
           <Notice role="status" tone="success">
             <strong>
-              {commitResult.importedBottleCount} {commitResult.importedBottleCount === 1 ? "bottle" : "bottles"}{t("imported")}</strong>
+              {formatLocalizedNumber(commitResult.importedBottleCount, language)} {commitResult.importedBottleCount === 1 ? "bottle" : "bottles"}{t("imported")}</strong>
             <p>
-              {commitResult.importedRowCount}{t(" ")}{t("source")}{t(" ")}{commitResult.importedRowCount === 1 ? "row" : "rows"} · {commitResult.createdWineCount}{t(" ")}{t("new")}{t(" ")}{commitResult.createdWineCount === 1 ? "wine" : "wines"} · {commitResult.reusedWineCount}{t(" ")}{t("reused")}{t(" ")}{commitResult.reusedWineCount === 1 ? "wine" : "wines"}
+              {formatLocalizedNumber(commitResult.importedRowCount, language)}{t(" ")}{t("source")}{t(" ")}{commitResult.importedRowCount === 1 ? "row" : "rows"} · {formatLocalizedNumber(commitResult.createdWineCount, language)}{t(" ")}{t("new")}{t(" ")}{commitResult.createdWineCount === 1 ? "wine" : "wines"} · {formatLocalizedNumber(commitResult.reusedWineCount, language)}{t(" ")}{t("reused")}{t(" ")}{commitResult.reusedWineCount === 1 ? "wine" : "wines"}
             </p>
           </Notice>
 

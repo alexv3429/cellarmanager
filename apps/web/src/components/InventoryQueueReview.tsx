@@ -4,6 +4,7 @@ import { INVENTORY_REQUEST_FIELDS, getStoppedInventoryUploads, stopInventoryUplo
 import { rememberInventoryUploadReceipt } from "../data/powersync/inventoryUploadReceipts"
 import { Notice } from "./Notice"
 import { useLanguage } from "../i18n/useLanguage"
+import { formatLocalizedDateTime, formatLocalizedNumber } from "../i18n/formatting"
 
 interface Props { userId: string; householdId: string | null; isOnline: boolean; onlyWhenQueued?: boolean }
 export const QUEUE_QUERY = `
@@ -28,9 +29,9 @@ export const QUEUE_QUERY = `
   order by o.created_at_client, o.id limit 100
 `
 function errorText(error: unknown) { return error instanceof Error ? error.message : String(error) }
-function requestAction(request: QueuedInventoryRequest) {
+function requestAction(request: QueuedInventoryRequest, language: "en" | "fr") {
   const action = request.operation_type === "ADD" ? "Add" : request.operation_type === "MOVE" ? "Move" : "Remove"
-  return `${action} ${request.quantity} ${request.quantity === 1 ? "bottle" : "bottles"}`
+  return `${action} ${formatLocalizedNumber(request.quantity, language)} ${request.quantity === 1 ? "bottle" : "bottles"}`
 }
 function locations(request: QueuedInventoryRequest) {
   return [request.source_label ? `From ${request.source_label}` : null,
@@ -41,7 +42,7 @@ export function InventoryQueueReview(props: Props) {
   return <QueueWorkspace key={`${props.userId}:${props.householdId}:${props.isOnline}`} {...props} />
 }
 function QueueWorkspace({ userId, householdId, isOnline, onlyWhenQueued = false }: Props) {
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
   const { data: rows, error, isLoading } = useQuery<QueuedInventoryRequest>(QUEUE_QUERY, [userId])
   const [selected, setSelected] = useState<QueuedInventoryRequest | null>(null)
   const [busy, setBusy] = useState(false)
@@ -117,15 +118,15 @@ function QueueWorkspace({ userId, householdId, isOnline, onlyWhenQueued = false 
     {!isOnline ? <Notice tone="warning">{t("Reconnect before stopping a request. The server must first check whether it was already accepted.")}</Notice> : null}
     {!isLoading && !error && visible.length === 0 ? <p>{t("No unreviewed requests are queued on this browser.")}</p> : null}
     <ol className="inventory-queue-review__list">{visible.map((request) => <li key={request.id}>
-      <div><h3>{request.wine_label ?? "Wine request"}</h3><p><strong>{requestAction(request)}</strong> · {locations(request)}</p>
+      <div><h3>{request.wine_label ?? "Wine request"}</h3><p><strong>{requestAction(request, language)}</strong> · {locations(request)}</p>
         <p>{request.household_label ?? "Previous household"}{request.household_id !== householdId ? " · Another household" : ""} · {request.device_label ?? "Original registration"}</p>
-        <small>{t("Requested")}{t(" ")}{new Date(request.created_at_client).toLocaleString()}{t(" ")}{t("· ID")}{t(" ")}{request.id.slice(0, 8)}</small></div>
+        <small>{t("Requested")}{t(" ")}{formatLocalizedDateTime(request.created_at_client, language)}{t(" ")}{t("· ID")}{t(" ")}{request.id.slice(0, 8)}</small></div>
       <button type="button" disabled={!isOnline || busy || !!error} aria-label={`Review queued request: ${request.wine_label ?? request.id}`}
         onClick={(event) => { trigger.current = event.currentTarget; setSelected(request); setMessage(null) }}>{t("Review request")}</button>
       {selected?.id === request.id ? <div className="inventory-queue-review__confirmation" role="region" aria-label={t("Stop queued request")} tabIndex={-1} ref={panel}
         onKeyDown={(event) => { if (event.key === "Escape" && !busy) cancel() }}>
         <h3>{t("Stop this request?")}</h3>
-        <p>{requestAction(request)} · {request.wine_label} · {locations(request)}</p>
+        <p>{requestAction(request, language)} · {request.wine_label} · {locations(request)}</p>
         <p>{t("The server checks this exact ID first. If already accepted, its stock change is kept. Otherwise it is stopped permanently. The original request is retained privately; nothing is moved to another user or device.")}</p>
         <div className="inventory-recovery-actions"><button type="button" disabled={busy} onClick={cancel}>{t("Keep queued")}</button>
           <button type="button" disabled={!isOnline || busy} onClick={() => void confirm()}>{busy ? "Checking server…" : "Confirm: stop this request"}</button></div>
@@ -136,7 +137,7 @@ function QueueWorkspace({ userId, householdId, isOnline, onlyWhenQueued = false 
       <button type="button" disabled={!isOnline || busy} onClick={() => void refreshHistory()}>{t("Refresh stopped-request history")}</button>
       {!isOnline ? <p>{t("Reconnect to load the server’s private history.")}</p> : historyError ? <Notice tone="warning">{historyError}</Notice> : <>
         {history.length === 0 ? <p>{t("No stopped requests found.")}</p> : <ul>{history.map((item) => <li key={item.operation_id}>
-          <strong>{item.request.wine_label ?? "Wine request"}</strong> — {requestAction(item.request)}{t(" ")}{t("· Stopped")}{t(" ")}{new Date(item.stopped_at).toLocaleString()}
+          <strong>{item.request.wine_label ?? "Wine request"}</strong> — {requestAction(item.request, language)}{t(" ")}{t("· Stopped")}{t(" ")}{formatLocalizedDateTime(item.stopped_at, language)}
           <small>{t("Request ID:")}{t(" ")}{item.operation_id}</small>
         </li>)}</ul>}
       </>}

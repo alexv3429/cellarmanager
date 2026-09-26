@@ -28,6 +28,7 @@ import {
 } from "../data/profileReviews"
 import { Notice } from "./Notice"
 import { useLanguage } from "../i18n/useLanguage"
+import { formatLocalizedDate } from "../i18n/formatting"
 
 interface WineMaturityPanelProps {
   canManageCellar?: boolean
@@ -664,7 +665,7 @@ export function WineMaturityPanel({
 
           <details className="wine-maturity__explanation">
             <summary>{t("Why this estimate?")}</summary>
-            <p>{t("Model specificity:")}{t(projection.specificity.replaceAll("-", " "))}{t(". Calculated")}{new Date(projection.calculatedAt).toLocaleDateString(language === "fr" ? "fr-FR" : "en-US")}.
+            <p>{t("Model specificity:")}{t(projection.specificity.replaceAll("-", " "))}{t(". Calculated")}{formatLocalizedDate(projection.calculatedAt, language)}.
             </p>
             {model.contributions.length > 0 ? (
               <ol className="wine-maturity__contributions">
