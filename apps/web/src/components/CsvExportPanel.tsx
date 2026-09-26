@@ -215,13 +215,6 @@ export function CsvExportPanel({
   const wineCount = new Set(
     records.map((record) => record.wine.id),
   ).size
-  const zeroStockWineCount = wines.filter(
-    (wine) =>
-      !projectedHoldings.some(
-        (holding) =>
-          holding.wine_id === wine.id && holding.quantity > 0,
-      ),
-  ).length
   const queryError =
     winesError ??
     holdingsError ??
@@ -337,12 +330,7 @@ export function CsvExportPanel({
             type="checkbox"
           />
           <span>
-            <strong>{t(
-              zeroStockWineCount === 1
-                ? "csv.export.includeZeroStockOne"
-                : "csv.export.includeZeroStockMany",
-              { count: String(zeroStockWineCount) },
-            )}</strong>
+            <strong>{t("Include wines with no bottles")}</strong>
             <small>{t("Useful for a complete catalog copy. These wines can be imported again as catalog entries without adding bottles.")}</small>
           </span>
         </label>

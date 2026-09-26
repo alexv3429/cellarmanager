@@ -285,7 +285,7 @@ export const frenchText: Readonly<Record<string, string>> = {
   "In stock": "En stock",
   "Include": "Inclure",
   "Include all rows again": "Inclure à nouveau toutes les lignes",
-  "Include wines with no bottles": "Inclure les vins sans bouteille",
+  "Include wines with no bottles": "Inclure aussi les vins sans stock",
   "Included rows": "Lignes incluses",
   "Inspect the wine": "Examiner le vin",
   "Install app": "Installer l’application",
