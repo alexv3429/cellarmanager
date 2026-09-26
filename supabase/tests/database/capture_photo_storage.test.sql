@@ -65,6 +65,11 @@ select public.create_capture_session(
 
 select is(jsonb_array_length(response->'objects'), 2, 'Owner receives two distinct server-created upload slots') from capture_created;
 select ok((response->>'session_id') ~ '^[0-9a-f-]{36}$', 'Session ID is opaque and server generated') from capture_created;
+select ok(
+    (response->>'expires_at')::timestamptz > now()
+    and (response->>'expires_at')::timestamptz <= now() + interval '24 hours',
+    'Capture has an immutable maximum lifetime of 24 hours'
+) from capture_created;
 select ok((response->'objects'->0->>'object_name') ~ '^[0-9a-f-]{36}$', 'Upload path is an opaque UUID, not a filename') from capture_created;
 select is((select jsonb_array_length(public.list_capture_sessions('00000000-0000-4000-8000-000000000100'))), 1, 'Owner can list only their own capture summaries');
 select ok((select public.list_capture_sessions('00000000-0000-4000-8000-000000000100')::text not like '%object_name%'), 'Session listing never reveals object keys');

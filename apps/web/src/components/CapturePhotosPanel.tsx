@@ -98,7 +98,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
     try {
       await uploadCapturePhotos(householdId, files)
       setFiles([])
-      setMessage(t("Photos uploaded. They are private and will be deleted after 7 days."))
+      setMessage(t("Photos uploaded. They are private and will be deleted after 24 hours unless processed sooner."))
       await refresh()
     } catch (uploadError) {
       setFiles([])
@@ -132,7 +132,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
       <div className="capture-photos__intro">
         <div>
           <h3 id="capture-photos-title">{t("Capture label photos")}</h3>
-          <p>{t("Upload one or two label photos for a later wine-identification step. Photos stay private, are not shown or analyzed yet, and expire after 7 days. No wine or bottle is added.")}</p>
+          <p>{t("Upload one or two label photos for a later wine-identification step. Photos stay private, are not shown or analyzed yet, and expire after 24 hours. No wine or bottle is added.")}</p>
         </div>
         <button type="button" className="button-secondary" onClick={() => void refresh()} disabled={!isOnline || loading || busy}>
           {loading ? t("Loading…") : t("Refresh photos")}

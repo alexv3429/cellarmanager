@@ -130,7 +130,10 @@ receives a service key. It displays capture status and expiry, but does not
 render, download, or analyze the images. Owners can delete a capture; a
 scheduled Worker retries failed or expired deletions. Uploading a photo does
 not create a wine or change stock. Local image-byte validation, metadata
-stripping, and safe preview are reserved for step 0.6.7.
+stripping, and safe preview are reserved for step 0.6.7. Unprocessed images
+expire after 24 hours; once later processing has durably ingested extracted
+wine information into the capture draft, it should delete the source images
+immediately rather than retaining them for the draft's review period.
 
 ## Acceptance for 0.6.4
 

@@ -33,8 +33,10 @@ threat model, thresholds, deletion workflow, and implementation acceptance.
 - Validate byte signatures and decoded dimensions server-side, strip metadata,
   re-encode a bounded sanitized image, and delete the original after successful
   normalization.
-- Delete assets and raw extraction immediately on terminal review; expire
-  unfinished captures after seven days with a server-side cleanup job. A
+- Delete source and normalized images as soon as extracted wine information is
+  durably ingested into the capture draft; expire unprocessed captures after
+  24 hours with a server-side cleanup job. Delete raw extraction immediately
+  on terminal review. A
   cancellation denies access first, then deletes through the Storage API.
 - Do not retain a permanent cellar photo library or send an image to an
   external recognizer until the provider's security, rights, training, and

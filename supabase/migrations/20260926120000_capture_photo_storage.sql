@@ -34,11 +34,11 @@ create table private.capture_sessions (
     state text not null default 'uploading'
         check (state in ('uploading', 'ready', 'deletion_pending')),
     created_at timestamptz not null default now(),
-    expires_at timestamptz not null default (now() + interval '7 days'),
+    expires_at timestamptz not null default (now() + interval '24 hours'),
     cleanup_attempts integer not null default 0 check (cleanup_attempts >= 0),
     cleanup_retry_after timestamptz,
     reserved_bytes bigint not null check (reserved_bytes between 1 and 27262976),
-    check (expires_at <= created_at + interval '7 days')
+    check (expires_at <= created_at + interval '24 hours')
 );
 
 create index capture_sessions_owner_state_idx
@@ -177,7 +177,7 @@ as $$
 declare
     v_actor uuid := (select auth.uid());
     v_session_id uuid := gen_random_uuid();
-    v_expires_at timestamptz := now() + interval '7 days';
+    v_expires_at timestamptz := now() + interval '24 hours';
     v_image_count integer;
     v_reserved_bytes bigint;
     v_active_count integer;
