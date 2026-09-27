@@ -17,9 +17,11 @@ vi.mock("./supabase", () => ({
 
 import {
   CAPTURE_PHOTO_MAX_BYTES,
+  listCaptureOcrResult,
   listCapturePhotoSessions,
   listPreparedCapturePhotos,
   processCapturePhotoSession,
+  saveCaptureOcrResult,
   uploadCapturePhotos,
   validateCapturePhotoFiles,
 } from "./capturePhotos"
@@ -95,10 +97,14 @@ describe("temporary label photo upload", () => {
     rpc.mockResolvedValueOnce({ data: [
       { session_id: sessionId, state: "processing", created_at: "2026-09-27T10:00:00Z", expires_at: "2026-09-28T10:00:00Z", photo_count: 1 },
       { session_id: "f47ac10b-58cc-4372-a567-0e02b2c3d479", state: "processed", created_at: "2026-09-27T09:00:00Z", expires_at: "2026-09-28T09:00:00Z", photo_count: 1 },
+      { session_id: "c56a4180-65aa-42ec-a945-5fd21dec0538", state: "recognized", created_at: "2026-09-27T08:00:00Z", expires_at: "2026-09-28T08:00:00Z", photo_count: 0 },
+      { session_id: "a987fbc9-4bed-4078-8f07-9141ba07c9f3", state: "ocr_deletion_pending", created_at: "2026-09-27T07:00:00Z", expires_at: "2026-09-28T07:00:00Z", photo_count: 1 },
     ], error: null })
     await expect(listCapturePhotoSessions("household-1")).resolves.toMatchObject([
       { sessionId, state: "processing" },
       { state: "processed" },
+      { state: "recognized", photoCount: 0 },
+      { state: "ocr_deletion_pending" },
     ])
   })
 
@@ -125,5 +131,70 @@ describe("temporary label photo upload", () => {
       headers: { "content-type": "application/json", authorization: "Bearer session-token" },
       body: JSON.stringify({ sessionId, objectName }),
     }))
+  })
+
+  it("stores a validated private transcript before deleting the exact private photo", async () => {
+    rpc.mockResolvedValueOnce({ data: { state: "ocr_deletion_pending", object_names: [objectName] }, error: null })
+    rpc.mockResolvedValueOnce({ data: {
+      session_id: sessionId,
+      language_code: "fra+eng",
+      engine_version: "7.0.0",
+      recognized_pages: [{ text: "Domaine Exemple 2022", confidence: 89 }],
+      created_at: "2026-09-27T10:00:00Z",
+    }, error: null })
+    rpc.mockResolvedValueOnce({ data: true, error: null })
+
+    await expect(saveCaptureOcrResult(sessionId, [{
+      objectName,
+      text: "Domaine Exemple 2022",
+      confidence: 89,
+    }])).resolves.toEqual({
+      state: "recognized",
+      pages: [{ text: "Domaine Exemple 2022", confidence: 89 }],
+    })
+
+    expect(rpc).toHaveBeenNthCalledWith(1, "complete_capture_ocr", {
+      p_session_id: sessionId,
+      p_language_code: "fra+eng",
+      p_engine_version: "7.0.0",
+      p_pages: [{ object_name: objectName, text: "Domaine Exemple 2022", confidence: 89 }],
+    })
+    expect(rpc).toHaveBeenNthCalledWith(2, "list_capture_ocr_result", { p_session_id: sessionId })
+    expect(remove).toHaveBeenCalledWith([objectName])
+    expect(rpc).toHaveBeenNthCalledWith(3, "complete_capture_cleanup", { p_session_id: sessionId })
+  })
+
+  it("keeps the saved text visible and reports pending cleanup if photo deletion fails", async () => {
+    rpc.mockResolvedValueOnce({ data: { state: "ocr_deletion_pending", object_names: [objectName] }, error: null })
+    rpc.mockResolvedValueOnce({ data: {
+      session_id: sessionId,
+      recognized_pages: [{ text: "Domaine Exemple", confidence: 89 }],
+    }, error: null })
+    remove.mockResolvedValueOnce({ data: null, error: { message: "Storage temporarily unavailable" } })
+
+    await expect(saveCaptureOcrResult(sessionId, [{
+      objectName,
+      text: "Domaine Exemple",
+      confidence: 89,
+    }])).resolves.toEqual({
+      state: "ocr_deletion_pending",
+      pages: [{ text: "Domaine Exemple", confidence: 89 }],
+    })
+    expect(rpc).toHaveBeenCalledTimes(2)
+  })
+
+  it("validates private OCR results before rendering them", async () => {
+    rpc.mockResolvedValueOnce({ data: {
+      session_id: sessionId,
+      recognized_pages: [{ object_name: objectName, text: "Domaine Exemple", confidence: 89 }],
+    }, error: null })
+    await expect(listCaptureOcrResult(sessionId)).resolves.toEqual({
+      pages: [{ text: "Domaine Exemple", confidence: 89 }],
+    })
+
+    rpc.mockResolvedValueOnce({ data: {
+      recognized_pages: [{ text: "", confidence: 0 }],
+    }, error: null })
+    await expect(listCaptureOcrResult(sessionId)).rejects.toMatchObject({ kind: "ocr" })
   })
 })

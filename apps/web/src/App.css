@@ -2839,6 +2839,7 @@
 
 .capture-photos h3,
 .capture-photos h4,
+.capture-photos h5,
 .capture-photos p {
   margin: 0;
 }
@@ -2912,6 +2913,28 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface);
+}
+
+.capture-photos__ocr-progress,
+.capture-photos__recognized {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.capture-photos__ocr-progress progress {
+  width: 100%;
+  accent-color: var(--accent, #8e4357);
+}
+
+.capture-photos__recognized pre {
+  margin: 6px 0 14px;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  font: inherit;
 }
 
 .capture-photos__offline,

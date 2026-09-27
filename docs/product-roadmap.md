@@ -12,7 +12,7 @@ crosses a milestone boundary.
 | `v0.3` | A cellar can live safely in CellarManager through daily manual use or guarded CSV import | Released (`v0.3.0`) |
 | `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable evidence | Released (`v0.4.0`) |
 | `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | Released (`v0.5.0`) |
-| `v0.6` | The app is usable in English or French, and adding or identifying wine requires dramatically less typing | In progress (0.6.1–0.6.6 complete; 0.6.7 in progress) |
+| `v0.6` | The app is usable in English or French, and adding or identifying wine requires dramatically less typing | In progress (0.6.1–0.6.7 complete; 0.6.8 in progress) |
 | `v0.7` | CellarManager explains what happened to the cellar and what the collection means over time | Planned |
 | `v1.0` | A self-host can install, trust, upgrade, recover, and maintain CellarManager for years | Planned |
 
@@ -423,8 +423,8 @@ and [ADR 005](adr/005-capture-assisted-wine-entry.md).
 | 0.6.4 | Capture architecture extending the v0.4 enrichment boundary — complete |
 | 0.6.5 | Image/storage security model — complete |
 | 0.6.6 | Owner-only mobile photo capture and private temporary upload — complete |
-| 0.6.7 | Safe image preparation, metadata removal, and private preview — in progress |
-| 0.6.8 | OCR |
+| 0.6.7 | Safe image preparation, metadata removal, and private preview — complete |
+| 0.6.8 | Same-origin, on-device French/English OCR; keep only private short-lived text and delete the photo after it is safely saved — in progress |
 | 0.6.9 | Structured wine-field extraction |
 | 0.6.10 | Human review and correction workflow |
 | 0.6.11 | Existing-wine candidate matching |
@@ -453,9 +453,12 @@ orientation, composites transparency on white, scales the long edge to at most
 2,400 px, and re-encodes a metadata-free JPEG. A trusted Worker independently
 decodes and re-encodes the upload, verifies the private derivative, and removes
 the uploaded object through the Storage API before making the derivative
-available for an authenticated preview. The derivative is private and expires
-after 24 hours. No photo is sent to an external recognizer, and the workflow
-still creates no wine, bottle, or inventory record.
+available for an authenticated preview. Step 0.6.8 runs French/English OCR in
+a browser worker with version-pinned runtime files served from the app's own
+origin; model files are not precached by the PWA and no image is sent to an
+external recognizer. After text is saved in the private capture draft, the
+photo is deleted; any text and any photo not yet read expire within 24 hours.
+The workflow still creates no wine, bottle, or inventory record.
 
 ## v0.7 — History, purchases, value, and insights
 

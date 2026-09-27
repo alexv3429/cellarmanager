@@ -17,6 +17,8 @@ build/
 coverage/
 .wrangler/
 .provider-trials/
+apps/web/public/ocr/1.0.0/
+apps/web/public/ocr/7.0.0/
 
 *.log
 .DS_Store
