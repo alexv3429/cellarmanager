@@ -9,6 +9,8 @@ alter table private.capture_sessions
 alter table private.capture_assets
     drop constraint capture_assets_state_check;
 alter table private.capture_assets
+    drop constraint capture_assets_check;
+alter table private.capture_assets
     add column normalized_object_name text unique,
     add constraint capture_assets_state_check
     check (state in ('reserved', 'uploaded', 'processing', 'processed')),
