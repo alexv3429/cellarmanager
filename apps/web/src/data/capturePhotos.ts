@@ -4,7 +4,7 @@ export const CAPTURE_PHOTO_BUCKET = "capture-labels"
 export const CAPTURE_PHOTO_MAX_BYTES = 6 * 1024 * 1024
 export const CAPTURE_PHOTO_MAX_COUNT = 2
 
-export type CapturePhotoErrorKind = "invalid" | "limit" | "permission" | "offline" | "upload" | "delete"
+export type CapturePhotoErrorKind = "invalid" | "dimensions" | "processing" | "limit" | "permission" | "offline" | "upload" | "delete"
 
 export class CapturePhotoError extends Error {
   readonly kind: CapturePhotoErrorKind
@@ -18,7 +18,7 @@ export class CapturePhotoError extends Error {
 
 export interface CapturePhotoSession {
   sessionId: string
-  state: "uploading" | "ready" | "deletion_pending"
+  state: "uploading" | "ready" | "processing" | "processed" | "deletion_pending"
   createdAt: string
   expiresAt: string
   photoCount: number
@@ -34,6 +34,22 @@ interface CaptureCreateResponse {
   expires_at: string
   objects: CaptureUploadObject[]
 }
+
+export interface PreparedCapturePhoto {
+  blob: Blob
+  objectName: string
+}
+
+interface PhotoProcessingOptions {
+  accessToken?: string
+  fetch?: typeof fetch
+}
+
+interface UploadCapturePhotoOptions extends PhotoProcessingOptions {
+  prepareImage?: (file: File) => Promise<File>
+}
+
+const OBJECT_KEY_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 function isPlainRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value)
@@ -98,7 +114,7 @@ export async function listCapturePhotoSessions(
   return data.flatMap((item): CapturePhotoSession[] => {
     if (!isPlainRecord(item)
         || typeof item.session_id !== "string"
-        || !["uploading", "ready", "deletion_pending"].includes(String(item.state))
+        || !["uploading", "ready", "processing", "processed", "deletion_pending"].includes(String(item.state))
         || typeof item.created_at !== "string"
         || typeof item.expires_at !== "string"
         || typeof item.photo_count !== "number") return []
@@ -110,6 +126,96 @@ export async function listCapturePhotoSessions(
       photoCount: item.photo_count,
     }]
   })
+}
+
+async function currentAccessToken(accessToken?: string): Promise<string> {
+  if (accessToken) return accessToken
+  const { data, error } = await supabase.auth.getSession()
+  if (error || !data.session?.access_token) throw new CapturePhotoError("permission")
+  return data.session.access_token
+}
+
+export async function processCapturePhotoSession(
+  sessionId: string,
+  options: PhotoProcessingOptions = {},
+): Promise<"processed" | "processing"> {
+  const token = await currentAccessToken(options.accessToken)
+  let response: Response
+  try {
+    response = await (options.fetch ?? fetch)("/api/capture/process", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ sessionId }),
+    })
+  } catch {
+    throw new CapturePhotoError("processing")
+  }
+  let result: unknown
+  try {
+    result = await response.json()
+  } catch {
+    throw new CapturePhotoError("processing")
+  }
+  if (!response.ok || !isPlainRecord(result)) {
+    if (isPlainRecord(result) && result.error === "invalid_photo") throw new CapturePhotoError("invalid")
+    throw new CapturePhotoError("processing")
+  }
+  if (result.status === "processed") return "processed"
+  if (result.status === "processing") return "processing"
+  throw new CapturePhotoError("processing")
+}
+
+export async function listPreparedCapturePhotos(
+  sessionId: string,
+  options: PhotoProcessingOptions = {},
+): Promise<PreparedCapturePhoto[]> {
+  const { data, error } = await supabase.rpc("list_capture_processed_assets", {
+    p_session_id: sessionId,
+  })
+  if (error || !Array.isArray(data) || data.length < 1 || data.length > CAPTURE_PHOTO_MAX_COUNT) {
+    throw new CapturePhotoError("permission")
+  }
+
+  const assets = data.map((item) => {
+    if (!isPlainRecord(item) || typeof item.object_name !== "string"
+        || !OBJECT_KEY_PATTERN.test(item.object_name) || item.content_type !== "image/jpeg"
+        || !Number.isSafeInteger(item.size_bytes) || Number(item.size_bytes) < 1
+        || Number(item.size_bytes) > 5 * 1024 * 1024) {
+      throw new CapturePhotoError("processing")
+    }
+    return { objectName: item.object_name, size: Number(item.size_bytes) }
+  })
+  const token = await currentAccessToken(options.accessToken)
+  const fetcher = options.fetch ?? fetch
+  const results = await Promise.all(assets.map(async (asset) => {
+    let response: Response
+    try {
+      response = await fetcher("/api/capture/preview", {
+        method: "POST",
+        cache: "no-store",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ sessionId, objectName: asset.objectName }),
+      })
+    } catch {
+      throw new CapturePhotoError("offline")
+    }
+    if (!response.ok || response.headers.get("content-type")?.split(";")[0] !== "image/jpeg"
+        || !response.headers.get("cache-control")?.includes("no-store")) {
+      throw new CapturePhotoError("permission")
+    }
+    const blob = await response.blob()
+    if (blob.type !== "image/jpeg" || blob.size !== asset.size || blob.size > 5 * 1024 * 1024) {
+      throw new CapturePhotoError("processing")
+    }
+    return { objectName: asset.objectName, blob }
+  }))
+  return results
 }
 
 async function closeAndDeleteCapture(sessionId: string): Promise<void> {
@@ -135,27 +241,36 @@ async function closeAndDeleteCapture(sessionId: string): Promise<void> {
 export async function uploadCapturePhotos(
   householdId: string,
   files: readonly File[],
-): Promise<void> {
+  options: UploadCapturePhotoOptions = {},
+): Promise<{ sessionId: string; status: "processed" | "processing" }> {
   const validationError = validateCapturePhotoFiles(files)
   if (validationError) throw new CapturePhotoError(validationError)
 
+  const { prepareCapturePhotoFile } = await import("./capturePhotoImage")
+  const preparedFiles: File[] = []
+  for (const file of files) {
+    preparedFiles.push(await (options.prepareImage ?? prepareCapturePhotoFile)(file))
+  }
+  const preparedValidation = validateCapturePhotoFiles(preparedFiles)
+  if (preparedValidation) throw new CapturePhotoError(preparedValidation)
+
   const { data: created, error: createError } = await supabase.rpc("create_capture_session", {
     p_household_id: householdId,
-    p_assets: files.map((file) => ({
+    p_assets: preparedFiles.map((file) => ({
       content_type: file.type,
       size_bytes: file.size,
     })),
   })
   if (createError) throw mapRpcError(createError, "upload")
   const session = asCreateResponse(created)
-  if (session.objects.length !== files.length) {
+  if (session.objects.length !== preparedFiles.length) {
     await closeAndDeleteCapture(session.session_id).catch(() => undefined)
     throw new CapturePhotoError("upload")
   }
 
   try {
-    for (let index = 0; index < files.length; index += 1) {
-      const file = files[index]
+    for (let index = 0; index < preparedFiles.length; index += 1) {
+      const file = preparedFiles[index]
       const object = session.objects[index]
       if (!file || !object || file.type !== object.content_type) {
         throw new CapturePhotoError("upload")
@@ -187,6 +302,9 @@ export async function uploadCapturePhotos(
     if (error instanceof CapturePhotoError) throw error
     throw new CapturePhotoError("upload")
   }
+
+  const status = await processCapturePhotoSession(session.session_id, options)
+  return { sessionId: session.session_id, status }
 }
 
 export async function deleteCapturePhotoSession(sessionId: string): Promise<void> {

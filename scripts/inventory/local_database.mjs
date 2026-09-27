@@ -78,7 +78,7 @@ export async function createLocalDatabase() {
       `Apply pending migrations to LOCAL Supabase first: ${missing.join(", ")}`)
     const schema = await processCommand([
       ...docker, "exec", container, "pg_dump", "-U", "postgres", "-d", "postgres",
-      "--schema-only", "--schema=public", "--schema=private", "--schema=auth",
+      "--schema-only", "--schema=public", "--schema=private", "--schema=auth", "--schema=capture_guard",
     ], "").done
     await psql("postgres", `CREATE DATABASE "${name}" TEMPLATE template0;`).done
     created = true

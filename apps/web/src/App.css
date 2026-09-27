@@ -2883,9 +2883,35 @@
 }
 
 .capture-photos__session {
+  display: grid;
+  gap: 12px;
   padding: 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
+}
+
+.capture-photos__session-info,
+.capture-photos__session-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.capture-photos__preview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: 12px;
+}
+
+.capture-photos__preview img {
+  width: 100%;
+  max-height: 28rem;
+  object-fit: contain;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
 }
 
 .capture-photos__offline,
@@ -4468,7 +4494,12 @@
   }
 
   .capture-photos__intro,
-  .capture-photos__session {
+  .capture-photos__session-info {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .capture-photos__session-actions {
     align-items: stretch;
     flex-direction: column;
   }
@@ -4476,6 +4507,10 @@
   .capture-photos__intro > button,
   .capture-photos__selection > button,
   .capture-photos__session > button {
+    width: 100%;
+  }
+
+  .capture-photos__session-actions > button {
     width: 100%;
   }
 

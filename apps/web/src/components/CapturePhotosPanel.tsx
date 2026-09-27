@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 import {
   CapturePhotoError,
   deleteCapturePhotoSession,
+  listPreparedCapturePhotos,
   listCapturePhotoSessions,
+  processCapturePhotoSession,
   validateCapturePhotoFiles,
   uploadCapturePhotos,
   type CapturePhotoSession,
@@ -19,7 +21,9 @@ interface CapturePhotosPanelProps {
 function messageForError(error: unknown, t: (key: string) => string): string {
   if (!(error instanceof CapturePhotoError)) return t("Photo upload failed. Your cellar was not changed.")
   switch (error.kind) {
-    case "invalid": return t("Choose one or two JPEG or PNG photos, each no larger than 6 MB.")
+    case "invalid": return t("Choose one or two valid JPEG or PNG photos, each no larger than 6 MB.")
+    case "dimensions": return t("This photo is too large to prepare safely. Choose a smaller image.")
+    case "processing": return t("Photo preparation did not finish. You can retry or delete this capture.")
     case "limit": return t("The temporary photo limit has been reached. Delete an earlier capture or try again later.")
     case "permission": return t("Only the current household owner can upload these photos. Refresh your access and try again.")
     case "offline": return t("Reconnect before uploading photos. Photos are not queued offline.")
@@ -30,7 +34,9 @@ function messageForError(error: unknown, t: (key: string) => string): string {
 
 function sessionStateLabel(session: CapturePhotoSession, t: (key: string) => string): string {
   switch (session.state) {
-    case "ready": return t("Photos stored privately; image processing is not available yet.")
+    case "ready": return t("Ready to prepare privately")
+    case "processing": return t("Preparing photos…")
+    case "processed": return t("Prepared photos are private and ready for a later identification step")
     case "deletion_pending": return t("Deletion in progress")
     default: return t("Upload incomplete")
   }
@@ -44,6 +50,14 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
+  const [preview, setPreview] = useState<{ sessionId: string; urls: string[] } | null>(null)
+  const previewRef = useRef<{ sessionId: string; urls: string[] } | null>(null)
+
+  const clearPreview = useCallback(() => {
+    previewRef.current?.urls.forEach((url) => URL.revokeObjectURL(url))
+    previewRef.current = null
+    setPreview(null)
+  }, [])
 
   const refresh = useCallback(async () => {
     if (!isOnline) return
@@ -59,24 +73,32 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
   }, [householdId, isOnline, t])
 
   useEffect(() => {
+    previewRef.current?.urls.forEach((url) => URL.revokeObjectURL(url))
+    previewRef.current = null
+    setPreview(null)
     setFiles([])
     setSessions([])
     setMessage("")
     setError("")
-    if (!isOnline) return
     let active = true
-    setLoading(true)
-    void listCapturePhotoSessions(householdId)
-      .then((items) => {
-        if (active) setSessions(items)
-      })
-      .catch((loadError: unknown) => {
-        if (active) setError(messageForError(loadError, t))
-      })
-      .finally(() => {
-        if (active) setLoading(false)
-      })
-    return () => { active = false }
+    if (isOnline) {
+      setLoading(true)
+      void listCapturePhotoSessions(householdId)
+        .then((items) => {
+          if (active) setSessions(items)
+        })
+        .catch((loadError: unknown) => {
+          if (active) setError(messageForError(loadError, t))
+        })
+        .finally(() => {
+          if (active) setLoading(false)
+        })
+    }
+    return () => {
+      active = false
+      previewRef.current?.urls.forEach((url) => URL.revokeObjectURL(url))
+      previewRef.current = null
+    }
   }, [householdId, isOnline, t, userId])
 
   const chooseFiles = (chosen: FileList | null) => {
@@ -96,9 +118,11 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
     setError("")
     setMessage("")
     try {
-      await uploadCapturePhotos(householdId, files)
+      const result = await uploadCapturePhotos(householdId, files)
       setFiles([])
-      setMessage(t("Photos uploaded. They are private and will be deleted within 24 hours."))
+      setMessage(t(result.status === "processed"
+        ? "Photos are prepared privately and will be deleted within 24 hours."
+        : "Photos are still being prepared. Refresh to check their status."))
       await refresh()
     } catch (uploadError) {
       setFiles([])
@@ -109,11 +133,54 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
     }
   }
 
+  const prepare = async (sessionId: string) => {
+    setBusy(true)
+    setError("")
+    setMessage("")
+    try {
+      const status = await processCapturePhotoSession(sessionId)
+      setMessage(t(status === "processed"
+        ? "Photos are prepared privately and will be deleted within 24 hours."
+        : "Photos are still being prepared. Refresh to check their status."))
+      await refresh()
+    } catch (prepareError) {
+      setError(messageForError(prepareError, t))
+      await refresh()
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const togglePreview = async (sessionId: string) => {
+    if (previewRef.current?.sessionId === sessionId) {
+      clearPreview()
+      return
+    }
+    setBusy(true)
+    setError("")
+    setMessage("")
+    clearPreview()
+    try {
+      const photos = await listPreparedCapturePhotos(sessionId)
+      const nextPreview = {
+        sessionId,
+        urls: photos.map((photo) => URL.createObjectURL(photo.blob)),
+      }
+      previewRef.current = nextPreview
+      setPreview(nextPreview)
+    } catch (previewError) {
+      setError(messageForError(previewError, t))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const remove = async (sessionId: string) => {
     setBusy(true)
     setError("")
     setMessage("")
     try {
+      if (previewRef.current?.sessionId === sessionId) clearPreview()
       await deleteCapturePhotoSession(sessionId)
       setMessage(t("Photos deleted."))
       await refresh()
@@ -132,7 +199,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
       <div className="capture-photos__intro">
         <div>
           <h3 id="capture-photos-title">{t("Capture label photos")}</h3>
-          <p>{t("Upload one or two label photos for a later wine-identification step. Photos stay private, are not shown or analyzed yet, and expire after 24 hours. No wine or bottle is added.")}</p>
+          <p>{t("Upload one or two label photos for a later wine-identification step. Photos stay private, are safely prepared before upload, and expire after 24 hours. No wine or bottle is added.")}</p>
         </div>
         <button type="button" className="button-secondary" onClick={() => void refresh()} disabled={!isOnline || loading || busy}>
           {loading ? t("Loading…") : t("Refresh photos")}
@@ -175,7 +242,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
           <span>{t(files.length === 1 ? "1 photo selected" : "{count} photos selected", { count: String(files.length) })}</span>
           <button type="button" className="button-secondary" disabled={busy} onClick={() => setFiles([])}>{t("Clear selection")}</button>
           <button type="button" disabled={busy || !isOnline} onClick={() => void upload()}>
-            {busy ? t("Uploading…") : t("Upload photos")}
+            {busy ? t("Preparing and uploading…") : t("Prepare and upload photos")}
           </button>
         </div>
       ) : null}
@@ -188,16 +255,37 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
           <h4>{t("Temporary photo captures")}</h4>
           {sessions.map((session) => (
             <article className="capture-photos__session" key={session.sessionId}>
-              <div>
-                <strong>{sessionStateLabel(session, t)}</strong>
-                <p>{t(session.photoCount === 1 ? "1 photo" : "{count} photos", { count: String(session.photoCount) })} · {t("Expires {date}", {
-                  date: new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(new Date(session.expiresAt)),
-                })}</p>
+              <div className="capture-photos__session-info">
+                <div>
+                  <strong>{sessionStateLabel(session, t)}</strong>
+                  <p>{t(session.photoCount === 1 ? "1 photo" : "{count} photos", { count: String(session.photoCount) })} · {t("Expires {date}", {
+                    date: new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(new Date(session.expiresAt)),
+                  })}</p>
+                </div>
+                <div className="capture-photos__session-actions">
+                  {session.state === "ready" ? (
+                    <button type="button" disabled={busy || !isOnline} onClick={() => void prepare(session.sessionId)}>
+                      {busy ? t("Preparing…") : t("Prepare photos")}
+                    </button>
+                  ) : null}
+                  {session.state === "processed" ? (
+                    <button type="button" className="button-secondary" disabled={busy || !isOnline} onClick={() => void togglePreview(session.sessionId)}>
+                      {preview?.sessionId === session.sessionId ? t("Hide prepared photos") : t("View prepared photos")}
+                    </button>
+                  ) : null}
+                  {session.state !== "deletion_pending" && session.state !== "processing" ? (
+                    <button type="button" className="button-secondary" disabled={busy || !isOnline} onClick={() => void remove(session.sessionId)}>
+                      {t("Delete photos")}
+                    </button>
+                  ) : null}
+                </div>
               </div>
-              {session.state !== "deletion_pending" ? (
-                <button type="button" className="button-secondary" disabled={busy || !isOnline} onClick={() => void remove(session.sessionId)}>
-                  {t("Delete photos")}
-                </button>
+              {preview?.sessionId === session.sessionId ? (
+                <div className="capture-photos__preview">
+                  {preview.urls.map((url, index) => (
+                    <img key={url} src={url} alt={t("Prepared label photo {number}", { number: String(index + 1) })} />
+                  ))}
+                </div>
               ) : null}
             </article>
           ))}

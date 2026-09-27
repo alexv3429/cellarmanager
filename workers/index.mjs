@@ -1,6 +1,7 @@
 import { researchConfiguration, runResearchCycle } from "./researchWorker.mjs";
 import { handleInvitationEmail } from "./invitationEmail.mjs";
 import { cleanupExpiredCaptureSessions } from "./captureCleanup.mjs";
+import { handleCapturePreprocessing, handleCapturePreview } from "./capturePreprocessing.mjs";
 
 const WORKER_VERSION = "0.5.0";
 
@@ -9,6 +10,17 @@ export default {
     const url = new URL(request.url);
     if (url.pathname === "/api/household-invitations/email") {
       return handleInvitationEmail(request, env);
+    }
+    if (url.pathname === "/api/capture/process") {
+      return handleCapturePreprocessing(request, env, {
+        processImage: async (bytes, contentType) => {
+          const { preprocessCaptureImage } = await import("./captureImageRuntime.mjs");
+          return preprocessCaptureImage(bytes, contentType);
+        },
+      });
+    }
+    if (url.pathname === "/api/capture/preview") {
+      return handleCapturePreview(request, env);
     }
     if (request.method === "GET" && url.pathname === "/api/research/status") {
       const configuration = researchConfiguration(env);

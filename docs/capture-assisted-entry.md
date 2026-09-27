@@ -114,8 +114,8 @@ for 0.6.15; this step defines their place in the architecture only.
 | Step | Work enabled by this architecture |
 |---|---|
 | 0.6.5 | Decide image/storage threat model, access controls, retention/deletion, upload limits, metadata handling, and provider-data boundaries — complete; see [capture storage security](capture-storage-security.md) and [ADR 006](adr/006-capture-image-storage-security.md) |
-| 0.6.6 | Owner-only mobile camera and photo upload to private temporary storage — in progress; no recognition dependency |
-| 0.6.7 | Safe orientation, crop/resize, and image preprocessing |
+| 0.6.6 | Owner-only mobile camera and photo upload to private temporary storage — complete; no recognition dependency |
+| 0.6.7 | Safe orientation, resize, metadata removal, trusted re-encoding, and private preview — in progress |
 | 0.6.8–0.6.9 | OCR and structured field extraction through a reviewed adapter |
 | 0.6.10–0.6.12 | Human correction, conservative existing-wine matching, explicit wine selection/creation, and normal ADD |
 | 0.6.15 | Barcode scan and approved identifier lookup, converging on the same candidate review |
@@ -123,17 +123,19 @@ for 0.6.15; this step defines their place in the architecture only.
 This order deliberately establishes storage/privacy controls before upload and
 provider rights before sending images to any external recognizer.
 
-Step 0.6.6 places a temporary photo panel in the Owner-only Add bottles flow.
-It accepts one or two JPEG/PNG images up to 6 MB each, and uploads only when
-online. The browser uses authenticated Supabase Storage policies and never
-receives a service key. It displays capture status and expiry, but does not
-render, download, or analyze the images. Owners can delete a capture; a
-scheduled Worker retries failed or expired deletions. Uploading a photo does
-not create a wine or change stock. Local image-byte validation, metadata
-stripping, and safe preview are reserved for step 0.6.7. Unprocessed images
-expire after 24 hours; once later processing has durably ingested extracted
-wine information into the capture draft, it should delete the source images
-immediately rather than retaining them for the draft's review period.
+Step 0.6.6 established the temporary, Owner-only photo panel in Add bottles.
+Step 0.6.7 prepares JPEG/PNG images on-device before any upload: it checks the
+signature and pixel dimensions, applies EXIF orientation, composites
+transparency on white, resizes to a maximum 2,400 px long edge, and re-encodes
+to JPEG without carrying metadata. A Worker then independently verifies and
+re-encodes each uploaded image, confirms the private derivative was stored,
+and deletes the uploaded object through the Storage API before publishing a
+preview key. Owners may preview or delete the sanitized photo; other household
+members cannot read it. The image remains only as a short-lived input for the
+planned identification step and expires within 24 hours. No provider receives
+it, and no wine or stock is created or changed. When a later step durably
+ingests extracted fields into a draft, it should delete the photo immediately
+rather than retain it throughout the review period.
 
 ## Acceptance for 0.6.4
 
