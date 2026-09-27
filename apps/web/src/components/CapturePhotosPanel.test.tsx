@@ -4,7 +4,11 @@ import { describe, expect, it, vi } from "vitest"
 vi.mock("../data/capturePhotos", () => ({
   CapturePhotoError: class CapturePhotoError extends Error {},
   deleteCapturePhotoSession: vi.fn(),
+  listCaptureOcrResult: vi.fn(),
+  listPreparedCapturePhotos: vi.fn(),
   listCapturePhotoSessions: vi.fn(),
+  processCapturePhotoSession: vi.fn(),
+  saveCaptureOcrResult: vi.fn(),
   validateCapturePhotoFiles: vi.fn(() => null),
   uploadCapturePhotos: vi.fn(),
 }))
@@ -20,7 +24,7 @@ describe("capture photo panel", () => {
     expect(html).toContain("Capture label photos")
     expect(html).toContain('accept="image/jpeg,image/png"')
     expect(html).toContain('capture="environment"')
-    expect(html).toContain("Photos stay private")
+    expect(html).toContain("Text recognition runs on this device")
     expect(html).not.toContain("<img")
     expect(html).not.toContain("private-cellar-photo")
   })
