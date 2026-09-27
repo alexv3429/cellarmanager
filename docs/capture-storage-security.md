@@ -173,15 +173,45 @@ standard authenticated upload path. The database reserves 13 MiB per photo
 260 MiB per initiating account and 512 MiB deployment-wide. These are reserved
 capacity limits; they do not permit the client to raise the bucket limit.
 
-The browser does not persist selected `File` objects offline, show a photo
-preview, or expose original filenames. It can show the initiating Owner that a
-private capture is pending and when its 24-hour deadline expires. JPEG/PNG
-MIME metadata and byte count are checked at upload, but actual file signatures,
-decoding, dimensions, and metadata are not trusted until 0.6.7. Therefore this
-step cannot preview, analyze, or transmit an image. Owner cancellation first
-sets `deletion_pending`; the Storage API removes the exact reserved keys, and a
-15-minute scheduled Worker retries failures and expired captures before the
-database releases their storage reservation.
+The browser does not persist selected `File` objects offline, expose original
+filenames, or queue a photo for background upload. In 0.6.6, it could show the
+initiating Owner a private capture's status and expiry; the database and Worker
+enforced the 24-hour limit, owner scope, quotas, cancellation, and Storage-API
+cleanup. Image signature checks, decoding, dimension limits, metadata removal,
+and safe preview were added in 0.6.7.
+
+## 0.6.7 image preprocessing implementation boundary
+
+Before a capture session is reserved, the browser reads the selected JPEG/PNG,
+checks its signature and dimensions (at most 24 megapixels), applies embedded
+orientation, composites transparency against white, resizes to a maximum
+2,400-pixel long edge, and re-encodes to a metadata-free JPEG no larger than
+5 MiB. Only that generic-named prepared JPEG is uploaded; the original selected
+file never leaves browser memory. This client step improves privacy and mobile
+upload size, but is not trusted as the security boundary.
+
+The Worker accepts only the exact claimed object keys for the initiating Owner,
+checks byte signature and dimensions again (at most 8 megapixels per server
+decode), decodes with orientation handling, composites alpha, resizes and
+re-encodes to JPEG, and caps the derivative at 5 MiB and 2,400 px on its long
+edge. It uploads the derivative under a new opaque key, downloads it again and
+checks its exact byte count and SHA-256 digest, then deletes the uploaded object
+through the Storage API. The database only changes the session to `processed`
+when it sees the derivative metadata and confirms the source object is gone.
+An authenticated download policy grants the initiating Owner access to the
+processed derivative only; a narrowly scoped RPC provides its opaque key for
+preview. The same-origin Worker rechecks that exact key against the Owner's
+processed session and streams the JPEG with `Cache-Control: no-store`. The UI
+uses an in-memory Blob URL and revokes it when the preview is hidden, the
+account/household changes, or the panel unmounts. Member access, public URLs,
+caches, PowerSync, OCR, and third-party image services remain out of scope. A
+malformed or unprocessable image closes the capture and attempts
+Storage-API deletion; any cleanup failure stays closed and is retried by the
+15-minute cleanup Worker before the immutable 24-hour expiry.
+
+The Worker bundles the Apache-2.0 `@jsquash/jpeg`, `@jsquash/png`, and
+`@jsquash/resize` codecs as WebAssembly modules. No hosted image service or new
+provider credential is introduced.
 
 ## Required acceptance for implementation
 

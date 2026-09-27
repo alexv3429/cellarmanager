@@ -17,7 +17,7 @@ select ok((select allowed_mime_types = array['image/jpeg', 'image/png']::text[] 
 select ok((select count(*) = 1 from pg_policies where schemaname = 'storage' and tablename = 'objects' and policyname = 'capture_label_upload_insert'), 'Storage insert is guarded by the exact active capture key');
 select ok((select count(*) = 1 from pg_policies where schemaname = 'storage' and tablename = 'objects' and policyname = 'capture_label_upload_response_select'), 'Upload metadata reads are operation restricted');
 select ok((select count(*) = 0 from pg_policies where schemaname = 'storage' and tablename = 'objects' and policyname ilike 'capture_label%update%'), 'Capture objects cannot be updated or overwritten');
-select is((select count(*)::integer from pg_policies where schemaname = 'storage' and tablename = 'objects'), 3, 'No unmanaged Storage policy can broaden capture access');
+select is((select count(*)::integer from pg_policies where schemaname = 'storage' and tablename = 'objects'), 4, 'No unmanaged Storage policy can broaden capture access');
 
 insert into auth.users(id, email, raw_user_meta_data)
 values ('00000000-0000-4000-8000-000000009987', 'capture-member@example.test', '{}');
