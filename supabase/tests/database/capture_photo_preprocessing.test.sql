@@ -48,16 +48,19 @@ select is((select state from private.capture_sessions where id = (select (respon
 set local role authenticated;
 
 reset role;
--- Direct storage-row writes/deletes here simulate objects created/removed by
--- the Storage API; production code never edits storage.objects directly.
+-- Direct storage-row writes here simulate objects created by the Storage API.
+-- PostgreSQL intentionally blocks deletes from storage.objects, so disable its
+-- guard only inside this rollback-only test to model Storage API deletion.
 insert into storage.objects(bucket_id, name, metadata)
 select 'capture-labels',
        claim->'assets'->0->>'normalized_object_name',
        jsonb_build_object('mimetype', 'image/jpeg', 'size', 4)
 from preprocessing_claim;
+alter table storage.objects disable trigger user;
 delete from storage.objects
 where bucket_id = 'capture-labels'
   and name = (select claim->'assets'->0->>'source_object_name' from preprocessing_claim);
+alter table storage.objects enable trigger user;
 
 set local role service_role;
 set local request.jwt.claim.role = 'service_role';
@@ -108,9 +111,11 @@ select throws_ok(
 set local request.jwt.claim.sub = '00000000-0000-4000-8000-000000000001';
 select public.cancel_capture_session((select (response->>'session_id')::uuid from preprocessing_capture));
 reset role;
+alter table storage.objects disable trigger user;
 delete from storage.objects
 where bucket_id = 'capture-labels'
   and name = (select claim->'assets'->0->>'normalized_object_name' from preprocessing_claim);
+alter table storage.objects enable trigger user;
 set local role authenticated;
 set local request.jwt.claim.sub = '00000000-0000-4000-8000-000000000001';
 select is(
