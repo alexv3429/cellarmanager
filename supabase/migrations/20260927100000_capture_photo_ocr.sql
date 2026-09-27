@@ -246,13 +246,15 @@ begin
     set state = 'ocr_deletion_pending', cleanup_attempts = 0, cleanup_retry_after = null
     where id = p_session_id;
 
-    select coalesce(jsonb_agg(asset.normalized_object_name order by asset.normalized_object_name), '[]'::jsonb)
+    select coalesce(jsonb_agg(object.name order by object.name), '[]'::jsonb)
       into v_names
     from private.capture_assets asset
+    cross join lateral unnest(array[asset.object_name, asset.normalized_object_name]) candidate(name)
     join storage.objects object
       on object.bucket_id = 'capture-labels'
-     and object.name = asset.normalized_object_name
-    where asset.session_id = p_session_id;
+     and object.name = candidate.name
+    where asset.session_id = p_session_id
+      and asset.state = 'processed';
     return jsonb_build_object('state', 'ocr_deletion_pending', 'object_names', v_names);
 end;
 $$;
@@ -380,7 +382,6 @@ begin
             and (
                 session.cleanup_retry_after is null
                 or session.cleanup_retry_after <= now()
-                or session.expires_at <= now()
             )
         ) or (
             session.state in ('uploading', 'ready', 'processing', 'processed', 'recognized')
