@@ -18,6 +18,7 @@ values ('00000000-0000-4000-8000-000000000100', '00000000-0000-4000-8000-0000000
 
 create temporary table preprocessing_capture(response jsonb);
 grant select, insert on preprocessing_capture to authenticated;
+grant select on preprocessing_capture to service_role;
 create temporary table preprocessing_claim(claim jsonb);
 grant select, insert on preprocessing_claim to authenticated;
 
