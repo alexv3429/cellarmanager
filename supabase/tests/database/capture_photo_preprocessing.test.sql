@@ -103,7 +103,7 @@ set local role authenticated;
 set local request.jwt.claim.sub = '00000000-0000-4000-8000-000000009987';
 select throws_ok(
     $$select public.list_capture_processed_assets((select (response->>'session_id')::uuid from preprocessing_capture))$$,
-    '42501', 'Household owner permission is required', 'Household Members cannot view prepared label photos'
+    '42501', 'Capture is not available to this account', 'Household Members cannot view prepared label photos'
 );
 set local request.jwt.claim.sub = '00000000-0000-4000-8000-000000000001';
 select public.cancel_capture_session((select (response->>'session_id')::uuid from preprocessing_capture));
