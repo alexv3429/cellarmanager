@@ -14,7 +14,7 @@ select ok((select count(*)::integer = 4 from pg_policies where schemaname = 'sto
 insert into auth.users(id, email, raw_user_meta_data)
 values ('00000000-0000-4000-8000-000000009987', 'capture-preprocess-member@example.test', '{}');
 insert into public.household_members(household_id, user_id, role)
-values ('00000000-0000-4000-8000-000000009987', '00000000-0000-4000-8000-000000009987', 'member');
+values ('00000000-0000-4000-8000-000000000100', '00000000-0000-4000-8000-000000009987', 'member');
 
 create temporary table preprocessing_capture(response jsonb);
 grant select, insert on preprocessing_capture to authenticated;
