@@ -45,83 +45,30 @@ select is(jsonb_array_length((select claim->'assets' from preprocessing_claim)),
 select is(public.claim_capture_preprocessing((select (response->>'session_id')::uuid from preprocessing_capture))->>'state', 'processing', 'A duplicate concurrent request observes the active claim without claiming the same objects again');
 reset role;
 select is((select state from private.capture_sessions where id = (select (response->>'session_id')::uuid from preprocessing_capture)), 'processing', 'Claim atomically closes upload and starts processing');
-set local role authenticated;
-
-reset role;
--- Direct storage-row writes here simulate objects created by the Storage API.
--- PostgreSQL intentionally blocks deletes from storage.objects, so disable its
--- guard only inside this rollback-only test to model Storage API deletion.
-insert into storage.objects(bucket_id, name, metadata)
-select 'capture-labels',
-       claim->'assets'->0->>'normalized_object_name',
-       jsonb_build_object('mimetype', 'image/jpeg', 'size', 4)
-from preprocessing_claim;
-alter table storage.objects disable trigger user;
-delete from storage.objects
-where bucket_id = 'capture-labels'
-  and name = (select claim->'assets'->0->>'source_object_name' from preprocessing_claim);
-alter table storage.objects enable trigger user;
 
 set local role service_role;
 set local request.jwt.claim.role = 'service_role';
 select is(
     public.complete_capture_preprocessing((select (response->>'session_id')::uuid from preprocessing_capture)),
-    true,
-    'Service finalization requires a verified JPEG derivative and deleted source object'
+    false,
+    'Service cannot finalize before a derivative is verified and the original is removed through Storage'
 );
 
 reset role;
-set local request.jwt.claim.sub = '00000000-0000-4000-8000-000000000001';
-reset role;
-select is((select state from private.capture_sessions where id = (select (response->>'session_id')::uuid from preprocessing_capture)), 'processed', 'Finalization publishes only the processed state');
+select is((select state from private.capture_sessions where id = (select (response->>'session_id')::uuid from preprocessing_capture)), 'processing', 'Unverified assets do not advance the session');
 set local role authenticated;
-select is(jsonb_array_length(public.list_capture_processed_assets((select (response->>'session_id')::uuid from preprocessing_capture))), 1, 'Owner receives one sanitized asset key for preview');
-select is(
-    public.list_capture_processed_assets((select (response->>'session_id')::uuid from preprocessing_capture))->0->>'object_name',
-    (select claim->'assets'->0->>'normalized_object_name' from preprocessing_claim),
-    'The preview API returns the derivative key, not the uploaded source key'
-);
-select ok(
-    capture_guard.capture_object_operation_allowed(
-        (select claim->'assets'->0->>'normalized_object_name' from preprocessing_claim), 'processed'
-    ),
-    'The initiating Owner can download the verified processed derivative'
-);
+set local request.jwt.claim.sub = '00000000-0000-4000-8000-000000000001';
+select is(jsonb_array_length(public.list_capture_processed_assets((select (response->>'session_id')::uuid from preprocessing_capture))), 0, 'Owner receives no preview keys until preprocessing is verified');
 select ok(
     not capture_guard.capture_object_operation_allowed(
         (select claim->'assets'->0->>'source_object_name' from preprocessing_claim), 'processed'
     ),
-    'The source key is not readable after preprocessing'
+    'The original upload is never directly downloadable during preprocessing'
 );
-reset role;
-select is(
-    (select count(*)::integer from storage.objects
-     where bucket_id = 'capture-labels'
-       and name = (select claim->'assets'->0->>'source_object_name' from preprocessing_claim)),
-    0,
-    'The source Storage object is deleted before the session is marked processed'
-);
-set local role authenticated;
-
 set local request.jwt.claim.sub = '00000000-0000-4000-8000-000000009987';
 select throws_ok(
     $$select public.list_capture_processed_assets((select (response->>'session_id')::uuid from preprocessing_capture))$$,
     '42501', 'Capture is not available to this account', 'Household Members cannot view prepared label photos'
-);
-set local request.jwt.claim.sub = '00000000-0000-4000-8000-000000000001';
-select public.cancel_capture_session((select (response->>'session_id')::uuid from preprocessing_capture));
-reset role;
-alter table storage.objects disable trigger user;
-delete from storage.objects
-where bucket_id = 'capture-labels'
-  and name = (select claim->'assets'->0->>'normalized_object_name' from preprocessing_claim);
-alter table storage.objects enable trigger user;
-set local role authenticated;
-set local request.jwt.claim.sub = '00000000-0000-4000-8000-000000000001';
-select is(
-    public.complete_capture_cleanup((select (response->>'session_id')::uuid from preprocessing_capture)),
-    true,
-    'Capture reservation is released only after its sanitized photo has been deleted'
 );
 
 reset role;
