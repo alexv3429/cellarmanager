@@ -34,6 +34,10 @@ function messageForError(error: unknown, t: (key: string) => string): string {
     case "limit": return t("The temporary photo limit has been reached. Delete an earlier capture or try again later.")
     case "permission": return t("Only the current household owner can upload these photos. Refresh your access and try again.")
     case "offline": return t("Reconnect before uploading photos. Photos are not queued offline.")
+    case "upload_start": return t("Could not start the private photo upload. Refresh and try again. Your cellar was not changed.")
+    case "upload_transfer": return t("The photo could not be transferred. Check your connection and try again. Your cellar was not changed.")
+    case "upload_confirm": return t("The upload could not be confirmed. Refresh the photo list before retrying. Your cellar was not changed.")
+    case "refresh": return t("Could not refresh photo status. Check your connection and try again.")
     case "delete": return t("Deletion is still pending. CellarManager will retry it automatically.")
     default: return t("Photo upload failed. Your cellar was not changed.")
   }
@@ -71,14 +75,14 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
     setPreview(null)
   }, [])
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async ({ preserveError = false }: { preserveError?: boolean } = {}) => {
     if (!isOnline) return
     setLoading(true)
-    setError("")
+    if (!preserveError) setError("")
     try {
       setSessions(await listCapturePhotoSessions(householdId))
     } catch (loadError) {
-      setError(messageForError(loadError, t))
+      if (!preserveError) setError(messageForError(loadError, t))
     } finally {
       setLoading(false)
     }
@@ -142,7 +146,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
     } catch (uploadError) {
       setFiles([])
       setError(messageForError(uploadError, t))
-      await refresh()
+      await refresh({ preserveError: true })
     } finally {
       setBusy(false)
     }
@@ -160,7 +164,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
       await refresh()
     } catch (prepareError) {
       setError(messageForError(prepareError, t))
-      await refresh()
+      await refresh({ preserveError: true })
     } finally {
       setBusy(false)
     }
@@ -215,7 +219,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
         ? recognitionError
         : new CapturePhotoError("ocr")
       setError(messageForError(displayError, t))
-      await refresh()
+      await refresh({ preserveError: true })
     } finally {
       setOcrProgress(null)
       setBusy(false)
@@ -256,7 +260,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
       await refresh()
     } catch (deleteError) {
       setError(messageForError(deleteError, t))
-      await refresh()
+      await refresh({ preserveError: true })
     } finally {
       setBusy(false)
     }
@@ -279,10 +283,11 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
       {!isOnline ? <p className="capture-photos__offline">{t("Reconnect before uploading photos. Photos are not queued offline.")}</p> : null}
 
       <div className="capture-photos__pickers">
-        <label>
-          {t("Take a photo")}
+        <label className="capture-photos__picker" aria-disabled={!isOnline || busy}>
+          <span>{t("Take a photo")}</span>
           <input
             accept="image/jpeg,image/png"
+            aria-label={t("Take a photo")}
             capture="environment"
             disabled={!isOnline || busy}
             onChange={(event) => {
@@ -292,10 +297,11 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
             type="file"
           />
         </label>
-        <label>
-          {t("Choose up to two photos")}
+        <label className="capture-photos__picker" aria-disabled={!isOnline || busy}>
+          <span>{t("Choose existing photos")}</span>
           <input
             accept="image/jpeg,image/png"
+            aria-label={t("Choose existing photos")}
             disabled={!isOnline || busy}
             multiple
             onChange={(event) => {
@@ -306,6 +312,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
           />
         </label>
       </div>
+      <p className="capture-photos__picker-help">{t("Choose existing photos from your photo library or Files. Select one or two JPEG or PNG images.")}</p>
 
       {files.length > 0 ? (
         <div className="capture-photos__selection">

@@ -16,7 +16,7 @@ vi.mock("../data/capturePhotos", () => ({
 import { CapturePhotosPanel } from "./CapturePhotosPanel"
 
 describe("capture photo panel", () => {
-  it("offers camera and file selection without previewing or exposing filenames", () => {
+  it("offers clear camera and existing-photo actions without exposing filenames", () => {
     const html = renderToStaticMarkup(
       <CapturePhotosPanel householdId="household-1" isOnline userId="owner-1" />,
     )
@@ -24,6 +24,9 @@ describe("capture photo panel", () => {
     expect(html).toContain("Capture label photos")
     expect(html).toContain('accept="image/jpeg,image/png"')
     expect(html).toContain('capture="environment"')
+    expect(html).toContain("Choose existing photos")
+    expect(html).toContain("photo library or Files")
+    expect(html).toContain('multiple=""')
     expect(html).toContain("Text recognition runs on this device")
     expect(html).not.toContain("<img")
     expect(html).not.toContain("private-cellar-photo")

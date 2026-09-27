@@ -51,6 +51,64 @@ describe("temporary label photo upload", () => {
     expect(validateCapturePhotoFiles([oversized])).toBe("invalid")
   })
 
+  it("reports a safe stage-specific error when creating a private upload fails", async () => {
+    const file = new File([new Uint8Array([1])], "label.jpg", { type: "image/jpeg" })
+    rpc.mockResolvedValueOnce({ data: null, error: { code: "XX000" } })
+
+    await expect(uploadCapturePhotos("household-1", [file], {
+      prepareImage: async () => new File([new Uint8Array([2])], "capture.jpg", { type: "image/jpeg" }),
+    })).rejects.toMatchObject({ kind: "upload_start" })
+  })
+
+  it("classifies a network rejection while creating the private upload", async () => {
+    const file = new File([new Uint8Array([1])], "label.jpg", { type: "image/jpeg" })
+    rpc.mockRejectedValueOnce(new Error("network unavailable"))
+
+    await expect(uploadCapturePhotos("household-1", [file], {
+      prepareImage: async () => new File([new Uint8Array([2])], "capture.jpg", { type: "image/jpeg" }),
+    })).rejects.toMatchObject({ kind: "upload_start" })
+  })
+
+  it("reports a transfer error when secure photo storage rejects the upload", async () => {
+    const file = new File([new Uint8Array([1])], "label.jpg", { type: "image/jpeg" })
+    rpc.mockResolvedValueOnce({ data: {
+      session_id: sessionId,
+      expires_at: "2026-10-03T12:00:00.000Z",
+      objects: [{ object_name: objectName, content_type: "image/jpeg" }],
+    }, error: null })
+    upload.mockResolvedValueOnce({ data: null, error: { statusCode: "500" } })
+
+    await expect(uploadCapturePhotos("household-1", [file], {
+      prepareImage: async () => new File([new Uint8Array([2])], "capture.jpg", { type: "image/jpeg" }),
+    })).rejects.toMatchObject({ kind: "upload_transfer" })
+  })
+
+  it("reports a confirmation error after a stored photo cannot be finalized", async () => {
+    const file = new File([new Uint8Array([1])], "label.jpg", { type: "image/jpeg" })
+    rpc.mockResolvedValueOnce({ data: {
+      session_id: sessionId,
+      expires_at: "2026-10-03T12:00:00.000Z",
+      objects: [{ object_name: objectName, content_type: "image/jpeg" }],
+    }, error: null })
+    rpc.mockResolvedValueOnce({ data: null, error: { code: "XX000" } })
+
+    await expect(uploadCapturePhotos("household-1", [file], {
+      prepareImage: async () => new File([new Uint8Array([2])], "capture.jpg", { type: "image/jpeg" }),
+    })).rejects.toMatchObject({ kind: "upload_confirm" })
+  })
+
+  it("distinguishes failure to refresh temporary photo status", async () => {
+    rpc.mockResolvedValueOnce({ data: null, error: { code: "XX000" } })
+
+    await expect(listCapturePhotoSessions("household-1")).rejects.toMatchObject({ kind: "refresh" })
+  })
+
+  it("classifies a network rejection while refreshing temporary photo status", async () => {
+    rpc.mockRejectedValueOnce(new Error("network unavailable"))
+
+    await expect(listCapturePhotoSessions("household-1")).rejects.toMatchObject({ kind: "refresh" })
+  })
+
   it("uses server-generated exact keys and does not send original filenames", async () => {
     const file = new File([new Uint8Array([1, 2, 3])], "private-cellar-photo.jpg", { type: "image/jpeg" })
     rpc.mockResolvedValueOnce({ data: {

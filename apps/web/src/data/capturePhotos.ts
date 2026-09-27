@@ -5,7 +5,7 @@ export const CAPTURE_PHOTO_BUCKET = "capture-labels"
 export const CAPTURE_PHOTO_MAX_BYTES = 6 * 1024 * 1024
 export const CAPTURE_PHOTO_MAX_COUNT = 2
 
-export type CapturePhotoErrorKind = "invalid" | "dimensions" | "processing" | "ocr" | "limit" | "permission" | "offline" | "upload" | "delete"
+export type CapturePhotoErrorKind = "invalid" | "dimensions" | "processing" | "ocr" | "limit" | "permission" | "offline" | "upload_start" | "upload_transfer" | "upload_confirm" | "refresh" | "delete"
 
 export class CapturePhotoError extends Error {
   readonly kind: CapturePhotoErrorKind
@@ -92,18 +92,18 @@ function asCreateResponse(value: unknown): CaptureCreateResponse {
   if (!isPlainRecord(value) || typeof value.session_id !== "string"
       || typeof value.expires_at !== "string" || !Array.isArray(value.objects)
       || !Number.isFinite(Date.parse(value.expires_at))) {
-    throw new CapturePhotoError("upload")
+    throw new CapturePhotoError("upload_start")
   }
   const objects = value.objects.map((item) => {
     if (!isPlainRecord(item) || typeof item.object_name !== "string"
         || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(item.object_name)
         || (item.content_type !== "image/jpeg" && item.content_type !== "image/png")) {
-      throw new CapturePhotoError("upload")
+      throw new CapturePhotoError("upload_start")
     }
     return { object_name: item.object_name, content_type: item.content_type }
   })
   if (objects.length < 1 || objects.length > CAPTURE_PHOTO_MAX_COUNT) {
-    throw new CapturePhotoError("upload")
+    throw new CapturePhotoError("upload_start")
   }
   return {
     session_id: value.session_id,
@@ -126,11 +126,17 @@ export function validateCapturePhotoFiles(files: readonly File[]): CapturePhotoE
 export async function listCapturePhotoSessions(
   householdId: string,
 ): Promise<CapturePhotoSession[]> {
-  const { data, error } = await supabase.rpc("list_capture_sessions", {
-    p_household_id: householdId,
-  })
-  if (error) throw mapRpcError(error, "upload")
-  if (!Array.isArray(data)) throw new CapturePhotoError("upload")
+  let response
+  try {
+    response = await supabase.rpc("list_capture_sessions", {
+      p_household_id: householdId,
+    })
+  } catch {
+    throw new CapturePhotoError("refresh")
+  }
+  const { data, error } = response
+  if (error) throw mapRpcError(error, "refresh")
+  if (!Array.isArray(data)) throw new CapturePhotoError("refresh")
   return data.flatMap((item): CapturePhotoSession[] => {
     if (!isPlainRecord(item)
         || typeof item.session_id !== "string"
@@ -352,18 +358,24 @@ export async function uploadCapturePhotos(
   const preparedValidation = validateCapturePhotoFiles(preparedFiles)
   if (preparedValidation) throw new CapturePhotoError(preparedValidation)
 
-  const { data: created, error: createError } = await supabase.rpc("create_capture_session", {
-    p_household_id: householdId,
-    p_assets: preparedFiles.map((file) => ({
-      content_type: file.type,
-      size_bytes: file.size,
-    })),
-  })
-  if (createError) throw mapRpcError(createError, "upload")
+  let createResponse
+  try {
+    createResponse = await supabase.rpc("create_capture_session", {
+      p_household_id: householdId,
+      p_assets: preparedFiles.map((file) => ({
+        content_type: file.type,
+        size_bytes: file.size,
+      })),
+    })
+  } catch {
+    throw new CapturePhotoError("upload_start")
+  }
+  const { data: created, error: createError } = createResponse
+  if (createError) throw mapRpcError(createError, "upload_start")
   const session = asCreateResponse(created)
   if (session.objects.length !== preparedFiles.length) {
     await closeAndDeleteCapture(session.session_id).catch(() => undefined)
-    throw new CapturePhotoError("upload")
+    throw new CapturePhotoError("upload_start")
   }
 
   try {
@@ -371,7 +383,7 @@ export async function uploadCapturePhotos(
       const file = preparedFiles[index]
       const object = session.objects[index]
       if (!file || !object || file.type !== object.content_type) {
-        throw new CapturePhotoError("upload")
+        throw new CapturePhotoError("upload_transfer")
       }
       // Supabase's multipart request can include the File object's name.
       // Replace it with a generic media type name before sending any bytes.
@@ -386,19 +398,29 @@ export async function uploadCapturePhotos(
           contentType: file.type,
           upsert: false,
         })
-      if (error) throw new CapturePhotoError("upload")
+      if (error) {
+        const status = isPlainRecord(error) ? Number(error.statusCode ?? error.status) : NaN
+        if (status === 401 || status === 403) throw new CapturePhotoError("permission")
+        throw new CapturePhotoError("upload_transfer")
+      }
     }
 
-    const { error: completeError } = await supabase.rpc("complete_capture_session", {
-      p_session_id: session.session_id,
-    })
-    if (completeError) throw mapRpcError(completeError, "upload")
+    let completeResponse
+    try {
+      completeResponse = await supabase.rpc("complete_capture_session", {
+        p_session_id: session.session_id,
+      })
+    } catch {
+      throw new CapturePhotoError("upload_confirm")
+    }
+    const { error: completeError } = completeResponse
+    if (completeError) throw mapRpcError(completeError, "upload_confirm")
   } catch (error) {
     // Closing access comes first. If the Storage API is temporarily unavailable,
     // the cleanup worker retries these exact server-created paths.
     await closeAndDeleteCapture(session.session_id).catch(() => undefined)
     if (error instanceof CapturePhotoError) throw error
-    throw new CapturePhotoError("upload")
+    throw new CapturePhotoError("upload_transfer")
   }
 
   const status = await processCapturePhotoSession(session.session_id, options)
