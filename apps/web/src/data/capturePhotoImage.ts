@@ -15,6 +15,10 @@ interface ImageDimensions {
   height: number
 }
 
+interface InspectedPhoto extends ImageDimensions {
+  contentType: "image/jpeg" | "image/png"
+}
+
 interface ImagePreparationPlatform {
   createBitmap: (image: ImageBitmapSource, options?: ImageBitmapOptions) => Promise<ImageBitmap>
   createCanvas: () => HTMLCanvasElement
@@ -59,17 +63,17 @@ function jpegDimensions(bytes: Uint8Array): ImageDimensions | null {
   return null
 }
 
-function inspectPhoto(bytes: Uint8Array, contentType: string): ImageDimensions {
-  const dimensions = contentType === "image/jpeg"
-    ? jpegDimensions(bytes)
-    : contentType === "image/png"
-      ? pngDimensions(bytes)
-      : null
-  if (!dimensions) throw new CapturePhotoError("invalid")
+function inspectPhoto(bytes: Uint8Array): InspectedPhoto {
+  // The picker-provided File.type is not reliable on every mobile browser. Use
+  // the image signature as the source of truth before decoding or uploading.
+  const jpeg = jpegDimensions(bytes)
+  const png = jpeg ? null : pngDimensions(bytes)
+  const dimensions = jpeg ?? png
+  if (!dimensions) throw new CapturePhotoError("format")
   if (dimensions.width * dimensions.height > CAPTURE_PHOTO_MAX_PIXELS) {
     throw new CapturePhotoError("dimensions")
   }
-  return dimensions
+  return { ...dimensions, contentType: jpeg ? "image/jpeg" : "image/png" }
 }
 
 function canvasBlob(canvas: HTMLCanvasElement, quality: number): Promise<Blob> {
@@ -98,16 +102,18 @@ export async function prepareCapturePhotoFile(
     createCanvas: () => document.createElement("canvas"),
   },
 ): Promise<File> {
-  if (file.size < 1 || file.size > 6 * 1024 * 1024
-      || (file.type !== "image/jpeg" && file.type !== "image/png")) {
+  if (file.size < 1 || file.size > 6 * 1024 * 1024) {
     throw new CapturePhotoError("invalid")
   }
 
   const bytes = new Uint8Array(await file.arrayBuffer())
-  inspectPhoto(bytes, file.type)
+  const photo = inspectPhoto(bytes)
+  const decoderSource = file.type === photo.contentType
+    ? file
+    : new Blob([bytes], { type: photo.contentType })
   let bitmap: ImageBitmap | null = null
   try {
-    bitmap = await platform.createBitmap(file, { imageOrientation: "from-image" })
+    bitmap = await platform.createBitmap(decoderSource, { imageOrientation: "from-image" })
     const dimensions = validDimensions(bitmap.width, bitmap.height)
     if (!dimensions) throw new CapturePhotoError("dimensions")
     if (dimensions.width * dimensions.height > CAPTURE_PHOTO_MAX_PIXELS) {

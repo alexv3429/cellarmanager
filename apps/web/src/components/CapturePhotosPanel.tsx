@@ -30,6 +30,7 @@ function messageForError(error: unknown, t: (key: string) => string): string {
   if (!(error instanceof CapturePhotoError)) return t("Photo upload failed. Your cellar was not changed.")
   switch (error.kind) {
     case "invalid": return t("Choose one or two valid JPEG or PNG photos, each no larger than 6 MB.")
+    case "format": return t("This file could not be read as a JPEG or PNG image. Choose a different photo.")
     case "dimensions": return t("This photo is too large to prepare safely. Choose a smaller image.")
     case "processing": return t("Photo preparation was interrupted. Refresh the photo list; if it is still preparing after five minutes, you can retry. Your cellar was not changed.")
     case "ocr": return t("Cloudflare label recognition could not finish. Your cellar was not changed; you can retry later or delete the photo.")
@@ -305,7 +306,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
         <label className="capture-photos__picker" aria-disabled={!isOnline || busy}>
           <span>{t("Take a photo")}</span>
           <input
-            accept="image/jpeg,image/png"
+            accept="image/jpeg,image/png,.jpg,.jpeg,.png"
             aria-label={t("Take a photo")}
             capture="environment"
             disabled={!isOnline || busy}
@@ -319,7 +320,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
         <label className="capture-photos__picker" aria-disabled={!isOnline || busy}>
           <span>{t("Choose existing photos")}</span>
           <input
-            accept="image/jpeg,image/png"
+            accept="image/jpeg,image/png,.jpg,.jpeg,.png"
             aria-label={t("Choose existing photos")}
             disabled={!isOnline || busy}
             multiple

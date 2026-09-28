@@ -24,7 +24,7 @@ describe("capture photo panel", () => {
     )
 
     expect(html).toContain("Capture label photos")
-    expect(html).toContain('accept="image/jpeg,image/png"')
+    expect(html).toContain('accept="image/jpeg,image/png,.jpg,.jpeg,.png"')
     expect(html).toContain('capture="environment"')
     expect(html).toContain("Choose existing photos")
     expect(html).toContain("photo library or Files")

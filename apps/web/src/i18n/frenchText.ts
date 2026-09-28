@@ -115,6 +115,7 @@ export const frenchText: Readonly<Record<string, string>> = {
   "Choose existing photos": "Choisir des photos existantes",
   "Choose existing photos from your photo library or Files. Select one or two JPEG or PNG images.": "Choisissez des photos dans votre photothèque ou l’app Fichiers. Sélectionnez une ou deux images JPEG ou PNG.",
   "Choose one or two valid JPEG or PNG photos, each no larger than 6 MB.": "Choisissez une ou deux photos JPEG ou PNG valides de 6 Mo maximum chacune.",
+  "This file could not be read as a JPEG or PNG image. Choose a different photo.": "Ce fichier n’a pas pu être lu comme une image JPEG ou PNG. Choisissez une autre photo.",
   "This photo is too large to prepare safely. Choose a smaller image.": "Cette photo est trop volumineuse pour être préparée en toute sécurité. Choisissez une image plus petite.",
   "Photo preparation was interrupted. Refresh the photo list; if it is still preparing after five minutes, you can retry. Your cellar was not changed.": "La préparation de la photo a été interrompue. Actualisez la liste ; si elle est toujours en cours après cinq minutes, vous pourrez réessayer. Votre cave n’a pas été modifiée.",
   "Photo preparation appears stalled. Refresh photos to retry.": "La préparation semble bloquée. Actualisez les photos pour réessayer.",

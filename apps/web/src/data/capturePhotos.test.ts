@@ -51,7 +51,7 @@ describe("temporary label photo upload", () => {
     expect(isCapturePhotoPreparationStale({ ...session, state: "ready" }, Date.parse(session.processingStartedAt) + CAPTURE_PREPROCESSING_LEASE_MS)).toBe(false)
   })
 
-  it("accepts only one or two JPEG/PNG files up to the cap", () => {
+  it("accepts one or two files up to the cap and defers format checks to byte inspection", () => {
     const jpeg = new File([new Uint8Array([1])], "label-front.jpg", { type: "image/jpeg" })
     const png = new File([new Uint8Array([1])], "label-back.png", { type: "image/png" })
     const wrongType = new File([new Uint8Array([1])], "label.svg", { type: "image/svg+xml" })
@@ -61,7 +61,7 @@ describe("temporary label photo upload", () => {
     expect(validateCapturePhotoFiles([jpeg, png])).toBeNull()
     expect(validateCapturePhotoFiles([])).toBe("invalid")
     expect(validateCapturePhotoFiles([jpeg, png, jpeg])).toBe("invalid")
-    expect(validateCapturePhotoFiles([wrongType])).toBe("invalid")
+    expect(validateCapturePhotoFiles([wrongType])).toBeNull()
     expect(validateCapturePhotoFiles([oversized])).toBe("invalid")
   })
 
