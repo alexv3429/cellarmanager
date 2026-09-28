@@ -60,9 +60,9 @@ describe("temporary label photo upload", () => {
     expect(validateCapturePhotoFiles([jpeg])).toBeNull()
     expect(validateCapturePhotoFiles([jpeg, png])).toBeNull()
     expect(validateCapturePhotoFiles([])).toBe("invalid")
-    expect(validateCapturePhotoFiles([jpeg, png, jpeg])).toBe("invalid")
+    expect(validateCapturePhotoFiles([jpeg, png, jpeg])).toBe("count")
     expect(validateCapturePhotoFiles([wrongType])).toBeNull()
-    expect(validateCapturePhotoFiles([oversized])).toBe("invalid")
+    expect(validateCapturePhotoFiles([oversized])).toBe("size")
   })
 
   it("reports a safe stage-specific error when creating a private upload fails", async () => {

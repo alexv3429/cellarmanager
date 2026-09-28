@@ -30,6 +30,8 @@ function messageForError(error: unknown, t: (key: string) => string): string {
   if (!(error instanceof CapturePhotoError)) return t("Photo upload failed. Your cellar was not changed.")
   switch (error.kind) {
     case "invalid": return t("Choose one or two valid JPEG or PNG photos, each no larger than 6 MB.")
+    case "count": return t("Select no more than two photos at a time.")
+    case "size": return t("Each photo must be no larger than 6 MB. Choose a smaller file.")
     case "format": return t("This file could not be read as a JPEG or PNG image. Choose a different photo.")
     case "dimensions": return t("This photo is too large to prepare safely. Choose a smaller image.")
     case "processing": return t("Photo preparation was interrupted. Refresh the photo list; if it is still preparing after five minutes, you can retry. Your cellar was not changed.")
@@ -146,7 +148,13 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
   }, [sessions, refresh])
 
   const chooseFiles = (chosen: FileList | null) => {
-    const nextFiles = chosen ? Array.from(chosen).slice(0, 3) : []
+    const nextFiles = chosen ? Array.from(chosen) : []
+    if (nextFiles.length === 0) {
+      setFiles([])
+      setError("")
+      setMessage("")
+      return
+    }
     const validation = validateCapturePhotoFiles(nextFiles)
     setFiles(validation ? [] : nextFiles)
     setError(validation ? messageForError(new CapturePhotoError(validation), t) : "")

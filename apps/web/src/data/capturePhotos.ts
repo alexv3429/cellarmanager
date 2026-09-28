@@ -5,7 +5,7 @@ export const CAPTURE_PHOTO_MAX_BYTES = 6 * 1024 * 1024
 export const CAPTURE_PHOTO_MAX_COUNT = 2
 export const CAPTURE_PREPROCESSING_LEASE_MS = 5 * 60 * 1000
 
-export type CapturePhotoErrorKind = "invalid" | "format" | "dimensions" | "processing" | "ocr" | "limit" | "permission" | "offline" | "upload_start" | "upload_transfer" | "upload_confirm" | "refresh" | "delete"
+export type CapturePhotoErrorKind = "invalid" | "count" | "size" | "format" | "dimensions" | "processing" | "ocr" | "limit" | "permission" | "offline" | "upload_start" | "upload_transfer" | "upload_confirm" | "refresh" | "delete"
 
 export class CapturePhotoError extends Error {
   readonly kind: CapturePhotoErrorKind
@@ -122,13 +122,13 @@ function asCreateResponse(value: unknown): CaptureCreateResponse {
 }
 
 export function validateCapturePhotoFiles(files: readonly File[]): CapturePhotoErrorKind | null {
-  if (files.length < 1 || files.length > CAPTURE_PHOTO_MAX_COUNT) return "invalid"
+  if (files.length < 1) return "invalid"
+  if (files.length > CAPTURE_PHOTO_MAX_COUNT) return "count"
   for (const file of files) {
     // Browsers, especially iOS photo pickers, may report an empty or non-standard
     // MIME type for a valid JPEG. The preparation step verifies the actual bytes.
-    if (file.size < 1 || file.size > CAPTURE_PHOTO_MAX_BYTES) {
-      return "invalid"
-    }
+    if (file.size < 1) return "invalid"
+    if (file.size > CAPTURE_PHOTO_MAX_BYTES) return "size"
   }
   return null
 }
