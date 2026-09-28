@@ -10,17 +10,35 @@ import {
   listCapturePhotoSessions,
   processCapturePhotoSession,
   recognizeCapturePhotoSession,
+  suggestCaptureWineCandidate,
   validateCapturePhotoFiles,
   uploadCapturePhotos,
   type CapturePhotoSession,
+  type CaptureWineSuggestion,
+  type CaptureWineTextField,
+  type CaptureWineNumberField,
   type StoredCaptureOcrResult,
 } from "../data/capturePhotos"
+import { findCaptureWineMatchCandidates } from "../data/captureWineMatching"
+import { formatWineVolume, type WineCatalogEntry } from "../data/wineCatalog"
 import { useLanguage } from "../i18n/useLanguage"
+
+interface CaptureWinePrefill {
+  producer: string
+  cuvee: string
+  vintage: number | null
+  color: string
+  appellation: string
+  area: string
+  formatMl: number | null
+}
 
 interface CapturePhotosPanelProps {
   householdId: string
   isOnline: boolean
   userId: string
+  wines: WineCatalogEntry[]
+  onUseReviewedDetails: (details: CaptureWinePrefill) => void
 }
 
 function messageForError(error: unknown, t: (key: string) => string): string {
@@ -37,6 +55,7 @@ function messageForError(error: unknown, t: (key: string) => string): string {
     case "server_photo": return t("The server rejected the prepared photo during a safety check. Refresh photo status; if it was removed, select it again. Your cellar was not changed.")
     case "processing": return t("Photo preparation was interrupted. Refresh the photo list; if it is still preparing after five minutes, you can retry. Your cellar was not changed.")
     case "ocr": return t("Cloudflare label recognition could not finish. Your cellar was not changed; you can retry later or delete the photo.")
+    case "suggestion": return t("Could not suggest wine details from the saved text. Your cellar was not changed; review the label text or try again later.")
     case "limit": return t("The temporary photo limit has been reached. Delete an earlier capture or try again later.")
     case "permission": return t("Only the current household owner can upload these photos. Refresh your access and try again.")
     case "offline": return t("Reconnect before uploading photos. Photos are not queued offline.")
@@ -71,7 +90,62 @@ function recognitionEngineLabel(engine: StoredCaptureOcrResult["engine"], t: (ke
   }
 }
 
-export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePhotosPanelProps) {
+function fieldConfidenceLabel(confidence: CaptureWineTextField["confidence"], t: (key: string) => string): string {
+  switch (confidence) {
+    case "high": return t("High confidence")
+    case "medium": return t("Medium confidence")
+    default: return t("Low confidence")
+  }
+}
+
+function colorLabel(color: string, t: (key: string) => string): string {
+  switch (color) {
+    case "red": return t("Red")
+    case "white": return t("White")
+    case "rose": return t("Rosé")
+    case "sparkling": return t("Sparkling")
+    default: return t("Other")
+  }
+}
+
+function fieldEvidence(field: CaptureWineTextField | CaptureWineNumberField, t: (key: string) => string) {
+  return (
+    <div className="capture-photos__field-meta">
+      <span>{fieldConfidenceLabel(field.confidence, t)}</span>
+      {field.evidence.length > 0 ? (
+        <span>{t("Label evidence")}: {field.evidence.map((line) => `“${line}”`).join(" · ")}</span>
+      ) : (
+        <span>{t("No supporting label text")}</span>
+      )}
+    </div>
+  )
+}
+
+function prefillFromSuggestion(suggestion: CaptureWineSuggestion): CaptureWinePrefill {
+  return {
+    producer: suggestion.producer.value ?? "",
+    cuvee: suggestion.cuvee.value ?? "",
+    vintage: suggestion.vintage.status === "year" ? suggestion.vintage.value : null,
+    color: suggestion.color.value ?? "",
+    appellation: suggestion.appellation.value ?? "",
+    area: suggestion.area.value ?? "",
+    formatMl: suggestion.format_ml.value,
+  }
+}
+
+function prefillFromWine(wine: WineCatalogEntry): CaptureWinePrefill {
+  return {
+    producer: wine.producer,
+    cuvee: wine.cuvee,
+    vintage: wine.vintage,
+    color: wine.color,
+    appellation: wine.appellation ?? "",
+    area: wine.area ?? "",
+    formatMl: wine.format_ml,
+  }
+}
+
+export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUseReviewedDetails }: CapturePhotosPanelProps) {
   const { language, t } = useLanguage()
   const [files, setFiles] = useState<File[]>([])
   const [sessions, setSessions] = useState<CapturePhotoSession[]>([])
@@ -84,6 +158,8 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
   const [shownOcrSession, setShownOcrSession] = useState<string | null>(null)
   const [ocrProgress, setOcrProgress] = useState<{ sessionId: string } | null>(null)
   const [ocrRetrySessions, setOcrRetrySessions] = useState<Record<string, boolean>>({})
+  const [wineSuggestions, setWineSuggestions] = useState<Record<string, CaptureWineSuggestion>>({})
+  const [suggestionProgress, setSuggestionProgress] = useState<string | null>(null)
   const previewRef = useRef<{ sessionId: string; urls: string[] } | null>(null)
 
   const clearPreview = useCallback(() => {
@@ -114,6 +190,8 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
     setOcrResults({})
     setShownOcrSession(null)
     setOcrProgress(null)
+    setWineSuggestions({})
+    setSuggestionProgress(null)
     setMessage("")
     setError("")
     let active = true
@@ -282,6 +360,41 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
     }
   }
 
+  const suggestWineDetails = async (sessionId: string) => {
+    setBusy(true)
+    setError("")
+    setMessage("")
+    setSuggestionProgress(sessionId)
+    try {
+      const saved = await suggestCaptureWineCandidate(sessionId)
+      setWineSuggestions((current) => ({ ...current, [sessionId]: saved.suggestion }))
+      setMessage(t("Wine details were suggested from the saved label text. Review and correct them before using them."))
+    } catch (suggestionError) {
+      setError(messageForError(suggestionError, t))
+    } finally {
+      setSuggestionProgress(null)
+      setBusy(false)
+    }
+  }
+
+  const updateWineSuggestion = <K extends keyof CaptureWineSuggestion>(
+    sessionId: string,
+    field: K,
+    update: Partial<CaptureWineSuggestion[K]>,
+  ) => {
+    setWineSuggestions((current) => {
+      const suggestion = current[sessionId]
+      if (!suggestion) return current
+      return {
+        ...current,
+        [sessionId]: {
+          ...suggestion,
+          [field]: { ...suggestion[field], ...update },
+        },
+      }
+    })
+  }
+
   const remove = async (sessionId: string) => {
     setBusy(true)
     setError("")
@@ -298,6 +411,11 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
       setBusy(false)
     }
   }
+
+  const matchesBySession = Object.fromEntries(Object.entries(wineSuggestions).map(([sessionId, suggestion]) => [
+    sessionId,
+    findCaptureWineMatchCandidates(suggestion, wines, householdId),
+  ]))
 
   const locale = language === "fr" ? "fr-FR" : "en-US"
 
@@ -439,6 +557,154 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
                   ))}
                   {session.state === "ocr_deletion_pending" ? (
                     <p>{t("Your recognized text is saved. The private photo will be removed automatically when deletion is available.")}</p>
+                  ) : null}
+                  {session.state === "recognized" ? (
+                    <div className="capture-photos__suggestion">
+                      <p>{t("Turn the recognized text into editable wine details. Cloudflare AI sees only the saved text, not the deleted photo. Nothing is added automatically.")}</p>
+                      {!wineSuggestions[session.sessionId] ? (
+                        <button
+                          type="button"
+                          disabled={busy || !isOnline}
+                          onClick={() => void suggestWineDetails(session.sessionId)}
+                        >
+                          {suggestionProgress === session.sessionId ? t("Analyzing label text…") : t("Suggest wine details")}
+                        </button>
+                      ) : (
+                        <>
+                          <h5>{t("Review suggested wine details")}</h5>
+                          <p>{t("These are role guesses, not confirmed facts. The quoted lines show what supports each suggestion; edit anything that is wrong.")}</p>
+                          <div className="capture-photos__suggestion-fields">
+                            {([
+                              ["producer", "Producer / winery"],
+                              ["cuvee", "Cuvée"],
+                              ["appellation", "Appellation"],
+                              ["area", "Area / region"],
+                            ] as const).map(([field, label]) => {
+                              const value = wineSuggestions[session.sessionId][field]
+                              return (
+                                <label key={field}>
+                                  {t(label)}
+                                  <input
+                                    value={value.value ?? ""}
+                                    onChange={(event) => updateWineSuggestion(session.sessionId, field, {
+                                      value: event.target.value || null,
+                                      evidence: [],
+                                      confidence: "low",
+                                    })}
+                                  />
+                                  {fieldEvidence(value, t)}
+                                </label>
+                              )
+                            })}
+                            <label>
+                              {t("Vintage")}
+                              <select
+                                value={wineSuggestions[session.sessionId].vintage.status}
+                                onChange={(event) => {
+                                  const status = event.target.value as CaptureWineSuggestion["vintage"]["status"]
+                                  updateWineSuggestion(session.sessionId, "vintage", {
+                                    status,
+                                    value: status === "year" ? wineSuggestions[session.sessionId].vintage.value : null,
+                                    evidence: [],
+                                    confidence: "low",
+                                  })
+                                }}
+                              >
+                                <option value="year">{t("Year is visible")}</option>
+                                <option value="non_vintage">{t("Explicitly non-vintage")}</option>
+                                <option value="not_visible">{t("Not visible / unknown")}</option>
+                              </select>
+                              {wineSuggestions[session.sessionId].vintage.status === "year" ? (
+                                <input
+                                  aria-label={t("Vintage year")}
+                                  inputMode="numeric"
+                                  min="1800"
+                                  max="2200"
+                                  step="1"
+                                  type="number"
+                                  value={wineSuggestions[session.sessionId].vintage.value ?? ""}
+                                  onChange={(event) => updateWineSuggestion(session.sessionId, "vintage", {
+                                    value: /^\d{4}$/u.test(event.target.value)
+                                      && Number(event.target.value) >= 1800
+                                      && Number(event.target.value) <= 2200
+                                      ? Number(event.target.value)
+                                      : null,
+                                    evidence: [],
+                                    confidence: "low",
+                                  })}
+                                />
+                              ) : null}
+                              {fieldEvidence(wineSuggestions[session.sessionId].vintage, t)}
+                            </label>
+                            <label>
+                              {t("Color")}
+                              <select
+                                value={wineSuggestions[session.sessionId].color.value ?? ""}
+                                onChange={(event) => updateWineSuggestion(session.sessionId, "color", {
+                                  value: (event.target.value || null) as CaptureWineSuggestion["color"]["value"],
+                                  evidence: [],
+                                  confidence: "low",
+                                })}
+                              >
+                                <option value="">{t("Unknown")}</option>
+                                <option value="red">{t("Red")}</option>
+                                <option value="white">{t("White")}</option>
+                                <option value="rose">{t("Rosé")}</option>
+                                <option value="sparkling">{t("Sparkling")}</option>
+                                <option value="other">{t("Other")}</option>
+                              </select>
+                              {fieldEvidence(wineSuggestions[session.sessionId].color, t)}
+                            </label>
+                            <label>
+                              {t("Bottle format (ml)")}
+                              <input
+                                inputMode="numeric"
+                                min="1"
+                                max="20000"
+                                step="1"
+                                type="number"
+                                value={wineSuggestions[session.sessionId].format_ml.value ?? ""}
+                                onChange={(event) => updateWineSuggestion(session.sessionId, "format_ml", {
+                                  value: /^\d+$/u.test(event.target.value)
+                                    && Number(event.target.value) > 0
+                                    && Number(event.target.value) <= 20000
+                                    ? Number(event.target.value)
+                                    : null,
+                                  evidence: [],
+                                  confidence: "low",
+                                })}
+                              />
+                              {fieldEvidence(wineSuggestions[session.sessionId].format_ml, t)}
+                            </label>
+                          </div>
+                          <button
+                            type="button"
+                            disabled={!wineSuggestions[session.sessionId].producer.value?.trim()
+                              || !wineSuggestions[session.sessionId].cuvee.value?.trim()}
+                            onClick={() => onUseReviewedDetails(prefillFromSuggestion(wineSuggestions[session.sessionId]))}
+                          >
+                            {t("Use reviewed details in bottle form")}
+                          </button>
+                          <div className="capture-photos__matches">
+                            <h5>{t("Possible matches in this cellar")}</h5>
+                            <p>{t("Matches are based on your local catalogue and are not selected automatically.")}</p>
+                            {matchesBySession[session.sessionId]?.length > 0 ? (
+                              matchesBySession[session.sessionId].map((match) => (
+                                <article className="capture-photos__match" key={match.wine.id}>
+                                  <strong>{match.wine.producer} — {match.wine.cuvee}</strong>
+                                  <span>{match.wine.vintage ?? t("NV")} · {colorLabel(match.wine.color, t)} · {formatWineVolume(match.wine.format_ml)}</span>
+                                  <button type="button" onClick={() => onUseReviewedDetails(prefillFromWine(match.wine))}>
+                                    {t("Use this catalogue wine in bottle form")}
+                                  </button>
+                                </article>
+                              ))
+                            ) : (
+                              <p>{t("No close catalogue matches were found. You can still use or edit the suggested details.")}</p>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
                   ) : null}
                 </section>
               ) : null}

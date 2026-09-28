@@ -13,6 +13,7 @@ it was introduced.
 | [005](005-capture-assisted-wine-entry.md) | Accepted | Multimodal wine capture produces reviewable candidates; only explicit owner action reaches the existing cellar and inventory workflows |
 | [006](006-capture-image-storage-security.md) | Accepted | Capture images are private, owner-authorized, purpose-limited temporary assets with bounded processing and deletion |
 | [007](007-opt-in-cloudflare-label-ocr.md) | Accepted | Explicitly opt-in, bounded Cloudflare Workers AI transcription; only private text is kept and photos are deleted after saving |
+| [008](008-capture-label-field-review.md) | Accepted | Text-only field-role suggestions cite OCR evidence; owner review and existing inventory flow remain authoritative |
 
 Create a new numbered ADR before changing a stable contract from
 [`../product-roadmap.md`](../product-roadmap.md). Do not rewrite an accepted ADR

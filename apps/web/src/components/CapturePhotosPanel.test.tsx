@@ -20,7 +20,7 @@ import { CapturePhotosPanel } from "./CapturePhotosPanel"
 describe("capture photo panel", () => {
   it("offers clear camera and existing-photo actions without exposing filenames", () => {
     const html = renderToStaticMarkup(
-      <CapturePhotosPanel householdId="household-1" isOnline userId="owner-1" />,
+      <CapturePhotosPanel householdId="household-1" isOnline userId="owner-1" wines={[]} onUseReviewedDetails={() => undefined} />,
     )
 
     expect(html).toContain("Capture label photos")
@@ -37,7 +37,7 @@ describe("capture photo panel", () => {
 
   it("makes photo inputs unavailable while offline", () => {
     const html = renderToStaticMarkup(
-      <CapturePhotosPanel householdId="household-1" isOnline={false} userId="owner-1" />,
+      <CapturePhotosPanel householdId="household-1" isOnline={false} userId="owner-1" wines={[]} onUseReviewedDetails={() => undefined} />,
     )
 
     expect(html.match(/disabled=""/g)?.length).toBeGreaterThanOrEqual(2)

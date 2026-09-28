@@ -90,10 +90,13 @@ for 0.6.15; this step defines their place in the architecture only.
   suggestions are out of scope.
 - Image analysis is optional and asynchronous. It cannot block normal cellar
   use, manual entry, or offline inventory work.
-- Provider adapters, credentials, and provider policy stay server-side. No
-  production OCR or image-recognition provider is approved by this decision.
-  A provider must pass the existing source, licence, retention, and rights
-  review before receiving a user's image or supplying persisted claims.
+- Provider adapters, credentials, and provider policy stay server-side.
+  Cloudflare Workers AI is approved for the explicitly opt-in image
+  transcription and separately triggered text-only field suggestions described
+  in [ADR 007](adr/007-opt-in-cloudflare-label-ocr.md) and
+  [ADR 008](adr/008-capture-label-field-review.md). Any additional provider or
+  modality requires a separate source, licence, retention, rights, and cost
+  review before use.
 - Image and extraction data are private to the active household and purpose-
   limited. Access to the original asset is limited to its initiating Owner and
   the authorized processing service; other household members do not get image
@@ -117,8 +120,8 @@ for 0.6.15; this step defines their place in the architecture only.
 | 0.6.6 | Owner-only mobile camera and photo upload to private temporary storage — complete; no recognition dependency |
 | 0.6.7 | Safe orientation, resize, metadata removal, trusted re-encoding, and private preview — complete |
 | 0.6.8 | Explicitly opt-in Cloudflare Workers AI transcription, private short-lived text draft, and photo deletion after the text is saved — complete |
-| 0.6.9 | Structured field extraction from recognized text |
-| 0.6.10–0.6.12 | Human correction, conservative existing-wine matching, explicit wine selection/creation, and normal ADD |
+| 0.6.9–0.6.11 | Structured field suggestions with OCR evidence, Owner correction, and conservative active-household matching — complete; see [ADR 008](adr/008-capture-label-field-review.md) |
+| 0.6.12 | Explicit wine selection/creation and normal ADD; capture review currently prefills the existing Add bottles form, which still requires its normal submit action |
 | 0.6.15 | Barcode scan and approved identifier lookup, converging on the same candidate review |
 
 This order deliberately establishes storage/privacy controls before upload and
@@ -146,8 +149,22 @@ Once the recognized text is saved to the private, short-lived capture draft,
 the sanitized photo is deleted through the Storage API. If recognition fails,
 the photo remains private and can be retried or deleted; unread photos and
 recognized text expire within 24 hours. OCR produces text only: it does not map
-wine fields, create a wine, add stock, or change inventory. Those require later
-review steps.
+wine fields, create a wine, add stock, or change inventory.
+
+Steps 0.6.9–0.6.11 add a second, separately triggered text-only inference. The
+Owner asks Cloudflare Workers AI to classify saved lines into tentative
+producer, cuvée, appellation, area, color, format, and vintage fields. Each
+suggestion includes quoted OCR evidence and qualitative confidence; unsupported
+values are discarded or left unknown. This is not deterministic string
+parsing: the model proposes the roles, and the Owner can edit them. At most one
+private suggestion is kept per capture for the same 24-hour lifetime. The
+interface compares the reviewed producer/cuvée against the active household's
+local wine catalogue, excludes explicit identity conflicts, and presents up
+to three possibilities without choosing one. An explicit action copies either
+the reviewed fields or a chosen catalogue wine into the existing Add bottles
+form. It does not create a wine or bottle; the Owner still reviews and submits
+through the normal inventory flow. See
+[ADR 008](adr/008-capture-label-field-review.md).
 
 ## Acceptance for 0.6.4
 
