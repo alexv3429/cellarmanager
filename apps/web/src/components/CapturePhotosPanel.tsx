@@ -34,6 +34,7 @@ function messageForError(error: unknown, t: (key: string) => string): string {
     case "size": return t("Each photo must be no larger than 6 MB. Choose a smaller file.")
     case "format": return t("This file could not be read as a JPEG or PNG image. Choose a different photo.")
     case "dimensions": return t("This photo is too large to prepare safely. Choose a smaller image.")
+    case "server_photo": return t("The server rejected the prepared photo during a safety check. Refresh photo status; if it was removed, select it again. Your cellar was not changed.")
     case "processing": return t("Photo preparation was interrupted. Refresh the photo list; if it is still preparing after five minutes, you can retry. Your cellar was not changed.")
     case "ocr": return t("Cloudflare label recognition could not finish. Your cellar was not changed; you can retry later or delete the photo.")
     case "limit": return t("The temporary photo limit has been reached. Delete an earlier capture or try again later.")

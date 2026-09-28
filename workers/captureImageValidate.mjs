@@ -5,7 +5,6 @@ export const CAPTURE_IMAGE_MAX_EDGE = 2_400;
 const JPEG_SOF0 = 0xc0;
 const JPEG_SOS = 0xda;
 const JPEG_APP0 = 0xe0;
-const JPEG_APP1 = 0xe1;
 const JPEG_APP15 = 0xef;
 const JPEG_COM = 0xfe;
 const JPEG_HEADER_SCAN_LIMIT = 64 * 1024;
@@ -22,19 +21,28 @@ function invalid() {
   throw new CaptureImageError("invalid");
 }
 
-function validateJfifApp0(bytes, offset, segmentLength) {
-  // Canvas-generated JPEGs may include the harmless, fixed-size JFIF header.
-  // Reject JFXX thumbnails and arbitrary APP0 payloads rather than retain metadata.
-  if (segmentLength !== 16
-      || bytes[offset + 2] !== 0x4a
-      || bytes[offset + 3] !== 0x46
-      || bytes[offset + 4] !== 0x49
-      || bytes[offset + 5] !== 0x46
-      || bytes[offset + 6] !== 0
-      || bytes[offset + 14] !== 0
-      || bytes[offset + 15] !== 0) {
-    invalid();
+function isSafeJfifApp0(bytes, offset, segmentLength) {
+  // Retain only the fixed, metadata-free JFIF header emitted by canvas encoders.
+  // JFXX thumbnails and arbitrary APP0 payloads are stripped like other metadata.
+  return segmentLength === 16
+    && bytes[offset + 2] === 0x4a
+    && bytes[offset + 3] === 0x46
+    && bytes[offset + 4] === 0x49
+    && bytes[offset + 5] === 0x46
+    && bytes[offset + 6] === 0
+    && bytes[offset + 14] === 0
+    && bytes[offset + 15] === 0;
+}
+
+function concatenate(parts, tail) {
+  const result = new Uint8Array(parts.reduce((total, part) => total + part.length, tail.length));
+  let offset = 0;
+  for (const part of parts) {
+    result.set(part, offset);
+    offset += part.length;
   }
+  result.set(tail, offset);
+  return result;
 }
 
 function validateSingleScan(bytes, scanOffset) {
@@ -74,8 +82,11 @@ export function validatePreparedCaptureImage(bytes, contentType) {
 
   let offset = 2;
   let dimensions = null;
+  const retainedHeader = [bytes.subarray(0, 2)];
+  let strippedMetadata = false;
   const headerLimit = Math.min(bytes.length - 2, JPEG_HEADER_SCAN_LIMIT);
   while (offset + 4 <= headerLimit) {
+    const markerStart = offset;
     if (bytes[offset] !== 0xff) invalid();
     while (offset < headerLimit && bytes[offset] === 0xff) offset += 1;
     const marker = bytes[offset];
@@ -85,16 +96,30 @@ export function validatePreparedCaptureImage(bytes, contentType) {
     if (marker === JPEG_SOS) {
       const segmentLength = (bytes[offset] << 8) | bytes[offset + 1];
       if (segmentLength < 8 || offset + segmentLength > headerLimit || !dimensions) invalid();
-      validateSingleScan(bytes, offset + segmentLength);
-      return { bytes, ...dimensions, contentType };
+      const scanOffset = offset + segmentLength;
+      validateSingleScan(bytes, scanOffset);
+      retainedHeader.push(bytes.subarray(markerStart, scanOffset));
+      return {
+        bytes: strippedMetadata ? concatenate(retainedHeader, bytes.subarray(scanOffset)) : bytes,
+        ...dimensions,
+        contentType,
+      };
     }
 
     if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) invalid();
-    if ((marker >= JPEG_APP1 && marker <= JPEG_APP15) || marker === JPEG_COM) invalid();
 
     const segmentLength = (bytes[offset] << 8) | bytes[offset + 1];
     if (segmentLength < 2 || offset + segmentLength > headerLimit) invalid();
-    if (marker === JPEG_APP0) validateJfifApp0(bytes, offset, segmentLength);
+
+    const isApplicationMetadata = marker >= JPEG_APP0 && marker <= JPEG_APP15;
+    const retainJfif = marker === JPEG_APP0 && isSafeJfifApp0(bytes, offset, segmentLength);
+    if (retainJfif) {
+      retainedHeader.push(bytes.subarray(markerStart, offset + segmentLength));
+    } else if (isApplicationMetadata || marker === JPEG_COM) {
+      strippedMetadata = true;
+    } else {
+      retainedHeader.push(bytes.subarray(markerStart, offset + segmentLength));
+    }
 
     if (marker === JPEG_SOF0) {
       if (segmentLength < 11 || dimensions) invalid();

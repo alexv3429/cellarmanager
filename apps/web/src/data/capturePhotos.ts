@@ -5,7 +5,7 @@ export const CAPTURE_PHOTO_MAX_BYTES = 6 * 1024 * 1024
 export const CAPTURE_PHOTO_MAX_COUNT = 2
 export const CAPTURE_PREPROCESSING_LEASE_MS = 5 * 60 * 1000
 
-export type CapturePhotoErrorKind = "invalid" | "count" | "size" | "format" | "dimensions" | "processing" | "ocr" | "limit" | "permission" | "offline" | "upload_start" | "upload_transfer" | "upload_confirm" | "refresh" | "delete"
+export type CapturePhotoErrorKind = "invalid" | "count" | "size" | "format" | "dimensions" | "server_photo" | "processing" | "ocr" | "limit" | "permission" | "offline" | "upload_start" | "upload_transfer" | "upload_confirm" | "refresh" | "delete"
 
 export class CapturePhotoError extends Error {
   readonly kind: CapturePhotoErrorKind
@@ -197,7 +197,7 @@ export async function processCapturePhotoSession(
     throw new CapturePhotoError("processing")
   }
   if (!response.ok || !isPlainRecord(result)) {
-    if (isPlainRecord(result) && result.error === "invalid_photo") throw new CapturePhotoError("invalid")
+    if (isPlainRecord(result) && result.error === "invalid_photo") throw new CapturePhotoError("server_photo")
     throw new CapturePhotoError("processing")
   }
   if (result.status === "processed") return "processed"

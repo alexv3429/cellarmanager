@@ -70,10 +70,14 @@ test("accepts bounded baseline JPEGs already prepared by the browser without dec
   assert.equal(CAPTURE_IMAGE_MAX_EDGE, 2_400);
 });
 
-test("rejects metadata, non-JPEG input, malformed scans, and trailing bytes", () => {
+test("strips JPEG metadata before storage and rejects malformed images", () => {
   const exif = segment(0xe1, [0x45, 0x78, 0x69, 0x66, 0, 0]);
-  assert.throws(() => validatePreparedCaptureImage(jpeg(1200, 800, exif), "image/jpeg"),
-    (error) => error instanceof CaptureImageError && error.code === "invalid");
+  const icc = segment(0xe2, [0x49, 0x43, 0x43, 0x5f, 0x50, 0x52, 0x4f, 0x46, 0x49, 0x4c, 0x45, 0]);
+  const comment = segment(0xfe, [0x50, 0x72, 0x69, 0x76, 0x61, 0x74, 0x65]);
+  const withMetadata = jpeg(1200, 800, [...exif, ...icc, ...comment]);
+  const prepared = validatePreparedCaptureImage(withMetadata, "image/jpeg");
+  assert.deepEqual(prepared.bytes, jpeg());
+  assert.notEqual(prepared.bytes, withMetadata);
   assert.throws(() => validatePreparedCaptureImage(jpeg(), "image/png"), CaptureImageError);
   assert.throws(() => validatePreparedCaptureImage(jpeg().slice(0, -2), "image/jpeg"), CaptureImageError);
   assert.throws(() => validatePreparedCaptureImage(new Uint8Array([...jpeg(), 0]), "image/jpeg"), CaptureImageError);

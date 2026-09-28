@@ -205,6 +205,18 @@ describe("temporary label photo upload", () => {
     }))
   })
 
+  it("distinguishes a server-side photo safety rejection from a picker validation error", async () => {
+    const fetcher = vi.fn().mockResolvedValue(Response.json({
+      error: "invalid_photo",
+      cleanup: "complete",
+    }, { status: 422 }))
+
+    await expect(processCapturePhotoSession(sessionId, {
+      accessToken: "session-token",
+      fetch: fetcher,
+    })).rejects.toMatchObject({ kind: "server_photo" })
+  })
+
   it("requests Cloudflare OCR through the authenticated same-origin worker", async () => {
     const fetcher = vi.fn().mockResolvedValue(Response.json({
       state: "recognized",

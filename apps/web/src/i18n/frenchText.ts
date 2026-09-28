@@ -119,6 +119,7 @@ export const frenchText: Readonly<Record<string, string>> = {
   "Each photo must be no larger than 6 MB. Choose a smaller file.": "Chaque photo doit faire 6 Mo maximum. Choisissez un fichier plus léger.",
   "This file could not be read as a JPEG or PNG image. Choose a different photo.": "Ce fichier n’a pas pu être lu comme une image JPEG ou PNG. Choisissez une autre photo.",
   "This photo is too large to prepare safely. Choose a smaller image.": "Cette photo est trop volumineuse pour être préparée en toute sécurité. Choisissez une image plus petite.",
+  "The server rejected the prepared photo during a safety check. Refresh photo status; if it was removed, select it again. Your cellar was not changed.": "Le serveur a rejeté la photo préparée lors d’un contrôle de sécurité. Actualisez l’état des photos ; si elle a été supprimée, sélectionnez-la de nouveau. Votre cave n’a pas été modifiée.",
   "Photo preparation was interrupted. Refresh the photo list; if it is still preparing after five minutes, you can retry. Your cellar was not changed.": "La préparation de la photo a été interrompue. Actualisez la liste ; si elle est toujours en cours après cinq minutes, vous pourrez réessayer. Votre cave n’a pas été modifiée.",
   "Photo preparation appears stalled. Refresh photos to retry.": "La préparation semble bloquée. Actualisez les photos pour réessayer.",
   "Retry preparation": "Réessayer la préparation",
