@@ -5,7 +5,7 @@ export const CAPTURE_PHOTO_MAX_BYTES = 6 * 1024 * 1024
 export const CAPTURE_PHOTO_MAX_COUNT = 2
 export const CAPTURE_PREPROCESSING_LEASE_MS = 5 * 60 * 1000
 
-export type CapturePhotoErrorKind = "invalid" | "count" | "size" | "format" | "dimensions" | "server_photo" | "processing" | "ocr" | "limit" | "permission" | "offline" | "upload_start" | "upload_transfer" | "upload_confirm" | "refresh" | "delete"
+export type CapturePhotoErrorKind = "invalid" | "count" | "size" | "format" | "dimensions" | "server_photo" | "processing" | "ocr" | "suggestion" | "limit" | "permission" | "offline" | "upload_start" | "upload_transfer" | "upload_confirm" | "refresh" | "delete"
 
 export class CapturePhotoError extends Error {
   readonly kind: CapturePhotoErrorKind
@@ -76,6 +76,39 @@ export interface StoredCaptureOcrResult {
 
 export interface SavedCaptureOcrResult extends StoredCaptureOcrResult {
   state: "ocr_deletion_pending" | "recognized"
+}
+
+export type CaptureSuggestionConfidence = "high" | "medium" | "low"
+
+export interface CaptureWineTextField {
+  value: string | null
+  evidence: string[]
+  confidence: CaptureSuggestionConfidence
+}
+
+export interface CaptureWineNumberField {
+  value: number | null
+  evidence: string[]
+  confidence: CaptureSuggestionConfidence
+}
+
+export interface CaptureWineVintageField extends CaptureWineNumberField {
+  status: "year" | "non_vintage" | "not_visible"
+}
+
+export interface CaptureWineSuggestion {
+  producer: CaptureWineTextField
+  cuvee: CaptureWineTextField
+  appellation: CaptureWineTextField
+  area: CaptureWineTextField
+  color: CaptureWineTextField & { value: "red" | "white" | "rose" | "sparkling" | "other" | null }
+  format_ml: CaptureWineNumberField
+  vintage: CaptureWineVintageField
+}
+
+export interface SavedCaptureWineSuggestion {
+  modelVersion: string
+  suggestion: CaptureWineSuggestion
 }
 
 const OBJECT_KEY_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
@@ -283,6 +316,114 @@ export async function listCaptureOcrResult(sessionId: string): Promise<StoredCap
   })
   if (error) throw mapRpcError(error, "ocr")
   return asCaptureOcrResult(data)
+}
+
+const CAPTURE_WINE_SUGGESTION_MODEL_VERSION = "cloudflare-llama-3.3-70b-wine-label-v1"
+const CAPTURE_SUGGESTION_CONFIDENCE = new Set<CaptureSuggestionConfidence>(["high", "medium", "low"])
+const CAPTURE_SUGGESTION_COLORS = new Set(["red", "white", "rose", "sparkling", "other"])
+
+function asEvidence(value: unknown): string[] {
+  if (!Array.isArray(value) || value.length > 4
+      || value.some((line) => typeof line !== "string" || line.length > 500)) {
+    throw new CapturePhotoError("suggestion")
+  }
+  return value
+}
+
+function asConfidence(value: unknown): CaptureSuggestionConfidence {
+  if (typeof value !== "string" || !CAPTURE_SUGGESTION_CONFIDENCE.has(value as CaptureSuggestionConfidence)) {
+    throw new CapturePhotoError("suggestion")
+  }
+  return value as CaptureSuggestionConfidence
+}
+
+function asTextField(value: unknown): CaptureWineTextField {
+  if (!isPlainRecord(value)
+      || !(value.value === null || (typeof value.value === "string" && value.value.trim().length > 0 && value.value.length <= 240))) {
+    throw new CapturePhotoError("suggestion")
+  }
+  return {
+    value: value.value === null ? null : value.value.trim(),
+    evidence: asEvidence(value.evidence),
+    confidence: asConfidence(value.confidence),
+  }
+}
+
+function asNumberField(value: unknown, max: number): CaptureWineNumberField {
+  if (!isPlainRecord(value)
+      || !(value.value === null || (typeof value.value === "number" && Number.isInteger(value.value)
+        && value.value > 0 && value.value <= max))) {
+    throw new CapturePhotoError("suggestion")
+  }
+  return {
+    value: value.value as number | null,
+    evidence: asEvidence(value.evidence),
+    confidence: asConfidence(value.confidence),
+  }
+}
+
+function asCaptureWineSuggestion(value: unknown): SavedCaptureWineSuggestion {
+  if (!isPlainRecord(value) || value.model_version !== CAPTURE_WINE_SUGGESTION_MODEL_VERSION
+      || !isPlainRecord(value.suggestion)) throw new CapturePhotoError("suggestion")
+  const candidate = value.suggestion
+  const vintage = asNumberField(candidate.vintage, 2200)
+  if (!isPlainRecord(candidate.vintage)
+      || !["year", "non_vintage", "not_visible"].includes(String(candidate.vintage.status))
+    || (candidate.vintage.status === "year"
+      ? vintage.value === null || vintage.value < 1800
+      : vintage.value !== null)) {
+    throw new CapturePhotoError("suggestion")
+  }
+  const color = asTextField(candidate.color)
+  if (color.value !== null && !CAPTURE_SUGGESTION_COLORS.has(color.value)) {
+    throw new CapturePhotoError("suggestion")
+  }
+  return {
+    modelVersion: CAPTURE_WINE_SUGGESTION_MODEL_VERSION,
+    suggestion: {
+      producer: asTextField(candidate.producer),
+      cuvee: asTextField(candidate.cuvee),
+      appellation: asTextField(candidate.appellation),
+      area: asTextField(candidate.area),
+      color: color as CaptureWineSuggestion["color"],
+      format_ml: asNumberField(candidate.format_ml, 20_000),
+      vintage: {
+        ...vintage,
+        status: candidate.vintage.status as CaptureWineVintageField["status"],
+      },
+    },
+  }
+}
+
+export async function suggestCaptureWineCandidate(
+  sessionId: string,
+  options: PhotoProcessingOptions = {},
+): Promise<SavedCaptureWineSuggestion> {
+  const token = await currentAccessToken(options.accessToken)
+  let response: Response
+  try {
+    response = await (options.fetch ?? fetch)("/api/capture/suggest-wine", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ sessionId }),
+    })
+  } catch {
+    throw new CapturePhotoError("offline")
+  }
+  let data: unknown
+  try {
+    data = await response.json()
+  } catch {
+    throw new CapturePhotoError("suggestion")
+  }
+  if (!response.ok) {
+    if (response.status === 401 || response.status === 403) throw new CapturePhotoError("permission")
+    throw new CapturePhotoError("suggestion")
+  }
+  return asCaptureWineSuggestion(data)
 }
 
 export async function recognizeCapturePhotoSession(

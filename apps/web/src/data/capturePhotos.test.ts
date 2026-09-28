@@ -24,6 +24,7 @@ import {
   listPreparedCapturePhotos,
   processCapturePhotoSession,
   recognizeCapturePhotoSession,
+  suggestCaptureWineCandidate,
   uploadCapturePhotos,
   validateCapturePhotoFiles,
 } from "./capturePhotos"
@@ -39,6 +40,45 @@ beforeEach(() => {
 })
 
 describe("temporary label photo upload", () => {
+  it("requests only a private saved-transcript suggestion and validates the result", async () => {
+    const request = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      expect(input).toBe("/api/capture/suggest-wine")
+      expect(init?.headers).toMatchObject({
+        "content-type": "application/json",
+        authorization: "Bearer session-token",
+      })
+      expect(JSON.parse(String(init?.body))).toEqual({ sessionId })
+      return Response.json({
+        model_version: "cloudflare-llama-3.3-70b-wine-label-v1",
+        suggestion: {
+          producer: { value: "JEAN-MARC BURGAUD", evidence: ["JEAN-MARC BURGAUD"], confidence: "high" },
+          cuvee: { value: "MORGON CÔTE DU PY", evidence: ["MORGON CÔTE DU PY"], confidence: "medium" },
+          appellation: { value: "MORGON", evidence: ["APPELLATION MORGON PROTÉGÉE"], confidence: "high" },
+          area: { value: null, evidence: [], confidence: "low" },
+          color: { value: null, evidence: [], confidence: "low" },
+          format_ml: { value: null, evidence: [], confidence: "low" },
+          vintage: { value: 2011, status: "year", evidence: ["2011"], confidence: "high" },
+        },
+      })
+    })
+
+    const result = await suggestCaptureWineCandidate(sessionId, { fetch: request })
+
+    expect(request).toHaveBeenCalledTimes(1)
+    expect(result.suggestion.producer.value).toBe("JEAN-MARC BURGAUD")
+    expect(result.suggestion.cuvee.value).toBe("MORGON CÔTE DU PY")
+    expect(result.suggestion.vintage).toMatchObject({ status: "year", value: 2011 })
+  })
+
+  it("rejects malformed server wine suggestions", async () => {
+    await expect(suggestCaptureWineCandidate(sessionId, {
+      fetch: vi.fn(async () => Response.json({
+        model_version: "wrong-version",
+        suggestion: {},
+      })),
+    })).rejects.toMatchObject({ kind: "suggestion" })
+  })
+
   it("allows a retry only after the server-side preparation lease expires", () => {
     const session = {
       state: "processing" as const,

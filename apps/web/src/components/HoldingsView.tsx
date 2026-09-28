@@ -368,6 +368,30 @@ export function HoldingsView({
   const [addQuantity, setAddQuantity] = useState("1")
   const [addLocationId, setAddLocationId] = useState("")
   const [adding, setAdding] = useState(false)
+  const [capturePrefillMessage, setCapturePrefillMessage] = useState("")
+
+  const applyCapturePrefill = (details: {
+    producer: string
+    cuvee: string
+    vintage: number | null
+    color: string
+    appellation: string
+    area: string
+    formatMl: number | null
+  }) => {
+    setAddProducer(details.producer)
+    setAddCuvee(details.cuvee)
+    setAddVintage(details.vintage === null ? "" : String(details.vintage))
+    setAddColor(details.color)
+    setAddAppellation(details.appellation)
+    setAddArea(details.area)
+    if (details.formatMl !== null) setAddFormatMl(String(details.formatMl))
+    setCapturePrefillMessage(t("Reviewed wine details were copied into the bottle form. Nothing has been added yet."))
+    window.setTimeout(() => {
+      document.querySelector<HTMLInputElement>(".add-bottles-form input")?.focus({ preventScroll: true })
+      document.querySelector(".add-bottles-form")?.scrollIntoView({ behavior: "smooth", block: "nearest" })
+    }, 0)
+  }
 
   const selectedAddLocationId =
     addLocationId || locations[0]?.id || ""
@@ -857,8 +881,12 @@ export function HoldingsView({
             householdId={householdId}
             isOnline={isOnline}
             userId={userId}
+            wines={wines}
+            onUseReviewedDetails={applyCapturePrefill}
           />
         ) : null}
+
+        {capturePrefillMessage ? <Notice role="status" tone="success">{capturePrefillMessage}</Notice> : null}
 
       <form className="add-bottles-form" onSubmit={(event) => void handleAdd(event)}>
         <label>{t("Producer / winery")}<input
