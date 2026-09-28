@@ -230,7 +230,7 @@ export async function handleCaptureRecognition(request, env, dependencies = {}) 
         task: "query",
         image: asDataUri(bytes),
         question: OCR_QUESTION,
-        reasoning: false,
+        reasoning: true,
         temperature: 0,
         max_tokens: 512,
         stream: false,
