@@ -5,11 +5,12 @@ const MAX_REQUEST_BYTES = 4_096;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const OBJECT_KEY_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const OCR_QUESTION = [
-  "Read this wine bottle label and transcribe its visible text in reading order.",
-  "Preserve the original language, spelling, and accents.",
-  "Prioritize the producer, wine or vineyard name, appellation, vintage, and bottle size.",
-  "Use [illegible] for any part you cannot read; do not leave the whole answer blank.",
-  "Return only the transcription.",
+  "Act as OCR, not as a wine expert or image captioner.",
+  "Read the main front paper label; ignore the bottle, reflections, and background.",
+  "Transcribe every visible word and number in reading order, preserving the printed language, spelling, accents, capitalization, and line breaks.",
+  "Focus on the producer near the top, the wine or appellation in the center, and the vintage and volume near the bottom.",
+  "Include partially readable words; use [illegible] only for unreadable spans. Never guess or invent text.",
+  "If any characters are readable, return them rather than an empty answer. Return only the transcription.",
 ].join(" ");
 
 function json(body, status = 200) {
@@ -229,7 +230,7 @@ export async function handleCaptureRecognition(request, env, dependencies = {}) 
         task: "query",
         image: asDataUri(bytes),
         question: OCR_QUESTION,
-        reasoning: true,
+        reasoning: false,
         temperature: 0,
         max_tokens: 512,
         stream: false,

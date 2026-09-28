@@ -66,9 +66,11 @@ test("transcribes a verified owner photo with Cloudflare AI, saves private text,
   assert.equal(aiCalls.length, 1);
   assert.equal(aiCalls[0].model, "@cf/moondream/moondream3.1-9B-A2B");
   assert.equal(aiCalls[0].input.task, "query");
-  assert.equal(aiCalls[0].input.reasoning, true);
+  assert.equal(aiCalls[0].input.reasoning, false);
   assert.equal(aiCalls[0].input.temperature, 0);
   assert.equal(aiCalls[0].input.max_tokens, 512);
+  assert.match(aiCalls[0].input.question, /Act as OCR, not as a wine expert/);
+  assert.match(aiCalls[0].input.question, /If any characters are readable, return them rather than an empty answer/);
   assert.match(aiCalls[0].input.image, /^data:image\/jpeg;base64,/);
   assert.equal(aiCalls[0].input.image, `data:image/jpeg;base64,${Buffer.from(imageBytes).toString("base64")}`);
   assert.equal(aiCalls[0].input.question.includes(sessionId), false);

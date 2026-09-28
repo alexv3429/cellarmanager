@@ -25,7 +25,7 @@ interface CapturePhotosPanelProps {
 
 function messageForError(error: unknown, t: (key: string) => string): string {
   if (error instanceof Error && error.name === "CaptureOcrEmptyError") {
-    return t("No label text could be read. The private photo is still available to retry or delete.")
+    return t("Cloudflare AI returned no readable label text. The photo was uploaded and remains private. View it and retry, or delete it; your cellar was not changed.")
   }
   if (!(error instanceof CapturePhotoError)) return t("Photo upload failed. Your cellar was not changed.")
   switch (error.kind) {
@@ -83,6 +83,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
   const [ocrResults, setOcrResults] = useState<Record<string, StoredCaptureOcrResult>>({})
   const [shownOcrSession, setShownOcrSession] = useState<string | null>(null)
   const [ocrProgress, setOcrProgress] = useState<{ sessionId: string } | null>(null)
+  const [ocrRetrySessions, setOcrRetrySessions] = useState<Record<string, boolean>>({})
   const previewRef = useRef<{ sessionId: string; urls: string[] } | null>(null)
 
   const clearPreview = useCallback(() => {
@@ -236,6 +237,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
     if (previewRef.current?.sessionId === sessionId) clearPreview()
     try {
       const saved = await recognizeCapturePhotoSession(sessionId)
+      setOcrRetrySessions((current) => ({ ...current, [sessionId]: false }))
       setOcrResults((current) => ({ ...current, [sessionId]: { pages: saved.pages, engine: saved.engine } }))
       setShownOcrSession(sessionId)
       setMessage(t(saved.state === "recognized"
@@ -243,8 +245,10 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
         : "Text is saved privately. Photo deletion is still being retried; your cellar was not changed."))
       await refresh()
     } catch (recognitionError) {
+      const noText = recognitionError instanceof Error && recognitionError.name === "CaptureOcrEmptyError"
+      if (noText) setOcrRetrySessions((current) => ({ ...current, [sessionId]: true }))
       const displayError = recognitionError instanceof CapturePhotoError
-        || (recognitionError instanceof Error && recognitionError.name === "CaptureOcrEmptyError")
+        || noText
         ? recognitionError
         : new CapturePhotoError("ocr")
       setError(messageForError(displayError, t))
@@ -384,7 +388,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
                       <button type="button" disabled={busy || !isOnline} onClick={() => void recognize(session.sessionId)}>
                         {ocrProgress?.sessionId === session.sessionId
                           ? t("Sending photos to Cloudflare AI…")
-                          : t("Send photos to Cloudflare AI to read label text")}
+                          : t(ocrRetrySessions[session.sessionId] ? "Retry label reading" : "Send photos to Cloudflare AI to read label text")}
                       </button>
                       <button type="button" className="button-secondary" disabled={busy || !isOnline} onClick={() => void togglePreview(session.sessionId)}>
                         {preview?.sessionId === session.sessionId ? t("Hide prepared photos") : t("View prepared photos")}
