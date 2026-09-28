@@ -452,9 +452,12 @@ existing Add bottles panel. Step 0.6.7 now prepares each photo on the device
 before upload: it validates JPEG/PNG signatures and dimensions, applies
 orientation, composites transparency on white, scales the long edge to at most
 2,400 px, and re-encodes a metadata-free JPEG. A trusted Worker independently
-decodes and re-encodes the upload, verifies the private derivative, and removes
-the uploaded object through the Storage API before making the derivative
-available for an authenticated preview. Step 0.6.8 runs transcription only
+checks JPEG structure, dimensions, size, and metadata markers, copies validated
+bytes to a private derivative, and removes the upload through the Storage API
+before making the derivative available for authenticated preview. It does not
+repeat pixel decoding/re-encoding, which exceeded the Workers Free CPU limit;
+interrupted requests can be retried after a five-minute processing lease.
+Step 0.6.8 runs transcription only
 after the Owner chooses the clearly labeled Cloudflare AI action. The Worker
 reads only the sanitized private derivative through the owner-authorized
 capture boundary, sends no household or wine identifiers, limits model output,

@@ -3,6 +3,7 @@ import { supabase } from "./supabase"
 export const CAPTURE_PHOTO_BUCKET = "capture-labels"
 export const CAPTURE_PHOTO_MAX_BYTES = 6 * 1024 * 1024
 export const CAPTURE_PHOTO_MAX_COUNT = 2
+export const CAPTURE_PREPROCESSING_LEASE_MS = 5 * 60 * 1000
 
 export type CapturePhotoErrorKind = "invalid" | "dimensions" | "processing" | "ocr" | "limit" | "permission" | "offline" | "upload_start" | "upload_transfer" | "upload_confirm" | "refresh" | "delete"
 
@@ -16,11 +17,25 @@ export class CapturePhotoError extends Error {
   }
 }
 
+export function isCapturePhotoPreparationStale(
+  session: Pick<CapturePhotoSession, "state" | "processingStartedAt" | "expiresAt">,
+  now = Date.now(),
+): boolean {
+  if (session.state !== "processing" || !session.processingStartedAt) return false
+  const startedAt = Date.parse(session.processingStartedAt)
+  const expiresAt = Date.parse(session.expiresAt)
+  return Number.isFinite(startedAt)
+    && Number.isFinite(expiresAt)
+    && now - startedAt >= CAPTURE_PREPROCESSING_LEASE_MS
+    && now < expiresAt
+}
+
 export interface CapturePhotoSession {
   sessionId: string
   state: "uploading" | "ready" | "processing" | "processed" | "ocr_deletion_pending" | "recognized" | "deletion_pending"
   createdAt: string
   expiresAt: string
+  processingStartedAt: string | null
   photoCount: number
 }
 
@@ -143,6 +158,7 @@ export async function listCapturePhotoSessions(
       state: item.state as CapturePhotoSession["state"],
       createdAt: item.created_at,
       expiresAt: item.expires_at,
+      processingStartedAt: typeof item.processing_started_at === "string" ? item.processing_started_at : null,
       photoCount: item.photo_count,
     }]
   })

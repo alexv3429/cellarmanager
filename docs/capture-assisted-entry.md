@@ -129,10 +129,13 @@ Step 0.6.6 established the temporary, Owner-only photo panel in Add bottles.
 Step 0.6.7 prepares JPEG/PNG images on-device before any upload: it checks the
 signature and pixel dimensions, applies EXIF orientation, composites
 transparency on white, resizes to a maximum 2,400 px long edge, and re-encodes
-to JPEG without carrying metadata. A Worker then independently verifies and
-re-encodes each uploaded image, confirms the private derivative was stored,
-and deletes the uploaded object through the Storage API before publishing a
-preview key. Owners may preview or delete the sanitized photo; other household
+to JPEG without carrying metadata. A Worker independently checks the prepared
+JPEG's structure, dimensions, size, and absence of metadata markers, copies the
+validated bytes to a new opaque key, and deletes the uploaded object through the
+Storage API before publishing a preview key. It avoids a second full pixel
+decode/re-encode to stay within Workers Free CPU limits. Interrupted processing
+can be retried after its five-minute lease expires. Owners may preview or delete
+the sanitized photo; other household
 members cannot read it. Step 0.6.8 sends only the sanitized JPEG derivative to
 Cloudflare Workers AI after the Owner explicitly selects the clearly labeled
 recognition action. The Worker retrieves the image through the existing

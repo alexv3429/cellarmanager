@@ -16,7 +16,9 @@ vi.mock("./supabase", () => ({
 }))
 
 import {
+  CAPTURE_PREPROCESSING_LEASE_MS,
   CAPTURE_PHOTO_MAX_BYTES,
+  isCapturePhotoPreparationStale,
   listCaptureOcrResult,
   listCapturePhotoSessions,
   listPreparedCapturePhotos,
@@ -37,6 +39,18 @@ beforeEach(() => {
 })
 
 describe("temporary label photo upload", () => {
+  it("allows a retry only after the server-side preparation lease expires", () => {
+    const session = {
+      state: "processing" as const,
+      processingStartedAt: "2026-09-28T10:00:00.000Z",
+      expiresAt: "2026-09-29T10:00:00.000Z",
+    }
+    expect(isCapturePhotoPreparationStale(session, Date.parse(session.processingStartedAt) + CAPTURE_PREPROCESSING_LEASE_MS - 1)).toBe(false)
+    expect(isCapturePhotoPreparationStale(session, Date.parse(session.processingStartedAt) + CAPTURE_PREPROCESSING_LEASE_MS)).toBe(true)
+    expect(isCapturePhotoPreparationStale({ ...session, expiresAt: session.processingStartedAt }, Date.parse(session.processingStartedAt) + CAPTURE_PREPROCESSING_LEASE_MS)).toBe(false)
+    expect(isCapturePhotoPreparationStale({ ...session, state: "ready" }, Date.parse(session.processingStartedAt) + CAPTURE_PREPROCESSING_LEASE_MS)).toBe(false)
+  })
+
   it("accepts only one or two JPEG/PNG files up to the cap", () => {
     const jpeg = new File([new Uint8Array([1])], "label-front.jpg", { type: "image/jpeg" })
     const png = new File([new Uint8Array([1])], "label-back.png", { type: "image/png" })
@@ -153,13 +167,13 @@ describe("temporary label photo upload", () => {
 
   it("lists processing and processed states while withholding keys from summaries", async () => {
     rpc.mockResolvedValueOnce({ data: [
-      { session_id: sessionId, state: "processing", created_at: "2026-09-27T10:00:00Z", expires_at: "2026-09-28T10:00:00Z", photo_count: 1 },
+      { session_id: sessionId, state: "processing", created_at: "2026-09-27T10:00:00Z", expires_at: "2026-09-28T10:00:00Z", processing_started_at: "2026-09-27T10:01:00Z", photo_count: 1 },
       { session_id: "f47ac10b-58cc-4372-a567-0e02b2c3d479", state: "processed", created_at: "2026-09-27T09:00:00Z", expires_at: "2026-09-28T09:00:00Z", photo_count: 1 },
       { session_id: "c56a4180-65aa-42ec-a945-5fd21dec0538", state: "recognized", created_at: "2026-09-27T08:00:00Z", expires_at: "2026-09-28T08:00:00Z", photo_count: 0 },
       { session_id: "a987fbc9-4bed-4078-8f07-9141ba07c9f3", state: "ocr_deletion_pending", created_at: "2026-09-27T07:00:00Z", expires_at: "2026-09-28T07:00:00Z", photo_count: 1 },
     ], error: null })
     await expect(listCapturePhotoSessions("household-1")).resolves.toMatchObject([
-      { sessionId, state: "processing" },
+      { sessionId, state: "processing", processingStartedAt: "2026-09-27T10:01:00Z" },
       { state: "processed" },
       { state: "recognized", photoCount: 0 },
       { state: "ocr_deletion_pending" },

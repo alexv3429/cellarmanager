@@ -30,9 +30,12 @@ threat model, thresholds, deletion workflow, and implementation acceptance.
   account media budget up to the 260 MiB worst-case overlap. Enforce a separate
   deployment-wide budget below the active Storage plan quota. Begin with JPEG
   and PNG; require maintained decoder support before adding HEIC/HEIF.
-- Validate byte signatures and decoded dimensions server-side, strip metadata,
-  re-encode a bounded sanitized image, and delete the original after successful
-  normalization.
+- Prepare images on-device with orientation applied, bounded dimensions and
+  metadata-free JPEG encoding. The Worker independently validates the JPEG
+  structure, dimensions, size, and absence of metadata markers before promoting
+  those exact bytes to a new opaque key; it then deletes the upload. Avoid a
+  second full pixel decode/re-encode in the Worker so the flow remains usable
+  within Cloudflare Workers Free CPU limits.
 - Delete source and normalized images as soon as extracted wine information is
   durably ingested into the capture draft; expire unprocessed captures after
   24 hours with a server-side cleanup job. Delete raw extraction immediately

@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef, useState } from "react"
 
 import {
   CapturePhotoError,
+  CAPTURE_PREPROCESSING_LEASE_MS,
   deleteCapturePhotoSession,
+  isCapturePhotoPreparationStale,
   listCaptureOcrResult,
   listPreparedCapturePhotos,
   listCapturePhotoSessions,
@@ -29,7 +31,7 @@ function messageForError(error: unknown, t: (key: string) => string): string {
   switch (error.kind) {
     case "invalid": return t("Choose one or two valid JPEG or PNG photos, each no larger than 6 MB.")
     case "dimensions": return t("This photo is too large to prepare safely. Choose a smaller image.")
-    case "processing": return t("Photo preparation did not finish. You can retry or delete this capture.")
+    case "processing": return t("Photo preparation was interrupted. Refresh the photo list; if it is still preparing after five minutes, you can retry. Your cellar was not changed.")
     case "ocr": return t("Cloudflare label recognition could not finish. Your cellar was not changed; you can retry later or delete the photo.")
     case "limit": return t("The temporary photo limit has been reached. Delete an earlier capture or try again later.")
     case "permission": return t("Only the current household owner can upload these photos. Refresh your access and try again.")
@@ -46,7 +48,9 @@ function messageForError(error: unknown, t: (key: string) => string): string {
 function sessionStateLabel(session: CapturePhotoSession, t: (key: string) => string): string {
   switch (session.state) {
     case "ready": return t("Ready to prepare privately")
-    case "processing": return t("Preparing photos…")
+    case "processing": return isCapturePhotoPreparationStale(session)
+      ? t("Photo preparation appears stalled. Refresh photos to retry.")
+      : t("Preparing photos…")
     case "processed": return t("Prepared photos are private and ready to send to Cloudflare AI for label reading")
     case "ocr_deletion_pending": return t("Text saved privately; photo deletion is still in progress")
     case "recognized": return t("Label text saved privately; photo deleted")
@@ -127,6 +131,18 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
       previewRef.current = null
     }
   }, [householdId, isOnline, t, userId])
+
+  useEffect(() => {
+    const now = Date.now()
+    const retryAt = sessions
+      .filter((session) => session.state === "processing" && session.processingStartedAt)
+      .map((session) => Date.parse(session.processingStartedAt ?? "") + CAPTURE_PREPROCESSING_LEASE_MS)
+      .filter((deadline) => Number.isFinite(deadline) && deadline > now)
+      .sort((left, right) => left - right)[0]
+    if (retryAt === undefined) return
+    const timer = window.setTimeout(() => void refresh(), retryAt - now)
+    return () => window.clearTimeout(timer)
+  }, [sessions, refresh])
 
   const chooseFiles = (chosen: FileList | null) => {
     const nextFiles = chosen ? Array.from(chosen).slice(0, 3) : []
@@ -346,6 +362,11 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
                   {session.state === "ready" ? (
                     <button type="button" disabled={busy || !isOnline} onClick={() => void prepare(session.sessionId)}>
                       {busy ? t("Preparing…") : t("Prepare photos")}
+                    </button>
+                  ) : null}
+                  {session.state === "processing" && isCapturePhotoPreparationStale(session) ? (
+                    <button type="button" disabled={busy || !isOnline} onClick={() => void prepare(session.sessionId)}>
+                      {busy ? t("Preparing…") : t("Retry preparation")}
                     </button>
                   ) : null}
                   {session.state === "processed" ? (

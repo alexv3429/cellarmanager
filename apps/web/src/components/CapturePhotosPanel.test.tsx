@@ -3,7 +3,9 @@ import { describe, expect, it, vi } from "vitest"
 
 vi.mock("../data/capturePhotos", () => ({
   CapturePhotoError: class CapturePhotoError extends Error {},
+  CAPTURE_PREPROCESSING_LEASE_MS: 5 * 60 * 1000,
   deleteCapturePhotoSession: vi.fn(),
+  isCapturePhotoPreparationStale: vi.fn(() => false),
   listCaptureOcrResult: vi.fn(),
   listPreparedCapturePhotos: vi.fn(),
   listCapturePhotoSessions: vi.fn(),

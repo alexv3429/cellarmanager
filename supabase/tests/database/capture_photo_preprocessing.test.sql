@@ -46,6 +46,11 @@ select is(jsonb_array_length((select claim->'assets' from preprocessing_claim)),
 select is(public.claim_capture_preprocessing((select (response->>'session_id')::uuid from preprocessing_capture))->>'state', 'processing', 'A duplicate concurrent request observes the active claim without claiming the same objects again');
 reset role;
 select is((select state from private.capture_sessions where id = (select (response->>'session_id')::uuid from preprocessing_capture)), 'processing', 'Claim atomically closes upload and starts processing');
+select ok(
+    (select preprocessing_started_at > now() - interval '1 minute'
+     from private.capture_sessions where id = (select (response->>'session_id')::uuid from preprocessing_capture)),
+    'A processing claim records its recovery lease timestamp'
+);
 
 set local role service_role;
 set local request.jwt.claim.role = 'service_role';
@@ -66,6 +71,39 @@ select ok(
     ),
     'The original upload is never directly downloadable during preprocessing'
 );
+
+create temporary table stale_preprocessing_claim(claim jsonb);
+grant select, insert on stale_preprocessing_claim to authenticated;
+reset role;
+update private.capture_sessions
+set preprocessing_started_at = now() - interval '6 minutes'
+where id = (select (response->>'session_id')::uuid from preprocessing_capture);
+set local role authenticated;
+set local request.jwt.claim.sub = '00000000-0000-4000-8000-000000000001';
+insert into stale_preprocessing_claim
+select public.claim_capture_preprocessing((select (response->>'session_id')::uuid from preprocessing_capture));
+select is((select claim->>'state' from stale_preprocessing_claim), 'claimed', 'An expired preprocessing lease can be reclaimed');
+select is((select claim->>'reclaimed' from stale_preprocessing_claim), 'true', 'A reclaimed claim tells the Worker to remove any partial derivative before retrying');
+select is(
+    (select claim->'assets'->0->>'normalized_object_name' from stale_preprocessing_claim),
+    (select claim->'assets'->0->>'normalized_object_name' from preprocessing_claim),
+    'A reclaimed attempt reuses its reserved derivative key so failed cleanup remains discoverable'
+);
+select is(
+    public.claim_capture_preprocessing((select (response->>'session_id')::uuid from preprocessing_capture))->>'state',
+    'processing',
+    'A fresh retry lease remains exclusive to its current Worker'
+);
+select ok(
+    exists (
+        select 1
+        from jsonb_array_elements(public.list_capture_sessions('00000000-0000-4000-8000-000000000100')) as listed(item)
+        where listed.item->>'session_id' = (select response->>'session_id' from preprocessing_capture)
+          and listed.item->>'processing_started_at' is not null
+    ),
+    'The Owner can see the lease timestamp needed to offer a safe retry'
+);
+
 set local request.jwt.claim.sub = '00000000-0000-4000-8000-000000009987';
 select throws_ok(
     $$select public.list_capture_processed_assets((select (response->>'session_id')::uuid from preprocessing_capture))$$,

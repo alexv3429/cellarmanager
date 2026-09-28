@@ -38,9 +38,6 @@
     "wrangler": "^4.135.0"
   },
   "dependencies": {
-    "@jsquash/jpeg": "1.6.0",
-    "@jsquash/png": "3.1.1",
-    "@jsquash/resize": "2.1.1",
     "nodemailer": "^10.0.10"
   }
 }

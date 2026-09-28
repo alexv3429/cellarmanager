@@ -101,22 +101,18 @@ cannot be reserved atomically, reject the upload with a retryable message.
 
 ## Sanitization and recognizer boundary
 
-Before previewing or sending a file to any external recognizer, a trusted image
-processor must:
-
-1. decode only an allowlisted raster format and reject malformed/oversized
-   input;
-2. apply image orientation, remove EXIF/GPS, IPTC, XMP, and other metadata, and
-   re-encode a normalized raster with a bounded long edge (2,400 px) and size
-   (5 MiB);
-3. assign a new opaque object key to the sanitized derivative and never
-   overwrite the original; and
-4. delete the original source object as soon as the normalized derivative is
-   verified. If validation, decoding, or sanitization fails, close the capture
-   and delete the source; the owner can upload a corrected image. A transient
-   processor failure may retry the original at most three times within 24 hours
-   in the trusted service only, after which the source is deleted. OCR retries
-   use the sanitized derivative, never the original.
+Before previewing or sending a file to any external recognizer, the browser
+must decode an allowlisted raster, apply image orientation, remove EXIF/GPS,
+IPTC, XMP, and other metadata, and re-encode a bounded JPEG (2,400 px long edge,
+5 MiB). The trusted Worker then independently checks JPEG structure, dimensions,
+size, and metadata markers without decoding pixels a second time. It copies only
+those exact validated bytes to a new opaque object key, verifies Storage's
+accepted content type and size through the database completion check, and
+deletes the upload. If validation or storage promotion fails, close the capture
+and delete both objects. A capture whose Worker request is interrupted retains
+a five-minute processing lease; after that, the owner can explicitly retry, and
+the Worker first removes any partial derivative through the Storage API. OCR
+retries use only the promoted JPEG, never an unvalidated original.
 
 The 0.6.5 design approved no OCR/image provider. The later, scoped Cloudflare
 Workers AI approval in [ADR 007](adr/007-opt-in-cloudflare-label-ocr.md) is the
@@ -179,7 +175,7 @@ enforced the 24-hour limit, owner scope, quotas, cancellation, and Storage-API
 cleanup. Image signature checks, decoding, dimension limits, metadata removal,
 and safe preview were added in 0.6.7.
 
-## 0.6.7 image preprocessing implementation boundary
+## 0.6.7–0.6.9 image preprocessing implementation boundary
 
 Before a capture session is reserved, the browser reads the selected JPEG/PNG,
 checks its signature and dimensions (at most 24 megapixels), applies embedded
@@ -187,16 +183,21 @@ orientation, composites transparency against white, resizes to a maximum
 2,400-pixel long edge, and re-encodes to a metadata-free JPEG no larger than
 5 MiB. Only that generic-named prepared JPEG is uploaded; the original selected
 file never leaves browser memory. This client step improves privacy and mobile
-upload size, but is not trusted as the security boundary.
+upload size. The server remains the trust boundary for object authorization,
+structural and dimension limits, and metadata-marker rejection; it deliberately
+does not repeat the expensive pixel decode/re-encode.
 
 The Worker accepts only the exact claimed object keys for the initiating Owner,
-checks byte signature and dimensions again (at most 8 megapixels per server
-decode), decodes with orientation handling, composites alpha, resizes and
-re-encodes to JPEG, and caps the derivative at 5 MiB and 2,400 px on its long
-edge. It uploads the derivative under a new opaque key, downloads it again and
-checks its exact byte count and SHA-256 digest, then deletes the uploaded object
-through the Storage API. The database only changes the session to `processed`
-when it sees the derivative metadata and confirms the source object is gone.
+checks JPEG structure and dimensions (at most 8 megapixels and 2,400 px on the
+long edge), rejects EXIF/XMP/IPTC/ICC/comment markers and non-JFIF APP0 data,
+and caps the already re-encoded image at 5 MiB. It copies those validated bytes
+to a new opaque key and deletes the source through the Storage API. The database
+only changes the session to `processed` when it sees the derivative's JPEG
+content type and bounded size and confirms the source object is gone. This
+avoids the second WASM pixel decode/re-encode, which exceeded the 10 ms CPU
+budget on Workers Free. Processing claims carry a five-minute lease; a retry
+after an interrupted Worker removes any partial derivative before reusing its
+reserved key.
 An authenticated download policy grants the initiating Owner access to the
 processed derivative only; a narrowly scoped RPC provides its opaque key for
 preview. The same-origin Worker rechecks that exact key against the Owner's
@@ -208,9 +209,7 @@ malformed or unprocessable image closes the capture and attempts
 Storage-API deletion; any cleanup failure stays closed and is retried by the
 15-minute cleanup Worker before the immutable 24-hour expiry.
 
-The Worker bundles the Apache-2.0 `@jsquash/jpeg`, `@jsquash/png`, and
-`@jsquash/resize` codecs as WebAssembly modules. No hosted image service or new
-provider credential is introduced.
+No hosted image service or new provider credential is introduced.
 
 ## Required acceptance for implementation
 
