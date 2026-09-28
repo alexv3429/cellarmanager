@@ -5,11 +5,11 @@ const MAX_REQUEST_BYTES = 4_096;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const OBJECT_KEY_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const OCR_QUESTION = [
-  "Transcribe the clearly legible text printed on this wine bottle label.",
-  "Preserve the exact spelling, accents, capitalization, and line breaks; do not infer or correct missing words.",
-  "Prioritize the producer, cuvée or vineyard, appellation, vintage, and bottle size.",
-  "Omit tiny legal text or background details when they are not clearly legible.",
-  "Return only the transcription, with no explanation or commentary.",
+  "Read this wine bottle label and transcribe its visible text in reading order.",
+  "Preserve the original language, spelling, and accents.",
+  "Prioritize the producer, wine or vineyard name, appellation, vintage, and bottle size.",
+  "Use [illegible] for any part you cannot read; do not leave the whole answer blank.",
+  "Return only the transcription.",
 ].join(" ");
 
 function json(body, status = 200) {
@@ -229,12 +229,26 @@ export async function handleCaptureRecognition(request, env, dependencies = {}) 
         task: "query",
         image: asDataUri(bytes),
         question: OCR_QUESTION,
-        reasoning: false,
+        reasoning: true,
         temperature: 0,
         max_tokens: 512,
         stream: false,
       });
       const text = recognizedText(result);
+      if (!text) {
+        const outputTokens = isPlainRecord(result) && isPlainRecord(result.metrics)
+          && Number.isSafeInteger(result.metrics.output_tokens)
+          ? result.metrics.output_tokens
+          : null;
+        console.warn("capture_ocr_empty_answer", {
+          model: MODEL,
+          answerType: isPlainRecord(result) && result.answer === null ? "null" : typeof result?.answer,
+          finishReason: isPlainRecord(result) && typeof result.finish_reason === "string"
+            ? result.finish_reason
+            : null,
+          outputTokens,
+        });
+      }
       if (text.length > 10_000) throw new Error("recognition_output_too_large");
       pages.push({ object_name: asset.object_name, text, confidence: 0 });
     }
