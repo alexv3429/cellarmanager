@@ -287,6 +287,7 @@ export async function handleCaptureRecognition(request, env, dependencies = {}) 
 
   return json({
     state,
+    engine_version: MODEL_VERSION,
     pages: pages.map(({ text, confidence }) => ({ text, confidence })),
   });
 }

@@ -49,9 +49,17 @@ function sessionStateLabel(session: CapturePhotoSession, t: (key: string) => str
     case "processing": return t("Preparing photos…")
     case "processed": return t("Prepared photos are private and ready to send to Cloudflare AI for label reading")
     case "ocr_deletion_pending": return t("Text saved privately; photo deletion is still in progress")
-    case "recognized": return t("Text read by Cloudflare AI and saved privately; photo deleted")
+    case "recognized": return t("Label text saved privately; photo deleted")
     case "deletion_pending": return t("Deletion in progress")
     default: return t("Upload incomplete")
+  }
+}
+
+function recognitionEngineLabel(engine: StoredCaptureOcrResult["engine"], t: (key: string) => string): string {
+  switch (engine) {
+    case "cloudflare": return t("Cloudflare Workers AI (Moondream)")
+    case "tesseract": return t("On-device OCR (Tesseract)")
+    default: return t("Recognition engine not recorded")
   }
 }
 
@@ -202,7 +210,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
     if (previewRef.current?.sessionId === sessionId) clearPreview()
     try {
       const saved = await recognizeCapturePhotoSession(sessionId)
-      setOcrResults((current) => ({ ...current, [sessionId]: { pages: saved.pages } }))
+      setOcrResults((current) => ({ ...current, [sessionId]: { pages: saved.pages, engine: saved.engine } }))
       setShownOcrSession(sessionId)
       setMessage(t(saved.state === "recognized"
         ? "Cloudflare AI read the label text and saved it privately. The photo has been deleted."
@@ -387,6 +395,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
               {shownOcrSession === session.sessionId && ocrResults[session.sessionId] ? (
                 <section className="capture-photos__recognized" aria-label={t("Recognized label text")}>
                   <h5>{t("Recognized label text")}</h5>
+                  <p>{t("Recognition engine")}: {recognitionEngineLabel(ocrResults[session.sessionId].engine, t)}</p>
                   {ocrResults[session.sessionId].pages.map((page, index) => (
                     <div key={`${session.sessionId}-${index}`}>
                       <strong>{t("Photo {number}", { number: String(index + 1) })}</strong>

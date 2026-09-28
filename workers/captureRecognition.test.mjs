@@ -60,6 +60,7 @@ test("transcribes a verified owner photo with Cloudflare AI, saves private text,
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), {
     state: "recognized",
+    engine_version: "cloudflare-moondream3.1-9b-a2b-v1",
     pages: [{ text: "JEAN-MARC BURGAUD\nMORGON CÔTE DU PY\n2011", confidence: 0 }],
   });
   assert.equal(aiCalls.length, 1);

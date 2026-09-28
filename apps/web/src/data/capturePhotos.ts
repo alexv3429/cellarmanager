@@ -56,6 +56,7 @@ export interface StoredCaptureOcrPage {
 
 export interface StoredCaptureOcrResult {
   pages: StoredCaptureOcrPage[]
+  engine: "tesseract" | "cloudflare" | "unknown"
 }
 
 export interface SavedCaptureOcrResult extends StoredCaptureOcrResult {
@@ -251,7 +252,12 @@ function asCaptureOcrResult(value: unknown): StoredCaptureOcrResult {
     return { text: item.text, confidence: item.confidence }
   })
   if (!pages.some((page) => page.text.trim().length > 0)) throw new CapturePhotoError("ocr")
-  return { pages }
+  const engine = value.engine_version === "7.0.0"
+    ? "tesseract"
+    : value.engine_version === "cloudflare-moondream3.1-9b-a2b-v1"
+      ? "cloudflare"
+      : "unknown"
+  return { pages, engine }
 }
 
 export async function listCaptureOcrResult(sessionId: string): Promise<StoredCaptureOcrResult> {
@@ -308,7 +314,8 @@ export async function recognizeCapturePhotoSession(
     return { text: page.text, confidence: page.confidence }
   })
   if (!pages.some((page) => page.text.trim().length > 0)) throw new CapturePhotoError("ocr")
-  return { state: data.state as SavedCaptureOcrResult["state"], pages }
+  const engine = data.engine_version === "cloudflare-moondream3.1-9b-a2b-v1" ? "cloudflare" : "unknown"
+  return { state: data.state as SavedCaptureOcrResult["state"], pages, engine }
 }
 
 async function closeAndDeleteCapture(sessionId: string): Promise<void> {

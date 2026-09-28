@@ -194,6 +194,7 @@ describe("temporary label photo upload", () => {
   it("requests Cloudflare OCR through the authenticated same-origin worker", async () => {
     const fetcher = vi.fn().mockResolvedValue(Response.json({
       state: "recognized",
+      engine_version: "cloudflare-moondream3.1-9b-a2b-v1",
       pages: [{ text: "Domaine Exemple 2022", confidence: 0 }],
     }))
 
@@ -203,6 +204,7 @@ describe("temporary label photo upload", () => {
     })).resolves.toEqual({
       state: "recognized",
       pages: [{ text: "Domaine Exemple 2022", confidence: 0 }],
+      engine: "cloudflare",
     })
 
     expect(fetcher).toHaveBeenCalledWith("/api/capture/ocr", expect.objectContaining({
@@ -234,10 +236,12 @@ describe("temporary label photo upload", () => {
   it("validates private OCR results before rendering them", async () => {
     rpc.mockResolvedValueOnce({ data: {
       session_id: sessionId,
+      engine_version: "7.0.0",
       recognized_pages: [{ object_name: objectName, text: "Domaine Exemple", confidence: 89 }],
     }, error: null })
     await expect(listCaptureOcrResult(sessionId)).resolves.toEqual({
       pages: [{ text: "Domaine Exemple", confidence: 89 }],
+      engine: "tesseract",
     })
 
     rpc.mockResolvedValueOnce({ data: {
