@@ -52,7 +52,13 @@ test("transcribes a verified owner photo with Cloudflare AI, saves private text,
   };
   const runModel = async (model, input) => {
     aiCalls.push({ model, input });
-    return { answer: "JEAN-MARC BURGAUD\nMORGON CÔTE DU PY\n2011" };
+    return {
+      result: {
+        answer: "JEAN-MARC BURGAUD\nMORGON CÔTE DU PY\n2011",
+        finish_reason: "stop",
+      },
+      usage: { completion_tokens: 58 },
+    };
   };
 
   const response = await handleCaptureRecognition(request(), env, { fetch: fetcher, runModel });
@@ -69,8 +75,8 @@ test("transcribes a verified owner photo with Cloudflare AI, saves private text,
   assert.equal(aiCalls[0].input.reasoning, true);
   assert.equal(aiCalls[0].input.temperature, 0);
   assert.equal(aiCalls[0].input.max_tokens, 512);
-  assert.match(aiCalls[0].input.question, /Act as OCR, not as a wine expert/);
-  assert.match(aiCalls[0].input.question, /If any characters are readable, return them rather than an empty answer/);
+  assert.equal(aiCalls[0].input.question,
+    "Transcribe exactly all text visible on the front wine label. Preserve accents and numbers. Do not guess or complete unreadable text");
   assert.match(aiCalls[0].input.image, /^data:image\/jpeg;base64,/);
   assert.equal(aiCalls[0].input.image, `data:image/jpeg;base64,${Buffer.from(imageBytes).toString("base64")}`);
   assert.equal(aiCalls[0].input.question.includes(sessionId), false);
@@ -122,7 +128,10 @@ test("keeps the photo available when the model cannot read any label text", asyn
       if (String(url).endsWith(`/object/authenticated/capture-labels/${objectName}`)) return imageResponse();
       assert.fail(`Unexpected request ${String(url)}`);
     },
-    runModel: async () => ({ answer: "  " }),
+    runModel: async () => ({
+      result: { answer: "  ", finish_reason: "stop" },
+      usage: { completion_tokens: 1 },
+    }),
   });
   assert.equal(response.status, 422);
   assert.deepEqual(await response.json(), { error: "no_text" });

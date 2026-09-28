@@ -4,14 +4,7 @@ const MODEL_VERSION = "cloudflare-moondream3.1-9b-a2b-v1";
 const MAX_REQUEST_BYTES = 4_096;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const OBJECT_KEY_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const OCR_QUESTION = [
-  "Act as OCR, not as a wine expert or image captioner.",
-  "Read the main front paper label; ignore the bottle, reflections, and background.",
-  "Transcribe every visible word and number in reading order, preserving the printed language, spelling, accents, capitalization, and line breaks.",
-  "Focus on the producer near the top, the wine or appellation in the center, and the vintage and volume near the bottom.",
-  "Include partially readable words; use [illegible] only for unreadable spans. Never guess or invent text.",
-  "If any characters are readable, return them rather than an empty answer. Return only the transcription.",
-].join(" ");
+const OCR_QUESTION = "Transcribe exactly all text visible on the front wine label. Preserve accents and numbers. Do not guess or complete unreadable text";
 
 function json(body, status = 200) {
   return Response.json(body, {
@@ -139,6 +132,12 @@ function recognizedText(result) {
   return result.answer.replaceAll("\u0000", "").trim();
 }
 
+function modelOutput(result) {
+  // Workers AI bindings return { result, usage }; the model card documents
+  // the inner query result directly. Accept both shapes.
+  return isPlainRecord(result) && isPlainRecord(result.result) ? result.result : result;
+}
+
 function validAsset(asset) {
   return isPlainRecord(asset)
     && OBJECT_KEY_PATTERN.test(asset.object_name ?? "")
@@ -235,17 +234,21 @@ export async function handleCaptureRecognition(request, env, dependencies = {}) 
         max_tokens: 512,
         stream: false,
       });
-      const text = recognizedText(result);
+      const output = modelOutput(result);
+      const text = recognizedText(output);
       if (!text) {
-        const outputTokens = isPlainRecord(result) && isPlainRecord(result.metrics)
-          && Number.isSafeInteger(result.metrics.output_tokens)
-          ? result.metrics.output_tokens
-          : null;
+        const outputTokens = isPlainRecord(result) && isPlainRecord(result.usage)
+          && Number.isSafeInteger(result.usage.completion_tokens)
+          ? result.usage.completion_tokens
+          : isPlainRecord(output) && isPlainRecord(output.metrics)
+            && Number.isSafeInteger(output.metrics.output_tokens)
+            ? output.metrics.output_tokens
+            : null;
         console.warn("capture_ocr_empty_answer", {
           model: MODEL,
-          answerType: isPlainRecord(result) && result.answer === null ? "null" : typeof result?.answer,
-          finishReason: isPlainRecord(result) && typeof result.finish_reason === "string"
-            ? result.finish_reason
+          answerType: isPlainRecord(output) && output.answer === null ? "null" : typeof output?.answer,
+          finishReason: isPlainRecord(output) && typeof output.finish_reason === "string"
+            ? output.finish_reason
             : null,
           outputTokens,
         });
