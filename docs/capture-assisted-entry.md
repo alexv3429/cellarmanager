@@ -116,7 +116,7 @@ for 0.6.15; this step defines their place in the architecture only.
 | 0.6.5 | Decide image/storage threat model, access controls, retention/deletion, upload limits, metadata handling, and provider-data boundaries — complete; see [capture storage security](capture-storage-security.md) and [ADR 006](adr/006-capture-image-storage-security.md) |
 | 0.6.6 | Owner-only mobile camera and photo upload to private temporary storage — complete; no recognition dependency |
 | 0.6.7 | Safe orientation, resize, metadata removal, trusted re-encoding, and private preview — complete |
-| 0.6.8 | Explicitly opt-in Cloudflare Workers AI transcription, private short-lived text draft, and photo deletion after the text is saved — in progress |
+| 0.6.8 | Explicitly opt-in Cloudflare Workers AI transcription, private short-lived text draft, and photo deletion after the text is saved — complete |
 | 0.6.9 | Structured field extraction from recognized text |
 | 0.6.10–0.6.12 | Human correction, conservative existing-wine matching, explicit wine selection/creation, and normal ADD |
 | 0.6.15 | Barcode scan and approved identifier lookup, converging on the same candidate review |
@@ -135,9 +135,9 @@ validated bytes to a new opaque key, and deletes the uploaded object through the
 Storage API before publishing a preview key. It avoids a second full pixel
 decode/re-encode to stay within Workers Free CPU limits. Interrupted processing
 can be retried after its five-minute lease expires. Owners may preview or delete
-the sanitized photo; other household
-members cannot read it. Step 0.6.8 sends only the sanitized JPEG derivative to
-Cloudflare Workers AI after the Owner explicitly selects the clearly labeled
+the sanitized photo; other household members cannot read it. Step 0.6.8 sends
+only the sanitized JPEG derivative to Cloudflare Workers AI after the Owner
+explicitly selects the clearly labeled
 recognition action. The Worker retrieves the image through the existing
 owner-authorized capture boundary, sends no household or wine identifiers, and
 uses no automatic retries. Cloudflare's documented data-use policy says it

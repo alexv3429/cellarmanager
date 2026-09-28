@@ -36,10 +36,10 @@ threat model, thresholds, deletion workflow, and implementation acceptance.
   those exact bytes to a new opaque key; it then deletes the upload. Avoid a
   second full pixel decode/re-encode in the Worker so the flow remains usable
   within Cloudflare Workers Free CPU limits.
-- Delete source and normalized images as soon as extracted wine information is
-  durably ingested into the capture draft; expire unprocessed captures after
-  24 hours with a server-side cleanup job. Delete raw extraction immediately
-  on terminal review. A
+- Request deletion of source and normalized images as soon as extracted wine
+  information is durably ingested into the capture draft; close access to
+  unprocessed captures after 24 hours and retry physical deletion through a
+  server-side cleanup job. Delete raw extraction on terminal review. A
   cancellation denies access first, then deletes through the Storage API.
 - Do not retain a permanent cellar photo library or send an image to an
   external recognizer until the provider's security, rights, training, and

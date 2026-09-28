@@ -48,6 +48,10 @@ test("transcribes a verified owner photo with Cloudflare AI, saves private text,
     if (call.url.endsWith("/complete_capture_ocr")) return jsonResponse({ state: "ocr_deletion_pending", object_names: [objectName] });
     if (call.url.endsWith("/object/capture-labels") && call.method === "DELETE") return jsonResponse([]);
     if (call.url.endsWith("/complete_capture_cleanup")) return jsonResponse(true);
+    if (call.url.endsWith("/list_capture_ocr_result")) return jsonResponse({
+      engine_version: "cloudflare-moondream3.1-9b-a2b-v1",
+      recognized_pages: [{ text: "JEAN-MARC BURGAUD\nMORGON CÔTE DU PY\n2011", confidence: 0 }],
+    });
     assert.fail(`Unexpected request ${call.method} ${call.url}`);
   };
   const runModel = async (model, input) => {
@@ -87,10 +91,55 @@ test("transcribes a verified owner photo with Cloudflare AI, saves private text,
     p_engine_version: "cloudflare-moondream3.1-9b-a2b-v1",
   });
   assert.deepEqual(JSON.parse(calls[3].body), { prefixes: [objectName] });
-  assert.equal(calls.at(-1).url.endsWith("/complete_capture_cleanup"), true);
+  assert.equal(calls.at(-2).url.endsWith("/complete_capture_cleanup"), true);
+  assert.equal(calls.at(-1).url.endsWith("/list_capture_ocr_result"), true);
+  assert.equal(calls.at(-1).headers.authorization, "Bearer user-access-token");
   assert.equal(calls[0].headers.authorization, "Bearer user-access-token");
   assert.equal(calls[1].headers.authorization, "Bearer service-secret");
   assert.equal(aiCalls.some((call) => JSON.stringify(call).includes("service-secret")), false);
+});
+
+test("returns the first persisted OCR result when another request saved this session", async () => {
+  const calls = [];
+  const response = await handleCaptureRecognition(request(), env, {
+    fetch: async (url, options = {}) => {
+      const call = { url: String(url), method: options.method ?? "GET" };
+      calls.push(call);
+      if (call.url.endsWith("/list_capture_processed_assets")) return jsonResponse([asset()]);
+      if (call.url.endsWith(`/object/authenticated/capture-labels/${objectName}`)) return imageResponse();
+      if (call.url.endsWith("/complete_capture_ocr")) return jsonResponse({ state: "recognized", object_names: [] });
+      if (call.url.endsWith("/list_capture_ocr_result")) return jsonResponse({
+        engine_version: "cloudflare-moondream3.1-9b-a2b-v1",
+        recognized_pages: [{ text: "PERSISTED TRANSCRIPTION", confidence: 0 }],
+      });
+      assert.fail(`Unexpected request ${call.method} ${call.url}`);
+    },
+    runModel: async () => ({ answer: "DIFFERENT UNSAVED TRANSCRIPTION" }),
+  });
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), {
+    state: "recognized",
+    engine_version: "cloudflare-moondream3.1-9b-a2b-v1",
+    pages: [{ text: "PERSISTED TRANSCRIPTION", confidence: 0 }],
+  });
+  assert.equal(calls.length, 4);
+});
+
+test("does not return unsaved OCR text when the persisted result cannot be read", async () => {
+  const response = await handleCaptureRecognition(request(), env, {
+    fetch: async (url) => {
+      if (String(url).endsWith("/list_capture_processed_assets")) return jsonResponse([asset()]);
+      if (String(url).endsWith(`/object/authenticated/capture-labels/${objectName}`)) return imageResponse();
+      if (String(url).endsWith("/complete_capture_ocr")) return jsonResponse({ state: "recognized", object_names: [] });
+      if (String(url).endsWith("/list_capture_ocr_result")) return jsonResponse({ error: "unavailable" }, 503);
+      assert.fail(`Unexpected request ${String(url)}`);
+    },
+    runModel: async () => ({ answer: "DIFFERENT UNSAVED TRANSCRIPTION" }),
+  });
+
+  assert.equal(response.status, 503);
+  assert.deepEqual(await response.json(), { error: "recognition_save_failed" });
 });
 
 test("rejects a cross-origin request before reading a capture or invoking AI", async () => {

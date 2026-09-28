@@ -303,9 +303,40 @@ export async function handleCaptureRecognition(request, env, dependencies = {}) 
     }
   }
 
+  // Another request can finish OCR for this session while this request is
+  // running the model. complete_capture_ocr then keeps the first saved result,
+  // so respond with that durable result rather than our unsaved transcription.
+  let persistedResponse;
+  try {
+    persistedResponse = await postRpc(fetcher, env, "list_capture_ocr_result", {
+      p_session_id: body.sessionId,
+    }, authorization);
+  } catch {
+    return json({ error: "recognition_save_failed" }, 503);
+  }
+  if (!persistedResponse.ok) return json({ error: "recognition_save_failed" }, 503);
+
+  let persisted;
+  try {
+    persisted = await persistedResponse.json();
+  } catch {
+    return json({ error: "recognition_save_failed" }, 503);
+  }
+  if (!isPlainRecord(persisted)
+      || persisted.engine_version !== MODEL_VERSION
+      || !Array.isArray(persisted.recognized_pages)
+      || persisted.recognized_pages.length !== pages.length
+      || persisted.recognized_pages.some((page) => !isPlainRecord(page)
+        || typeof page.text !== "string" || page.text.length > 10_000
+        || typeof page.confidence !== "number" || !Number.isFinite(page.confidence)
+        || page.confidence < 0 || page.confidence > 100)
+      || !persisted.recognized_pages.some((page) => page.text.trim().length > 0)) {
+    return json({ error: "recognition_save_failed" }, 503);
+  }
+
   return json({
     state,
     engine_version: MODEL_VERSION,
-    pages: pages.map(({ text, confidence }) => ({ text, confidence })),
+    pages: persisted.recognized_pages.map(({ text, confidence }) => ({ text, confidence })),
   });
 }

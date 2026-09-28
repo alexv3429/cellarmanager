@@ -424,7 +424,7 @@ and [ADR 005](adr/005-capture-assisted-wine-entry.md).
 | 0.6.5 | Image/storage security model — complete |
 | 0.6.6 | Owner-only mobile photo capture and private temporary upload — complete |
 | 0.6.7 | Safe image preparation, metadata removal, and private preview — complete |
-| 0.6.8 | Explicitly opt-in Cloudflare Workers AI label transcription; keep only private short-lived text and delete photos after saving — in progress |
+| 0.6.8 | Explicitly opt-in Cloudflare Workers AI label transcription; keep only private short-lived text and delete photos after saving — complete |
 | 0.6.9 | Structured wine-field extraction |
 | 0.6.10 | Human review and correction workflow |
 | 0.6.11 | Existing-wine candidate matching |
@@ -457,9 +457,9 @@ bytes to a private derivative, and removes the upload through the Storage API
 before making the derivative available for authenticated preview. It does not
 repeat pixel decoding/re-encoding, which exceeded the Workers Free CPU limit;
 interrupted requests can be retried after a five-minute processing lease.
-Step 0.6.8 runs transcription only
-after the Owner chooses the clearly labeled Cloudflare AI action. The Worker
-reads only the sanitized private derivative through the owner-authorized
+Step 0.6.8 runs transcription only after the Owner chooses the clearly labeled
+Cloudflare AI action. The Worker reads only the sanitized private derivative
+through the owner-authorized
 capture boundary, sends no household or wine identifiers, limits model output,
 and does not retry automatically. On success, text is saved in the private
 capture draft before the photo is deleted; failures preserve the private photo

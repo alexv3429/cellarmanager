@@ -134,15 +134,17 @@ operations. Those require the explicit review and existing owner workflows in
 - Keep the image in browser memory only until the authenticated upload finishes;
   do not persist a queued photo for automatic background upload.
 - Until extracted wine information is durably ingested into the capture draft,
-  retain images for no more than 24 hours from capture creation. This is a hard
-  fallback expiry and repeated retries cannot extend it. Keep no more than the
-  two images allowed by the per-capture limit.
+  close access to images no later than 24 hours from capture creation. Repeated
+  retries cannot extend that deadline. Keep no more than the two images allowed
+  by the per-capture limit. Scheduled deletion runs every 15 minutes, but a
+  failed deletion can leave inaccessible bytes until a later retry; do not
+  promise a hard physical-deletion deadline.
 - As soon as extracted wine information is durably ingested into the capture
-  draft, delete the source and normalized images immediately; do not retain
-  images for the later owner-review period.
+  draft, request deletion of the source and normalized images immediately; do
+  not make them available during the later owner-review period.
 - On a failed parse, permit a bounded retry from the normalized derivative
-  until the 24-hour deadline. Terminal errors or expiry delete all images and
-  unconfirmed extracted text.
+  until the 24-hour deadline. Terminal errors or expiry close access to images
+  and unconfirmed extracted text, then trigger cleanup.
 - An explicit delete/cancel first closes access by changing the capture state,
   then deletes the bytes. If deletion fails transiently, keep access denied and
   retry through a server-side cleanup job. A 15-minute cleanup job deletes expired
@@ -171,9 +173,9 @@ capacity limits; they do not permit the client to raise the bucket limit.
 The browser does not persist selected `File` objects offline, expose original
 filenames, or queue a photo for background upload. In 0.6.6, it could show the
 initiating Owner a private capture's status and expiry; the database and Worker
-enforced the 24-hour limit, owner scope, quotas, cancellation, and Storage-API
-cleanup. Image signature checks, decoding, dimension limits, metadata removal,
-and safe preview were added in 0.6.7.
+enforced the 24-hour access limit, owner scope, quotas, cancellation, and
+Storage-API cleanup. Image signature checks, decoding, dimension limits,
+metadata removal, and safe preview were added in 0.6.7.
 
 ## 0.6.7–0.6.9 image preprocessing implementation boundary
 
@@ -207,7 +209,7 @@ account/household changes, or the panel unmounts. Member access, public URLs,
 caches, PowerSync, OCR, and third-party image services remain out of scope. A
 malformed or unprocessable image closes the capture and attempts
 Storage-API deletion; any cleanup failure stays closed and is retried by the
-15-minute cleanup Worker before the immutable 24-hour expiry.
+15-minute cleanup Worker, including after the immutable 24-hour access expiry.
 
 No hosted image service or new provider credential is introduced.
 
