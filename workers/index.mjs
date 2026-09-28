@@ -2,6 +2,7 @@ import { researchConfiguration, runResearchCycle } from "./researchWorker.mjs";
 import { handleInvitationEmail } from "./invitationEmail.mjs";
 import { cleanupExpiredCaptureSessions } from "./captureCleanup.mjs";
 import { handleCapturePreprocessing, handleCapturePreview } from "./capturePreprocessing.mjs";
+import { handleCaptureRecognition } from "./captureRecognition.mjs";
 
 const WORKER_VERSION = "0.5.0";
 
@@ -18,6 +19,9 @@ export default {
           return preprocessCaptureImage(bytes, contentType);
         },
       });
+    }
+    if (url.pathname === "/api/capture/ocr") {
+      return handleCaptureRecognition(request, env);
     }
     if (url.pathname === "/api/capture/preview") {
       return handleCapturePreview(request, env);

@@ -118,15 +118,14 @@ processor must:
    in the trusted service only, after which the source is deleted. OCR retries
    use the sanitized derivative, never the original.
 
-No OCR/image provider is approved by this decision. Before any external
-transmission, a separate provider review must confirm allowed input use,
-retention/deletion, model-training restrictions, output rights, and security
-terms. The user must be told when a photo leaves CellarManager and explicitly
-choose to proceed. Send only the sanitized image bytes and random request ID—
-never household/account/wine IDs, email, EXIF, or unnecessary device metadata.
-If the provider cannot meet the reviewed policy, do not send the image; preserve
-manual entry as the fallback. Do not log source bytes, full image URLs,
-credentials, or raw provider payloads.
+The 0.6.5 design approved no OCR/image provider. The later, scoped Cloudflare
+Workers AI approval in [ADR 007](adr/007-opt-in-cloudflare-label-ocr.md) is the
+only current exception. The user must be told when a photo leaves CellarManager
+and explicitly choose to proceed. Send only sanitized image bytes and a fixed
+transcription prompt—never household/account/wine IDs, email, object keys,
+signed URLs, EXIF, or unnecessary device metadata. If the selected provider is
+unavailable, preserve manual entry as the fallback. Do not log source bytes,
+full image URLs, credentials, or raw provider payloads.
 
 Recognition output remains an untrusted candidate. It does not write household
 wine facts, shared-reference aliases/identifiers, enrichment evidence,

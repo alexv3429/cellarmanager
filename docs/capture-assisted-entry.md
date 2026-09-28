@@ -116,13 +116,14 @@ for 0.6.15; this step defines their place in the architecture only.
 | 0.6.5 | Decide image/storage threat model, access controls, retention/deletion, upload limits, metadata handling, and provider-data boundaries — complete; see [capture storage security](capture-storage-security.md) and [ADR 006](adr/006-capture-image-storage-security.md) |
 | 0.6.6 | Owner-only mobile camera and photo upload to private temporary storage — complete; no recognition dependency |
 | 0.6.7 | Safe orientation, resize, metadata removal, trusted re-encoding, and private preview — complete |
-| 0.6.8 | Local French/English OCR, private short-lived text draft, and immediate photo deletion after the text is saved — in progress |
+| 0.6.8 | Explicitly opt-in Cloudflare Workers AI transcription, private short-lived text draft, and photo deletion after the text is saved — in progress |
 | 0.6.9 | Structured field extraction from recognized text |
 | 0.6.10–0.6.12 | Human correction, conservative existing-wine matching, explicit wine selection/creation, and normal ADD |
 | 0.6.15 | Barcode scan and approved identifier lookup, converging on the same candidate review |
 
 This order deliberately establishes storage/privacy controls before upload and
-provider rights before sending images to any external recognizer.
+provider review before sending images to the selected recognizer. The specific
+Cloudflare Workers AI decision is recorded in [ADR 007](adr/007-opt-in-cloudflare-label-ocr.md).
 
 Step 0.6.6 established the temporary, Owner-only photo panel in Add bottles.
 Step 0.6.7 prepares JPEG/PNG images on-device before any upload: it checks the
@@ -132,14 +133,18 @@ to JPEG without carrying metadata. A Worker then independently verifies and
 re-encodes each uploaded image, confirms the private derivative was stored,
 and deletes the uploaded object through the Storage API before publishing a
 preview key. Owners may preview or delete the sanitized photo; other household
-members cannot read it. Step 0.6.8 runs OCR in a browser worker using
-same-origin, version-pinned runtime and French/English language data; the image
-is never sent to an OCR provider. Once the recognized text is saved to the
-private, short-lived capture draft, the sanitized photo is deleted through the
-Storage API. If recognition fails, the photo remains private and can be
-retried or deleted; unread photos and recognized text expire within 24 hours.
-OCR produces text only: it does not map wine fields, create a wine, add stock,
-or change inventory. Those require later review steps.
+members cannot read it. Step 0.6.8 sends only the sanitized JPEG derivative to
+Cloudflare Workers AI after the Owner explicitly selects the clearly labeled
+recognition action. The Worker retrieves the image through the existing
+owner-authorized capture boundary, sends no household or wine identifiers, and
+uses no automatic retries. Cloudflare's documented data-use policy says it
+does not use Workers AI customer content to train models or improve services.
+Once the recognized text is saved to the private, short-lived capture draft,
+the sanitized photo is deleted through the Storage API. If recognition fails,
+the photo remains private and can be retried or deleted; unread photos and
+recognized text expire within 24 hours. OCR produces text only: it does not map
+wine fields, create a wine, add stock, or change inventory. Those require later
+review steps.
 
 ## Acceptance for 0.6.4
 

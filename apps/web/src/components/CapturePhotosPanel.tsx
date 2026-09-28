@@ -7,7 +7,7 @@ import {
   listPreparedCapturePhotos,
   listCapturePhotoSessions,
   processCapturePhotoSession,
-  saveCaptureOcrResult,
+  recognizeCapturePhotoSession,
   validateCapturePhotoFiles,
   uploadCapturePhotos,
   type CapturePhotoSession,
@@ -30,7 +30,7 @@ function messageForError(error: unknown, t: (key: string) => string): string {
     case "invalid": return t("Choose one or two valid JPEG or PNG photos, each no larger than 6 MB.")
     case "dimensions": return t("This photo is too large to prepare safely. Choose a smaller image.")
     case "processing": return t("Photo preparation did not finish. You can retry or delete this capture.")
-    case "ocr": return t("Local text recognition did not finish. Your cellar was not changed; you can retry or delete the photo.")
+    case "ocr": return t("Cloudflare label recognition could not finish. Your cellar was not changed; you can retry later or delete the photo.")
     case "limit": return t("The temporary photo limit has been reached. Delete an earlier capture or try again later.")
     case "permission": return t("Only the current household owner can upload these photos. Refresh your access and try again.")
     case "offline": return t("Reconnect before uploading photos. Photos are not queued offline.")
@@ -47,9 +47,9 @@ function sessionStateLabel(session: CapturePhotoSession, t: (key: string) => str
   switch (session.state) {
     case "ready": return t("Ready to prepare privately")
     case "processing": return t("Preparing photos…")
-    case "processed": return t("Prepared photos are private and ready for on-device text recognition")
+    case "processed": return t("Prepared photos are private and ready to send to Cloudflare AI for label reading")
     case "ocr_deletion_pending": return t("Text saved privately; photo deletion is still in progress")
-    case "recognized": return t("Text recognized privately; photo deleted")
+    case "recognized": return t("Text read by Cloudflare AI and saved privately; photo deleted")
     case "deletion_pending": return t("Deletion in progress")
     default: return t("Upload incomplete")
   }
@@ -66,7 +66,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
   const [preview, setPreview] = useState<{ sessionId: string; urls: string[] } | null>(null)
   const [ocrResults, setOcrResults] = useState<Record<string, StoredCaptureOcrResult>>({})
   const [shownOcrSession, setShownOcrSession] = useState<string | null>(null)
-  const [ocrProgress, setOcrProgress] = useState<{ sessionId: string; page: number; pageCount: number; progress: number } | null>(null)
+  const [ocrProgress, setOcrProgress] = useState<{ sessionId: string } | null>(null)
   const previewRef = useRef<{ sessionId: string; urls: string[] } | null>(null)
 
   const clearPreview = useCallback(() => {
@@ -140,7 +140,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
       const result = await uploadCapturePhotos(householdId, files)
       setFiles([])
       setMessage(t(result.status === "processed"
-        ? "Photos are private. Read the label text on this device, or delete the capture. Unread photos expire within 24 hours."
+        ? "Photos are private. Send them to Cloudflare AI to read the labels, or delete the capture. Unread photos expire within 24 hours."
         : "Photos are still being prepared. Refresh to check their status."))
       await refresh()
     } catch (uploadError) {
@@ -159,7 +159,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
     try {
       const status = await processCapturePhotoSession(sessionId)
       setMessage(t(status === "processed"
-        ? "Photos are private. Read the label text on this device, or delete the capture. Unread photos expire within 24 hours."
+        ? "Photos are private. Send them to Cloudflare AI to read the labels, or delete the capture. Unread photos expire within 24 hours."
         : "Photos are still being prepared. Refresh to check their status."))
       await refresh()
     } catch (prepareError) {
@@ -198,19 +198,14 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
     setBusy(true)
     setError("")
     setMessage("")
-    setOcrProgress({ sessionId, page: 1, pageCount: 1, progress: 0 })
+    setOcrProgress({ sessionId })
     if (previewRef.current?.sessionId === sessionId) clearPreview()
     try {
-      const photos = await listPreparedCapturePhotos(sessionId)
-      const { recognizeCapturePhotosLocally } = await import("../data/captureOcr")
-      const pages = await recognizeCapturePhotosLocally(photos, {
-        onProgress: (progress) => setOcrProgress({ sessionId, ...progress }),
-      })
-      const saved = await saveCaptureOcrResult(sessionId, pages)
+      const saved = await recognizeCapturePhotoSession(sessionId)
       setOcrResults((current) => ({ ...current, [sessionId]: { pages: saved.pages } }))
       setShownOcrSession(sessionId)
       setMessage(t(saved.state === "recognized"
-        ? "Text recognized on this device and saved privately. The photo has been deleted."
+        ? "Cloudflare AI read the label text and saved it privately. The photo has been deleted."
         : "Text is saved privately. Photo deletion is still being retried; your cellar was not changed."))
       await refresh()
     } catch (recognitionError) {
@@ -273,7 +268,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
       <div className="capture-photos__intro">
         <div>
           <h3 id="capture-photos-title">{t("Capture label photos")}</h3>
-          <p>{t("Upload one or two label photos. Text recognition runs on this device; once the text is saved privately, the photo is deleted. Unread photos and saved text expire within 24 hours. No wine or bottle is added.")}</p>
+          <p>{t("Upload one or two label photos. When you choose to read them, the prepared photos are sent to Cloudflare Workers AI (Moondream) for transcription. Cloudflare says it does not use submissions to train or improve models. The text is saved privately and the photos are deleted after the text is saved. Unread photos and saved text expire within 24 hours. No wine or bottle is added.")}</p>
         </div>
         <button type="button" className="button-secondary" onClick={() => void refresh()} disabled={!isOnline || loading || busy}>
           {loading ? t("Loading…") : t("Refresh photos")}
@@ -349,8 +344,8 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
                     <>
                       <button type="button" disabled={busy || !isOnline} onClick={() => void recognize(session.sessionId)}>
                         {ocrProgress?.sessionId === session.sessionId
-                          ? t("Reading label text…")
-                          : t("Read label text on this device")}
+                          ? t("Sending photos to Cloudflare AI…")
+                          : t("Send photos to Cloudflare AI to read label text")}
                       </button>
                       <button type="button" className="button-secondary" disabled={busy || !isOnline} onClick={() => void togglePreview(session.sessionId)}>
                         {preview?.sessionId === session.sessionId ? t("Hide prepared photos") : t("View prepared photos")}
@@ -378,11 +373,8 @@ export function CapturePhotosPanel({ householdId, isOnline, userId }: CapturePho
               </div>
               {ocrProgress?.sessionId === session.sessionId ? (
                 <div className="capture-photos__ocr-progress" role="status">
-                  <span>{t("Reading photo {page} of {pageCount} on this device…", {
-                    page: String(ocrProgress.page),
-                    pageCount: String(ocrProgress.pageCount),
-                  })}</span>
-                  <progress max={1} value={ocrProgress.progress} />
+                  <span>{t("Sending the prepared photos to Cloudflare AI for label reading…")}</span>
+                  <progress />
                 </div>
               ) : null}
               {preview?.sessionId === session.sessionId ? (

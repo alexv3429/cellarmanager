@@ -53,12 +53,17 @@ create temporary table ocr_saved as
 select public.complete_capture_ocr(
     (select (response->>'session_id')::uuid from ocr_capture),
     '[{"object_name":"f47ac10b-58cc-4372-a567-0e02b2c3d479","text":"Domaine Exemple\nBourgogne blanc 2022","confidence":91}]'::jsonb,
-    'fra+eng',
-    '7.0.0'
+    'und',
+    'cloudflare-moondream3.1-9b-a2b-v1'
 ) as result;
 select is(result->>'state', 'ocr_deletion_pending', 'Saving text closes photo access and starts photo deletion') from ocr_saved;
 select is(jsonb_array_length(result->'object_names'), 1, 'Only the exact stored photo path is returned for deletion') from ocr_saved;
 select is(result->'object_names'->>0, 'f47ac10b-58cc-4372-a567-0e02b2c3d479', 'The returned path is the prepared image currently stored in Storage') from ocr_saved;
+select is(
+    (select engine_version from private.capture_ocr_results where session_id = (select (response->>'session_id')::uuid from ocr_capture)),
+    'cloudflare-moondream3.1-9b-a2b-v1',
+    'Cloud OCR is recorded accurately without changing the private draft boundary'
+);
 select ok(capture_guard.capture_object_operation_allowed('f47ac10b-58cc-4372-a567-0e02b2c3d479', 'deletion_pending'), 'Owner can delete the prepared photo after its text is saved');
 select is(
     (public.list_capture_ocr_result((select (response->>'session_id')::uuid from ocr_capture))->'recognized_pages'->0->>'text'),

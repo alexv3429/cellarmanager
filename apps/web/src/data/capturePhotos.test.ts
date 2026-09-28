@@ -21,7 +21,7 @@ import {
   listCapturePhotoSessions,
   listPreparedCapturePhotos,
   processCapturePhotoSession,
-  saveCaptureOcrResult,
+  recognizeCapturePhotoSession,
   uploadCapturePhotos,
   validateCapturePhotoFiles,
 } from "./capturePhotos"
@@ -191,54 +191,44 @@ describe("temporary label photo upload", () => {
     }))
   })
 
-  it("stores a validated private transcript before deleting the exact private photo", async () => {
-    rpc.mockResolvedValueOnce({ data: { state: "ocr_deletion_pending", object_names: [objectName] }, error: null })
-    rpc.mockResolvedValueOnce({ data: {
-      session_id: sessionId,
-      language_code: "fra+eng",
-      engine_version: "7.0.0",
-      recognized_pages: [{ text: "Domaine Exemple 2022", confidence: 89 }],
-      created_at: "2026-09-27T10:00:00Z",
-    }, error: null })
-    rpc.mockResolvedValueOnce({ data: true, error: null })
-
-    await expect(saveCaptureOcrResult(sessionId, [{
-      objectName,
-      text: "Domaine Exemple 2022",
-      confidence: 89,
-    }])).resolves.toEqual({
+  it("requests Cloudflare OCR through the authenticated same-origin worker", async () => {
+    const fetcher = vi.fn().mockResolvedValue(Response.json({
       state: "recognized",
-      pages: [{ text: "Domaine Exemple 2022", confidence: 89 }],
+      pages: [{ text: "Domaine Exemple 2022", confidence: 0 }],
+    }))
+
+    await expect(recognizeCapturePhotoSession(sessionId, {
+      accessToken: "session-token",
+      fetch: fetcher,
+    })).resolves.toEqual({
+      state: "recognized",
+      pages: [{ text: "Domaine Exemple 2022", confidence: 0 }],
     })
 
-    expect(rpc).toHaveBeenNthCalledWith(1, "complete_capture_ocr", {
-      p_session_id: sessionId,
-      p_language_code: "fra+eng",
-      p_engine_version: "7.0.0",
-      p_pages: [{ object_name: objectName, text: "Domaine Exemple 2022", confidence: 89 }],
-    })
-    expect(rpc).toHaveBeenNthCalledWith(2, "list_capture_ocr_result", { p_session_id: sessionId })
-    expect(remove).toHaveBeenCalledWith([objectName])
-    expect(rpc).toHaveBeenNthCalledWith(3, "complete_capture_cleanup", { p_session_id: sessionId })
+    expect(fetcher).toHaveBeenCalledWith("/api/capture/ocr", expect.objectContaining({
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: "Bearer session-token" },
+      body: JSON.stringify({ sessionId }),
+    }))
+    expect(rpc).not.toHaveBeenCalled()
+    expect(remove).not.toHaveBeenCalled()
   })
 
-  it("keeps the saved text visible and reports pending cleanup if photo deletion fails", async () => {
-    rpc.mockResolvedValueOnce({ data: { state: "ocr_deletion_pending", object_names: [objectName] }, error: null })
-    rpc.mockResolvedValueOnce({ data: {
-      session_id: sessionId,
-      recognized_pages: [{ text: "Domaine Exemple", confidence: 89 }],
-    }, error: null })
-    remove.mockResolvedValueOnce({ data: null, error: { message: "Storage temporarily unavailable" } })
-
-    await expect(saveCaptureOcrResult(sessionId, [{
-      objectName,
-      text: "Domaine Exemple",
-      confidence: 89,
-    }])).resolves.toEqual({
-      state: "ocr_deletion_pending",
-      pages: [{ text: "Domaine Exemple", confidence: 89 }],
+  it("preserves the explicit no-text response as a retryable capture error", async () => {
+    const fetcher = vi.fn().mockResolvedValue(Response.json({ error: "no_text" }, { status: 422 }))
+    await expect(recognizeCapturePhotoSession(sessionId, { fetch: fetcher })).rejects.toMatchObject({
+      name: "CaptureOcrEmptyError",
     })
-    expect(rpc).toHaveBeenCalledTimes(2)
+    expect(rpc).not.toHaveBeenCalled()
+    expect(remove).not.toHaveBeenCalled()
+  })
+
+  it("maps an owner authorization failure without exposing worker details", async () => {
+    const fetcher = vi.fn().mockResolvedValue(Response.json({ error: "forbidden" }, { status: 403 }))
+    await expect(recognizeCapturePhotoSession(sessionId, {
+      accessToken: "session-token",
+      fetch: fetcher,
+    })).rejects.toMatchObject({ kind: "permission" })
   })
 
   it("validates private OCR results before rendering them", async () => {

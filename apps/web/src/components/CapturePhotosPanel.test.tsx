@@ -8,7 +8,7 @@ vi.mock("../data/capturePhotos", () => ({
   listPreparedCapturePhotos: vi.fn(),
   listCapturePhotoSessions: vi.fn(),
   processCapturePhotoSession: vi.fn(),
-  saveCaptureOcrResult: vi.fn(),
+  recognizeCapturePhotoSession: vi.fn(),
   validateCapturePhotoFiles: vi.fn(() => null),
   uploadCapturePhotos: vi.fn(),
 }))
@@ -27,7 +27,8 @@ describe("capture photo panel", () => {
     expect(html).toContain("Choose existing photos")
     expect(html).toContain("photo library or Files")
     expect(html).toContain('multiple=""')
-    expect(html).toContain("Text recognition runs on this device")
+    expect(html).toContain("prepared photos are sent to Cloudflare Workers AI")
+    expect(html).toContain("does not use submissions to train or improve models")
     expect(html).not.toContain("<img")
     expect(html).not.toContain("private-cellar-photo")
   })

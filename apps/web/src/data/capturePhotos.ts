@@ -1,5 +1,4 @@
 import { supabase } from "./supabase"
-import { CAPTURE_OCR_ENGINE_VERSION, CAPTURE_OCR_LANGUAGE_CODE } from "./captureOcrConstants"
 
 export const CAPTURE_PHOTO_BUCKET = "capture-labels"
 export const CAPTURE_PHOTO_MAX_BYTES = 6 * 1024 * 1024
@@ -61,12 +60,6 @@ export interface StoredCaptureOcrResult {
 
 export interface SavedCaptureOcrResult extends StoredCaptureOcrResult {
   state: "ocr_deletion_pending" | "recognized"
-}
-
-interface CaptureOcrInputPage {
-  objectName: string
-  text: string
-  confidence: number
 }
 
 const OBJECT_KEY_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
@@ -269,57 +262,53 @@ export async function listCaptureOcrResult(sessionId: string): Promise<StoredCap
   return asCaptureOcrResult(data)
 }
 
-export async function saveCaptureOcrResult(
+export async function recognizeCapturePhotoSession(
   sessionId: string,
-  pages: readonly CaptureOcrInputPage[],
+  options: PhotoProcessingOptions = {},
 ): Promise<SavedCaptureOcrResult> {
-  if (pages.length < 1 || pages.length > CAPTURE_PHOTO_MAX_COUNT
-      || pages.some((page) => !OBJECT_KEY_PATTERN.test(page.objectName)
-        || typeof page.text !== "string" || page.text.length > 10000
-        || !Number.isFinite(page.confidence) || page.confidence < 0 || page.confidence > 100)
-      || !pages.some((page) => page.text.trim().length > 0)) {
+  const token = await currentAccessToken(options.accessToken)
+  let response: Response
+  try {
+    response = await (options.fetch ?? fetch)("/api/capture/ocr", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ sessionId }),
+    })
+  } catch {
+    throw new CapturePhotoError("offline")
+  }
+  let data: unknown
+  try {
+    data = await response.json()
+  } catch {
     throw new CapturePhotoError("ocr")
   }
-
-  const { data, error } = await supabase.rpc("complete_capture_ocr", {
-    p_session_id: sessionId,
-    p_language_code: CAPTURE_OCR_LANGUAGE_CODE,
-    p_engine_version: CAPTURE_OCR_ENGINE_VERSION,
-    p_pages: pages.map((page) => ({
-      object_name: page.objectName,
-      text: page.text,
-      confidence: page.confidence,
-    })),
-  })
-  if (error) throw mapRpcError(error, "ocr")
-  if (!isPlainRecord(data)
-      || !["ocr_deletion_pending", "recognized"].includes(String(data.state))
-      || !Array.isArray(data.object_names)
-      || data.object_names.length > CAPTURE_PHOTO_MAX_COUNT * 2
-      || data.object_names.some((name) => typeof name !== "string" || !OBJECT_KEY_PATTERN.test(name))) {
+  if (isPlainRecord(data) && data.error === "no_text") {
+    const error = new Error("No text recognized")
+    error.name = "CaptureOcrEmptyError"
+    throw error
+  }
+  if (!response.ok) {
+    if (response.status === 401 || response.status === 403) throw new CapturePhotoError("permission")
     throw new CapturePhotoError("ocr")
   }
-
-  // Read the server's canonical result before removing the only image copy;
-  // this also handles a simultaneous second tab without overwriting its text.
-  const result = await listCaptureOcrResult(sessionId)
-  if (data.state === "recognized") return { state: "recognized", ...result }
-
-  const names = [...new Set(data.object_names as string[])]
-  if (names.length > 0) {
-    const { error: removeError } = await supabase.storage
-      .from(CAPTURE_PHOTO_BUCKET)
-      .remove(names)
-    if (removeError) return { state: "ocr_deletion_pending", ...result }
+  if (!isPlainRecord(data) || !["ocr_deletion_pending", "recognized"].includes(String(data.state))
+      || !Array.isArray(data.pages) || data.pages.length < 1 || data.pages.length > CAPTURE_PHOTO_MAX_COUNT) {
+    throw new CapturePhotoError("ocr")
   }
-
-  const { data: completed, error: cleanupError } = await supabase.rpc("complete_capture_cleanup", {
-    p_session_id: sessionId,
+  const pages = data.pages.map((page): StoredCaptureOcrPage => {
+    if (!isPlainRecord(page) || typeof page.text !== "string" || page.text.length > 10000
+        || typeof page.confidence !== "number" || !Number.isFinite(page.confidence)
+        || page.confidence < 0 || page.confidence > 100) {
+      throw new CapturePhotoError("ocr")
+    }
+    return { text: page.text, confidence: page.confidence }
   })
-  return {
-    state: !cleanupError && completed === true ? "recognized" : "ocr_deletion_pending",
-    ...result,
-  }
+  if (!pages.some((page) => page.text.trim().length > 0)) throw new CapturePhotoError("ocr")
+  return { state: data.state as SavedCaptureOcrResult["state"], pages }
 }
 
 async function closeAndDeleteCapture(sessionId: string): Promise<void> {
