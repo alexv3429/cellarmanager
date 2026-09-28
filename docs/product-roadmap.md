@@ -424,7 +424,7 @@ and [ADR 005](adr/005-capture-assisted-wine-entry.md).
 | 0.6.5 | Image/storage security model — complete |
 | 0.6.6 | Owner-only mobile photo capture and private temporary upload — complete |
 | 0.6.7 | Safe image preparation, metadata removal, and private preview — complete |
-| 0.6.8 | Same-origin, on-device French/English OCR; keep only private short-lived text and delete the photo after it is safely saved — in progress |
+| 0.6.8 | Explicitly opt-in Cloudflare Workers AI label transcription; keep only private short-lived text and delete photos after saving — complete |
 | 0.6.9 | Structured wine-field extraction |
 | 0.6.10 | Human review and correction workflow |
 | 0.6.11 | Existing-wine candidate matching |
@@ -441,9 +441,10 @@ uploads user images. It defines live Owner authorization, per-capture object
 scoping, file validation and quotas, metadata removal, external-recognizer
 gates, deletion, and hard expiry. Capture assets and in-progress OCR data stay
 outside PowerSync and are removed when the review ends or expires. No public
-image URLs, client service credentials, permanent cellar photo library, or
-provider transmission without a separate rights/privacy approval are allowed.
-See [`capture-storage-security.md`](capture-storage-security.md) and
+image URLs, client service credentials, or permanent cellar photo library are
+allowed. The only approved OCR provider is the explicitly opt-in Cloudflare
+Workers AI path in [ADR 007](adr/007-opt-in-cloudflare-label-ocr.md). See
+[`capture-storage-security.md`](capture-storage-security.md) and
 [ADR 006](adr/006-capture-image-storage-security.md).
 
 Step 0.6.6 implements the owner-only camera/file upload foundation inside the
@@ -451,14 +452,19 @@ existing Add bottles panel. Step 0.6.7 now prepares each photo on the device
 before upload: it validates JPEG/PNG signatures and dimensions, applies
 orientation, composites transparency on white, scales the long edge to at most
 2,400 px, and re-encodes a metadata-free JPEG. A trusted Worker independently
-decodes and re-encodes the upload, verifies the private derivative, and removes
-the uploaded object through the Storage API before making the derivative
-available for an authenticated preview. Step 0.6.8 runs French/English OCR in
-a browser worker with version-pinned runtime files served from the app's own
-origin; model files are not precached by the PWA and no image is sent to an
-external recognizer. After text is saved in the private capture draft, the
-photo is deleted; any text and any photo not yet read expire within 24 hours.
-The workflow still creates no wine, bottle, or inventory record.
+checks JPEG structure, dimensions, size, and metadata markers, copies validated
+bytes to a private derivative, and removes the upload through the Storage API
+before making the derivative available for authenticated preview. It does not
+repeat pixel decoding/re-encoding, which exceeded the Workers Free CPU limit;
+interrupted requests can be retried after a five-minute processing lease.
+Step 0.6.8 runs transcription only after the Owner chooses the clearly labeled
+Cloudflare AI action. The Worker reads only the sanitized private derivative
+through the owner-authorized
+capture boundary, sends no household or wine identifiers, limits model output,
+and does not retry automatically. On success, text is saved in the private
+capture draft before the photo is deleted; failures preserve the private photo
+for an explicit retry or deletion. Any text and any unread photo expire within
+24 hours. The workflow still creates no wine, bottle, or inventory record.
 
 ## v0.7 — History, purchases, value, and insights
 

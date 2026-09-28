@@ -1,11 +1,11 @@
 import { supabase } from "./supabase"
-import { CAPTURE_OCR_ENGINE_VERSION, CAPTURE_OCR_LANGUAGE_CODE } from "./captureOcrConstants"
 
 export const CAPTURE_PHOTO_BUCKET = "capture-labels"
 export const CAPTURE_PHOTO_MAX_BYTES = 6 * 1024 * 1024
 export const CAPTURE_PHOTO_MAX_COUNT = 2
+export const CAPTURE_PREPROCESSING_LEASE_MS = 5 * 60 * 1000
 
-export type CapturePhotoErrorKind = "invalid" | "dimensions" | "processing" | "ocr" | "limit" | "permission" | "offline" | "upload" | "delete"
+export type CapturePhotoErrorKind = "invalid" | "count" | "size" | "format" | "dimensions" | "server_photo" | "processing" | "ocr" | "limit" | "permission" | "offline" | "upload_start" | "upload_transfer" | "upload_confirm" | "refresh" | "delete"
 
 export class CapturePhotoError extends Error {
   readonly kind: CapturePhotoErrorKind
@@ -17,11 +17,25 @@ export class CapturePhotoError extends Error {
   }
 }
 
+export function isCapturePhotoPreparationStale(
+  session: Pick<CapturePhotoSession, "state" | "processingStartedAt" | "expiresAt">,
+  now = Date.now(),
+): boolean {
+  if (session.state !== "processing" || !session.processingStartedAt) return false
+  const startedAt = Date.parse(session.processingStartedAt)
+  const expiresAt = Date.parse(session.expiresAt)
+  return Number.isFinite(startedAt)
+    && Number.isFinite(expiresAt)
+    && now - startedAt >= CAPTURE_PREPROCESSING_LEASE_MS
+    && now < expiresAt
+}
+
 export interface CapturePhotoSession {
   sessionId: string
   state: "uploading" | "ready" | "processing" | "processed" | "ocr_deletion_pending" | "recognized" | "deletion_pending"
   createdAt: string
   expiresAt: string
+  processingStartedAt: string | null
   photoCount: number
 }
 
@@ -57,16 +71,11 @@ export interface StoredCaptureOcrPage {
 
 export interface StoredCaptureOcrResult {
   pages: StoredCaptureOcrPage[]
+  engine: "tesseract" | "cloudflare" | "unknown"
 }
 
 export interface SavedCaptureOcrResult extends StoredCaptureOcrResult {
   state: "ocr_deletion_pending" | "recognized"
-}
-
-interface CaptureOcrInputPage {
-  objectName: string
-  text: string
-  confidence: number
 }
 
 const OBJECT_KEY_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
@@ -92,18 +101,18 @@ function asCreateResponse(value: unknown): CaptureCreateResponse {
   if (!isPlainRecord(value) || typeof value.session_id !== "string"
       || typeof value.expires_at !== "string" || !Array.isArray(value.objects)
       || !Number.isFinite(Date.parse(value.expires_at))) {
-    throw new CapturePhotoError("upload")
+    throw new CapturePhotoError("upload_start")
   }
   const objects = value.objects.map((item) => {
     if (!isPlainRecord(item) || typeof item.object_name !== "string"
         || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(item.object_name)
         || (item.content_type !== "image/jpeg" && item.content_type !== "image/png")) {
-      throw new CapturePhotoError("upload")
+      throw new CapturePhotoError("upload_start")
     }
     return { object_name: item.object_name, content_type: item.content_type }
   })
   if (objects.length < 1 || objects.length > CAPTURE_PHOTO_MAX_COUNT) {
-    throw new CapturePhotoError("upload")
+    throw new CapturePhotoError("upload_start")
   }
   return {
     session_id: value.session_id,
@@ -113,12 +122,13 @@ function asCreateResponse(value: unknown): CaptureCreateResponse {
 }
 
 export function validateCapturePhotoFiles(files: readonly File[]): CapturePhotoErrorKind | null {
-  if (files.length < 1 || files.length > CAPTURE_PHOTO_MAX_COUNT) return "invalid"
+  if (files.length < 1) return "invalid"
+  if (files.length > CAPTURE_PHOTO_MAX_COUNT) return "count"
   for (const file of files) {
-    if (file.size < 1 || file.size > CAPTURE_PHOTO_MAX_BYTES
-        || (file.type !== "image/jpeg" && file.type !== "image/png")) {
-      return "invalid"
-    }
+    // Browsers, especially iOS photo pickers, may report an empty or non-standard
+    // MIME type for a valid JPEG. The preparation step verifies the actual bytes.
+    if (file.size < 1) return "invalid"
+    if (file.size > CAPTURE_PHOTO_MAX_BYTES) return "size"
   }
   return null
 }
@@ -126,11 +136,17 @@ export function validateCapturePhotoFiles(files: readonly File[]): CapturePhotoE
 export async function listCapturePhotoSessions(
   householdId: string,
 ): Promise<CapturePhotoSession[]> {
-  const { data, error } = await supabase.rpc("list_capture_sessions", {
-    p_household_id: householdId,
-  })
-  if (error) throw mapRpcError(error, "upload")
-  if (!Array.isArray(data)) throw new CapturePhotoError("upload")
+  let response
+  try {
+    response = await supabase.rpc("list_capture_sessions", {
+      p_household_id: householdId,
+    })
+  } catch {
+    throw new CapturePhotoError("refresh")
+  }
+  const { data, error } = response
+  if (error) throw mapRpcError(error, "refresh")
+  if (!Array.isArray(data)) throw new CapturePhotoError("refresh")
   return data.flatMap((item): CapturePhotoSession[] => {
     if (!isPlainRecord(item)
         || typeof item.session_id !== "string"
@@ -143,6 +159,7 @@ export async function listCapturePhotoSessions(
       state: item.state as CapturePhotoSession["state"],
       createdAt: item.created_at,
       expiresAt: item.expires_at,
+      processingStartedAt: typeof item.processing_started_at === "string" ? item.processing_started_at : null,
       photoCount: item.photo_count,
     }]
   })
@@ -180,7 +197,7 @@ export async function processCapturePhotoSession(
     throw new CapturePhotoError("processing")
   }
   if (!response.ok || !isPlainRecord(result)) {
-    if (isPlainRecord(result) && result.error === "invalid_photo") throw new CapturePhotoError("invalid")
+    if (isPlainRecord(result) && result.error === "invalid_photo") throw new CapturePhotoError("server_photo")
     throw new CapturePhotoError("processing")
   }
   if (result.status === "processed") return "processed"
@@ -252,7 +269,12 @@ function asCaptureOcrResult(value: unknown): StoredCaptureOcrResult {
     return { text: item.text, confidence: item.confidence }
   })
   if (!pages.some((page) => page.text.trim().length > 0)) throw new CapturePhotoError("ocr")
-  return { pages }
+  const engine = value.engine_version === "7.0.0"
+    ? "tesseract"
+    : value.engine_version === "cloudflare-moondream3.1-9b-a2b-v1"
+      ? "cloudflare"
+      : "unknown"
+  return { pages, engine }
 }
 
 export async function listCaptureOcrResult(sessionId: string): Promise<StoredCaptureOcrResult> {
@@ -263,57 +285,54 @@ export async function listCaptureOcrResult(sessionId: string): Promise<StoredCap
   return asCaptureOcrResult(data)
 }
 
-export async function saveCaptureOcrResult(
+export async function recognizeCapturePhotoSession(
   sessionId: string,
-  pages: readonly CaptureOcrInputPage[],
+  options: PhotoProcessingOptions = {},
 ): Promise<SavedCaptureOcrResult> {
-  if (pages.length < 1 || pages.length > CAPTURE_PHOTO_MAX_COUNT
-      || pages.some((page) => !OBJECT_KEY_PATTERN.test(page.objectName)
-        || typeof page.text !== "string" || page.text.length > 10000
-        || !Number.isFinite(page.confidence) || page.confidence < 0 || page.confidence > 100)
-      || !pages.some((page) => page.text.trim().length > 0)) {
+  const token = await currentAccessToken(options.accessToken)
+  let response: Response
+  try {
+    response = await (options.fetch ?? fetch)("/api/capture/ocr", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ sessionId }),
+    })
+  } catch {
+    throw new CapturePhotoError("offline")
+  }
+  let data: unknown
+  try {
+    data = await response.json()
+  } catch {
     throw new CapturePhotoError("ocr")
   }
-
-  const { data, error } = await supabase.rpc("complete_capture_ocr", {
-    p_session_id: sessionId,
-    p_language_code: CAPTURE_OCR_LANGUAGE_CODE,
-    p_engine_version: CAPTURE_OCR_ENGINE_VERSION,
-    p_pages: pages.map((page) => ({
-      object_name: page.objectName,
-      text: page.text,
-      confidence: page.confidence,
-    })),
-  })
-  if (error) throw mapRpcError(error, "ocr")
-  if (!isPlainRecord(data)
-      || !["ocr_deletion_pending", "recognized"].includes(String(data.state))
-      || !Array.isArray(data.object_names)
-      || data.object_names.length > CAPTURE_PHOTO_MAX_COUNT * 2
-      || data.object_names.some((name) => typeof name !== "string" || !OBJECT_KEY_PATTERN.test(name))) {
+  if (isPlainRecord(data) && data.error === "no_text") {
+    const error = new Error("No text recognized")
+    error.name = "CaptureOcrEmptyError"
+    throw error
+  }
+  if (!response.ok) {
+    if (response.status === 401 || response.status === 403) throw new CapturePhotoError("permission")
     throw new CapturePhotoError("ocr")
   }
-
-  // Read the server's canonical result before removing the only image copy;
-  // this also handles a simultaneous second tab without overwriting its text.
-  const result = await listCaptureOcrResult(sessionId)
-  if (data.state === "recognized") return { state: "recognized", ...result }
-
-  const names = [...new Set(data.object_names as string[])]
-  if (names.length > 0) {
-    const { error: removeError } = await supabase.storage
-      .from(CAPTURE_PHOTO_BUCKET)
-      .remove(names)
-    if (removeError) return { state: "ocr_deletion_pending", ...result }
+  if (!isPlainRecord(data) || !["ocr_deletion_pending", "recognized"].includes(String(data.state))
+      || !Array.isArray(data.pages) || data.pages.length < 1 || data.pages.length > CAPTURE_PHOTO_MAX_COUNT) {
+    throw new CapturePhotoError("ocr")
   }
-
-  const { data: completed, error: cleanupError } = await supabase.rpc("complete_capture_cleanup", {
-    p_session_id: sessionId,
+  const pages = data.pages.map((page): StoredCaptureOcrPage => {
+    if (!isPlainRecord(page) || typeof page.text !== "string" || page.text.length > 10000
+        || typeof page.confidence !== "number" || !Number.isFinite(page.confidence)
+        || page.confidence < 0 || page.confidence > 100) {
+      throw new CapturePhotoError("ocr")
+    }
+    return { text: page.text, confidence: page.confidence }
   })
-  return {
-    state: !cleanupError && completed === true ? "recognized" : "ocr_deletion_pending",
-    ...result,
-  }
+  if (!pages.some((page) => page.text.trim().length > 0)) throw new CapturePhotoError("ocr")
+  const engine = data.engine_version === "cloudflare-moondream3.1-9b-a2b-v1" ? "cloudflare" : "unknown"
+  return { state: data.state as SavedCaptureOcrResult["state"], pages, engine }
 }
 
 async function closeAndDeleteCapture(sessionId: string): Promise<void> {
@@ -352,18 +371,24 @@ export async function uploadCapturePhotos(
   const preparedValidation = validateCapturePhotoFiles(preparedFiles)
   if (preparedValidation) throw new CapturePhotoError(preparedValidation)
 
-  const { data: created, error: createError } = await supabase.rpc("create_capture_session", {
-    p_household_id: householdId,
-    p_assets: preparedFiles.map((file) => ({
-      content_type: file.type,
-      size_bytes: file.size,
-    })),
-  })
-  if (createError) throw mapRpcError(createError, "upload")
+  let createResponse
+  try {
+    createResponse = await supabase.rpc("create_capture_session", {
+      p_household_id: householdId,
+      p_assets: preparedFiles.map((file) => ({
+        content_type: file.type,
+        size_bytes: file.size,
+      })),
+    })
+  } catch {
+    throw new CapturePhotoError("upload_start")
+  }
+  const { data: created, error: createError } = createResponse
+  if (createError) throw mapRpcError(createError, "upload_start")
   const session = asCreateResponse(created)
   if (session.objects.length !== preparedFiles.length) {
     await closeAndDeleteCapture(session.session_id).catch(() => undefined)
-    throw new CapturePhotoError("upload")
+    throw new CapturePhotoError("upload_start")
   }
 
   try {
@@ -371,7 +396,7 @@ export async function uploadCapturePhotos(
       const file = preparedFiles[index]
       const object = session.objects[index]
       if (!file || !object || file.type !== object.content_type) {
-        throw new CapturePhotoError("upload")
+        throw new CapturePhotoError("upload_transfer")
       }
       // Supabase's multipart request can include the File object's name.
       // Replace it with a generic media type name before sending any bytes.
@@ -386,19 +411,29 @@ export async function uploadCapturePhotos(
           contentType: file.type,
           upsert: false,
         })
-      if (error) throw new CapturePhotoError("upload")
+      if (error) {
+        const status = isPlainRecord(error) ? Number(error.statusCode ?? error.status) : NaN
+        if (status === 401 || status === 403) throw new CapturePhotoError("permission")
+        throw new CapturePhotoError("upload_transfer")
+      }
     }
 
-    const { error: completeError } = await supabase.rpc("complete_capture_session", {
-      p_session_id: session.session_id,
-    })
-    if (completeError) throw mapRpcError(completeError, "upload")
+    let completeResponse
+    try {
+      completeResponse = await supabase.rpc("complete_capture_session", {
+        p_session_id: session.session_id,
+      })
+    } catch {
+      throw new CapturePhotoError("upload_confirm")
+    }
+    const { error: completeError } = completeResponse
+    if (completeError) throw mapRpcError(completeError, "upload_confirm")
   } catch (error) {
     // Closing access comes first. If the Storage API is temporarily unavailable,
     // the cleanup worker retries these exact server-created paths.
     await closeAndDeleteCapture(session.session_id).catch(() => undefined)
     if (error instanceof CapturePhotoError) throw error
-    throw new CapturePhotoError("upload")
+    throw new CapturePhotoError("upload_transfer")
   }
 
   const status = await processCapturePhotoSession(session.session_id, options)

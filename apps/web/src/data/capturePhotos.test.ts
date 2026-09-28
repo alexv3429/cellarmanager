@@ -16,12 +16,14 @@ vi.mock("./supabase", () => ({
 }))
 
 import {
+  CAPTURE_PREPROCESSING_LEASE_MS,
   CAPTURE_PHOTO_MAX_BYTES,
+  isCapturePhotoPreparationStale,
   listCaptureOcrResult,
   listCapturePhotoSessions,
   listPreparedCapturePhotos,
   processCapturePhotoSession,
-  saveCaptureOcrResult,
+  recognizeCapturePhotoSession,
   uploadCapturePhotos,
   validateCapturePhotoFiles,
 } from "./capturePhotos"
@@ -37,7 +39,19 @@ beforeEach(() => {
 })
 
 describe("temporary label photo upload", () => {
-  it("accepts only one or two JPEG/PNG files up to the cap", () => {
+  it("allows a retry only after the server-side preparation lease expires", () => {
+    const session = {
+      state: "processing" as const,
+      processingStartedAt: "2026-09-28T10:00:00.000Z",
+      expiresAt: "2026-09-29T10:00:00.000Z",
+    }
+    expect(isCapturePhotoPreparationStale(session, Date.parse(session.processingStartedAt) + CAPTURE_PREPROCESSING_LEASE_MS - 1)).toBe(false)
+    expect(isCapturePhotoPreparationStale(session, Date.parse(session.processingStartedAt) + CAPTURE_PREPROCESSING_LEASE_MS)).toBe(true)
+    expect(isCapturePhotoPreparationStale({ ...session, expiresAt: session.processingStartedAt }, Date.parse(session.processingStartedAt) + CAPTURE_PREPROCESSING_LEASE_MS)).toBe(false)
+    expect(isCapturePhotoPreparationStale({ ...session, state: "ready" }, Date.parse(session.processingStartedAt) + CAPTURE_PREPROCESSING_LEASE_MS)).toBe(false)
+  })
+
+  it("accepts one or two files up to the cap and defers format checks to byte inspection", () => {
     const jpeg = new File([new Uint8Array([1])], "label-front.jpg", { type: "image/jpeg" })
     const png = new File([new Uint8Array([1])], "label-back.png", { type: "image/png" })
     const wrongType = new File([new Uint8Array([1])], "label.svg", { type: "image/svg+xml" })
@@ -46,9 +60,67 @@ describe("temporary label photo upload", () => {
     expect(validateCapturePhotoFiles([jpeg])).toBeNull()
     expect(validateCapturePhotoFiles([jpeg, png])).toBeNull()
     expect(validateCapturePhotoFiles([])).toBe("invalid")
-    expect(validateCapturePhotoFiles([jpeg, png, jpeg])).toBe("invalid")
-    expect(validateCapturePhotoFiles([wrongType])).toBe("invalid")
-    expect(validateCapturePhotoFiles([oversized])).toBe("invalid")
+    expect(validateCapturePhotoFiles([jpeg, png, jpeg])).toBe("count")
+    expect(validateCapturePhotoFiles([wrongType])).toBeNull()
+    expect(validateCapturePhotoFiles([oversized])).toBe("size")
+  })
+
+  it("reports a safe stage-specific error when creating a private upload fails", async () => {
+    const file = new File([new Uint8Array([1])], "label.jpg", { type: "image/jpeg" })
+    rpc.mockResolvedValueOnce({ data: null, error: { code: "XX000" } })
+
+    await expect(uploadCapturePhotos("household-1", [file], {
+      prepareImage: async () => new File([new Uint8Array([2])], "capture.jpg", { type: "image/jpeg" }),
+    })).rejects.toMatchObject({ kind: "upload_start" })
+  })
+
+  it("classifies a network rejection while creating the private upload", async () => {
+    const file = new File([new Uint8Array([1])], "label.jpg", { type: "image/jpeg" })
+    rpc.mockRejectedValueOnce(new Error("network unavailable"))
+
+    await expect(uploadCapturePhotos("household-1", [file], {
+      prepareImage: async () => new File([new Uint8Array([2])], "capture.jpg", { type: "image/jpeg" }),
+    })).rejects.toMatchObject({ kind: "upload_start" })
+  })
+
+  it("reports a transfer error when secure photo storage rejects the upload", async () => {
+    const file = new File([new Uint8Array([1])], "label.jpg", { type: "image/jpeg" })
+    rpc.mockResolvedValueOnce({ data: {
+      session_id: sessionId,
+      expires_at: "2026-10-03T12:00:00.000Z",
+      objects: [{ object_name: objectName, content_type: "image/jpeg" }],
+    }, error: null })
+    upload.mockResolvedValueOnce({ data: null, error: { statusCode: "500" } })
+
+    await expect(uploadCapturePhotos("household-1", [file], {
+      prepareImage: async () => new File([new Uint8Array([2])], "capture.jpg", { type: "image/jpeg" }),
+    })).rejects.toMatchObject({ kind: "upload_transfer" })
+  })
+
+  it("reports a confirmation error after a stored photo cannot be finalized", async () => {
+    const file = new File([new Uint8Array([1])], "label.jpg", { type: "image/jpeg" })
+    rpc.mockResolvedValueOnce({ data: {
+      session_id: sessionId,
+      expires_at: "2026-10-03T12:00:00.000Z",
+      objects: [{ object_name: objectName, content_type: "image/jpeg" }],
+    }, error: null })
+    rpc.mockResolvedValueOnce({ data: null, error: { code: "XX000" } })
+
+    await expect(uploadCapturePhotos("household-1", [file], {
+      prepareImage: async () => new File([new Uint8Array([2])], "capture.jpg", { type: "image/jpeg" }),
+    })).rejects.toMatchObject({ kind: "upload_confirm" })
+  })
+
+  it("distinguishes failure to refresh temporary photo status", async () => {
+    rpc.mockResolvedValueOnce({ data: null, error: { code: "XX000" } })
+
+    await expect(listCapturePhotoSessions("household-1")).rejects.toMatchObject({ kind: "refresh" })
+  })
+
+  it("classifies a network rejection while refreshing temporary photo status", async () => {
+    rpc.mockRejectedValueOnce(new Error("network unavailable"))
+
+    await expect(listCapturePhotoSessions("household-1")).rejects.toMatchObject({ kind: "refresh" })
   })
 
   it("uses server-generated exact keys and does not send original filenames", async () => {
@@ -95,13 +167,13 @@ describe("temporary label photo upload", () => {
 
   it("lists processing and processed states while withholding keys from summaries", async () => {
     rpc.mockResolvedValueOnce({ data: [
-      { session_id: sessionId, state: "processing", created_at: "2026-09-27T10:00:00Z", expires_at: "2026-09-28T10:00:00Z", photo_count: 1 },
+      { session_id: sessionId, state: "processing", created_at: "2026-09-27T10:00:00Z", expires_at: "2026-09-28T10:00:00Z", processing_started_at: "2026-09-27T10:01:00Z", photo_count: 1 },
       { session_id: "f47ac10b-58cc-4372-a567-0e02b2c3d479", state: "processed", created_at: "2026-09-27T09:00:00Z", expires_at: "2026-09-28T09:00:00Z", photo_count: 1 },
       { session_id: "c56a4180-65aa-42ec-a945-5fd21dec0538", state: "recognized", created_at: "2026-09-27T08:00:00Z", expires_at: "2026-09-28T08:00:00Z", photo_count: 0 },
       { session_id: "a987fbc9-4bed-4078-8f07-9141ba07c9f3", state: "ocr_deletion_pending", created_at: "2026-09-27T07:00:00Z", expires_at: "2026-09-28T07:00:00Z", photo_count: 1 },
     ], error: null })
     await expect(listCapturePhotoSessions("household-1")).resolves.toMatchObject([
-      { sessionId, state: "processing" },
+      { sessionId, state: "processing", processingStartedAt: "2026-09-27T10:01:00Z" },
       { state: "processed" },
       { state: "recognized", photoCount: 0 },
       { state: "ocr_deletion_pending" },
@@ -133,63 +205,69 @@ describe("temporary label photo upload", () => {
     }))
   })
 
-  it("stores a validated private transcript before deleting the exact private photo", async () => {
-    rpc.mockResolvedValueOnce({ data: { state: "ocr_deletion_pending", object_names: [objectName] }, error: null })
-    rpc.mockResolvedValueOnce({ data: {
-      session_id: sessionId,
-      language_code: "fra+eng",
-      engine_version: "7.0.0",
-      recognized_pages: [{ text: "Domaine Exemple 2022", confidence: 89 }],
-      created_at: "2026-09-27T10:00:00Z",
-    }, error: null })
-    rpc.mockResolvedValueOnce({ data: true, error: null })
+  it("distinguishes a server-side photo safety rejection from a picker validation error", async () => {
+    const fetcher = vi.fn().mockResolvedValue(Response.json({
+      error: "invalid_photo",
+      cleanup: "complete",
+    }, { status: 422 }))
 
-    await expect(saveCaptureOcrResult(sessionId, [{
-      objectName,
-      text: "Domaine Exemple 2022",
-      confidence: 89,
-    }])).resolves.toEqual({
-      state: "recognized",
-      pages: [{ text: "Domaine Exemple 2022", confidence: 89 }],
-    })
-
-    expect(rpc).toHaveBeenNthCalledWith(1, "complete_capture_ocr", {
-      p_session_id: sessionId,
-      p_language_code: "fra+eng",
-      p_engine_version: "7.0.0",
-      p_pages: [{ object_name: objectName, text: "Domaine Exemple 2022", confidence: 89 }],
-    })
-    expect(rpc).toHaveBeenNthCalledWith(2, "list_capture_ocr_result", { p_session_id: sessionId })
-    expect(remove).toHaveBeenCalledWith([objectName])
-    expect(rpc).toHaveBeenNthCalledWith(3, "complete_capture_cleanup", { p_session_id: sessionId })
+    await expect(processCapturePhotoSession(sessionId, {
+      accessToken: "session-token",
+      fetch: fetcher,
+    })).rejects.toMatchObject({ kind: "server_photo" })
   })
 
-  it("keeps the saved text visible and reports pending cleanup if photo deletion fails", async () => {
-    rpc.mockResolvedValueOnce({ data: { state: "ocr_deletion_pending", object_names: [objectName] }, error: null })
-    rpc.mockResolvedValueOnce({ data: {
-      session_id: sessionId,
-      recognized_pages: [{ text: "Domaine Exemple", confidence: 89 }],
-    }, error: null })
-    remove.mockResolvedValueOnce({ data: null, error: { message: "Storage temporarily unavailable" } })
+  it("requests Cloudflare OCR through the authenticated same-origin worker", async () => {
+    const fetcher = vi.fn().mockResolvedValue(Response.json({
+      state: "recognized",
+      engine_version: "cloudflare-moondream3.1-9b-a2b-v1",
+      pages: [{ text: "Domaine Exemple 2022", confidence: 0 }],
+    }))
 
-    await expect(saveCaptureOcrResult(sessionId, [{
-      objectName,
-      text: "Domaine Exemple",
-      confidence: 89,
-    }])).resolves.toEqual({
-      state: "ocr_deletion_pending",
-      pages: [{ text: "Domaine Exemple", confidence: 89 }],
+    await expect(recognizeCapturePhotoSession(sessionId, {
+      accessToken: "session-token",
+      fetch: fetcher,
+    })).resolves.toEqual({
+      state: "recognized",
+      pages: [{ text: "Domaine Exemple 2022", confidence: 0 }],
+      engine: "cloudflare",
     })
-    expect(rpc).toHaveBeenCalledTimes(2)
+
+    expect(fetcher).toHaveBeenCalledWith("/api/capture/ocr", expect.objectContaining({
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: "Bearer session-token" },
+      body: JSON.stringify({ sessionId }),
+    }))
+    expect(rpc).not.toHaveBeenCalled()
+    expect(remove).not.toHaveBeenCalled()
+  })
+
+  it("preserves the explicit no-text response as a retryable capture error", async () => {
+    const fetcher = vi.fn().mockResolvedValue(Response.json({ error: "no_text" }, { status: 422 }))
+    await expect(recognizeCapturePhotoSession(sessionId, { fetch: fetcher })).rejects.toMatchObject({
+      name: "CaptureOcrEmptyError",
+    })
+    expect(rpc).not.toHaveBeenCalled()
+    expect(remove).not.toHaveBeenCalled()
+  })
+
+  it("maps an owner authorization failure without exposing worker details", async () => {
+    const fetcher = vi.fn().mockResolvedValue(Response.json({ error: "forbidden" }, { status: 403 }))
+    await expect(recognizeCapturePhotoSession(sessionId, {
+      accessToken: "session-token",
+      fetch: fetcher,
+    })).rejects.toMatchObject({ kind: "permission" })
   })
 
   it("validates private OCR results before rendering them", async () => {
     rpc.mockResolvedValueOnce({ data: {
       session_id: sessionId,
+      engine_version: "7.0.0",
       recognized_pages: [{ object_name: objectName, text: "Domaine Exemple", confidence: 89 }],
     }, error: null })
     await expect(listCaptureOcrResult(sessionId)).resolves.toEqual({
       pages: [{ text: "Domaine Exemple", confidence: 89 }],
+      engine: "tesseract",
     })
 
     rpc.mockResolvedValueOnce({ data: {

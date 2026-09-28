@@ -2,6 +2,8 @@ import { researchConfiguration, runResearchCycle } from "./researchWorker.mjs";
 import { handleInvitationEmail } from "./invitationEmail.mjs";
 import { cleanupExpiredCaptureSessions } from "./captureCleanup.mjs";
 import { handleCapturePreprocessing, handleCapturePreview } from "./capturePreprocessing.mjs";
+import { handleCaptureRecognition } from "./captureRecognition.mjs";
+import { validatePreparedCaptureImage } from "./captureImageValidate.mjs";
 
 const WORKER_VERSION = "0.5.0";
 
@@ -13,11 +15,11 @@ export default {
     }
     if (url.pathname === "/api/capture/process") {
       return handleCapturePreprocessing(request, env, {
-        processImage: async (bytes, contentType) => {
-          const { preprocessCaptureImage } = await import("./captureImageRuntime.mjs");
-          return preprocessCaptureImage(bytes, contentType);
-        },
+        processImage: validatePreparedCaptureImage,
       });
+    }
+    if (url.pathname === "/api/capture/ocr") {
+      return handleCaptureRecognition(request, env);
     }
     if (url.pathname === "/api/capture/preview") {
       return handleCapturePreview(request, env);

@@ -1,4 +1,4 @@
-import { CaptureImageError } from "./captureImageNormalize.mjs";
+import { CaptureImageError } from "./captureImageValidate.mjs";
 
 const BUCKET = "capture-labels";
 const MAX_REQUEST_BYTES = 4_096;
@@ -70,6 +70,7 @@ function isValidClaim(value) {
   return value && typeof value === "object" && !Array.isArray(value)
     && OBJECT_KEY_PATTERN.test(value.session_id ?? "")
     && ["claimed", "processing", "processed"].includes(value.state)
+    && (value.reclaimed === undefined || typeof value.reclaimed === "boolean")
     && Array.isArray(value.assets);
 }
 
@@ -96,46 +97,29 @@ async function readLimited(response, expectedBytes, limit) {
   if (!response.ok || !response.body || expectedBytes > limit) throw new Error("storage_read_failed");
   const contentLength = Number(response.headers.get("content-length") ?? -1);
   if (contentLength > limit) throw new Error("storage_read_failed");
+  const bytes = new Uint8Array(expectedBytes);
   const reader = response.body.getReader();
-  const chunks = [];
   let size = 0;
   try {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
       size += value.byteLength;
-      if (size > limit) {
+      if (size > limit || size > expectedBytes) {
         await reader.cancel();
         throw new Error("storage_read_failed");
       }
-      chunks.push(value);
+      bytes.set(value, size - value.byteLength);
     }
   } finally {
     reader.releaseLock();
   }
   if (size !== expectedBytes) throw new Error("storage_size_mismatch");
-  const bytes = new Uint8Array(size);
-  let offset = 0;
-  for (const chunk of chunks) {
-    bytes.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
   return bytes;
 }
 
 async function storageUrl(env, objectName, endpoint = "object/authenticated") {
   return `${env.SUPABASE_URL}/storage/v1/${endpoint}/${BUCKET}/${objectName}`;
-}
-
-async function storedObjectMatches(fetcher, env, objectName, expectedBytes) {
-  const response = await fetcher(await storageUrl(env, objectName), {
-    method: "GET",
-    headers: serviceHeaders(env),
-    signal: AbortSignal.timeout(20_000),
-  });
-  const stored = await readLimited(response, expectedBytes, 5 * 1024 * 1024);
-  const digest = await crypto.subtle.digest("SHA-256", stored);
-  return digest;
 }
 
 async function removeObjects(fetcher, env, objectNames) {
@@ -230,7 +214,35 @@ export async function handleCapturePreprocessing(request, env, dependencies = {}
     return json({ error: "photo_preparation_failed" }, 422);
   }
 
+  if (claim.reclaimed === true) {
+    // A prior Worker may have uploaded every derivative and removed its
+    // originals, then been interrupted before publishing the completed state.
+    // Let the database safely finish that transition before deleting anything.
+    let completedResponse;
+    try {
+      completedResponse = await postRpc(fetcher, env, "complete_capture_preprocessing", {
+        p_session_id: claim.session_id,
+      });
+    } catch {
+      return json({ error: "service_unavailable" }, 503);
+    }
+    if (!completedResponse.ok) return json({ error: "service_unavailable" }, 503);
+    let completed;
+    try {
+      completed = await completedResponse.json();
+    } catch {
+      return json({ error: "service_unavailable" }, 503);
+    }
+    if (completed === true) return json({ status: "processed", count: claim.assets.length });
+    if (completed !== false) return json({ error: "service_unavailable" }, 503);
+  }
+
   try {
+    if (claim.reclaimed === true
+        && !(await removeObjects(fetcher, env, claim.assets.map((asset) => asset.normalized_object_name)))) {
+      throw new Error("stale_derivative_cleanup_failed");
+    }
+
     for (const asset of claim.assets) {
       const sourceResponse = await fetcher(await storageUrl(env, asset.source_object_name), {
         method: "GET",
@@ -238,11 +250,11 @@ export async function handleCapturePreprocessing(request, env, dependencies = {}
         signal: AbortSignal.timeout(20_000),
       });
       const sourceBytes = await readLimited(sourceResponse, asset.uploaded_bytes, 6 * 1024 * 1024);
-      const normalized = await processImage(sourceBytes, asset.content_type);
-      if (!normalized || normalized.contentType !== "image/jpeg"
-          || !(normalized.bytes instanceof Uint8Array)
-          || normalized.bytes.length < 4
-          || normalized.bytes.length > 5 * 1024 * 1024
+      const prepared = await processImage(sourceBytes, asset.content_type);
+      if (!prepared || prepared.contentType !== "image/jpeg"
+          || !(prepared.bytes instanceof Uint8Array)
+          || prepared.bytes.length < 4
+          || prepared.bytes.length > 5 * 1024 * 1024
           || !OBJECT_KEY_PATTERN.test(asset.normalized_object_name)) {
         throw new CaptureImageError("invalid");
       }
@@ -254,15 +266,10 @@ export async function handleCapturePreprocessing(request, env, dependencies = {}
           "cache-control": "no-store",
           "x-upsert": "false",
         },
-        body: normalized.bytes,
+        body: prepared.bytes,
         signal: AbortSignal.timeout(20_000),
       });
       if (!uploadResponse.ok) throw new Error("normalized_upload_failed");
-
-      const storedDigest = await storedObjectMatches(fetcher, env, asset.normalized_object_name, normalized.bytes.length);
-      const expectedDigest = await crypto.subtle.digest("SHA-256", normalized.bytes);
-      const same = new Uint8Array(storedDigest).every((value, index) => value === new Uint8Array(expectedDigest)[index]);
-      if (!same) throw new Error("normalized_upload_mismatch");
 
       if (!(await removeObjects(fetcher, env, [asset.source_object_name]))) {
         throw new Error("source_delete_failed");

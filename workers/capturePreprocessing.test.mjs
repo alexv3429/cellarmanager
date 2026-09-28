@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { CaptureImageError } from "./captureImageNormalize.mjs";
+import { CaptureImageError } from "./captureImageValidate.mjs";
 import { handleCapturePreprocessing, handleCapturePreview } from "./capturePreprocessing.mjs";
 
 const sessionId = "550e8400-e29b-41d4-a716-446655440000";
@@ -60,7 +60,7 @@ test("requires an authenticated same-origin owner request before calling Supabas
   assert.equal(calls.length, 0);
 });
 
-test("processes, verifies, and immediately deletes the exact source before publishing the derivative", async () => {
+test("validates the source, promotes the prepared bytes, and deletes the source before publishing the derivative", async () => {
   const calls = [];
   const fetcher = async (url, options = {}) => {
     const entry = { url: String(url), method: options.method ?? "GET", headers: options.headers, body: options.body };
@@ -88,13 +88,13 @@ test("processes, verifies, and immediately deletes the exact source before publi
   const response = await handleCapturePreprocessing(request(), env, { fetch: fetcher, processImage });
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), { status: "processed", count: 1 });
-  assert.deepEqual(calls.map((call) => call.method), ["POST", "GET", "POST", "GET", "DELETE", "POST"]);
+  assert.deepEqual(calls.map((call) => call.method), ["POST", "GET", "POST", "DELETE", "POST"]);
   assert.equal(calls[0].url.endsWith("/claim_capture_preprocessing"), true);
   assert.equal(calls[0].headers.authorization, "Bearer user-access-token");
   assert.equal(calls[2].url.endsWith(`/object/capture-labels/${normalizedName}`), true);
-  assert.equal(calls[4].url.endsWith("/object/capture-labels"), true);
-  assert.deepEqual(JSON.parse(calls[4].body), { prefixes: [sourceName] });
-  assert.equal(calls[5].url.endsWith("/complete_capture_preprocessing"), true);
+  assert.equal(calls[3].url.endsWith("/object/capture-labels"), true);
+  assert.deepEqual(JSON.parse(calls[3].body), { prefixes: [sourceName] });
+  assert.equal(calls[4].url.endsWith("/complete_capture_preprocessing"), true);
   assert.equal(JSON.stringify(calls).includes("service-secret"), true);
   assert.equal(JSON.stringify(calls).includes("user-access-token"), true);
   assert.equal(calls.some((call) => String(call.body ?? "").includes("\"user-access-token\"")), false);
@@ -140,6 +140,57 @@ test("returns processing for a concurrent request without reading any image", as
   assert.equal(response.status, 202);
   assert.deepEqual(await response.json(), { status: "processing" });
   assert.equal(calls, 1);
+});
+
+test("clears stale derivatives through Storage before retrying a reclaimed capture", async () => {
+  const calls = [];
+  let completionAttempts = 0;
+  const fetcher = async (url, options = {}) => {
+    const entry = { url: String(url), method: options.method ?? "GET", body: options.body };
+    calls.push(entry);
+    if (entry.url.endsWith("/claim_capture_preprocessing")) return jsonResponse({ ...claim(), reclaimed: true });
+    if (entry.url.endsWith("/complete_capture_preprocessing")) {
+      completionAttempts += 1;
+      return jsonResponse(completionAttempts > 1);
+    }
+    if (entry.url.endsWith("/object/capture-labels") && entry.method === "DELETE") return jsonResponse([]);
+    if (entry.url.endsWith(`/object/authenticated/capture-labels/${sourceName}`)) {
+      return new Response(sourceBytes, { headers: { "content-length": String(sourceBytes.length) } });
+    }
+    if (entry.url.endsWith(`/object/capture-labels/${normalizedName}`) && entry.method === "POST") return jsonResponse({ Key: normalizedName });
+    if (entry.url.endsWith("/complete_capture_preprocessing")) return jsonResponse(true);
+    assert.fail(`Unexpected request ${entry.method} ${entry.url}`);
+  };
+  const response = await handleCapturePreprocessing(request(), env, {
+    fetch: fetcher,
+    processImage: async (bytes) => ({ bytes, contentType: "image/jpeg" }),
+  });
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { status: "processed", count: 1 });
+  assert.deepEqual(calls.slice(0, 4).map((call) => call.method), ["POST", "POST", "DELETE", "GET"]);
+  assert.equal(calls[1].url.endsWith("/complete_capture_preprocessing"), true);
+  assert.deepEqual(JSON.parse(calls[2].body), { prefixes: [normalizedName] });
+});
+
+test("finalizes a derivative already completed by an interrupted Worker before deleting stale objects", async () => {
+  const calls = [];
+  const fetcher = async (url, options = {}) => {
+    const entry = { url: String(url), method: options.method ?? "GET", body: options.body };
+    calls.push(entry);
+    if (entry.url.endsWith("/claim_capture_preprocessing")) return jsonResponse({ ...claim(), reclaimed: true });
+    if (entry.url.endsWith("/complete_capture_preprocessing")) return jsonResponse(true);
+    assert.fail(`Unexpected request ${entry.method} ${entry.url}`);
+  };
+  const response = await handleCapturePreprocessing(request(), env, {
+    fetch: fetcher,
+    processImage: async () => { assert.fail("The already-prepared image should not be processed again"); },
+  });
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { status: "processed", count: 1 });
+  assert.deepEqual(calls.map((call) => call.url.split("/rpc/").pop()), [
+    "claim_capture_preprocessing",
+    "complete_capture_preprocessing",
+  ]);
 });
 
 test("serves only an authorized prepared preview with explicit no-store response headers", async () => {

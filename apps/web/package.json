@@ -4,9 +4,7 @@
   "version": "0.5.0",
   "type": "module",
   "scripts": {
-    "predev": "node ../../scripts/capture/prepare_ocr_assets.mjs",
     "dev": "vite",
-    "prebuild": "node ../../scripts/capture/prepare_ocr_assets.mjs",
     "build": "tsc -b && vite build",
     "lint": "oxlint src",
     "preview": "vite preview",
@@ -17,13 +15,9 @@
     "@powersync/react": "^2.0.1",
     "@powersync/web": "^2.3.1",
     "@supabase/supabase-js": "^2.116.0",
-    "@tesseract.js-data/eng": "1.0.0",
-    "@tesseract.js-data/fra": "1.0.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "read-excel-file": "^9.3.10",
-    "tesseract.js": "7.0.0",
-    "tesseract.js-core": "7.0.0",
     "write-excel-file": "^4.1.1"
   },
   "devDependencies": {

@@ -2857,20 +2857,58 @@
 }
 
 .capture-photos__pickers label {
-  display: grid;
-  gap: 7px;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
   color: var(--text-h);
+  background: var(--bg);
+  text-align: center;
   font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.capture-photos__pickers label:hover {
+  border-color: var(--accent-border);
+}
+
+.capture-photos__pickers label:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.capture-photos__pickers label[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.capture-photos__pickers label span {
+  pointer-events: none;
 }
 
 .capture-photos__pickers input {
-  width: 100%;
-  min-width: 0;
-  padding: 8px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  color: var(--text);
-  background: var(--surface);
+  position: absolute;
+  width: 1px;
+  min-width: 1px;
+  height: 1px;
+  min-height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+  background: transparent;
+}
+
+.capture-photos__picker-help {
+  color: var(--text-muted);
 }
 
 .capture-photos__selection {

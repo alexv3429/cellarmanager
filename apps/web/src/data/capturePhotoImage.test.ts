@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from "vitest"
 
 vi.mock("./supabase", () => ({ supabase: {} }))
 
-import { CapturePhotoError } from "./capturePhotos"
 import { prepareCapturePhotoFile } from "./capturePhotoImage"
 
 function jpegHeader(width: number, height: number): Uint8Array {
@@ -59,11 +58,40 @@ describe("local label photo preprocessing", () => {
     expect(platform.createBitmap).not.toHaveBeenCalled()
   })
 
-  it("rejects MIME/signature mismatches without uploading or decoding", async () => {
-    const source = new File([jpegHeader(1000, 1000)], "wrong.png", { type: "image/png" })
+  it("uses the JPEG signature when a mobile picker reports a non-standard MIME type", async () => {
+    const source = new File([jpegHeader(1000, 1000)], "family-photo.jpg", { type: "image/jpg" })
+    const { platform, canvas } = fakePlatform(1000, 1000)
+
+    const prepared = await prepareCapturePhotoFile(source, platform)
+
+    expect(platform.createBitmap).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "image/jpeg" }),
+      { imageOrientation: "from-image" },
+    )
+    expect(canvas.toBlob).toHaveBeenCalled()
+    expect(prepared.type).toBe("image/jpeg")
+  })
+
+  it("also handles a valid JPEG with no picker-provided MIME type", async () => {
+    const source = new File([jpegHeader(1000, 1000)], "IMG_1234.JPG", { type: "" })
     const { platform } = fakePlatform(1000, 1000)
 
-    await expect(prepareCapturePhotoFile(source, platform)).rejects.toBeInstanceOf(CapturePhotoError)
-    expect(platform.createBitmap).not.toHaveBeenCalled()
+    await expect(prepareCapturePhotoFile(source, platform)).resolves.toMatchObject({ type: "image/jpeg" })
+    expect(platform.createBitmap).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "image/jpeg" }),
+      { imageOrientation: "from-image" },
+    )
+  })
+
+  it("rejects unsupported image bytes before invoking a decoder", async () => {
+    const source = new File([jpegHeader(1000, 1000)], "wrong.png", { type: "image/png" })
+    const unsupported = new File(["not an image"], "photo.heic", { type: "image/heic" })
+    const { platform: mislabeledPlatform } = fakePlatform(1000, 1000)
+    const { platform: unsupportedPlatform } = fakePlatform(1000, 1000)
+
+    // A mislabeled but recognizable JPEG is safe to normalize based on its bytes.
+    await expect(prepareCapturePhotoFile(source, mislabeledPlatform)).resolves.toMatchObject({ type: "image/jpeg" })
+    await expect(prepareCapturePhotoFile(unsupported, unsupportedPlatform)).rejects.toMatchObject({ kind: "format" })
+    expect(unsupportedPlatform.createBitmap).not.toHaveBeenCalled()
   })
 })
