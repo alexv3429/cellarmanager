@@ -4763,16 +4763,23 @@
   cursor: pointer;
 }
 
-.capture-wine-target__choice input {
-  flex: none;
-  width: auto;
-  margin-top: 3px;
+.add-bottles-form .capture-wine-target__choice > input[type="radio"] {
+  flex: 0 0 20px;
+  width: 20px;
+  min-width: 20px;
+  height: 20px;
+  min-height: 20px;
+  margin: 3px 0 0;
+  padding: 0;
+  accent-color: var(--accent);
 }
 
 .capture-wine-target__choice span {
   display: grid;
+  flex: 1 1 0;
   gap: 4px;
   min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 900px) {
