@@ -285,6 +285,7 @@ describe("label review", () => {
 
     await click("Continue with this wine")
     expect(onUseReviewedDetails).toHaveBeenCalledExactlyOnceWith({
+      wineId: "wine-1",
       producer: "Jean-Marc Burgaud", cuvee: "Côte du Py", vintage: 2011,
       color: "red", appellation: "Morgon", area: "Beaujolais", formatMl: 750,
     })

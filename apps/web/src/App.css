@@ -4717,6 +4717,48 @@
   grid-column: 1 / -1;
 }
 
+.add-bottles-form > .capture-wine-target {
+  grid-column: 1 / -1;
+  min-width: 0;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.capture-wine-target legend {
+  padding: 0 6px;
+  font-weight: 700;
+}
+
+.capture-wine-target > p {
+  margin: 0 0 12px;
+}
+
+.add-bottles-form .capture-wine-target__choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  grid-column: auto;
+  cursor: pointer;
+}
+
+.capture-wine-target__choice input {
+  flex: none;
+  width: auto;
+  margin-top: 3px;
+}
+
+.capture-wine-target__choice span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
 @media (max-width: 900px) {
   .app-shell__content .inventory-filters {
     grid-template-columns: repeat(2, minmax(0, 1fr));
