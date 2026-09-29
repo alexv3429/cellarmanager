@@ -24,6 +24,7 @@ import { formatWineVolume, type WineCatalogEntry } from "../data/wineCatalog"
 import { useLanguage } from "../i18n/useLanguage"
 
 interface CaptureWinePrefill {
+  captureSessionId: string
   wineId?: string
   producer: string
   cuvee: string
@@ -39,6 +40,7 @@ interface CapturePhotosPanelProps {
   isOnline: boolean
   userId: string
   wines: WineCatalogEntry[]
+  completedSessionIds?: string[]
   onUseReviewedDetails: (details: CaptureWinePrefill) => void
 }
 
@@ -134,8 +136,9 @@ function fieldEvidence(label: string, field: CaptureWineTextField | CaptureWineN
   )
 }
 
-function prefillFromSuggestion(suggestion: CaptureWineSuggestion): CaptureWinePrefill {
+function prefillFromSuggestion(suggestion: CaptureWineSuggestion, captureSessionId: string): CaptureWinePrefill {
   return {
+    captureSessionId,
     producer: suggestion.producer.value ?? "",
     cuvee: suggestion.cuvee.value ?? "",
     vintage: suggestion.vintage.status === "year" ? suggestion.vintage.value : null,
@@ -146,8 +149,9 @@ function prefillFromSuggestion(suggestion: CaptureWineSuggestion): CaptureWinePr
   }
 }
 
-function prefillFromWine(wine: WineCatalogEntry): CaptureWinePrefill {
+function prefillFromWine(wine: WineCatalogEntry, captureSessionId: string): CaptureWinePrefill {
   return {
+    captureSessionId,
     wineId: wine.id,
     producer: wine.producer,
     cuvee: wine.cuvee,
@@ -159,7 +163,7 @@ function prefillFromWine(wine: WineCatalogEntry): CaptureWinePrefill {
   }
 }
 
-export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUseReviewedDetails }: CapturePhotosPanelProps) {
+export function CapturePhotosPanel({ householdId, isOnline, userId, wines, completedSessionIds = [], onUseReviewedDetails }: CapturePhotosPanelProps) {
   const { language, t } = useLanguage()
   const consentKey = `cellarmanager:photo-reading-consent:v1:${userId}`
   const [photoConsentForUser, setPhotoConsentForUser] = useState<string | null>(() => {
@@ -477,7 +481,8 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
     }
   }
 
-  const matchesBySession = Object.fromEntries(sessions.map((session) => {
+  const visibleSessions = sessions.filter((session) => !completedSessionIds.includes(session.sessionId))
+  const matchesBySession = Object.fromEntries(visibleSessions.map((session) => {
     const direct = ocrResults[session.sessionId]
       ? findCaptureWineMatchesFromTranscript(ocrResults[session.sessionId].pages, wines, householdId)
       : []
@@ -562,7 +567,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
       {message ? <p role="status" className="capture-photos__message">{message}</p> : null}
       {error ? <p role="alert" className="capture-photos__error">{error}</p> : null}
 
-      {sessions.length > 0 ? (
+      {visibleSessions.length > 0 ? (
         <div className="capture-photos__sessions">
           <div className="capture-photos__sessions-heading">
             <h4>{t("Your label photos")}</h4>
@@ -570,7 +575,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
               {loading ? t("Loading…") : t("Refresh photos")}
             </button>
           </div>
-          {sessions.map((session) => (
+          {visibleSessions.map((session) => (
             <article className="capture-photos__session" key={session.sessionId}>
               <div className="capture-photos__session-info">
                 <div>
@@ -655,7 +660,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
                                 <strong>{match.producer} — {match.cuvee}</strong>
                                 <span>{[match.appellation, match.area, match.vintage ?? t("NV"), colorLabel(match.color, t), formatWineVolume(match.format_ml)].filter(Boolean).join(" · ")}</span>
                               </div>
-                              <button type="button" className="button-secondary" onClick={() => onUseReviewedDetails(prefillFromWine(match))}>
+                              <button type="button" className="button-secondary" onClick={() => onUseReviewedDetails(prefillFromWine(match, session.sessionId))}>
                                 {t("Continue with this wine")}
                               </button>
                             </article>
@@ -833,7 +838,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
                             className="capture-photos__continue"
                             disabled={!wineSuggestions[session.sessionId].producer.value?.trim()
                               || !wineSuggestions[session.sessionId].cuvee.value?.trim()}
-                            onClick={() => onUseReviewedDetails(prefillFromSuggestion(wineSuggestions[session.sessionId]))}
+                            onClick={() => onUseReviewedDetails(prefillFromSuggestion(wineSuggestions[session.sessionId], session.sessionId))}
                           >
                             {t("Continue to add bottles")}
                           </button>

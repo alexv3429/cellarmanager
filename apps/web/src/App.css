@@ -2838,6 +2838,22 @@
   margin: 16px 16px 0;
 }
 
+.inventory-batch-progress {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 16px 16px 0;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.inventory-batch-progress p {
+  margin: 0;
+}
+
 .capture-photos {
   display: grid;
   gap: 14px;

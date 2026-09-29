@@ -21,25 +21,32 @@ vi.mock("@powersync/react", () => ({
 vi.mock("../data/powersync/inventoryOperations", () => ({
   queueAdd: vi.fn(), queueMove: vi.fn(), queueRemove: vi.fn(),
 }))
-vi.mock("./CapturePhotosPanel", () => ({ CapturePhotosPanel: ({ onUseReviewedDetails }: {
+vi.mock("./CapturePhotosPanel", () => ({ CapturePhotosPanel: ({ onUseReviewedDetails, completedSessionIds = [] }: {
+  completedSessionIds?: string[]
   onUseReviewedDetails: (details: {
-    wineId?: string; producer: string; cuvee: string; vintage: number | null; color: string;
+    captureSessionId: string; wineId?: string; producer: string; cuvee: string; vintage: number | null; color: string;
     appellation: string; area: string; formatMl: number | null;
   }) => void
-}) => <div data-testid="photo-panel">
+}) => <div data-testid="photo-panel" data-completed={completedSessionIds.join(",")}>
   Photo panel
+  {!completedSessionIds.includes("capture-1") ? <button type="button" onClick={() => onUseReviewedDetails({
+    captureSessionId: "capture-1", wineId: "saved-wine", producer: "Domaine Barraud",
+    cuvee: "En France", vintage: 2019, color: "white", appellation: "Pouilly-Fuissé",
+    area: "Bourgogne", formatMl: 750,
+  })}>Choose saved label wine</button> : null}
   <button type="button" onClick={() => onUseReviewedDetails({
-    wineId: "saved-wine", producer: "Domaine Barraud", cuvee: "En France", vintage: 2019,
-    color: "white", appellation: "Pouilly-Fuissé", area: "Bourgogne", formatMl: 750,
-  })}>Choose saved label wine</button>
-  <button type="button" onClick={() => onUseReviewedDetails({
-    producer: "Domaine Barraud", cuvee: "En France", vintage: 2020,
+    captureSessionId: "capture-1", producer: "Domaine Barraud", cuvee: "En France", vintage: 2020,
     color: "white", appellation: "Pouilly-Fuissé", area: "Bourgogne", formatMl: 750,
   })}>Use reviewed label details</button>
   <button type="button" onClick={() => onUseReviewedDetails({
-    producer: "Domaine Barraud", cuvee: "En France", vintage: 2020,
+    captureSessionId: "capture-1", producer: "Domaine Barraud", cuvee: "En France", vintage: 2020,
     color: "white", appellation: "Pouilly-Fuissé", area: "Bourgogne", formatMl: null,
   })}>Use label without format</button>
+  {completedSessionIds.includes("capture-1") ? <button type="button" onClick={() => onUseReviewedDetails({
+    captureSessionId: "capture-2", wineId: "second-wine", producer: "Jean-Marc Burgaud",
+    cuvee: "Côte du Py", vintage: 2011, color: "red", appellation: "Morgon",
+    area: "Beaujolais", formatMl: 750,
+  })}>Choose next label wine</button> : null}
 </div> }))
 
 let root: Root
@@ -177,5 +184,58 @@ describe("add-bottles entry mode", () => {
       .find((input) => input.closest("label")?.textContent?.includes("Bottle format"))!
     expect(format.value).toBe("")
     expect([...container.querySelectorAll("button")].find((item) => item.textContent?.trim() === "Add bottles")?.disabled).toBe(true)
+  })
+
+  it("continues with the next distinct label after each confirmed ADD", async () => {
+    queryData.wines = [
+      { id: "saved-wine", household_id: "household-1", producer: "Domaine Barraud",
+        cuvee: "En France", vintage: 2019, color: "white", appellation: "Pouilly-Fuissé",
+        area: "Bourgogne", format_ml: 750 },
+      { id: "second-wine", household_id: "household-1", producer: "Jean-Marc Burgaud",
+        cuvee: "Côte du Py", vintage: 2011, color: "red", appellation: "Morgon",
+        area: "Beaujolais", format_ml: 750 },
+    ]
+    queryData.locations = [{ id: "location-1", household_id: "household-1", cellar_id: "cellar-1",
+      cellar_name: "Home", code: "A1" }]
+    await act(async () => root.render(
+      <HoldingsView userId="owner-1" householdId="household-1" isOnline canManageInventory
+        deviceRegistration={{ deviceIdByHousehold: { "household-1": "device-1" } } as RegisteredDevicesState}
+        onOpenWine={() => undefined} />,
+    ))
+    await click("Use a label photo")
+    await click("Choose saved label wine")
+    await click("Add bottles")
+    expect(container.querySelector(".add-bottles-form")).toBeNull()
+    expect(container.querySelector('[data-testid="photo-panel"]')?.getAttribute("data-completed")).toBe("capture-1")
+    expect(container.textContent).toContain("Additions queued in this batch: 1")
+
+    await click("Choose next label wine")
+    await click("Add bottles")
+    expect(container.querySelector('[data-testid="photo-panel"]')?.getAttribute("data-completed")).toBe("capture-1,capture-2")
+    expect(container.textContent).toContain("Additions queued in this batch: 2")
+    expect(vi.mocked(queueAdd).mock.calls.map(([input]) => input.wineId)).toEqual(["saved-wine", "second-wine"])
+    await click("Finish for now")
+    expect(container.querySelector('[data-testid="photo-panel"]')).toBeNull()
+  })
+
+  it("keeps the reviewed wine in the form if queuing its ADD fails", async () => {
+    vi.mocked(queueAdd).mockRejectedValueOnce(new Error("queue unavailable"))
+    queryData.wines = [{ id: "saved-wine", household_id: "household-1", producer: "Domaine Barraud",
+      cuvee: "En France", vintage: 2019, color: "white", appellation: "Pouilly-Fuissé",
+      area: "Bourgogne", format_ml: 750 }]
+    queryData.locations = [{ id: "location-1", household_id: "household-1", cellar_id: "cellar-1",
+      cellar_name: "Home", code: "A1" }]
+    await act(async () => root.render(
+      <HoldingsView userId="owner-1" householdId="household-1" isOnline canManageInventory
+        deviceRegistration={{ deviceIdByHousehold: { "household-1": "device-1" } } as RegisteredDevicesState}
+        onOpenWine={() => undefined} />,
+    ))
+    await click("Use a label photo")
+    await click("Choose saved label wine")
+    await click("Add bottles")
+    expect(container.querySelector(".add-bottles-form")).not.toBeNull()
+    expect(container.querySelector('[data-testid="photo-panel"]')).toBeNull()
+    expect(container.textContent).toContain("queue unavailable")
+    expect(container.textContent).not.toContain("Additions queued in this batch")
   })
 })

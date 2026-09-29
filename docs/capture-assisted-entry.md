@@ -123,6 +123,7 @@ for 0.6.15; this step defines their place in the architecture only.
 | 0.6.9–0.6.11 | Structured field suggestions with OCR evidence, Owner correction, and conservative active-household matching — complete; see [ADR 008](adr/008-capture-label-field-review.md) |
 | 0.6.11 UX follow-up | Plain-language label review with catalogue matches and editable details first; OCR transcript, evidence, and confidence remain available on demand — complete |
 | 0.6.12 | Explicit wine selection/creation and normal ADD — complete; capture review carries a selected catalogue wine ID or requires confirmation of a new wine before the existing Add bottles form queues stock |
+| 0.6.13 | Sequential batch entry — complete; after each confirmed ADD, return to the next-bottle photo picker and hide labels already used in this visit |
 | 0.6.15 | Barcode scan and approved identifier lookup, converging on the same candidate review |
 
 This order deliberately establishes storage/privacy controls before upload and
@@ -206,6 +207,17 @@ wine creation. Ambiguous duplicate catalogue entries can be resolved by an
 explicit selection. The normal ADD still asks for quantity and location and
 queues either the chosen wine ID or a new-wine operation; the photo and OCR
 never queue stock themselves.
+
+Step 0.6.13 lets an Owner repeat that reviewed flow for several different
+bottles without navigating back through the add-method chooser. Each bottle
+still has its own photo(s), wine decision, quantity, destination, and normal
+ADD operation. Successful additions return to the photo picker and temporarily
+hide the capture session just used, avoiding an accidental second ADD from the
+same label during this batch. Failed additions remain in the form for retry.
+The batch is a sequence of independently queued operations, not a single
+atomic stock transaction; completed-session hiding lasts only for the current
+page visit, while the private capture drafts retain their existing 24-hour
+expiry.
 
 ## Acceptance for 0.6.4
 
