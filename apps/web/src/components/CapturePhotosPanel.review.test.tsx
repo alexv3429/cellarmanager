@@ -28,7 +28,8 @@ vi.mock("../data/capturePhotos", () => ({
   validateCapturePhotoFiles: vi.fn(() => null),
   uploadCapturePhotos: vi.fn(),
 }))
-vi.mock("../data/captureWineMatching", () => ({
+vi.mock("../data/captureWineMatching", async (importOriginal) => ({
+  enrichCaptureWineSuggestion: (await importOriginal<typeof import("../data/captureWineMatching")>()).enrichCaptureWineSuggestion,
   findCaptureWineMatchCandidates: vi.fn(() => []),
   findCaptureWineMatchesFromTranscript: vi.fn(() => []),
   findCatalogueAppellationSpelling: vi.fn(() => null),
@@ -186,16 +187,14 @@ describe("label review", () => {
     })
   })
 
-  it("shows a unique catalogue spelling correction without hiding the OCR reading", async () => {
+  it("shows a reviewed appellation spelling correction without hiding the OCR reading", async () => {
     vi.mocked(suggestCaptureWineCandidate).mockResolvedValue({
       modelVersion: "test",
       suggestion: { ...suggestion, appellation: textField("POULILLY-FUISSE", ["POULILLY-FUISSE"]) },
     })
-    vi.mocked(findCatalogueAppellationSpelling).mockReturnValue("Pouilly-Fuissé")
     await renderReview()
-    expect(findCatalogueAppellationSpelling).toHaveBeenCalledWith("POULILLY-FUISSE", [], "household-1")
     expect(container.querySelector<HTMLInputElement>('label input[value="Pouilly-Fuissé"]')).not.toBeNull()
-    expect(container.textContent).toContain("Spelling adjusted from your catalogue (OCR: “POULILLY-FUISSE”).")
+    expect(container.textContent).toContain("Spelling adjusted using reviewed appellation names (OCR: “POULILLY-FUISSE”).")
     await click("Continue to add bottles")
     expect(onUseReviewedDetails).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ appellation: "Pouilly-Fuissé" }))
   })
@@ -218,12 +217,19 @@ describe("label review", () => {
       },
     })
     vi.mocked(findCaptureWineCrossRoleMatch).mockReturnValue(known)
-    vi.mocked(findCatalogueAppellationSpelling).mockReturnValue("Pouilly-Fuissé")
     await renderReview()
     expect(container.querySelector(".capture-photos__matches")?.textContent).toContain("Bourgogne")
     expect(container.querySelector(".capture-photos__matches")?.textContent).toContain("White")
     expect(container.querySelector<HTMLInputElement>('label input[value="Pouilly-Fuissé"]')).not.toBeNull()
-    expect(container.textContent).toContain("Spelling adjusted from your catalogue (OCR: “POULILLY-FUISSE”).")
+    expect(container.textContent).toContain("Spelling adjusted using reviewed appellation names (OCR: “POULILLY-FUISSE”).")
+    expect(container.querySelector<HTMLSelectElement>('.capture-photos__suggestion-fields select')?.value).toBe("year")
+    expect(container.querySelectorAll<HTMLSelectElement>('.capture-photos__suggestion-fields select')[1]?.value).toBe("white")
+    expect(container.querySelector<HTMLInputElement>('label input[value="Bourgogne"]')).not.toBeNull()
+    await click("Continue to add bottles")
+    expect(onUseReviewedDetails).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
+      color: "white", appellation: "Pouilly-Fuissé", area: "Bourgogne", cuvee: "En France",
+    }))
+    onUseReviewedDetails.mockClear()
 
     await click("Continue with this wine")
     expect(onUseReviewedDetails).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({

@@ -162,14 +162,20 @@ values are discarded or left unknown. This is not deterministic string
 parsing: the model proposes the roles, and the Owner can edit them. At most one
 private suggestion is kept per capture for the same 24-hour lifetime. The
 editable appellation spelling is adjusted only when it has one exact normalized
-or single-character near-match in the active household catalogue. The UI shows
-the original OCR spelling beside the adjustment; ambiguous or unknown names
+or single-character near-match in the active household catalogue or the
+project's reviewed appellation-place reference. The UI shows the original OCR
+spelling and the source beside the adjustment; ambiguous or unknown names
 remain unchanged for Owner review. If one catalogue wine also matches the
 inferred producer, visible vintage and printed cuvée across the tentative
 fields, the interface offers that wine; a near-matching saved appellation also
 allows it to correct the OCR spelling. It presents the stored wine's colour,
-region and other details in a visually distinct catalogue card; the Owner must
-still choose it.
+region and other details in a visually distinct catalogue card. A unique
+producer/cuvée/vintage identity match also fills safe missing or misclassified
+editable fields from that wine, including colour and region; the reference can
+correct a uniquely identifiable appellation such as Pouilly-Fuissé. The source
+is labelled and supporting OCR evidence is cleared for replaced fields. The
+Owner can edit every field. Bottle format is not copied into the editable
+suggestion when the label does not show it, since another size may be in hand.
 The interface first compares recognized text against the active household's
 local catalogue, then compares reviewed producer/cuvée if inference was needed.
 It excludes explicit identity conflicts and presents up

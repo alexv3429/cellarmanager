@@ -2915,8 +2915,8 @@
   color: var(--text-muted);
 }
 
-.capture-photos__correction-note {
-  color: var(--text-muted);
+.capture-photos__source-note {
+  color: var(--success-text, #6dbb8a);
   font-weight: 400;
 }
 

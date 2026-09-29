@@ -19,7 +19,7 @@ import {
   type CaptureWineNumberField,
   type StoredCaptureOcrResult,
 } from "../data/capturePhotos"
-import { findCaptureWineCrossRoleMatch, findCaptureWineMatchCandidates, findCaptureWineMatchesFromTranscript, findCatalogueAppellationSpelling } from "../data/captureWineMatching"
+import { enrichCaptureWineSuggestion, findCaptureWineCrossRoleMatch, findCaptureWineMatchCandidates, findCaptureWineMatchesFromTranscript, findCatalogueAppellationSpelling } from "../data/captureWineMatching"
 import { formatWineVolume, type WineCatalogEntry } from "../data/wineCatalog"
 import { useLanguage } from "../i18n/useLanguage"
 
@@ -165,6 +165,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
   const [ocrRetrySessions, setOcrRetrySessions] = useState<Record<string, boolean>>({})
   const [wineSuggestions, setWineSuggestions] = useState<Record<string, CaptureWineSuggestion>>({})
   const [appellationCorrections, setAppellationCorrections] = useState<Record<string, string>>({})
+  const [fieldSources, setFieldSources] = useState<Record<string, Partial<Record<keyof CaptureWineSuggestion, "catalogue" | "reviewed">>>>({})
   const [suggestionProgress, setSuggestionProgress] = useState<string | null>(null)
   const previewRef = useRef<{ sessionId: string; urls: string[] } | null>(null)
 
@@ -198,6 +199,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
     setOcrProgress(null)
     setWineSuggestions({})
     setAppellationCorrections({})
+    setFieldSources({})
     setSuggestionProgress(null)
     setMessage("")
     setError("")
@@ -390,21 +392,22 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
       const saved = await suggestCaptureWineCandidate(sessionId)
       const originalAppellation = saved.suggestion.appellation.value
       const knownWine = findCaptureWineCrossRoleMatch(saved.suggestion, wines, householdId)
-      const correctionFromKnownWine = knownWine
-        ? findCatalogueAppellationSpelling(originalAppellation, [knownWine], householdId)
+      const enriched = enrichCaptureWineSuggestion(saved.suggestion, knownWine, householdId)
+      const catalogueCorrection = enriched.suggestion.appellation.value === originalAppellation
+        ? findCatalogueAppellationSpelling(originalAppellation, wines, householdId)
         : null
-      const correctedAppellation = correctionFromKnownWine
-        ?? findCatalogueAppellationSpelling(originalAppellation, wines, householdId)
-      const suggestion = correctedAppellation
-        ? {
-          ...saved.suggestion,
-          appellation: { ...saved.suggestion.appellation, value: correctedAppellation, confidence: "medium" as const },
-        }
-        : saved.suggestion
+      const suggestion = catalogueCorrection
+        ? { ...enriched.suggestion, appellation: { value: catalogueCorrection, evidence: [], confidence: "medium" as const } }
+        : enriched.suggestion
+      const sources: Partial<Record<keyof CaptureWineSuggestion, "catalogue" | "reviewed">> = {}
+      enriched.catalogueFields.forEach((field) => { sources[field] = "catalogue" })
+      enriched.reviewedFields.forEach((field) => { sources[field] = "reviewed" })
+      if (catalogueCorrection) sources.appellation = "catalogue"
       setWineSuggestions((current) => ({ ...current, [sessionId]: suggestion }))
+      setFieldSources((current) => ({ ...current, [sessionId]: sources }))
       setAppellationCorrections((current) => {
         const next = { ...current }
-        if (correctedAppellation && originalAppellation) next[sessionId] = originalAppellation
+        if (suggestion.appellation.value !== originalAppellation && originalAppellation) next[sessionId] = originalAppellation
         else delete next[sessionId]
         return next
       })
@@ -422,6 +425,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
     field: K,
     update: Partial<CaptureWineSuggestion[K]>,
   ) => {
+    setFieldSources((current) => ({ ...current, [sessionId]: { ...current[sessionId], [field]: undefined } }))
     if (field === "appellation") {
       setAppellationCorrections((current) => {
         const next = { ...current }
@@ -668,7 +672,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
                             <h5>{t("Check the wine details")}</h5>
                             <p>{t("Suggestions can be wrong. Correct the fields before continuing.")}</p>
                           </div>
-                          <h6>{t("Details from the label")}</h6>
+                          <h6>{t("Suggested wine details")}</h6>
                           <div className="capture-photos__suggestion-fields">
                             {([
                               ["producer", "Producer / winery"],
@@ -686,6 +690,9 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
                                       confidence: "low",
                                     })}
                                   />
+                                  {fieldSources[session.sessionId]?.[field] === "catalogue" ? (
+                                    <small className="capture-photos__source-note">{t("From your catalogue")}</small>
+                                  ) : null}
                                 </label>
                               )
                             })}
@@ -745,6 +752,9 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
                                 <option value="sparkling">{t("Sparkling")}</option>
                                 <option value="other">{t("Other")}</option>
                               </select>
+                              {fieldSources[session.sessionId]?.color === "catalogue" ? (
+                                <small className="capture-photos__source-note">{t("From your catalogue")}</small>
+                              ) : null}
                             </label>
                             <label>
                               {t("Bottle format (ml)")}
@@ -785,10 +795,16 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
                                     })}
                                   />
                                   {field === "appellation" && appellationCorrections[session.sessionId] ? (
-                                    <small className="capture-photos__correction-note">
-                                      {t("Spelling adjusted from your catalogue (OCR: “{original}”).", {
+                                    <small className="capture-photos__source-note">
+                                      {t(fieldSources[session.sessionId]?.appellation === "reviewed"
+                                        ? "Spelling adjusted using reviewed appellation names (OCR: “{original}”)."
+                                        : "Spelling adjusted from your catalogue (OCR: “{original}”).", {
                                         original: appellationCorrections[session.sessionId],
                                       })}
+                                    </small>
+                                  ) : fieldSources[session.sessionId]?.[field] ? (
+                                    <small className="capture-photos__source-note">
+                                      {t(fieldSources[session.sessionId][field] === "catalogue" ? "From your catalogue" : "From reviewed appellation names")}
                                     </small>
                                   ) : null}
                                 </label>

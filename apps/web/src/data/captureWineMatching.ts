@@ -1,5 +1,6 @@
 import type { CaptureWineSuggestion } from "./capturePhotos"
 import type { WineCatalogEntry } from "./wineCatalog"
+import maturityKnowledge from "../../../../scripts/enrichment/maturity_knowledge_v2.json"
 
 export interface CaptureWineMatchCandidate {
   wine: WineCatalogEntry
@@ -63,6 +64,85 @@ export function findCatalogueAppellationSpelling(
   if (key.length < 8) return null
   const near = candidates.filter((appellation) => isOneEditApart(key, normalizedWords(appellation).join("")))
   return near.length === 1 ? near[0] : null
+}
+
+export interface ReviewedAppellation {
+  appellation: string
+  region: string | null
+}
+
+/** A unique exact or one-edit match against the project's reviewed place names. */
+export function findReviewedAppellation(printed: string | null): ReviewedAppellation | null {
+  if (!printed) return null
+  const key = normalizedWords(printed).join("")
+  if (key.length < 5) return null
+  const places = maturityKnowledge.places.filter((place) => place.type === "appellation")
+  const ranked = places.map((place) => {
+    const names = [place.name, ...place.aliases]
+    const keys = names.map((name) => normalizedWords(name).join(""))
+    const rank = keys.includes(key) ? 0 : key.length >= 8 && keys.some((candidate) => isOneEditApart(key, candidate)) ? 1 : 2
+    return { place, rank }
+  })
+  const best = Math.min(...ranked.map((candidate) => candidate.rank))
+  if (best > 1) return null
+  const matches = ranked.filter((candidate) => candidate.rank === best)
+  if (matches.length !== 1) return null
+  const place = matches[0].place
+  const canonicalKey = normalizedWords(place.name).join("")
+  const appellation = [place.name, ...place.aliases]
+    .filter((name) => normalizedWords(name).join("") === canonicalKey)
+    .sort((left, right) => Array.from(right).filter((character) => character.codePointAt(0)! > 127).length
+      - Array.from(left).filter((character) => character.codePointAt(0)! > 127).length)[0]
+  const parent = maturityKnowledge.places.find((candidate) => candidate.id === place.parent)
+  return { appellation, region: parent?.type === "region" ? parent.name : null }
+}
+
+export interface EnrichedCaptureWineSuggestion {
+  suggestion: CaptureWineSuggestion
+  catalogueFields: Array<"producer" | "cuvee" | "appellation" | "area" | "color">
+  reviewedFields: Array<"appellation" | "area">
+}
+
+/** Only a unique identity match can supply missing or misclassified editable details. */
+export function enrichCaptureWineSuggestion(
+  original: CaptureWineSuggestion,
+  knownWine: WineCatalogEntry | null,
+  householdId: string,
+): EnrichedCaptureWineSuggestion {
+  const suggestion = { ...original }
+  const catalogueFields: EnrichedCaptureWineSuggestion["catalogueFields"] = []
+  const reviewedFields: EnrichedCaptureWineSuggestion["reviewedFields"] = []
+  const reviewed = findReviewedAppellation(original.appellation.value)
+  const safeWine = knownWine?.household_id === householdId && !knownWine.merged_into_wine_id ? knownWine : null
+  const setText = (field: "producer" | "cuvee" | "appellation" | "area", value: string | null, source: "catalogue" | "reviewed") => {
+    if (!value || value === suggestion[field].value) return
+    suggestion[field] = { value, evidence: [], confidence: "medium" }
+    if (source === "catalogue") catalogueFields.push(field)
+    else if (field === "appellation" || field === "area") reviewedFields.push(field)
+  }
+  if (safeWine) {
+    setText("producer", safeWine.producer, "catalogue")
+    setText("cuvee", safeWine.cuvee, "catalogue")
+    if (!original.color.value && ["red", "white", "rose", "sparkling"].includes(safeWine.color)) {
+      suggestion.color = { value: safeWine.color as CaptureWineSuggestion["color"]["value"], evidence: [], confidence: "medium" }
+      catalogueFields.push("color")
+    }
+  }
+  const catalogueSpelling = safeWine
+    ? findCatalogueAppellationSpelling(original.appellation.value, [safeWine], householdId)
+    : null
+  const reviewedFromWine = safeWine?.appellation ? findReviewedAppellation(safeWine.appellation) : null
+  if (reviewed && (!safeWine?.appellation || reviewedFromWine?.appellation === reviewed.appellation)) {
+    setText("appellation", reviewed.appellation, "reviewed")
+  } else if (catalogueSpelling) {
+    setText("appellation", catalogueSpelling, "catalogue")
+  }
+  if (safeWine?.area && normalizedWords(safeWine.area).join("") !== normalizedWords(safeWine.cuvee).join("")) {
+    setText("area", safeWine.area, "catalogue")
+  } else if (reviewed?.region && safeWine && (!safeWine.appellation || reviewedFromWine?.appellation === reviewed.appellation)) {
+    setText("area", reviewed.region, "reviewed")
+  }
+  return { suggestion, catalogueFields, reviewedFields }
 }
 
 /**

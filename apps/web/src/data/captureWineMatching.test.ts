@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import type { CaptureWineSuggestion } from "./capturePhotos"
-import { findCaptureWineCrossRoleMatch, findCaptureWineMatchCandidates, findCaptureWineMatchesFromTranscript, findCatalogueAppellationSpelling } from "./captureWineMatching"
+import { enrichCaptureWineSuggestion, findCaptureWineCrossRoleMatch, findCaptureWineMatchCandidates, findCaptureWineMatchesFromTranscript, findCatalogueAppellationSpelling, findReviewedAppellation } from "./captureWineMatching"
 import type { WineCatalogEntry } from "./wineCatalog"
 
 function text(value: string | null, evidence: string[] = []) {
@@ -34,6 +34,44 @@ function wine(overrides: Partial<WineCatalogEntry> = {}): WineCatalogEntry {
 }
 
 describe("capture wine catalogue matching", () => {
+  it("uses the reviewed appellation reference to correct a unique OCR typo", () => {
+    expect(findReviewedAppellation("POULILLY-FUISSE")).toEqual({ appellation: "Pouilly-Fuissé", region: "Bourgogne" })
+    expect(findReviewedAppellation("POUILLY-FUISSÉ")).toEqual({ appellation: "Pouilly-Fuissé", region: "Bourgogne" })
+    expect(findReviewedAppellation("unknown print")).toBeNull()
+  })
+
+  it("fills the editable Barraud suggestion from a unique known wine, not from an OCR role mistake", () => {
+    const known = wine({ producer: "Domaine Barraud", cuvee: "En France", vintage: 2019,
+      appellation: null, area: "Bourgogne", color: "white" })
+    const raw: CaptureWineSuggestion = { ...suggestion,
+      producer: text("DOMAINE BARRAUD"), cuvee: text("En France"),
+      appellation: text("POULILLY-FUISSE", ["POULILLY-FUISSE"]), area: text("En France"),
+      color: { value: null, evidence: [], confidence: "low" },
+      format_ml: { value: null, evidence: [], confidence: "low" },
+      vintage: { value: 2019, status: "year", evidence: ["2019"], confidence: "high" },
+    }
+    const match = findCaptureWineCrossRoleMatch(raw, [known], "household-1")
+    const enriched = enrichCaptureWineSuggestion(raw, match, "household-1")
+    expect(enriched.suggestion.producer.value).toBe("Domaine Barraud")
+    expect(enriched.suggestion.cuvee.value).toBe("En France")
+    expect(enriched.suggestion.appellation.value).toBe("Pouilly-Fuissé")
+    expect(enriched.suggestion.area.value).toBe("Bourgogne")
+    expect(enriched.suggestion.color.value).toBe("white")
+    expect(enriched.suggestion.format_ml.value).toBeNull()
+    expect(enriched.suggestion.appellation.evidence).toEqual([])
+    expect(enriched.catalogueFields).toEqual(["producer", "color", "area"])
+    expect(enriched.reviewedFields).toEqual(["appellation"])
+    expect(raw.appellation.value).toBe("POULILLY-FUISSE")
+    const ambiguous = findCaptureWineCrossRoleMatch(raw, [known, { ...known, id: "other" }], "household-1")
+    expect(ambiguous).toBeNull()
+    expect(enrichCaptureWineSuggestion(raw, ambiguous, "household-1").suggestion.color.value).toBeNull()
+    const malformedCatalogue = { ...known, appellation: "Poulilly-Fuisse", area: "En France" }
+    const recovered = enrichCaptureWineSuggestion(raw, malformedCatalogue, "household-1")
+    expect(recovered.suggestion.appellation.value).toBe("Pouilly-Fuissé")
+    expect(recovered.suggestion.area.value).toBe("Bourgogne")
+    expect(recovered.reviewedFields).toEqual(["appellation", "area"])
+  })
+
   it("finds one existing wine when OCR and inference split its label across wrong fields", () => {
     const known = wine({
       id: "barraud", producer: "Domaine Barraud", cuvee: "En France", appellation: "Pouilly-Fuissé",
