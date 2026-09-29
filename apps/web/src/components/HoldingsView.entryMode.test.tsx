@@ -5,16 +5,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { HoldingsView } from "./HoldingsView"
 import type { RegisteredDevicesState } from "../devices/useRegisteredDevices"
-import { queueAdd } from "../data/powersync/inventoryOperations"
+import { queueAdd, queueMove } from "../data/powersync/inventoryOperations"
 
 const queryData = vi.hoisted(() => ({
   wines: [] as Array<Record<string, unknown>>,
   locations: [] as Array<Record<string, unknown>>,
+  holdings: [] as Array<Record<string, unknown>>,
 }))
 
 vi.mock("@powersync/react", () => ({
   useQuery: (sql: string) => ({
-    data: sql.includes("from wines") ? queryData.wines : sql.includes("from locations") ? queryData.locations : [],
+    data: sql.includes("from wines") ? queryData.wines
+      : sql.includes("from locations") ? queryData.locations
+        : sql.includes("from holdings") ? queryData.holdings : [],
     error: null, isLoading: false, isFetching: false,
   }),
 }))
@@ -59,8 +62,10 @@ beforeEach(() => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true)
   vi.mocked(queueAdd).mockReset()
   vi.mocked(queueAdd).mockResolvedValue("operation-1")
+  vi.mocked(queueMove).mockReset()
   queryData.wines = []
   queryData.locations = []
+  queryData.holdings = []
   container = document.createElement("div")
   document.body.append(container)
   root = createRoot(container)
@@ -95,6 +100,26 @@ describe("add-bottles entry mode", () => {
     await click("Enter details manually")
     expect([...container.querySelectorAll<HTMLSelectElement>(".add-bottles-form select")].at(-1)?.value).toBe("location-2")
     expect(queueAdd).not.toHaveBeenCalled()
+  })
+
+  it("uses a scanned destination in a Move form without moving stock", async () => {
+    queryData.locations = [
+      { id: "location-1", household_id: "household-1", cellar_id: "cellar-1", cellar_name: "Home", code: "A1" },
+      { id: "location-2", household_id: "household-1", cellar_id: "cellar-2", cellar_name: "Service", code: "B2" },
+    ]
+    queryData.holdings = [{ id: "holding-1", household_id: "household-1", wine_id: "wine-1", location_id: "location-1",
+      producer: "Domaine Barraud", cuvee: "En France", vintage: 2019, color: "white", appellation: "Pouilly-Fuissé",
+      area: "Bourgogne", format_ml: 750, location_code: "A1", quantity: 2, revision: 1 }]
+    await act(async () => root.render(
+      <HoldingsView userId="owner-1" householdId="household-1" isOnline canManageInventory
+        deviceRegistration={{ deviceIdByHousehold: { "household-1": "device-1" } } as RegisteredDevicesState}
+        onOpenWine={() => undefined} />,
+    ))
+    await click("Move")
+    await click("Scan destination QR")
+    await click("Scan location 2")
+    expect(container.querySelector<HTMLSelectElement>(".inventory-action-form select")?.value).toBe("location-2")
+    expect(queueMove).not.toHaveBeenCalled()
   })
 
   it("keeps photo and manual entry separate until the Owner chooses one", async () => {
