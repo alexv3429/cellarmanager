@@ -12,7 +12,7 @@ import {
   uploadCapturePhotos,
   type CaptureWineSuggestion,
 } from "../data/capturePhotos"
-import { findCaptureWineMatchCandidates, findCaptureWineMatchesFromTranscript, findCatalogueAppellationSpelling } from "../data/captureWineMatching"
+import { findCaptureWineCrossRoleMatch, findCaptureWineMatchCandidates, findCaptureWineMatchesFromTranscript, findCatalogueAppellationSpelling } from "../data/captureWineMatching"
 
 vi.mock("../data/capturePhotos", () => ({
   CapturePhotoError: class CapturePhotoError extends Error {},
@@ -32,6 +32,7 @@ vi.mock("../data/captureWineMatching", () => ({
   findCaptureWineMatchCandidates: vi.fn(() => []),
   findCaptureWineMatchesFromTranscript: vi.fn(() => []),
   findCatalogueAppellationSpelling: vi.fn(() => null),
+  findCaptureWineCrossRoleMatch: vi.fn(() => null),
 }))
 
 const textField = (value: string | null, evidence: string[] = []) => ({ value, evidence, confidence: "high" as const })
@@ -68,6 +69,7 @@ beforeEach(() => {
   vi.mocked(findCaptureWineMatchCandidates).mockReturnValue([])
   vi.mocked(findCaptureWineMatchesFromTranscript).mockReturnValue([])
   vi.mocked(findCatalogueAppellationSpelling).mockReturnValue(null)
+  vi.mocked(findCaptureWineCrossRoleMatch).mockReturnValue(null)
   vi.mocked(uploadCapturePhotos).mockResolvedValue({ sessionId: "capture-1", status: "processed" })
   vi.mocked(recognizeCapturePhotoSession).mockResolvedValue({
     state: "recognized", engine: "cloudflare",
@@ -196,6 +198,38 @@ describe("label review", () => {
     expect(container.textContent).toContain("Spelling adjusted from your catalogue (OCR: “POULILLY-FUISSE”).")
     await click("Continue to add bottles")
     expect(onUseReviewedDetails).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ appellation: "Pouilly-Fuissé" }))
+  })
+
+  it("shows saved wine details ahead of misclassified OCR fields", async () => {
+    const known = {
+      id: "barraud", household_id: "household-1", producer: "Domaine Barraud", cuvee: "En France",
+      appellation: "Pouilly-Fuissé", area: "Bourgogne", vintage: 2019, color: "white", format_ml: 750,
+    }
+    vi.mocked(suggestCaptureWineCandidate).mockResolvedValue({
+      modelVersion: "test",
+      suggestion: {
+        ...suggestion,
+        producer: textField("Domaine Barraud"),
+        cuvee: textField("POULILLY-FUISSE"),
+        appellation: textField("POULILLY-FUISSE"),
+        area: textField("En France"),
+        vintage: { value: 2019, status: "year", evidence: ["2019"], confidence: "high" },
+        color: { value: null, evidence: [], confidence: "low" },
+      },
+    })
+    vi.mocked(findCaptureWineCrossRoleMatch).mockReturnValue(known)
+    vi.mocked(findCatalogueAppellationSpelling).mockReturnValue("Pouilly-Fuissé")
+    await renderReview()
+    expect(container.querySelector(".capture-photos__matches")?.textContent).toContain("Bourgogne")
+    expect(container.querySelector(".capture-photos__matches")?.textContent).toContain("White")
+    expect(container.querySelector<HTMLInputElement>('label input[value="Pouilly-Fuissé"]')).not.toBeNull()
+    expect(container.textContent).toContain("Spelling adjusted from your catalogue (OCR: “POULILLY-FUISSE”).")
+
+    await click("Continue with this wine")
+    expect(onUseReviewedDetails).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
+      producer: "Domaine Barraud", cuvee: "En France", appellation: "Pouilly-Fuissé",
+      area: "Bourgogne", vintage: 2019, color: "white",
+    }))
   })
 
   it("offers a catalogue match before the label form but never chooses it automatically", async () => {

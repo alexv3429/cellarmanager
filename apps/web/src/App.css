@@ -3063,6 +3063,11 @@
   background: var(--bg);
 }
 
+.capture-photos__matches {
+  border-left: 4px solid var(--success, #6baa7a);
+  background: color-mix(in srgb, var(--success, #6baa7a) 9%, var(--bg));
+}
+
 .capture-photos__suggestion > h6 {
   font-size: 1rem;
 }

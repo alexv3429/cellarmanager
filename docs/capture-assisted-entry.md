@@ -164,9 +164,14 @@ private suggestion is kept per capture for the same 24-hour lifetime. The
 editable appellation spelling is adjusted only when it has one exact normalized
 or single-character near-match in the active household catalogue. The UI shows
 the original OCR spelling beside the adjustment; ambiguous or unknown names
-remain unchanged for Owner review. The interface first compares recognized
-text against the active household's local
-catalogue, then compares reviewed producer/cuvée if inference was needed.
+remain unchanged for Owner review. If one catalogue wine also matches the
+inferred producer, visible vintage and printed cuvée across the tentative
+fields, the interface offers that wine; a near-matching saved appellation also
+allows it to correct the OCR spelling. It presents the stored wine's colour,
+region and other details in a visually distinct catalogue card; the Owner must
+still choose it.
+The interface first compares recognized text against the active household's
+local catalogue, then compares reviewed producer/cuvée if inference was needed.
 It excludes explicit identity conflicts and presents up
 to three possibilities without choosing one. An explicit action copies either
 the reviewed fields or a chosen catalogue wine into the existing Add bottles

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import type { CaptureWineSuggestion } from "./capturePhotos"
-import { findCaptureWineMatchCandidates, findCaptureWineMatchesFromTranscript, findCatalogueAppellationSpelling } from "./captureWineMatching"
+import { findCaptureWineCrossRoleMatch, findCaptureWineMatchCandidates, findCaptureWineMatchesFromTranscript, findCatalogueAppellationSpelling } from "./captureWineMatching"
 import type { WineCatalogEntry } from "./wineCatalog"
 
 function text(value: string | null, evidence: string[] = []) {
@@ -34,6 +34,62 @@ function wine(overrides: Partial<WineCatalogEntry> = {}): WineCatalogEntry {
 }
 
 describe("capture wine catalogue matching", () => {
+  it("finds one existing wine when OCR and inference split its label across wrong fields", () => {
+    const known = wine({
+      id: "barraud", producer: "Domaine Barraud", cuvee: "En France", appellation: "Pouilly-Fuissé",
+      vintage: 2019, color: "white", area: "Bourgogne",
+    })
+    const misclassified: CaptureWineSuggestion = {
+      ...suggestion,
+      producer: text("Domaine Barraud"),
+      cuvee: text("POULILLY-FUISSE"),
+      appellation: text("POULILLY-FUISSE"),
+      area: text("En France"),
+      vintage: { value: 2019, status: "year", evidence: ["2019"], confidence: "high" },
+      color: { value: null, evidence: [], confidence: "low" },
+    }
+
+    expect(findCaptureWineCrossRoleMatch(misclassified, [known], "household-1")?.id).toBe("barraud")
+    expect(findCaptureWineCrossRoleMatch({ ...misclassified, cuvee: text(null) }, [known], "household-1")?.id).toBe("barraud")
+    expect(findCaptureWineCrossRoleMatch(misclassified, [known], "another-household")).toBeNull()
+    expect(findCaptureWineCrossRoleMatch({ ...misclassified, area: text("Other cuvée") }, [known], "household-1")).toBeNull()
+    expect(findCaptureWineCrossRoleMatch({ ...misclassified, vintage: { ...misclassified.vintage, value: 2020 } }, [known], "household-1")).toBeNull()
+    expect(findCaptureWineCrossRoleMatch(misclassified, [known, { ...known, id: "other-format", format_ml: 1500 }], "household-1")).toBeNull()
+  })
+
+  it("does not override clear conflicting colour or format evidence from a label", () => {
+    const known = wine({ producer: "Domaine Barraud", cuvee: "En France", appellation: "Pouilly-Fuissé", vintage: 2019, color: "white" })
+    const base: CaptureWineSuggestion = {
+      ...suggestion,
+      producer: text("Domaine Barraud"), cuvee: text("En France"), appellation: text("POULILLY-FUISSE"),
+      vintage: { value: 2019, status: "year", evidence: ["2019"], confidence: "high" },
+    }
+    expect(findCaptureWineCrossRoleMatch({
+      ...base, color: { value: "red", confidence: "high", evidence: ["ROUGE"] },
+    }, [known], "household-1")).toBeNull()
+    expect(findCaptureWineCrossRoleMatch({
+      ...base, format_ml: { value: 1500, confidence: "high", evidence: ["150 cl"] },
+    }, [known], "household-1")).toBeNull()
+    expect(findCaptureWineCrossRoleMatch({
+      ...base, appellation: { value: "Morgon", confidence: "high", evidence: ["MORGON"] },
+    }, [known], "household-1")).toBeNull()
+  })
+
+  it("can offer a unique existing wine when its catalogue appellation is missing", () => {
+    const known = wine({
+      producer: "Domaine Barraud", cuvee: "En France", appellation: null,
+      area: "Bourgogne", vintage: 2019, color: "white",
+    })
+    const candidate: CaptureWineSuggestion = {
+      ...suggestion,
+      producer: text("Domaine Barraud"), cuvee: text("POULILLY-FUISSE"),
+      appellation: text("POULILLY-FUISSE"), area: text("En France"),
+      vintage: { value: 2019, status: "year", evidence: ["2019"], confidence: "high" },
+    }
+    expect(findCaptureWineCrossRoleMatch(candidate, [known], "household-1")?.id).toBe(known.id)
+    expect(findCaptureWineCrossRoleMatch(candidate, [known, { ...known, id: "second" }], "household-1")).toBeNull()
+  })
+
   it("corrects a clear OCR appellation typo using only this household's catalogue", () => {
     const known = wine({ appellation: "Pouilly-Fuissé" })
     expect(findCatalogueAppellationSpelling("POULILLY-FUISSE", [known], "household-1")).toBe("Pouilly-Fuissé")

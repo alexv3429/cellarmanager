@@ -65,6 +65,53 @@ export function findCatalogueAppellationSpelling(
   return near.length === 1 ? near[0] : null
 }
 
+/**
+ * A model can put a printed cuvée in `area` and an appellation in `cuvee`.
+ * Resolve that only when producer, vintage and cuvée identify one wine, and
+ * any clearly evidenced appellation does not contradict it.
+ */
+export function findCaptureWineCrossRoleMatch(
+  suggestion: CaptureWineSuggestion,
+  wines: WineCatalogEntry[],
+  householdId: string,
+): WineCatalogEntry | null {
+  if (!suggestion.producer.value || suggestion.vintage.status !== "year" || suggestion.vintage.value === null) {
+    return null
+  }
+  const printedFields = (["cuvee", "appellation", "area"] as const)
+    .map((field) => ({ field, value: normalizedWords(suggestion[field].value ?? "").join("") }))
+    .filter(({ value }) => value.length > 0)
+  const matches = wines.filter((wine) => {
+    if (wine.household_id !== householdId || wine.merged_into_wine_id) return false
+    if (wine.vintage !== suggestion.vintage.value) return false
+    if (similarity(suggestion.producer.value ?? "", wine.producer) < 0.78) return false
+    if (suggestion.format_ml.value !== null && suggestion.format_ml.value !== wine.format_ml) return false
+    if (suggestion.color.value && suggestion.color.value !== "other"
+      && suggestion.color.value !== wine.color
+      && suggestion.color.confidence === "high" && suggestion.color.evidence.length > 0) return false
+
+    const cuvee = normalizedWords(wine.cuvee).join("")
+    const appellation = normalizedWords(wine.appellation ?? "").join("")
+    if (cuvee.length < 5) return false
+    const cuveeFields = printedFields.filter(({ value }) => value === cuvee)
+    if (cuveeFields.length === 0) return false
+    const appellationFields = printedFields.filter(({ value }) => value === appellation
+      || isOneEditApart(value, appellation))
+    const corroboratedAppellation = appellation.length >= 8
+      && cuveeFields.some((cuveeField) => appellationFields.some((appellationField) =>
+        cuveeField.field !== appellationField.field))
+    if (corroboratedAppellation) return true
+    const claimedAppellation = normalizedWords(suggestion.appellation.value ?? "").join("")
+    const confidentConflict = wine.appellation && claimedAppellation.length >= 5
+      && suggestion.appellation.confidence === "high" && suggestion.appellation.evidence.length > 0
+      && claimedAppellation !== cuvee
+      && claimedAppellation !== appellation
+      && !isOneEditApart(claimedAppellation, appellation)
+    return !confidentConflict
+  })
+  return matches.length === 1 ? matches[0] : null
+}
+
 /** Catalogue-first candidates use only text actually read on the label, never an inferred field role. */
 export function findCaptureWineMatchesFromTranscript(
   pages: readonly { text: string }[],

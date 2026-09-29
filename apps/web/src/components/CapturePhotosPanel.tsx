@@ -19,7 +19,7 @@ import {
   type CaptureWineNumberField,
   type StoredCaptureOcrResult,
 } from "../data/capturePhotos"
-import { findCaptureWineMatchCandidates, findCaptureWineMatchesFromTranscript, findCatalogueAppellationSpelling } from "../data/captureWineMatching"
+import { findCaptureWineCrossRoleMatch, findCaptureWineMatchCandidates, findCaptureWineMatchesFromTranscript, findCatalogueAppellationSpelling } from "../data/captureWineMatching"
 import { formatWineVolume, type WineCatalogEntry } from "../data/wineCatalog"
 import { useLanguage } from "../i18n/useLanguage"
 
@@ -389,7 +389,12 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
     try {
       const saved = await suggestCaptureWineCandidate(sessionId)
       const originalAppellation = saved.suggestion.appellation.value
-      const correctedAppellation = findCatalogueAppellationSpelling(originalAppellation, wines, householdId)
+      const knownWine = findCaptureWineCrossRoleMatch(saved.suggestion, wines, householdId)
+      const correctionFromKnownWine = knownWine
+        ? findCatalogueAppellationSpelling(originalAppellation, [knownWine], householdId)
+        : null
+      const correctedAppellation = correctionFromKnownWine
+        ?? findCatalogueAppellationSpelling(originalAppellation, wines, householdId)
       const suggestion = correctedAppellation
         ? {
           ...saved.suggestion,
@@ -461,7 +466,11 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
     const inferred = wineSuggestions[session.sessionId]
       ? findCaptureWineMatchCandidates(wineSuggestions[session.sessionId], wines, householdId).map((match) => match.wine)
       : []
-    return [session.sessionId, [...new Map([...direct, ...inferred].map((wine) => [wine.id, wine])).values()].slice(0, 3)]
+    const crossRole = wineSuggestions[session.sessionId]
+      ? findCaptureWineCrossRoleMatch(wineSuggestions[session.sessionId], wines, householdId)
+      : null
+    return [session.sessionId, [...new Map([...(crossRole ? [crossRole] : []), ...direct, ...inferred]
+      .map((wine) => [wine.id, wine])).values()].slice(0, 3)]
   }))
 
   const locale = language === "fr" ? "fr-FR" : "en-US"
@@ -621,12 +630,12 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
                       {matchesBySession[session.sessionId]?.length > 0 ? (
                         <div className="capture-photos__matches">
                           <h5>{t("Possible match in your catalogue")}</h5>
-                          <p>{t("Check the name and vintage. Choosing a match fills the bottle form; it does not add stock.")}</p>
+                          <p>{t("These are details already saved in your catalogue, not guesses from the photo. Check the wine and vintage before choosing it; no stock is added yet.")}</p>
                           {matchesBySession[session.sessionId].map((match) => (
                             <article className="capture-photos__match" key={match.id}>
                               <div>
                                 <strong>{match.producer} — {match.cuvee}</strong>
-                                <span>{match.appellation ? `${match.appellation} · ` : ""}{match.vintage ?? t("NV")} · {colorLabel(match.color, t)} · {formatWineVolume(match.format_ml)}</span>
+                                <span>{[match.appellation, match.area, match.vintage ?? t("NV"), colorLabel(match.color, t), formatWineVolume(match.format_ml)].filter(Boolean).join(" · ")}</span>
                               </div>
                               <button type="button" className="button-secondary" onClick={() => onUseReviewedDetails(prefillFromWine(match))}>
                                 {t("Continue with this wine")}

@@ -23,6 +23,7 @@ export const frenchTextRuntime: Readonly<Record<string, string>> = {
   "Label read. Review the suggested wine below.": "Étiquette lue. Vérifiez le vin suggéré ci-dessous.",
   "Possible match in your catalogue": "Correspondance possible dans votre catalogue",
   "Check the name and vintage. Choosing a match fills the bottle form; it does not add stock.": "Vérifiez le nom et le millésime. Choisir une correspondance préremplit le formulaire, sans ajouter de stock.",
+  "These are details already saved in your catalogue, not guesses from the photo. Check the wine and vintage before choosing it; no stock is added yet.": "Ces informations viennent de votre catalogue, et non d’une estimation à partir de la photo. Vérifiez le vin et le millésime avant de le choisir ; aucune bouteille n’est encore ajoutée.",
   "Not the right wine? Ask for editable label details instead.": "Ce n’est pas le bon vin ? Demandez plutôt des informations modifiables tirées de l’étiquette.",
   "Suggest other details": "Suggérer d’autres informations",
   "We could not read any label text from this photo. Preview it and retry, or delete it; your cellar was not changed.": "Aucun texte de l’étiquette n’a pu être lu sur cette photo. Prévisualisez-la puis réessayez, ou supprimez-la ; votre cave n’a pas été modifiée.",
