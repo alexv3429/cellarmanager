@@ -583,7 +583,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
                           {matchesBySession[session.sessionId]?.length > 0 ? (
                             <div className="capture-photos__matches">
                               <h6>{t("Already in your catalogue?")}</h6>
-                              <p>{t("Choose a match only if it is the same wine. Otherwise, review the details below.")}</p>
+                              <p>{t("Choose a match only if it is the same wine. This fills the bottle form; it does not add stock.")}</p>
                               {matchesBySession[session.sessionId].map((match) => (
                                 <article className="capture-photos__match" key={match.wine.id}>
                                   <div>
@@ -591,7 +591,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
                                     <span>{match.wine.vintage ?? t("NV")} · {colorLabel(match.wine.color, t)} · {formatWineVolume(match.wine.format_ml)}</span>
                                   </div>
                                   <button type="button" className="button-secondary" onClick={() => onUseReviewedDetails(prefillFromWine(match.wine))}>
-                                    {t("Use this wine")}
+                                    {t("Continue with this wine")}
                                   </button>
                                 </article>
                               ))}

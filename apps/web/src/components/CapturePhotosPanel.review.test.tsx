@@ -124,7 +124,7 @@ describe("label review", () => {
     expect(review.querySelector(".capture-photos__matches")!.compareDocumentPosition(review.querySelector(".capture-photos__suggestion-fields")!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(onUseReviewedDetails).not.toHaveBeenCalled()
 
-    await click("Use this wine")
+    await click("Continue with this wine")
     expect(onUseReviewedDetails).toHaveBeenCalledExactlyOnceWith({
       producer: "Jean-Marc Burgaud", cuvee: "Côte du Py", vintage: 2011,
       color: "red", appellation: "Morgon", area: "Beaujolais", formatMl: 750,
