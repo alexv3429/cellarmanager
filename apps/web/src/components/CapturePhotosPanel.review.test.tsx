@@ -13,6 +13,7 @@ import {
   type CaptureWineSuggestion,
 } from "../data/capturePhotos"
 import { findCaptureWineCrossRoleMatch, findCaptureWineMatchCandidates, findCaptureWineMatchesFromTranscript, findCatalogueAppellationSpelling } from "../data/captureWineMatching"
+import type { WineCatalogEntry } from "../data/wineCatalog"
 
 vi.mock("../data/capturePhotos", () => ({
   CapturePhotoError: class CapturePhotoError extends Error {},
@@ -30,6 +31,7 @@ vi.mock("../data/capturePhotos", () => ({
 }))
 vi.mock("../data/captureWineMatching", async (importOriginal) => ({
   enrichCaptureWineSuggestion: (await importOriginal<typeof import("../data/captureWineMatching")>()).enrichCaptureWineSuggestion,
+  findCaptureWineProductMatches: (await importOriginal<typeof import("../data/captureWineMatching")>()).findCaptureWineProductMatches,
   findCaptureWineMatchCandidates: vi.fn(() => []),
   findCaptureWineMatchesFromTranscript: vi.fn(() => []),
   findCatalogueAppellationSpelling: vi.fn(() => null),
@@ -87,9 +89,9 @@ afterEach(async () => {
   vi.unstubAllGlobals()
 })
 
-async function renderReview() {
+async function renderReview(wines: WineCatalogEntry[] = []) {
   await act(async () => root.render(
-    <CapturePhotosPanel householdId="household-1" isOnline userId="owner-1" wines={[]} onUseReviewedDetails={onUseReviewedDetails} />,
+    <CapturePhotosPanel householdId="household-1" isOnline userId="owner-1" wines={wines} onUseReviewedDetails={onUseReviewedDetails} />,
   ))
   await click("I understand — continue with photos")
   await click("Review label")
@@ -196,7 +198,7 @@ describe("label review", () => {
     expect(container.querySelector<HTMLInputElement>('label input[value="Pouilly-Fuissé"]')).not.toBeNull()
     expect(container.textContent).toContain("Spelling adjusted using reviewed appellation names (OCR: “POULILLY-FUISSE”).")
     await click("Continue to add bottles")
-    expect(onUseReviewedDetails).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ appellation: "Pouilly-Fuissé" }))
+    expect(onUseReviewedDetails).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ appellation: "Pouilly-Fuissé", color: "red" }))
   })
 
   it("shows saved wine details ahead of misclassified OCR fields", async () => {
@@ -217,11 +219,11 @@ describe("label review", () => {
       },
     })
     vi.mocked(findCaptureWineCrossRoleMatch).mockReturnValue(known)
-    await renderReview()
+    await renderReview([known])
     expect(container.querySelector(".capture-photos__matches")?.textContent).toContain("Bourgogne")
     expect(container.querySelector(".capture-photos__matches")?.textContent).toContain("White")
     expect(container.querySelector<HTMLInputElement>('label input[value="Pouilly-Fuissé"]')).not.toBeNull()
-    expect(container.textContent).toContain("Spelling adjusted using reviewed appellation names (OCR: “POULILLY-FUISSE”).")
+    expect(container.textContent).toContain("Spelling adjusted from your catalogue (OCR: “POULILLY-FUISSE”).")
     expect(container.querySelector<HTMLSelectElement>('.capture-photos__suggestion-fields select')?.value).toBe("year")
     expect(container.querySelectorAll<HTMLSelectElement>('.capture-photos__suggestion-fields select')[1]?.value).toBe("white")
     expect(container.querySelector<HTMLInputElement>('label input[value="Bourgogne"]')).not.toBeNull()
@@ -236,6 +238,35 @@ describe("label review", () => {
       producer: "Domaine Barraud", cuvee: "En France", appellation: "Pouilly-Fuissé",
       area: "Bourgogne", vintage: 2019, color: "white",
     }))
+  })
+
+  it("uses an older catalogue vintage for shared fields but keeps the photographed year", async () => {
+    const known = {
+      id: "barraud-2017", household_id: "household-1", producer: "Domaine Barraud", cuvee: "En France",
+      appellation: "Pouilly-Fuissé", area: "Bourgogne", vintage: 2017, color: "white", format_ml: 750,
+    }
+    vi.mocked(suggestCaptureWineCandidate).mockResolvedValue({ modelVersion: "test", suggestion: {
+      ...suggestion,
+      producer: textField("DOMAINE BARRAUD", ["DOMAINE BARRAUD"]),
+      cuvee: textField("En France", ["En France"]),
+      appellation: textField("POULILLY-FUISSE", ["POULILLY-FUISSE"]),
+      area: textField("En France"),
+      vintage: { value: 2019, status: "year", evidence: ["2019"], confidence: "high" },
+      color: { value: null, evidence: [], confidence: "low" },
+      format_ml: { value: null, evidence: [], confidence: "low" },
+    } })
+    await renderReview([known])
+    expect(container.textContent).toContain("Matched this wine to your catalogue across vintages")
+    expect(container.textContent).toContain("Matches your catalogue")
+    expect(container.textContent).toContain("From matching wines in your catalogue")
+    expect(container.querySelectorAll<HTMLSelectElement>('.capture-photos__suggestion-fields select')[1]?.value).toBe("white")
+    expect(container.querySelector<HTMLInputElement>('label input[value="Pouilly-Fuissé"]')).not.toBeNull()
+    expect(container.querySelector<HTMLInputElement>('label input[value="Bourgogne"]')).not.toBeNull()
+    await click("Continue to add bottles")
+    expect(onUseReviewedDetails).toHaveBeenCalledExactlyOnceWith({
+      producer: "Domaine Barraud", cuvee: "En France", appellation: "Pouilly-Fuissé",
+      area: "Bourgogne", color: "white", vintage: 2019, formatMl: null,
+    })
   })
 
   it("offers a catalogue match before the label form but never chooses it automatically", async () => {

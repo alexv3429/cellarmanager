@@ -19,7 +19,7 @@ import {
   type CaptureWineNumberField,
   type StoredCaptureOcrResult,
 } from "../data/capturePhotos"
-import { enrichCaptureWineSuggestion, findCaptureWineCrossRoleMatch, findCaptureWineMatchCandidates, findCaptureWineMatchesFromTranscript, findCatalogueAppellationSpelling } from "../data/captureWineMatching"
+import { enrichCaptureWineSuggestion, findCaptureWineCrossRoleMatch, findCaptureWineMatchCandidates, findCaptureWineMatchesFromTranscript, findCaptureWineProductMatches, findCatalogueAppellationSpelling, type CaptureReviewStatus } from "../data/captureWineMatching"
 import { formatWineVolume, type WineCatalogEntry } from "../data/wineCatalog"
 import { useLanguage } from "../i18n/useLanguage"
 
@@ -108,6 +108,17 @@ function colorLabel(color: string, t: (key: string) => string): string {
   }
 }
 
+function reviewStatusNote(field: keyof CaptureWineSuggestion, status: CaptureReviewStatus | undefined, t: (key: string) => string) {
+  if (!status) return null
+  const label = status === "exact"
+    ? field === "vintage" ? "Read from this label" : "Matches your catalogue"
+    : status === "inherited" ? "From matching wines in your catalogue"
+      : status === "corrected" ? "Adjusted using your catalogue"
+        : status === "reviewed" ? "Adjusted using reviewed appellation names"
+          : "Differs from your catalogue — check this field"
+  return <small className={`capture-photos__source-note capture-photos__source-note--${status}`}>{t(label)}</small>
+}
+
 function fieldEvidence(label: string, field: CaptureWineTextField | CaptureWineNumberField, t: (key: string) => string) {
   return (
     <div className="capture-photos__field-meta" key={label}>
@@ -165,7 +176,8 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
   const [ocrRetrySessions, setOcrRetrySessions] = useState<Record<string, boolean>>({})
   const [wineSuggestions, setWineSuggestions] = useState<Record<string, CaptureWineSuggestion>>({})
   const [appellationCorrections, setAppellationCorrections] = useState<Record<string, string>>({})
-  const [fieldSources, setFieldSources] = useState<Record<string, Partial<Record<keyof CaptureWineSuggestion, "catalogue" | "reviewed">>>>({})
+  const [fieldStatuses, setFieldStatuses] = useState<Record<string, Partial<Record<keyof CaptureWineSuggestion, CaptureReviewStatus>>>>({})
+  const [matchedProductSessions, setMatchedProductSessions] = useState<Record<string, boolean>>({})
   const [suggestionProgress, setSuggestionProgress] = useState<string | null>(null)
   const previewRef = useRef<{ sessionId: string; urls: string[] } | null>(null)
 
@@ -199,7 +211,8 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
     setOcrProgress(null)
     setWineSuggestions({})
     setAppellationCorrections({})
-    setFieldSources({})
+    setFieldStatuses({})
+    setMatchedProductSessions({})
     setSuggestionProgress(null)
     setMessage("")
     setError("")
@@ -391,20 +404,19 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
     try {
       const saved = await suggestCaptureWineCandidate(sessionId)
       const originalAppellation = saved.suggestion.appellation.value
-      const knownWine = findCaptureWineCrossRoleMatch(saved.suggestion, wines, householdId)
-      const enriched = enrichCaptureWineSuggestion(saved.suggestion, knownWine, householdId)
-      const catalogueCorrection = enriched.suggestion.appellation.value === originalAppellation
+      const matchingWines = findCaptureWineProductMatches(saved.suggestion, wines, householdId)
+      const enriched = enrichCaptureWineSuggestion(saved.suggestion, matchingWines, householdId)
+      const catalogueCorrection = matchingWines.length === 0 && enriched.suggestion.appellation.value === originalAppellation
         ? findCatalogueAppellationSpelling(originalAppellation, wines, householdId)
         : null
       const suggestion = catalogueCorrection
         ? { ...enriched.suggestion, appellation: { value: catalogueCorrection, evidence: [], confidence: "medium" as const } }
         : enriched.suggestion
-      const sources: Partial<Record<keyof CaptureWineSuggestion, "catalogue" | "reviewed">> = {}
-      enriched.catalogueFields.forEach((field) => { sources[field] = "catalogue" })
-      enriched.reviewedFields.forEach((field) => { sources[field] = "reviewed" })
-      if (catalogueCorrection) sources.appellation = "catalogue"
+      const statuses = { ...enriched.statuses }
+      if (catalogueCorrection) statuses.appellation = "corrected" as const
       setWineSuggestions((current) => ({ ...current, [sessionId]: suggestion }))
-      setFieldSources((current) => ({ ...current, [sessionId]: sources }))
+      setFieldStatuses((current) => ({ ...current, [sessionId]: statuses }))
+      setMatchedProductSessions((current) => ({ ...current, [sessionId]: matchingWines.length > 0 }))
       setAppellationCorrections((current) => {
         const next = { ...current }
         if (suggestion.appellation.value !== originalAppellation && originalAppellation) next[sessionId] = originalAppellation
@@ -425,7 +437,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
     field: K,
     update: Partial<CaptureWineSuggestion[K]>,
   ) => {
-    setFieldSources((current) => ({ ...current, [sessionId]: { ...current[sessionId], [field]: undefined } }))
+    setFieldStatuses((current) => ({ ...current, [sessionId]: { ...current[sessionId], [field]: undefined } }))
     if (field === "appellation") {
       setAppellationCorrections((current) => {
         const next = { ...current }
@@ -671,6 +683,9 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
                           <div className="capture-photos__review-heading">
                             <h5>{t("Check the wine details")}</h5>
                             <p>{t("Suggestions can be wrong. Correct the fields before continuing.")}</p>
+                            {matchedProductSessions[session.sessionId] ? (
+                              <p className="capture-photos__product-match">{t("Matched this wine to your catalogue across vintages. The year shown below comes from this label, not an older bottle.")}</p>
+                            ) : null}
                           </div>
                           <h6>{t("Suggested wine details")}</h6>
                           <div className="capture-photos__suggestion-fields">
@@ -690,9 +705,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
                                       confidence: "low",
                                     })}
                                   />
-                                  {fieldSources[session.sessionId]?.[field] === "catalogue" ? (
-                                    <small className="capture-photos__source-note">{t("From your catalogue")}</small>
-                                  ) : null}
+                                  {reviewStatusNote(field, fieldStatuses[session.sessionId]?.[field], t)}
                                 </label>
                               )
                             })}
@@ -734,6 +747,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
                                   })}
                                 />
                               ) : null}
+                              {reviewStatusNote("vintage", fieldStatuses[session.sessionId]?.vintage, t)}
                             </label>
                             <label>
                               {t("Color")}
@@ -752,8 +766,9 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
                                 <option value="sparkling">{t("Sparkling")}</option>
                                 <option value="other">{t("Other")}</option>
                               </select>
-                              {fieldSources[session.sessionId]?.color === "catalogue" ? (
-                                <small className="capture-photos__source-note">{t("From your catalogue")}</small>
+                              {reviewStatusNote("color", fieldStatuses[session.sessionId]?.color, t)}
+                              {!wineSuggestions[session.sessionId].color.value && !fieldStatuses[session.sessionId]?.color ? (
+                                <small className="capture-photos__source-note capture-photos__source-note--missing">{t("Not identified — please review")}</small>
                               ) : null}
                             </label>
                             <label>
@@ -775,6 +790,9 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
                                   confidence: "low",
                                 })}
                               />
+                              {!wineSuggestions[session.sessionId].format_ml.value ? (
+                                <small className="capture-photos__source-note capture-photos__source-note--missing">{t("Not identified — please review")}</small>
+                              ) : null}
                             </label>
                           </div>
                           <details className="capture-photos__more-details">
@@ -794,17 +812,14 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
                                       confidence: "low",
                                     })}
                                   />
+                                  {reviewStatusNote(field, fieldStatuses[session.sessionId]?.[field], t)}
                                   {field === "appellation" && appellationCorrections[session.sessionId] ? (
-                                    <small className="capture-photos__source-note">
-                                      {t(fieldSources[session.sessionId]?.appellation === "reviewed"
+                                    <small className="capture-photos__ocr-note">
+                                      {t(fieldStatuses[session.sessionId]?.appellation === "reviewed"
                                         ? "Spelling adjusted using reviewed appellation names (OCR: “{original}”)."
                                         : "Spelling adjusted from your catalogue (OCR: “{original}”).", {
                                         original: appellationCorrections[session.sessionId],
                                       })}
-                                    </small>
-                                  ) : fieldSources[session.sessionId]?.[field] ? (
-                                    <small className="capture-photos__source-note">
-                                      {t(fieldSources[session.sessionId][field] === "catalogue" ? "From your catalogue" : "From reviewed appellation names")}
                                     </small>
                                   ) : null}
                                 </label>

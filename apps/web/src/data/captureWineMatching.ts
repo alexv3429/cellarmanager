@@ -97,52 +97,112 @@ export function findReviewedAppellation(printed: string | null): ReviewedAppella
   return { appellation, region: parent?.type === "region" ? parent.name : null }
 }
 
+export type CaptureReviewStatus = "exact" | "inherited" | "corrected" | "reviewed" | "conflict"
+
 export interface EnrichedCaptureWineSuggestion {
   suggestion: CaptureWineSuggestion
-  catalogueFields: Array<"producer" | "cuvee" | "appellation" | "area" | "color">
-  reviewedFields: Array<"appellation" | "area">
+  statuses: Partial<Record<keyof CaptureWineSuggestion, CaptureReviewStatus>>
 }
 
-/** Only a unique identity match can supply missing or misclassified editable details. */
+function sameText(left: string, right: string): boolean {
+  return normalizedWords(left).join("") === normalizedWords(right).join("")
+}
+
+function canonicalAppellation(value: string): string {
+  return findReviewedAppellation(value)?.appellation ?? value
+}
+
+/** Identify one producer/cuvée product across vintages and bottle formats. */
+export function findCaptureWineProductMatches(
+  suggestion: CaptureWineSuggestion,
+  wines: WineCatalogEntry[],
+  householdId: string,
+): WineCatalogEntry[] {
+  if (!suggestion.producer.value) return []
+  const printedFields = (["cuvee", "appellation", "area"] as const)
+    .map((field) => normalizedWords(suggestion[field].value ?? "").join(""))
+    .filter((value) => value.length >= 5)
+  if (printedFields.length === 0) return []
+  const claimedAppellation = suggestion.appellation.value
+  const matches = wines.filter((wine) => {
+    if (wine.household_id !== householdId || wine.merged_into_wine_id) return false
+    if (similarity(suggestion.producer.value ?? "", wine.producer) < 0.78) return false
+    const cuveeKey = normalizedWords(wine.cuvee).join("")
+    if (cuveeKey.length < 5 || !printedFields.includes(cuveeKey)) return false
+    if (claimedAppellation && wine.appellation && !sameText(claimedAppellation, wine.cuvee)) {
+      const printed = normalizedWords(canonicalAppellation(claimedAppellation)).join("")
+      const stored = normalizedWords(canonicalAppellation(wine.appellation)).join("")
+      if (printed !== stored && !isOneEditApart(printed, stored)
+        && suggestion.appellation.confidence === "high" && suggestion.appellation.evidence.length > 0) return false
+    }
+    return true
+  })
+  const products = new Set(matches.map((wine) => JSON.stringify([
+    normalizedWords(wine.producer).join(""), normalizedWords(wine.cuvee).join(""),
+  ])))
+  return products.size === 1 ? matches : []
+}
+
+function commonText(wines: WineCatalogEntry[], field: "producer" | "cuvee" | "appellation" | "area"): string | null {
+  const values = wines.map((wine) => wine[field]).filter((value): value is string => Boolean(value))
+  if (values.length !== wines.length) return null
+  const canonical = field === "appellation" ? values.map(canonicalAppellation) : values
+  return canonical.every((value) => sameText(value, canonical[0])) ? canonical[0] : null
+}
+
+/** Inherit only metadata shared by every matching vintage; keep the photographed vintage. */
 export function enrichCaptureWineSuggestion(
   original: CaptureWineSuggestion,
-  knownWine: WineCatalogEntry | null,
+  matchingWines: WineCatalogEntry[],
   householdId: string,
 ): EnrichedCaptureWineSuggestion {
   const suggestion = { ...original }
-  const catalogueFields: EnrichedCaptureWineSuggestion["catalogueFields"] = []
-  const reviewedFields: EnrichedCaptureWineSuggestion["reviewedFields"] = []
+  const statuses: EnrichedCaptureWineSuggestion["statuses"] = {}
   const reviewed = findReviewedAppellation(original.appellation.value)
-  const safeWine = knownWine?.household_id === householdId && !knownWine.merged_into_wine_id ? knownWine : null
-  const setText = (field: "producer" | "cuvee" | "appellation" | "area", value: string | null, source: "catalogue" | "reviewed") => {
-    if (!value || value === suggestion[field].value) return
-    suggestion[field] = { value, evidence: [], confidence: "medium" }
-    if (source === "catalogue") catalogueFields.push(field)
-    else if (field === "appellation" || field === "area") reviewedFields.push(field)
+  const safeWines = matchingWines.filter((wine) => wine.household_id === householdId && !wine.merged_into_wine_id)
+  const setText = (field: "producer" | "cuvee" | "appellation" | "area", value: string, status: CaptureReviewStatus) => {
+    if (suggestion[field].value !== value) suggestion[field] = { value, evidence: [], confidence: "medium" }
+    statuses[field] = status
   }
-  if (safeWine) {
-    setText("producer", safeWine.producer, "catalogue")
-    setText("cuvee", safeWine.cuvee, "catalogue")
-    if (!original.color.value && ["red", "white", "rose", "sparkling"].includes(safeWine.color)) {
-      suggestion.color = { value: safeWine.color as CaptureWineSuggestion["color"]["value"], evidence: [], confidence: "medium" }
-      catalogueFields.push("color")
+  if (safeWines.length > 0) {
+    for (const field of ["producer", "cuvee"] as const) {
+      const value = commonText(safeWines, field)
+      if (value) setText(field, value, original[field].value && sameText(original[field].value, value) ? "exact" : "corrected")
+    }
+    const color = safeWines[0].color
+    if (["red", "white", "rose", "sparkling"].includes(color)
+      && safeWines.every((wine) => wine.color === color)) {
+      if (!original.color.value) {
+        suggestion.color = { value: color as CaptureWineSuggestion["color"]["value"], evidence: [], confidence: "medium" }
+        statuses.color = "inherited"
+      } else if (original.color.value === color) statuses.color = "exact"
+      else statuses.color = "conflict"
+    }
+    const appellation = commonText(safeWines, "appellation")
+    if (appellation) {
+      const printed = normalizedWords(original.appellation.value ?? "").join("")
+      const stored = normalizedWords(appellation).join("")
+      if (!printed) setText("appellation", appellation, "inherited")
+      else if (printed === stored) setText("appellation", appellation, "exact")
+      else if (isOneEditApart(printed, stored)) setText("appellation", appellation, "corrected")
+      else statuses.appellation = "conflict"
+    }
+    const area = commonText(safeWines, "area")
+    if (area) {
+      if (!original.area.value) setText("area", area, "inherited")
+      else if (sameText(original.area.value, area)) setText("area", area, "exact")
+      else if (sameText(original.area.value, original.cuvee.value ?? "")
+        || original.area.confidence !== "high" || original.area.evidence.length === 0) setText("area", area, "corrected")
+      else statuses.area = "conflict"
     }
   }
-  const catalogueSpelling = safeWine
-    ? findCatalogueAppellationSpelling(original.appellation.value, [safeWine], householdId)
-    : null
-  const reviewedFromWine = safeWine?.appellation ? findReviewedAppellation(safeWine.appellation) : null
-  if (reviewed && (!safeWine?.appellation || reviewedFromWine?.appellation === reviewed.appellation)) {
+  if (!statuses.appellation && reviewed && original.appellation.value !== reviewed.appellation) {
     setText("appellation", reviewed.appellation, "reviewed")
-  } else if (catalogueSpelling) {
-    setText("appellation", catalogueSpelling, "catalogue")
   }
-  if (safeWine?.area && normalizedWords(safeWine.area).join("") !== normalizedWords(safeWine.cuvee).join("")) {
-    setText("area", safeWine.area, "catalogue")
-  } else if (reviewed?.region && safeWine && (!safeWine.appellation || reviewedFromWine?.appellation === reviewed.appellation)) {
-    setText("area", reviewed.region, "reviewed")
+  if (original.vintage.status === "year" && original.vintage.value !== null && original.vintage.evidence.length > 0) {
+    statuses.vintage = "exact"
   }
-  return { suggestion, catalogueFields, reviewedFields }
+  return { suggestion, statuses }
 }
 
 /**

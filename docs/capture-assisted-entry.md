@@ -169,13 +169,17 @@ remain unchanged for Owner review. If one catalogue wine also matches the
 inferred producer, visible vintage and printed cuvée across the tentative
 fields, the interface offers that wine; a near-matching saved appellation also
 allows it to correct the OCR spelling. It presents the stored wine's colour,
-region and other details in a visually distinct catalogue card. A unique
-producer/cuvée/vintage identity match also fills safe missing or misclassified
-editable fields from that wine, including colour and region; the reference can
-correct a uniquely identifiable appellation such as Pouilly-Fuissé. The source
-is labelled and supporting OCR evidence is cleared for replaced fields. The
-Owner can edit every field. Bottle format is not copied into the editable
-suggestion when the label does not show it, since another size may be in hand.
+region and other details in a visually distinct catalogue card. Separately,
+the editable review matches producer and cuvée across catalogue vintages,
+using a clear appellation (including a one-character OCR correction) to reject
+contradictions. It inherits colour, appellation and region only when all
+matching vintages agree. The photographed vintage is never copied from an older
+catalogue wine. Exact matches are marked green, inherited or corrected values
+amber, genuine conflicts red, and missing values neutral. Supporting OCR
+evidence is cleared for replaced fields; the Owner can still edit everything.
+The reviewed appellation reference can correct spelling but does not infer
+colour or region on its own. Bottle format is not copied when the label does
+not show it, since another size may be in hand.
 The interface first compares recognized text against the active household's
 local catalogue, then compares reviewed producer/cuvée if inference was needed.
 It excludes explicit identity conflicts and presents up
