@@ -28,6 +28,7 @@ export const frenchTextRuntime: Readonly<Record<string, string>> = {
   "We could not read any label text from this photo. Preview it and retry, or delete it; your cellar was not changed.": "Aucun texte de l’étiquette n’a pu être lu sur cette photo. Prévisualisez-la puis réessayez, ou supprimez-la ; votre cave n’a pas été modifiée.",
   "Label reading could not finish. Your cellar was not changed; you can retry later or delete the photo.": "La lecture de l’étiquette n’a pas pu aboutir. Votre cave n’a pas été modifiée ; réessayez plus tard ou supprimez la photo.",
   "Photo is ready. Continue reading this label below.": "La photo est prête. Poursuivez la lecture de l’étiquette ci-dessous.",
+  "Spelling adjusted from your catalogue (OCR: “{original}”).": "Orthographe corrigée d’après votre catalogue (texte lu : « {original} »).",
   "Add wine from a label": "Ajouter un vin à partir d’une étiquette",
   "Take a photo or choose up to two existing photos. Review the suggested wine before adding any bottles.": "Prenez une photo ou choisissez jusqu’à deux photos existantes. Vérifiez le vin suggéré avant d’ajouter des bouteilles.",
   "How your photos are handled": "Comment vos photos sont traitées",

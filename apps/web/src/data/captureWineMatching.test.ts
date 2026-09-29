@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import type { CaptureWineSuggestion } from "./capturePhotos"
-import { findCaptureWineMatchCandidates, findCaptureWineMatchesFromTranscript } from "./captureWineMatching"
+import { findCaptureWineMatchCandidates, findCaptureWineMatchesFromTranscript, findCatalogueAppellationSpelling } from "./captureWineMatching"
 import type { WineCatalogEntry } from "./wineCatalog"
 
 function text(value: string | null, evidence: string[] = []) {
@@ -34,6 +34,25 @@ function wine(overrides: Partial<WineCatalogEntry> = {}): WineCatalogEntry {
 }
 
 describe("capture wine catalogue matching", () => {
+  it("corrects a clear OCR appellation typo using only this household's catalogue", () => {
+    const known = wine({ appellation: "Pouilly-Fuissé" })
+    expect(findCatalogueAppellationSpelling("POULILLY-FUISSE", [known], "household-1")).toBe("Pouilly-Fuissé")
+    expect(findCatalogueAppellationSpelling("POUILLY-FUISSE", [known], "household-1")).toBe("Pouilly-Fuissé")
+    expect(findCatalogueAppellationSpelling("Pouilly-Fuissé", [known], "household-1")).toBeNull()
+    expect(findCatalogueAppellationSpelling("POULILLY-FUISSE", [known], "another-household")).toBeNull()
+  })
+
+  it("does not guess when the OCR appellation has multiple close catalogue spellings", () => {
+    const known = wine({ appellation: "Pouilly-Fuissé" })
+    expect(findCatalogueAppellationSpelling("POULILLY-FUISSE", [
+      known, wine({ id: "variant", appellation: "Poulilly-Fuissè" }),
+    ], "household-1")).toBe("Poulilly-Fuissè")
+    expect(findCatalogueAppellationSpelling("POULILLY-FUISSE", [
+      known, wine({ id: "variant", appellation: "Poulilly-Fuisss" }),
+    ], "household-1")).toBeNull()
+    expect(findCatalogueAppellationSpelling("MORGON", [known], "household-1")).toBeNull()
+  })
+
   it("finds a known Pouilly-Fuissé even when the model would confuse appellation and cuvée", () => {
     const known = wine({
       id: "barraud", producer: "Domaine Barraud", cuvee: "En France",

@@ -27,6 +27,44 @@ function containsPrintedPhrase(transcript: string, phrase: string): boolean {
   return words.join(" ").length >= 5 && ` ${transcript} `.includes(` ${words.join(" ")} `)
 }
 
+function isOneEditApart(left: string, right: string): boolean {
+  if (Math.abs(left.length - right.length) > 1) return false
+  let leftIndex = 0
+  let rightIndex = 0
+  let edits = 0
+  while (leftIndex < left.length && rightIndex < right.length) {
+    if (left[leftIndex] === right[rightIndex]) {
+      leftIndex += 1
+      rightIndex += 1
+      continue
+    }
+    edits += 1
+    if (edits > 1) return false
+    if (left.length >= right.length) leftIndex += 1
+    if (right.length >= left.length) rightIndex += 1
+  }
+  return edits + (left.length - leftIndex) + (right.length - rightIndex) === 1
+}
+
+/** Only correct an OCR spelling when this household has one clear canonical appellation. */
+export function findCatalogueAppellationSpelling(
+  printed: string | null,
+  wines: WineCatalogEntry[],
+  householdId: string,
+): string | null {
+  if (!printed) return null
+  const key = normalizedWords(printed).join("")
+  if (key.length < 5) return null
+  const candidates = [...new Set(wines
+    .filter((wine) => wine.household_id === householdId && !wine.merged_into_wine_id && wine.appellation)
+    .map((wine) => wine.appellation as string))]
+  const exact = candidates.filter((appellation) => normalizedWords(appellation).join("") === key)
+  if (exact.length > 0) return exact.length === 1 && exact[0] !== printed ? exact[0] : null
+  if (key.length < 8) return null
+  const near = candidates.filter((appellation) => isOneEditApart(key, normalizedWords(appellation).join("")))
+  return near.length === 1 ? near[0] : null
+}
+
 /** Catalogue-first candidates use only text actually read on the label, never an inferred field role. */
 export function findCaptureWineMatchesFromTranscript(
   pages: readonly { text: string }[],

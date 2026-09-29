@@ -19,7 +19,7 @@ import {
   type CaptureWineNumberField,
   type StoredCaptureOcrResult,
 } from "../data/capturePhotos"
-import { findCaptureWineMatchCandidates, findCaptureWineMatchesFromTranscript } from "../data/captureWineMatching"
+import { findCaptureWineMatchCandidates, findCaptureWineMatchesFromTranscript, findCatalogueAppellationSpelling } from "../data/captureWineMatching"
 import { formatWineVolume, type WineCatalogEntry } from "../data/wineCatalog"
 import { useLanguage } from "../i18n/useLanguage"
 
@@ -164,6 +164,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
   const [ocrProgress, setOcrProgress] = useState<{ sessionId: string } | null>(null)
   const [ocrRetrySessions, setOcrRetrySessions] = useState<Record<string, boolean>>({})
   const [wineSuggestions, setWineSuggestions] = useState<Record<string, CaptureWineSuggestion>>({})
+  const [appellationCorrections, setAppellationCorrections] = useState<Record<string, string>>({})
   const [suggestionProgress, setSuggestionProgress] = useState<string | null>(null)
   const previewRef = useRef<{ sessionId: string; urls: string[] } | null>(null)
 
@@ -196,6 +197,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
     setShownOcrSession(null)
     setOcrProgress(null)
     setWineSuggestions({})
+    setAppellationCorrections({})
     setSuggestionProgress(null)
     setMessage("")
     setError("")
@@ -386,7 +388,21 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
     setSuggestionProgress(sessionId)
     try {
       const saved = await suggestCaptureWineCandidate(sessionId)
-      setWineSuggestions((current) => ({ ...current, [sessionId]: saved.suggestion }))
+      const originalAppellation = saved.suggestion.appellation.value
+      const correctedAppellation = findCatalogueAppellationSpelling(originalAppellation, wines, householdId)
+      const suggestion = correctedAppellation
+        ? {
+          ...saved.suggestion,
+          appellation: { ...saved.suggestion.appellation, value: correctedAppellation, confidence: "medium" as const },
+        }
+        : saved.suggestion
+      setWineSuggestions((current) => ({ ...current, [sessionId]: suggestion }))
+      setAppellationCorrections((current) => {
+        const next = { ...current }
+        if (correctedAppellation && originalAppellation) next[sessionId] = originalAppellation
+        else delete next[sessionId]
+        return next
+      })
       setMessage(t("Wine details were suggested from the saved label text. Review and correct them before using them."))
     } catch (suggestionError) {
       setError(messageForError(suggestionError, t))
@@ -401,6 +417,13 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
     field: K,
     update: Partial<CaptureWineSuggestion[K]>,
   ) => {
+    if (field === "appellation") {
+      setAppellationCorrections((current) => {
+        const next = { ...current }
+        delete next[sessionId]
+        return next
+      })
+    }
     setWineSuggestions((current) => {
       const suggestion = current[sessionId]
       if (!suggestion) return current
@@ -752,6 +775,13 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
                                       confidence: "low",
                                     })}
                                   />
+                                  {field === "appellation" && appellationCorrections[session.sessionId] ? (
+                                    <small className="capture-photos__correction-note">
+                                      {t("Spelling adjusted from your catalogue (OCR: “{original}”).", {
+                                        original: appellationCorrections[session.sessionId],
+                                      })}
+                                    </small>
+                                  ) : null}
                                 </label>
                               ))}
                             </div>

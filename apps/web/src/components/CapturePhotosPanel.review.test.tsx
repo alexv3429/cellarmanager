@@ -12,7 +12,7 @@ import {
   uploadCapturePhotos,
   type CaptureWineSuggestion,
 } from "../data/capturePhotos"
-import { findCaptureWineMatchCandidates, findCaptureWineMatchesFromTranscript } from "../data/captureWineMatching"
+import { findCaptureWineMatchCandidates, findCaptureWineMatchesFromTranscript, findCatalogueAppellationSpelling } from "../data/captureWineMatching"
 
 vi.mock("../data/capturePhotos", () => ({
   CapturePhotoError: class CapturePhotoError extends Error {},
@@ -31,6 +31,7 @@ vi.mock("../data/capturePhotos", () => ({
 vi.mock("../data/captureWineMatching", () => ({
   findCaptureWineMatchCandidates: vi.fn(() => []),
   findCaptureWineMatchesFromTranscript: vi.fn(() => []),
+  findCatalogueAppellationSpelling: vi.fn(() => null),
 }))
 
 const textField = (value: string | null, evidence: string[] = []) => ({ value, evidence, confidence: "high" as const })
@@ -66,6 +67,7 @@ beforeEach(() => {
   vi.mocked(suggestCaptureWineCandidate).mockResolvedValue({ modelVersion: "test", suggestion })
   vi.mocked(findCaptureWineMatchCandidates).mockReturnValue([])
   vi.mocked(findCaptureWineMatchesFromTranscript).mockReturnValue([])
+  vi.mocked(findCatalogueAppellationSpelling).mockReturnValue(null)
   vi.mocked(uploadCapturePhotos).mockResolvedValue({ sessionId: "capture-1", status: "processed" })
   vi.mocked(recognizeCapturePhotoSession).mockResolvedValue({
     state: "recognized", engine: "cloudflare",
@@ -180,6 +182,20 @@ describe("label review", () => {
       area: "Beaujolais",
       formatMl: 750,
     })
+  })
+
+  it("shows a unique catalogue spelling correction without hiding the OCR reading", async () => {
+    vi.mocked(suggestCaptureWineCandidate).mockResolvedValue({
+      modelVersion: "test",
+      suggestion: { ...suggestion, appellation: textField("POULILLY-FUISSE", ["POULILLY-FUISSE"]) },
+    })
+    vi.mocked(findCatalogueAppellationSpelling).mockReturnValue("Pouilly-Fuissé")
+    await renderReview()
+    expect(findCatalogueAppellationSpelling).toHaveBeenCalledWith("POULILLY-FUISSE", [], "household-1")
+    expect(container.querySelector<HTMLInputElement>('label input[value="Pouilly-Fuissé"]')).not.toBeNull()
+    expect(container.textContent).toContain("Spelling adjusted from your catalogue (OCR: “POULILLY-FUISSE”).")
+    await click("Continue to add bottles")
+    expect(onUseReviewedDetails).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ appellation: "Pouilly-Fuissé" }))
   })
 
   it("offers a catalogue match before the label form but never chooses it automatically", async () => {
