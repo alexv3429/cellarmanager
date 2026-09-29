@@ -19,7 +19,7 @@ import {
   type CaptureWineNumberField,
   type StoredCaptureOcrResult,
 } from "../data/capturePhotos"
-import { findCaptureWineMatchCandidates } from "../data/captureWineMatching"
+import { enrichCaptureWineSuggestion, findCaptureWineCrossRoleMatch, findCaptureWineMatchCandidates, findCaptureWineMatchesFromTranscript, findCaptureWineProductMatches, findCatalogueAppellationSpelling, type CaptureReviewStatus } from "../data/captureWineMatching"
 import { formatWineVolume, type WineCatalogEntry } from "../data/wineCatalog"
 import { useLanguage } from "../i18n/useLanguage"
 
@@ -43,7 +43,7 @@ interface CapturePhotosPanelProps {
 
 function messageForError(error: unknown, t: (key: string) => string): string {
   if (error instanceof Error && error.name === "CaptureOcrEmptyError") {
-    return t("Cloudflare AI returned no readable label text. The photo was uploaded and remains private. View it and retry, or delete it; your cellar was not changed.")
+    return t("We could not read any label text from this photo. Preview it and retry, or delete it; your cellar was not changed.")
   }
   if (!(error instanceof CapturePhotoError)) return t("Photo upload failed. Your cellar was not changed.")
   switch (error.kind) {
@@ -54,7 +54,7 @@ function messageForError(error: unknown, t: (key: string) => string): string {
     case "dimensions": return t("This photo is too large to prepare safely. Choose a smaller image.")
     case "server_photo": return t("The server rejected the prepared photo during a safety check. Refresh photo status; if it was removed, select it again. Your cellar was not changed.")
     case "processing": return t("Photo preparation was interrupted. Refresh the photo list; if it is still preparing after five minutes, you can retry. Your cellar was not changed.")
-    case "ocr": return t("Cloudflare label recognition could not finish. Your cellar was not changed; you can retry later or delete the photo.")
+    case "ocr": return t("Label reading could not finish. Your cellar was not changed; you can retry later or delete the photo.")
     case "suggestion": return t("Could not suggest wine details from the saved text. Your cellar was not changed; review the label text or try again later.")
     case "limit": return t("The temporary photo limit has been reached. Delete an earlier capture or try again later.")
     case "permission": return t("Only the current household owner can upload these photos. Refresh your access and try again.")
@@ -74,9 +74,9 @@ function sessionStateLabel(session: CapturePhotoSession, t: (key: string) => str
     case "processing": return isCapturePhotoPreparationStale(session)
       ? t("Photo preparation appears stalled. Refresh photos to retry.")
       : t("Preparing photos…")
-    case "processed": return t("Prepared photos are private and ready to send to Cloudflare AI for label reading")
-    case "ocr_deletion_pending": return t("Text saved privately; photo deletion is still in progress")
-    case "recognized": return t("Label text saved privately; photo deleted")
+    case "processed": return t("Photos ready to read")
+    case "ocr_deletion_pending": return t("Label ready; photo deletion pending")
+    case "recognized": return t("Label ready to review")
     case "deletion_pending": return t("Deletion in progress")
     default: return t("Upload incomplete")
   }
@@ -108,9 +108,21 @@ function colorLabel(color: string, t: (key: string) => string): string {
   }
 }
 
-function fieldEvidence(field: CaptureWineTextField | CaptureWineNumberField, t: (key: string) => string) {
+function reviewStatusNote(field: keyof CaptureWineSuggestion, status: CaptureReviewStatus | undefined, t: (key: string) => string) {
+  if (!status) return null
+  const label = status === "exact"
+    ? field === "vintage" ? "Read from this label" : "Matches your catalogue"
+    : status === "inherited" ? "From matching wines in your catalogue"
+      : status === "corrected" ? "Adjusted using your catalogue"
+        : status === "reviewed" ? "Adjusted using reviewed appellation names"
+          : "Differs from your catalogue — check this field"
+  return <small className={`capture-photos__source-note capture-photos__source-note--${status}`}>{t(label)}</small>
+}
+
+function fieldEvidence(label: string, field: CaptureWineTextField | CaptureWineNumberField, t: (key: string) => string) {
   return (
-    <div className="capture-photos__field-meta">
+    <div className="capture-photos__field-meta" key={label}>
+      <strong>{t(label)}</strong>
       <span>{fieldConfidenceLabel(field.confidence, t)}</span>
       {field.evidence.length > 0 ? (
         <span>{t("Label evidence")}: {field.evidence.map((line) => `“${line}”`).join(" · ")}</span>
@@ -147,7 +159,11 @@ function prefillFromWine(wine: WineCatalogEntry): CaptureWinePrefill {
 
 export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUseReviewedDetails }: CapturePhotosPanelProps) {
   const { language, t } = useLanguage()
-  const [files, setFiles] = useState<File[]>([])
+  const consentKey = `cellarmanager:photo-reading-consent:v1:${userId}`
+  const [photoConsentForUser, setPhotoConsentForUser] = useState<string | null>(() => {
+    try { return typeof window !== "undefined" && window.localStorage.getItem(consentKey) === "accepted" ? userId : null } catch { return null }
+  })
+  const photoConsent = photoConsentForUser === userId
   const [sessions, setSessions] = useState<CapturePhotoSession[]>([])
   const [loading, setLoading] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -159,6 +175,9 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
   const [ocrProgress, setOcrProgress] = useState<{ sessionId: string } | null>(null)
   const [ocrRetrySessions, setOcrRetrySessions] = useState<Record<string, boolean>>({})
   const [wineSuggestions, setWineSuggestions] = useState<Record<string, CaptureWineSuggestion>>({})
+  const [appellationCorrections, setAppellationCorrections] = useState<Record<string, string>>({})
+  const [fieldStatuses, setFieldStatuses] = useState<Record<string, Partial<Record<keyof CaptureWineSuggestion, CaptureReviewStatus>>>>({})
+  const [matchedProductSessions, setMatchedProductSessions] = useState<Record<string, boolean>>({})
   const [suggestionProgress, setSuggestionProgress] = useState<string | null>(null)
   const previewRef = useRef<{ sessionId: string; urls: string[] } | null>(null)
 
@@ -185,12 +204,15 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
     previewRef.current?.urls.forEach((url) => URL.revokeObjectURL(url))
     previewRef.current = null
     setPreview(null)
-    setFiles([])
+    try { setPhotoConsentForUser(window.localStorage.getItem(consentKey) === "accepted" ? userId : null) } catch { setPhotoConsentForUser(null) }
     setSessions([])
     setOcrResults({})
     setShownOcrSession(null)
     setOcrProgress(null)
     setWineSuggestions({})
+    setAppellationCorrections({})
+    setFieldStatuses({})
+    setMatchedProductSessions({})
     setSuggestionProgress(null)
     setMessage("")
     setError("")
@@ -213,7 +235,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
       previewRef.current?.urls.forEach((url) => URL.revokeObjectURL(url))
       previewRef.current = null
     }
-  }, [householdId, isOnline, t, userId])
+  }, [consentKey, householdId, isOnline, t, userId])
 
   useEffect(() => {
     const now = Date.now()
@@ -227,21 +249,20 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
     return () => window.clearTimeout(timer)
   }, [sessions, refresh])
 
-  const chooseFiles = (chosen: FileList | null) => {
-    const nextFiles = chosen ? Array.from(chosen) : []
-    if (nextFiles.length === 0) {
-      setFiles([])
-      setError("")
-      setMessage("")
-      return
-    }
-    const validation = validateCapturePhotoFiles(nextFiles)
-    setFiles(validation ? [] : nextFiles)
-    setError(validation ? messageForError(new CapturePhotoError(validation), t) : "")
-    setMessage("")
+  const acceptPhotoConsent = () => {
+    try { window.localStorage.setItem(consentKey, "accepted") } catch { /* The choice still applies to this visit. */ }
+    setPhotoConsentForUser(userId)
   }
 
-  const upload = async () => {
+  const upload = async (chosen: FileList | null) => {
+    const selected = chosen ? Array.from(chosen) : []
+    if (selected.length === 0) return
+    const validation = validateCapturePhotoFiles(selected)
+    if (validation) {
+      setError(messageForError(new CapturePhotoError(validation), t))
+      return
+    }
+    if (!photoConsent) return
     if (!isOnline) {
       setError(messageForError(new CapturePhotoError("offline"), t))
       return
@@ -250,14 +271,25 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
     setError("")
     setMessage("")
     try {
-      const result = await uploadCapturePhotos(householdId, files)
-      setFiles([])
-      setMessage(t(result.status === "processed"
-        ? "Photos are private. Send them to Cloudflare AI to read the labels, or delete the capture. Unread photos expire within 24 hours."
-        : "Photos are still being prepared. Refresh to check their status."))
+      const result = await uploadCapturePhotos(householdId, selected)
       await refresh()
+      let readyToRead = result.status === "processed"
+      for (let attempt = 0; !readyToRead && attempt < 5; attempt += 1) {
+        await new Promise((resolve) => window.setTimeout(resolve, 2000))
+        try {
+          const updated = await listCapturePhotoSessions(householdId)
+          setSessions(updated)
+          const state = updated.find((session) => session.sessionId === result.sessionId)?.state
+          if (state === "processed") readyToRead = true
+          else if (state !== "processing") break
+        } catch { break }
+      }
+      if (readyToRead) {
+        await recognize(result.sessionId)
+      } else {
+        setMessage(t("Photo preparation is taking longer than expected. Refresh the photos to continue reading this label."))
+      }
     } catch (uploadError) {
-      setFiles([])
       setError(messageForError(uploadError, t))
       await refresh({ preserveError: true })
     } finally {
@@ -272,7 +304,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
     try {
       const status = await processCapturePhotoSession(sessionId)
       setMessage(t(status === "processed"
-        ? "Photos are private. Send them to Cloudflare AI to read the labels, or delete the capture. Unread photos expire within 24 hours."
+        ? "Photo is ready. Continue reading this label below."
         : "Photos are still being prepared. Refresh to check their status."))
       await refresh()
     } catch (prepareError) {
@@ -318,10 +350,14 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
       setOcrRetrySessions((current) => ({ ...current, [sessionId]: false }))
       setOcrResults((current) => ({ ...current, [sessionId]: { pages: saved.pages, engine: saved.engine } }))
       setShownOcrSession(sessionId)
+      const directMatches = findCaptureWineMatchesFromTranscript(saved.pages, wines, householdId)
       setMessage(t(saved.state === "recognized"
-        ? "Cloudflare AI read the label text and saved it privately. The photo has been deleted."
+        ? directMatches.length > 0
+          ? "Possible catalogue match found. Check it before continuing."
+          : "Label read. Review the suggested wine below."
         : "Text is saved privately. Photo deletion is still being retried; your cellar was not changed."))
       await refresh()
+      if (saved.state === "recognized" && directMatches.length === 0) await suggestWineDetails(sessionId)
     } catch (recognitionError) {
       const noText = recognitionError instanceof Error && recognitionError.name === "CaptureOcrEmptyError"
       if (noText) setOcrRetrySessions((current) => ({ ...current, [sessionId]: true }))
@@ -367,7 +403,26 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
     setSuggestionProgress(sessionId)
     try {
       const saved = await suggestCaptureWineCandidate(sessionId)
-      setWineSuggestions((current) => ({ ...current, [sessionId]: saved.suggestion }))
+      const originalAppellation = saved.suggestion.appellation.value
+      const matchingWines = findCaptureWineProductMatches(saved.suggestion, wines, householdId)
+      const enriched = enrichCaptureWineSuggestion(saved.suggestion, matchingWines, householdId)
+      const catalogueCorrection = matchingWines.length === 0 && enriched.suggestion.appellation.value === originalAppellation
+        ? findCatalogueAppellationSpelling(originalAppellation, wines, householdId)
+        : null
+      const suggestion = catalogueCorrection
+        ? { ...enriched.suggestion, appellation: { value: catalogueCorrection, evidence: [], confidence: "medium" as const } }
+        : enriched.suggestion
+      const statuses = { ...enriched.statuses }
+      if (catalogueCorrection) statuses.appellation = "corrected" as const
+      setWineSuggestions((current) => ({ ...current, [sessionId]: suggestion }))
+      setFieldStatuses((current) => ({ ...current, [sessionId]: statuses }))
+      setMatchedProductSessions((current) => ({ ...current, [sessionId]: matchingWines.length > 0 }))
+      setAppellationCorrections((current) => {
+        const next = { ...current }
+        if (suggestion.appellation.value !== originalAppellation && originalAppellation) next[sessionId] = originalAppellation
+        else delete next[sessionId]
+        return next
+      })
       setMessage(t("Wine details were suggested from the saved label text. Review and correct them before using them."))
     } catch (suggestionError) {
       setError(messageForError(suggestionError, t))
@@ -382,6 +437,14 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
     field: K,
     update: Partial<CaptureWineSuggestion[K]>,
   ) => {
+    setFieldStatuses((current) => ({ ...current, [sessionId]: { ...current[sessionId], [field]: undefined } }))
+    if (field === "appellation") {
+      setAppellationCorrections((current) => {
+        const next = { ...current }
+        delete next[sessionId]
+        return next
+      })
+    }
     setWineSuggestions((current) => {
       const suggestion = current[sessionId]
       if (!suggestion) return current
@@ -412,10 +475,19 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
     }
   }
 
-  const matchesBySession = Object.fromEntries(Object.entries(wineSuggestions).map(([sessionId, suggestion]) => [
-    sessionId,
-    findCaptureWineMatchCandidates(suggestion, wines, householdId),
-  ]))
+  const matchesBySession = Object.fromEntries(sessions.map((session) => {
+    const direct = ocrResults[session.sessionId]
+      ? findCaptureWineMatchesFromTranscript(ocrResults[session.sessionId].pages, wines, householdId)
+      : []
+    const inferred = wineSuggestions[session.sessionId]
+      ? findCaptureWineMatchCandidates(wineSuggestions[session.sessionId], wines, householdId).map((match) => match.wine)
+      : []
+    const crossRole = wineSuggestions[session.sessionId]
+      ? findCaptureWineCrossRoleMatch(wineSuggestions[session.sessionId], wines, householdId)
+      : null
+    return [session.sessionId, [...new Map([...(crossRole ? [crossRole] : []), ...direct, ...inferred]
+      .map((wine) => [wine.id, wine])).values()].slice(0, 3)]
+  }))
 
   const locale = language === "fr" ? "fr-FR" : "en-US"
 
@@ -423,72 +495,91 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
     <section className="capture-photos" aria-labelledby="capture-photos-title">
       <div className="capture-photos__intro">
         <div>
-          <h3 id="capture-photos-title">{t("Capture label photos")}</h3>
-          <p>{t("Upload one or two label photos. When you choose to read them, the prepared photos are sent to Cloudflare Workers AI (Moondream) for transcription. Cloudflare says it does not use submissions to train or improve models. The text is saved privately and the photos are deleted after the text is saved. Unread photos and saved text expire within 24 hours. No wine or bottle is added.")}</p>
+          <h3 id="capture-photos-title">{t("Add wine from a label")}</h3>
+          <p>{t("Photograph one bottle at a time. You can use two photos when it has front and back labels.")}</p>
+          <details className="capture-photos__privacy">
+            <summary>{t("Photo privacy details")}</summary>
+            <p>{t("After you choose a photo, CellarManager prepares it privately and sends it to Cloudflare AI to read the label. If no clear catalogue match is found, the recognized text is sent to the same service for editable suggestions. Cloudflare says it does not use submissions to train or improve its models. The text is saved privately, and the photo is deleted after a successful reading. Unread photos and saved text expire within 24 hours. No wine or bottle is added automatically.")}</p>
+            {photoConsent ? (
+              <button type="button" className="button-secondary" onClick={() => {
+                try { window.localStorage.removeItem(consentKey) } catch { /* Consent still resets for this visit. */ }
+                setPhotoConsentForUser(null)
+              }}>{t("Forget my photo choice on this device")}</button>
+            ) : null}
+          </details>
         </div>
-        <button type="button" className="button-secondary" onClick={() => void refresh()} disabled={!isOnline || loading || busy}>
-          {loading ? t("Loading…") : t("Refresh photos")}
-        </button>
       </div>
 
       {!isOnline ? <p className="capture-photos__offline">{t("Reconnect before uploading photos. Photos are not queued offline.")}</p> : null}
 
-      <div className="capture-photos__pickers">
-        <label className="capture-photos__picker" aria-disabled={!isOnline || busy}>
-          <span>{t("Take a photo")}</span>
-          <input
-            accept="image/jpeg,image/png,.jpg,.jpeg,.png"
-            aria-label={t("Take a photo")}
-            capture="environment"
-            disabled={!isOnline || busy}
-            onChange={(event) => {
-              chooseFiles(event.currentTarget.files)
-              event.currentTarget.value = ""
-            }}
-            type="file"
-          />
-        </label>
-        <label className="capture-photos__picker" aria-disabled={!isOnline || busy}>
-          <span>{t("Choose existing photos")}</span>
-          <input
-            accept="image/jpeg,image/png,.jpg,.jpeg,.png"
-            aria-label={t("Choose existing photos")}
-            disabled={!isOnline || busy}
-            multiple
-            onChange={(event) => {
-              chooseFiles(event.currentTarget.files)
-              event.currentTarget.value = ""
-            }}
-            type="file"
-          />
-        </label>
-      </div>
-      <p className="capture-photos__picker-help">{t("Choose existing photos from your photo library or Files. Select one or two JPEG or PNG images.")}</p>
-
-      {files.length > 0 ? (
-        <div className="capture-photos__selection">
-          <span>{t(files.length === 1 ? "1 photo selected" : "{count} photos selected", { count: String(files.length) })}</span>
-          <button type="button" className="button-secondary" disabled={busy} onClick={() => setFiles([])}>{t("Clear selection")}</button>
-          <button type="button" disabled={busy || !isOnline} onClick={() => void upload()}>
-            {busy ? t("Preparing and uploading…") : t("Prepare and upload photos")}
-          </button>
+      {!photoConsent ? (
+        <div className="capture-photos__consent">
+          <h4>{t("Before using a label photo")}</h4>
+          <p>{t("Choosing a photo sends it to an external AI service to read this one bottle's label. If no clear match is found in your catalogue, its recognized text is also sent for editable suggestions. You review the result before adding bottles. Photos and text are temporary; no stock is changed automatically.")}</p>
+          <button type="button" disabled={!isOnline} onClick={acceptPhotoConsent}>{t("I understand — continue with photos")}</button>
+          <small>{t("This choice is remembered on this device for your account. You can review the photo privacy details above at any time.")}</small>
         </div>
-      ) : null}
+      ) : (
+        <>
+          <div className="capture-photos__pickers">
+            <label className="capture-photos__picker" aria-disabled={!isOnline || busy}>
+              <span>{t("Take a photo of this bottle")}</span>
+              <input
+                accept="image/jpeg,image/png,.jpg,.jpeg,.png"
+                aria-label={t("Take a photo of this bottle")}
+                capture="environment"
+                disabled={!isOnline || busy}
+                onChange={(event) => {
+                  void upload(event.currentTarget.files)
+                  event.currentTarget.value = ""
+                }}
+                type="file"
+              />
+            </label>
+            <label className="capture-photos__picker" aria-disabled={!isOnline || busy}>
+              <span>{t("Choose photos of this bottle")}</span>
+              <input
+                accept="image/jpeg,image/png,.jpg,.jpeg,.png"
+                aria-label={t("Choose photos of this bottle")}
+                disabled={!isOnline || busy}
+                multiple
+                onChange={(event) => {
+                  void upload(event.currentTarget.files)
+                  event.currentTarget.value = ""
+                }}
+                type="file"
+              />
+            </label>
+          </div>
+          <p className="capture-photos__picker-help">{t("Choose one photo, or two photos of the front and back labels of the same bottle. Selecting photos starts the reading automatically.")}</p>
+        </>
+      )}
+
+      {busy ? <p role="status">{t("Preparing and reading your label…")}</p> : null}
 
       {message ? <p role="status" className="capture-photos__message">{message}</p> : null}
       {error ? <p role="alert" className="capture-photos__error">{error}</p> : null}
 
       {sessions.length > 0 ? (
         <div className="capture-photos__sessions">
-          <h4>{t("Temporary photo captures")}</h4>
+          <div className="capture-photos__sessions-heading">
+            <h4>{t("Your label photos")}</h4>
+            <button type="button" className="button-secondary" onClick={() => void refresh()} disabled={!isOnline || loading || busy}>
+              {loading ? t("Loading…") : t("Refresh photos")}
+            </button>
+          </div>
           {sessions.map((session) => (
             <article className="capture-photos__session" key={session.sessionId}>
               <div className="capture-photos__session-info">
                 <div>
                   <strong>{sessionStateLabel(session, t)}</strong>
-                  <p>{t(session.photoCount === 1 ? "1 photo" : "{count} photos", { count: String(session.photoCount) })} · {t("Expires {date}", {
-                    date: new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(new Date(session.expiresAt)),
-                  })}</p>
+                  <p>{session.state === "recognized" || session.state === "ocr_deletion_pending"
+                    ? t("Label text expires {date}", {
+                      date: new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(new Date(session.expiresAt)),
+                    })
+                    : <>{t(session.photoCount === 1 ? "1 photo" : "{count} photos", { count: String(session.photoCount) })} · {t("Expires {date}", {
+                      date: new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(new Date(session.expiresAt)),
+                    })}</>}</p>
                 </div>
                 <div className="capture-photos__session-actions">
                   {session.state === "ready" ? (
@@ -503,13 +594,13 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
                   ) : null}
                   {session.state === "processed" ? (
                     <>
-                      <button type="button" disabled={busy || !isOnline} onClick={() => void recognize(session.sessionId)}>
+                      <button type="button" disabled={busy || !isOnline || !photoConsent} onClick={() => void recognize(session.sessionId)}>
                         {ocrProgress?.sessionId === session.sessionId
-                          ? t("Sending photos to Cloudflare AI…")
-                          : t(ocrRetrySessions[session.sessionId] ? "Retry label reading" : "Send photos to Cloudflare AI to read label text")}
+                          ? t("Reading label…")
+                          : t(ocrRetrySessions[session.sessionId] ? "Retry label reading" : "Continue reading label")}
                       </button>
                       <button type="button" className="button-secondary" disabled={busy || !isOnline} onClick={() => void togglePreview(session.sessionId)}>
-                        {preview?.sessionId === session.sessionId ? t("Hide prepared photos") : t("View prepared photos")}
+                        {preview?.sessionId === session.sessionId ? t("Hide photos") : t("Preview photos")}
                       </button>
                     </>
                   ) : null}
@@ -520,7 +611,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
                       disabled={busy || (!isOnline && !ocrResults[session.sessionId])}
                       onClick={() => void toggleRecognizedText(session.sessionId)}
                     >
-                      {shownOcrSession === session.sessionId ? t("Hide recognized text") : t("View recognized text")}
+                      {shownOcrSession === session.sessionId ? t("Hide label review") : t("Review label")}
                     </button>
                   ) : null}
                   {session.state !== "deletion_pending" && session.state !== "processing" ? (
@@ -534,7 +625,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
               </div>
               {ocrProgress?.sessionId === session.sessionId ? (
                 <div className="capture-photos__ocr-progress" role="status">
-                  <span>{t("Sending the prepared photos to Cloudflare AI for label reading…")}</span>
+                  <span>{t("Reading label…")}</span>
                   <progress />
                 </div>
               ) : null}
@@ -546,39 +637,61 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
                 </div>
               ) : null}
               {shownOcrSession === session.sessionId && ocrResults[session.sessionId] ? (
-                <section className="capture-photos__recognized" aria-label={t("Recognized label text")}>
-                  <h5>{t("Recognized label text")}</h5>
-                  <p>{t("Recognition engine")}: {recognitionEngineLabel(ocrResults[session.sessionId].engine, t)}</p>
-                  {ocrResults[session.sessionId].pages.map((page, index) => (
-                    <div key={`${session.sessionId}-${index}`}>
-                      <strong>{t("Photo {number}", { number: String(index + 1) })}</strong>
-                      <pre>{page.text}</pre>
-                    </div>
-                  ))}
+                <section className="capture-photos__recognized" aria-label={t("Review label")}>
                   {session.state === "ocr_deletion_pending" ? (
                     <p>{t("Your recognized text is saved. The private photo will be removed automatically when deletion is available.")}</p>
                   ) : null}
                   {session.state === "recognized" ? (
                     <div className="capture-photos__suggestion">
-                      <p>{t("Turn the recognized text into editable wine details. Cloudflare AI sees only the saved text, not the deleted photo. Nothing is added automatically.")}</p>
+                      {matchesBySession[session.sessionId]?.length > 0 ? (
+                        <div className="capture-photos__matches">
+                          <h5>{t("Possible match in your catalogue")}</h5>
+                          <p>{t("These are details already saved in your catalogue, not guesses from the photo. Check the wine and vintage before choosing it; no stock is added yet.")}</p>
+                          {matchesBySession[session.sessionId].map((match) => (
+                            <article className="capture-photos__match" key={match.id}>
+                              <div>
+                                <strong>{match.producer} — {match.cuvee}</strong>
+                                <span>{[match.appellation, match.area, match.vintage ?? t("NV"), colorLabel(match.color, t), formatWineVolume(match.format_ml)].filter(Boolean).join(" · ")}</span>
+                              </div>
+                              <button type="button" className="button-secondary" onClick={() => onUseReviewedDetails(prefillFromWine(match))}>
+                                {t("Continue with this wine")}
+                              </button>
+                            </article>
+                          ))}
+                        </div>
+                      ) : null}
                       {!wineSuggestions[session.sessionId] ? (
-                        <button
-                          type="button"
-                          disabled={busy || !isOnline}
-                          onClick={() => void suggestWineDetails(session.sessionId)}
-                        >
-                          {suggestionProgress === session.sessionId ? t("Analyzing label text…") : t("Suggest wine details")}
-                        </button>
+                        <>
+                          {matchesBySession[session.sessionId]?.length > 0 ? (
+                            <p>{t("Not the right wine? Ask for editable label details instead.")}</p>
+                          ) : (
+                            <>
+                              <h5>{t("Find the wine on this label")}</h5>
+                              <p>{t("We can suggest the producer, cuvée and vintage from the saved label text. Check everything before continuing.")}</p>
+                            </>
+                          )}
+                          <button
+                            type="button"
+                            disabled={busy || !isOnline || !photoConsent}
+                            onClick={() => void suggestWineDetails(session.sessionId)}
+                          >
+                            {suggestionProgress === session.sessionId ? t("Analyzing label text…") : t(matchesBySession[session.sessionId]?.length > 0 ? "Suggest other details" : "Suggest wine details")}
+                          </button>
+                        </>
                       ) : (
                         <>
-                          <h5>{t("Review suggested wine details")}</h5>
-                          <p>{t("These are role guesses, not confirmed facts. The quoted lines show what supports each suggestion; edit anything that is wrong.")}</p>
+                          <div className="capture-photos__review-heading">
+                            <h5>{t("Check the wine details")}</h5>
+                            <p>{t("Suggestions can be wrong. Correct the fields before continuing.")}</p>
+                            {matchedProductSessions[session.sessionId] ? (
+                              <p className="capture-photos__product-match">{t("Matched this wine to your catalogue across vintages. The year shown below comes from this label, not an older bottle.")}</p>
+                            ) : null}
+                          </div>
+                          <h6>{t("Suggested wine details")}</h6>
                           <div className="capture-photos__suggestion-fields">
                             {([
                               ["producer", "Producer / winery"],
                               ["cuvee", "Cuvée"],
-                              ["appellation", "Appellation"],
-                              ["area", "Area / region"],
                             ] as const).map(([field, label]) => {
                               const value = wineSuggestions[session.sessionId][field]
                               return (
@@ -592,7 +705,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
                                       confidence: "low",
                                     })}
                                   />
-                                  {fieldEvidence(value, t)}
+                                  {reviewStatusNote(field, fieldStatuses[session.sessionId]?.[field], t)}
                                 </label>
                               )
                             })}
@@ -634,7 +747,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
                                   })}
                                 />
                               ) : null}
-                              {fieldEvidence(wineSuggestions[session.sessionId].vintage, t)}
+                              {reviewStatusNote("vintage", fieldStatuses[session.sessionId]?.vintage, t)}
                             </label>
                             <label>
                               {t("Color")}
@@ -653,7 +766,10 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
                                 <option value="sparkling">{t("Sparkling")}</option>
                                 <option value="other">{t("Other")}</option>
                               </select>
-                              {fieldEvidence(wineSuggestions[session.sessionId].color, t)}
+                              {reviewStatusNote("color", fieldStatuses[session.sessionId]?.color, t)}
+                              {!wineSuggestions[session.sessionId].color.value && !fieldStatuses[session.sessionId]?.color ? (
+                                <small className="capture-photos__source-note capture-photos__source-note--missing">{t("Not identified — please review")}</small>
+                              ) : null}
                             </label>
                             <label>
                               {t("Bottle format (ml)")}
@@ -674,38 +790,81 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, onUse
                                   confidence: "low",
                                 })}
                               />
-                              {fieldEvidence(wineSuggestions[session.sessionId].format_ml, t)}
+                              {!wineSuggestions[session.sessionId].format_ml.value ? (
+                                <small className="capture-photos__source-note capture-photos__source-note--missing">{t("Not identified — please review")}</small>
+                              ) : null}
                             </label>
                           </div>
+                          <details className="capture-photos__more-details">
+                            <summary>{t("More wine details")}</summary>
+                            <div className="capture-photos__suggestion-fields">
+                              {([
+                                ["appellation", "Appellation"],
+                                ["area", "Area / region"],
+                              ] as const).map(([field, label]) => (
+                                <label key={field}>
+                                  {t(label)}
+                                  <input
+                                    value={wineSuggestions[session.sessionId][field].value ?? ""}
+                                    onChange={(event) => updateWineSuggestion(session.sessionId, field, {
+                                      value: event.target.value || null,
+                                      evidence: [],
+                                      confidence: "low",
+                                    })}
+                                  />
+                                  {reviewStatusNote(field, fieldStatuses[session.sessionId]?.[field], t)}
+                                  {field === "appellation" && appellationCorrections[session.sessionId] ? (
+                                    <small className="capture-photos__ocr-note">
+                                      {t(fieldStatuses[session.sessionId]?.appellation === "reviewed"
+                                        ? "Spelling adjusted using reviewed appellation names (OCR: “{original}”)."
+                                        : "Spelling adjusted from your catalogue (OCR: “{original}”).", {
+                                        original: appellationCorrections[session.sessionId],
+                                      })}
+                                    </small>
+                                  ) : null}
+                                </label>
+                              ))}
+                            </div>
+                          </details>
                           <button
                             type="button"
+                            className="capture-photos__continue"
                             disabled={!wineSuggestions[session.sessionId].producer.value?.trim()
                               || !wineSuggestions[session.sessionId].cuvee.value?.trim()}
                             onClick={() => onUseReviewedDetails(prefillFromSuggestion(wineSuggestions[session.sessionId]))}
                           >
-                            {t("Use reviewed details in bottle form")}
+                            {t("Continue to add bottles")}
                           </button>
-                          <div className="capture-photos__matches">
-                            <h5>{t("Possible matches in this cellar")}</h5>
-                            <p>{t("Matches are based on your local catalogue and are not selected automatically.")}</p>
-                            {matchesBySession[session.sessionId]?.length > 0 ? (
-                              matchesBySession[session.sessionId].map((match) => (
-                                <article className="capture-photos__match" key={match.wine.id}>
-                                  <strong>{match.wine.producer} — {match.wine.cuvee}</strong>
-                                  <span>{match.wine.vintage ?? t("NV")} · {colorLabel(match.wine.color, t)} · {formatWineVolume(match.wine.format_ml)}</span>
-                                  <button type="button" onClick={() => onUseReviewedDetails(prefillFromWine(match.wine))}>
-                                    {t("Use this catalogue wine in bottle form")}
-                                  </button>
-                                </article>
-                              ))
-                            ) : (
-                              <p>{t("No close catalogue matches were found. You can still use or edit the suggested details.")}</p>
-                            )}
-                          </div>
+                          <p className="capture-photos__fine-print">{t("This fills the bottle form; no wine or bottle is saved until you confirm there.")}</p>
+                          <details className="capture-photos__evidence">
+                            <summary>{t("Why were these details suggested?")}</summary>
+                            <p>{t("Compare the suggestions with the exact label text. Edited fields have no supporting quote.")}</p>
+                            <div className="capture-photos__evidence-list">
+                              {([
+                                ["producer", "Producer / winery"],
+                                ["cuvee", "Cuvée"],
+                                ["appellation", "Appellation"],
+                                ["area", "Area / region"],
+                                ["vintage", "Vintage"],
+                                ["color", "Color"],
+                                ["format_ml", "Bottle format (ml)"],
+                              ] as const).map(([field, label]) => fieldEvidence(label, wineSuggestions[session.sessionId][field], t))}
+                            </div>
+                          </details>
                         </>
                       )}
                     </div>
                   ) : null}
+                  <details className="capture-photos__transcript">
+                    <summary>{t("View exact label text")}</summary>
+                    <p>{t("Recognition engine")}: {recognitionEngineLabel(ocrResults[session.sessionId].engine, t)}</p>
+                    {ocrResults[session.sessionId].pages.map((page, index) => (
+                      <div key={`${session.sessionId}-${index}`}>
+                        <strong>{t("Photo {number}", { number: String(index + 1) })}</strong>
+                        <pre>{page.text}</pre>
+                      </div>
+                    ))}
+                  </details>
                 </section>
               ) : null}
             </article>

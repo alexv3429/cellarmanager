@@ -90,6 +90,7 @@ test("classifies winery, cuvée, appellation and vintage from the saved transcri
   assert.equal(modelCalls[0].input.temperature, 0);
   assert.equal(modelCalls[0].input.max_tokens, 512);
   assert.equal(modelCalls[0].input.response_format.type, "json_schema");
+  assert.match(modelCalls[0].input.messages[0].content, /Pouilly-Fuissé.*En France/u);
   assert.deepEqual(modelCalls[0].input.messages[1], {
     role: "user",
     content: JSON.stringify({ label_ocr_lines_by_photo: recognizedPages }),

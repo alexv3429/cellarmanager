@@ -18,19 +18,17 @@ vi.mock("../data/capturePhotos", () => ({
 import { CapturePhotosPanel } from "./CapturePhotosPanel"
 
 describe("capture photo panel", () => {
-  it("offers clear camera and existing-photo actions without exposing filenames", () => {
+  it("asks for photo consent before offering camera or upload actions", () => {
     const html = renderToStaticMarkup(
       <CapturePhotosPanel householdId="household-1" isOnline userId="owner-1" wines={[]} onUseReviewedDetails={() => undefined} />,
     )
 
-    expect(html).toContain("Capture label photos")
-    expect(html).toContain('accept="image/jpeg,image/png,.jpg,.jpeg,.png"')
-    expect(html).toContain('capture="environment"')
-    expect(html).toContain("Choose existing photos")
-    expect(html).toContain("photo library or Files")
-    expect(html).toContain('multiple=""')
-    expect(html).toContain("prepared photos are sent to Cloudflare Workers AI")
-    expect(html).toContain("does not use submissions to train or improve models")
+    expect(html).toContain("Add wine from a label")
+    expect(html).toContain("Photo privacy details")
+    expect(html).toContain("Before using a label photo")
+    expect(html).toContain("one bottle at a time")
+    expect(html).toContain("external AI service")
+    expect(html).not.toContain('type="file"')
     expect(html).not.toContain("<img")
     expect(html).not.toContain("private-cellar-photo")
   })
@@ -40,7 +38,7 @@ describe("capture photo panel", () => {
       <CapturePhotosPanel householdId="household-1" isOnline={false} userId="owner-1" wines={[]} onUseReviewedDetails={() => undefined} />,
     )
 
-    expect(html.match(/disabled=""/g)?.length).toBeGreaterThanOrEqual(2)
+    expect(html.match(/disabled=""/g)?.length).toBeGreaterThanOrEqual(1)
     expect(html).toContain("Photos are not queued offline")
   })
 })

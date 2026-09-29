@@ -426,6 +426,7 @@ and [ADR 005](adr/005-capture-assisted-wine-entry.md).
 | 0.6.7 | Safe image preparation, metadata removal, and private preview — complete |
 | 0.6.8 | Explicitly opt-in Cloudflare Workers AI label transcription; keep only private short-lived text and delete photos after saving — complete |
 | 0.6.9–0.6.11 | Evidence-backed field extraction, editable Owner review, and local household-catalogue suggestions — complete |
+| 0.6.11 UX follow-up | Owner-facing label review with catalogue matches and editable details first; OCR transcript, evidence, and confidence remain available on demand — complete |
 | 0.6.12 | Photo-to-inventory ADD flow |
 | 0.6.13 | Batch-entry workflow |
 | 0.6.14 | Location QR codes |
@@ -455,8 +456,9 @@ bytes to a private derivative, and removes the upload through the Storage API
 before making the derivative available for authenticated preview. It does not
 repeat pixel decoding/re-encoding, which exceeded the Workers Free CPU limit;
 interrupted requests can be retried after a five-minute processing lease.
-Step 0.6.8 runs transcription only after the Owner chooses the clearly labeled
-Cloudflare AI action. The Worker reads only the sanitized private derivative
+Step 0.6.8 runs transcription only after the Owner has acknowledged the
+external AI transfer once per account and device and selected a bottle photo
+under the photo-reading path. The Worker reads only the sanitized private derivative
 through the owner-authorized
 capture boundary, sends no household or wine identifiers, limits model output,
 and does not retry automatically. On success, text is saved in the private

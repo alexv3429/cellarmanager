@@ -116,8 +116,9 @@ retries use only the promoted JPEG, never an unvalidated original.
 
 The 0.6.5 design approved no OCR/image provider. The later, scoped Cloudflare
 Workers AI approval in [ADR 007](adr/007-opt-in-cloudflare-label-ocr.md) is the
-only current exception. The user must be told when a photo leaves CellarManager
-and explicitly choose to proceed. Send only sanitized image bytes and a fixed
+only current exception. The Owner acknowledges the external transfer once per
+account and device, then explicitly chooses each bottle's photo under the
+photo-reading path. Send only sanitized image bytes and a fixed
 transcription prompt—never household/account/wine IDs, email, object keys,
 signed URLs, EXIF, or unnecessary device metadata. If the selected provider is
 unavailable, preserve manual entry as the fallback. Do not log source bytes,

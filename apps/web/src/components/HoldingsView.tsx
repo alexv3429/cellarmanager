@@ -369,6 +369,7 @@ export function HoldingsView({
   const [addLocationId, setAddLocationId] = useState("")
   const [adding, setAdding] = useState(false)
   const [capturePrefillMessage, setCapturePrefillMessage] = useState("")
+  const [addEntryMode, setAddEntryMode] = useState<"choose" | "photo" | "manual">("choose")
 
   const applyCapturePrefill = (details: {
     producer: string
@@ -386,6 +387,7 @@ export function HoldingsView({
     setAddAppellation(details.appellation)
     setAddArea(details.area)
     if (details.formatMl !== null) setAddFormatMl(String(details.formatMl))
+    setAddEntryMode("manual")
     setCapturePrefillMessage(t("Reviewed wine details were copied into the bottle form. Nothing has been added yet."))
     window.setTimeout(() => {
       document.querySelector<HTMLInputElement>(".add-bottles-form input")?.focus({ preventScroll: true })
@@ -876,7 +878,25 @@ export function HoldingsView({
           </span>
         </summary>
 
-        {canManageInventory ? (
+        {addEntryMode === "choose" ? (
+          <div className="inventory-add-methods" aria-label={t("Choose how to add bottles")}>
+            <h3>{t("Choose how to add bottles")}</h3>
+            {canManageInventory ? (
+              <button type="button" onClick={() => setAddEntryMode("photo")}>
+                {t("Use a label photo")}
+              </button>
+            ) : null}
+            <button type="button" className="button-secondary" onClick={() => setAddEntryMode("manual")}>
+              {t("Enter details manually")}
+            </button>
+          </div>
+        ) : (
+          <button type="button" className="button-secondary inventory-add-method-back" onClick={() => setAddEntryMode("choose")}>
+            {t("Change entry method")}
+          </button>
+        )}
+
+        {canManageInventory && addEntryMode === "photo" ? (
           <CapturePhotosPanel
             householdId={householdId}
             isOnline={isOnline}
@@ -886,9 +906,9 @@ export function HoldingsView({
           />
         ) : null}
 
-        {capturePrefillMessage ? <Notice role="status" tone="success">{capturePrefillMessage}</Notice> : null}
+        {addEntryMode === "manual" && capturePrefillMessage ? <Notice role="status" tone="success">{capturePrefillMessage}</Notice> : null}
 
-      <form className="add-bottles-form" onSubmit={(event) => void handleAdd(event)}>
+      {addEntryMode === "manual" ? <form className="add-bottles-form" onSubmit={(event) => void handleAdd(event)}>
         <label>{t("Producer / winery")}<input
             list="add-producer-suggestions"
             onChange={(event) =>
@@ -1076,7 +1096,7 @@ export function HoldingsView({
         >
           {adding ? t("Queuing…") : t("Add bottles")}
         </button>
-      </form>
+      </form> : null}
       </details>
 
       <h2>{t("Holdings")}</h2>

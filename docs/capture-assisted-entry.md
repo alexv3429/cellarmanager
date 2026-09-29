@@ -121,6 +121,7 @@ for 0.6.15; this step defines their place in the architecture only.
 | 0.6.7 | Safe orientation, resize, metadata removal, trusted re-encoding, and private preview — complete |
 | 0.6.8 | Explicitly opt-in Cloudflare Workers AI transcription, private short-lived text draft, and photo deletion after the text is saved — complete |
 | 0.6.9–0.6.11 | Structured field suggestions with OCR evidence, Owner correction, and conservative active-household matching — complete; see [ADR 008](adr/008-capture-label-field-review.md) |
+| 0.6.11 UX follow-up | Plain-language label review with catalogue matches and editable details first; OCR transcript, evidence, and confidence remain available on demand — complete |
 | 0.6.12 | Explicit wine selection/creation and normal ADD; capture review currently prefills the existing Add bottles form, which still requires its normal submit action |
 | 0.6.15 | Barcode scan and approved identifier lookup, converging on the same candidate review |
 
@@ -140,8 +141,8 @@ decode/re-encode to stay within Workers Free CPU limits. Interrupted processing
 can be retried after its five-minute lease expires. Owners may preview or delete
 the sanitized photo; other household members cannot read it. Step 0.6.8 sends
 only the sanitized JPEG derivative to Cloudflare Workers AI after the Owner
-explicitly selects the clearly labeled
-recognition action. The Worker retrieves the image through the existing
+has acknowledged the transfer once on this device and explicitly selected
+photos of one bottle for reading. The Worker retrieves the image through the existing
 owner-authorized capture boundary, sends no household or wine identifiers, and
 uses no automatic retries. Cloudflare's documented data-use policy says it
 does not use Workers AI customer content to train models or improve services.
@@ -151,20 +152,51 @@ the photo remains private and can be retried or deleted; unread photos and
 recognized text expire within 24 hours. OCR produces text only: it does not map
 wine fields, create a wine, add stock, or change inventory.
 
-Steps 0.6.9–0.6.11 add a second, separately triggered text-only inference. The
-Owner asks Cloudflare Workers AI to classify saved lines into tentative
+Steps 0.6.9–0.6.11 add text-only inference after a successful reading when
+the exact OCR text does not identify a conservative active-household catalogue
+match. The Owner may request it manually when a proposed match is wrong.
+Cloudflare Workers AI classifies saved lines into tentative
 producer, cuvée, appellation, area, color, format, and vintage fields. Each
 suggestion includes quoted OCR evidence and qualitative confidence; unsupported
 values are discarded or left unknown. This is not deterministic string
 parsing: the model proposes the roles, and the Owner can edit them. At most one
 private suggestion is kept per capture for the same 24-hour lifetime. The
-interface compares the reviewed producer/cuvée against the active household's
-local wine catalogue, excludes explicit identity conflicts, and presents up
+editable appellation spelling is adjusted only when it has one exact normalized
+or single-character near-match in the active household catalogue or the
+project's reviewed appellation-place reference. The UI shows the original OCR
+spelling and the source beside the adjustment; ambiguous or unknown names
+remain unchanged for Owner review. If one catalogue wine also matches the
+inferred producer, visible vintage and printed cuvée across the tentative
+fields, the interface offers that wine; a near-matching saved appellation also
+allows it to correct the OCR spelling. It presents the stored wine's colour,
+region and other details in a visually distinct catalogue card. Separately,
+the editable review matches producer and cuvée across catalogue vintages,
+using a clear appellation (including a one-character OCR correction) to reject
+contradictions. It inherits colour, appellation and region only when all
+matching vintages agree. The photographed vintage is never copied from an older
+catalogue wine. Exact matches are marked green, inherited or corrected values
+amber, genuine conflicts red, and missing values neutral. Supporting OCR
+evidence is cleared for replaced fields; the Owner can still edit everything.
+The reviewed appellation reference can correct spelling but does not infer
+colour or region on its own. Bottle format is not copied when the label does
+not show it, since another size may be in hand.
+The interface first compares recognized text against the active household's
+local catalogue, then compares reviewed producer/cuvée if inference was needed.
+It excludes explicit identity conflicts and presents up
 to three possibilities without choosing one. An explicit action copies either
 the reviewed fields or a chosen catalogue wine into the existing Add bottles
 form. It does not create a wine or bottle; the Owner still reviews and submits
 through the normal inventory flow. See
 [ADR 008](adr/008-capture-label-field-review.md).
+
+The 0.6.11 UX follow-up separates photo and manual entry, uses a one-time
+device/account photo acknowledgement, and leads with a plain-language review of possible
+catalogue matches and editable wine details. The exact OCR transcript, field
+evidence, confidence, and photo-handling explanation remain accessible in
+expandable sections instead of dominating the main path. Selecting a photo
+starts one reading sequence without extra confirmation steps; the Owner still
+chooses whether to prefill the normal
+Add bottles form; nothing is written to inventory before its normal submit.
 
 ## Acceptance for 0.6.4
 
