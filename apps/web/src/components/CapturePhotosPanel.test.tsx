@@ -23,7 +23,8 @@ describe("capture photo panel", () => {
       <CapturePhotosPanel householdId="household-1" isOnline userId="owner-1" wines={[]} onUseReviewedDetails={() => undefined} />,
     )
 
-    expect(html).toContain("Capture label photos")
+    expect(html).toContain("Add wine from a label")
+    expect(html).toContain("How your photos are handled")
     expect(html).toContain('accept="image/jpeg,image/png,.jpg,.jpeg,.png"')
     expect(html).toContain('capture="environment"')
     expect(html).toContain("Choose existing photos")

@@ -121,7 +121,7 @@ for 0.6.15; this step defines their place in the architecture only.
 | 0.6.7 | Safe orientation, resize, metadata removal, trusted re-encoding, and private preview — complete |
 | 0.6.8 | Explicitly opt-in Cloudflare Workers AI transcription, private short-lived text draft, and photo deletion after the text is saved — complete |
 | 0.6.9–0.6.11 | Structured field suggestions with OCR evidence, Owner correction, and conservative active-household matching — complete; see [ADR 008](adr/008-capture-label-field-review.md) |
-| 0.6.11 UX follow-up | Polish the label-review UI, which currently feels too technical/debug-oriented; make the main path plain-language and user-facing while preserving access to OCR evidence and confidence — planned |
+| 0.6.11 UX follow-up | Plain-language label review with catalogue matches and editable details first; OCR transcript, evidence, and confidence remain available on demand — complete |
 | 0.6.12 | Explicit wine selection/creation and normal ADD; capture review currently prefills the existing Add bottles form, which still requires its normal submit action |
 | 0.6.15 | Barcode scan and approved identifier lookup, converging on the same candidate review |
 
@@ -167,13 +167,12 @@ form. It does not create a wine or bottle; the Owner still reviews and submits
 through the normal inventory flow. See
 [ADR 008](adr/008-capture-label-field-review.md).
 
-Before expanding the photo-to-inventory flow, a 0.6.11 UX follow-up is planned
-for the label-review screen. The current experience works but feels technical
-and debug-oriented. The polish should make the steps and choices clearer to an
-Owner, keep supporting OCR evidence easy to inspect, and move confidence or
-processing details out of the primary path where they are not needed. It must
-preserve explicit review, privacy disclosures, and the existing no-write-until-
-ADD boundary.
+The 0.6.11 UX follow-up leads with a plain-language review of possible
+catalogue matches and editable wine details. The exact OCR transcript, field
+evidence, confidence, and photo-handling explanation remain accessible in
+expandable sections instead of dominating the main path. The Owner still
+explicitly requests each AI step and chooses whether to prefill the normal
+Add bottles form; nothing is written to inventory before its normal submit.
 
 ## Acceptance for 0.6.4
 
