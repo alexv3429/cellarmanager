@@ -48,6 +48,9 @@ vi.mock("./CapturePhotosPanel", () => ({ CapturePhotosPanel: ({ onUseReviewedDet
     area: "Beaujolais", formatMl: 750,
   })}>Choose next label wine</button> : null}
 </div> }))
+vi.mock("./LocationQrScanner", () => ({ LocationQrScanner: ({ onScanned }: { onScanned: (locationId: string) => void }) => (
+  <button type="button" onClick={() => onScanned("location-2")}>Scan location 2</button>
+) }))
 
 let root: Root
 let container: HTMLDivElement
@@ -75,6 +78,25 @@ async function click(label: string) {
 }
 
 describe("add-bottles entry mode", () => {
+  it("selects an active scanned location without queuing stock", async () => {
+    queryData.locations = [
+      { id: "location-1", household_id: "household-1", cellar_id: "cellar-1", cellar_name: "Home", code: "A1" },
+      { id: "location-2", household_id: "household-1", cellar_id: "cellar-2", cellar_name: "Service", code: "B2" },
+    ]
+    await act(async () => root.render(
+      <HoldingsView userId="owner-1" householdId="household-1" isOnline canManageInventory
+        deviceRegistration={{ deviceIdByHousehold: { "household-1": "device-1" } } as RegisteredDevicesState}
+        onOpenWine={() => undefined} />,
+    ))
+    await click("Scan a location QR code")
+    await click("Scan location 2")
+    expect(container.textContent).toContain("Location selected: Service / B2")
+    expect([...container.querySelectorAll<HTMLSelectElement>(".inventory-filters select")].at(-1)?.value).toBe("location-2")
+    await click("Enter details manually")
+    expect([...container.querySelectorAll<HTMLSelectElement>(".add-bottles-form select")].at(-1)?.value).toBe("location-2")
+    expect(queueAdd).not.toHaveBeenCalled()
+  })
+
   it("keeps photo and manual entry separate until the Owner chooses one", async () => {
     await act(async () => root.render(
       <HoldingsView

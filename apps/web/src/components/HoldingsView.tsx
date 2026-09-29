@@ -50,6 +50,7 @@ import {
 } from "../data/powersync/inventoryOperations"
 import { Notice } from "./Notice"
 import { CapturePhotosPanel } from "./CapturePhotosPanel"
+import { LocationQrScanner } from "./LocationQrScanner"
 import { useLanguage } from "../i18n/useLanguage"
 import { formatLocalizedNumber } from "../i18n/formatting"
 
@@ -268,11 +269,19 @@ export function HoldingsView({
     useState("ALL")
   const [locationFilter, setLocationFilter] =
     useState("ALL")
+  const [addLocationId, setAddLocationId] = useState("")
+  const [scanningLocation, setScanningLocation] = useState(false)
+  const [scanningMoveHoldingId, setScanningMoveHoldingId] = useState<string | null>(null)
+  const [scannedLocationLabel, setScannedLocationLabel] = useState("")
 
   useEffect(() => {
     setInventorySearch("")
     setCellarFilter("ALL")
     setLocationFilter("ALL")
+    setAddLocationId("")
+    setScannedLocationLabel("")
+    setScanningLocation(false)
+    setScanningMoveHoldingId(null)
   }, [householdId])
 
   const cellars = useMemo(() => {
@@ -366,7 +375,6 @@ export function HoldingsView({
   const [addArea, setAddArea] = useState("")
   const [addFormatMl, setAddFormatMl] = useState("750")
   const [addQuantity, setAddQuantity] = useState("1")
-  const [addLocationId, setAddLocationId] = useState("")
   const [adding, setAdding] = useState(false)
   const [capturePrefillMessage, setCapturePrefillMessage] = useState("")
   const [captureWineChoice, setCaptureWineChoice] = useState<{ kind: "existing"; wineId: string } | { kind: "new" } | null>(null)
@@ -556,6 +564,7 @@ export function HoldingsView({
     )
 
     setActiveHoldingAction(nextAction)
+    setScanningMoveHoldingId(null)
 
     if (nextAction) {
       setOperationMessage(null)
@@ -899,6 +908,35 @@ export function HoldingsView({
         <Notice role="alert" tone="error">
           {operationError}
         </Notice>
+      ) : null}
+
+      <div className="inventory-location-qr">
+        <button type="button" className="button-secondary" disabled={isLoading || locations.length === 0} onClick={() => setScanningLocation(true)}>
+          {t("Scan a location QR code")}
+        </button>
+        {scannedLocationLabel ? (
+          <Notice role="status" tone="success">
+            {t("Location selected: {location}. It is preselected for adding bottles; no stock has changed.", { location: scannedLocationLabel })}
+          </Notice>
+        ) : null}
+      </div>
+
+      {scanningLocation ? (
+        <LocationQrScanner
+          householdId={householdId}
+          locationIds={locations.map((location) => location.id)}
+          onClose={() => setScanningLocation(false)}
+          onScanned={(locationId) => {
+            const location = locations.find((item) => item.id === locationId)
+            if (!location) return
+            setInventorySearch("")
+            setCellarFilter(location.cellar_id)
+            setLocationFilter(location.id)
+            setAddLocationId(location.id)
+            setScannedLocationLabel(locationLabel(location))
+            setScanningLocation(false)
+          }}
+        />
       ) : null}
 
       <details className="inventory-add-panel">
@@ -1571,6 +1609,25 @@ export function HoldingsView({
                                 )}
                               </select>
                             </label>
+                          ) : null}
+
+                          {activeAction === "move" ? (
+                            <div className="inventory-action-form__qr">
+                              <button type="button" className="button-secondary" disabled={actionsBusy} onClick={() => setScanningMoveHoldingId(holding.id)}>
+                                {t("Scan destination QR")}
+                              </button>
+                              {scanningMoveHoldingId === holding.id ? (
+                                <LocationQrScanner
+                                  householdId={householdId}
+                                  locationIds={possibleDestinations.map((location) => location.id)}
+                                  onClose={() => setScanningMoveHoldingId(null)}
+                                  onScanned={(locationId) => {
+                                    setMoveDestinationId(locationId)
+                                    setScanningMoveHoldingId(null)
+                                  }}
+                                />
+                              ) : null}
+                            </div>
                           ) : null}
 
                           {activeAction === "remove" ? (

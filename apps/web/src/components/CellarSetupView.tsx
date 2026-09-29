@@ -33,6 +33,7 @@ import {
   type CellarSetupLocationSummary,
 } from "../data/cellarSetupView"
 import { Notice } from "./Notice"
+import { LocationQrLabel } from "./LocationQrLabel"
 import { useLanguage } from "../i18n/useLanguage"
 import { formatLocalizedNumber } from "../i18n/formatting"
 
@@ -132,6 +133,9 @@ function OwnerCellarSetupView({
     useState<string | null>(null)
 
   const [editingLocationId, setEditingLocationId] =
+    useState<string | null>(null)
+
+  const [qrLocationId, setQrLocationId] =
     useState<string | null>(null)
 
   const cellarSummaries = useMemo(
@@ -875,6 +879,13 @@ function OwnerCellarSetupView({
                                     ) : null}
 
                                     <button
+                                      onClick={() => setQrLocationId(
+                                        qrLocationId === location.id ? null : location.id,
+                                      )}
+                                      type="button"
+                                    >{t(qrLocationId === location.id ? "Hide QR label" : "Show QR label")}</button>
+
+                                    <button
                                       disabled={busyAction !== null}
                                       onClick={() => {
                                         setEditingLocationId(
@@ -916,6 +927,15 @@ function OwnerCellarSetupView({
                                     ) : null}
                                   </div>
                                 )}
+                                {qrLocationId === location.id ? (
+                                  <LocationQrLabel
+                                    householdId={householdId}
+                                    locationId={location.id}
+                                    cellarName={cellar.name}
+                                    locationCode={location.code}
+                                    onClose={() => setQrLocationId(null)}
+                                  />
+                                ) : null}
                               </li>
                             )
                           },

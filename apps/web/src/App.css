@@ -5442,6 +5442,7 @@
 
 .cellar-location-list > li {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   align-items: center;
   justify-content: space-between;
@@ -5450,6 +5451,101 @@
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--surface);
+}
+
+.location-qr-label {
+  box-sizing: border-box;
+  flex: 1 0 100%;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.location-qr-label__print {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 16px;
+  color: #111;
+  background: #fff;
+  text-align: center;
+}
+
+.location-qr-label__print img {
+  display: block;
+  width: min(100%, 280px);
+  aspect-ratio: 1;
+}
+
+.location-qr-label__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.inventory-location-qr {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  margin: 14px 0;
+}
+
+.location-qr-scanner {
+  display: grid;
+  gap: 12px;
+  max-width: 520px;
+  margin: 14px 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.location-qr-scanner__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.location-qr-scanner video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 8px;
+  background: #111;
+  object-fit: cover;
+}
+
+@media (max-width: 560px) {
+  .inventory-location-qr > button,
+  .location-qr-scanner__heading > button,
+  .location-qr-label__actions > button {
+    width: 100%;
+  }
+}
+
+@media print {
+  body:has(.location-qr-label) * {
+    visibility: hidden !important;
+  }
+
+  body:has(.location-qr-label) .location-qr-label__print,
+  body:has(.location-qr-label) .location-qr-label__print * {
+    visibility: visible !important;
+  }
+
+  .location-qr-label__print {
+    position: fixed;
+    top: 0;
+    left: 0;
+    box-shadow: none;
+  }
 }
 
 .cellar-location__summary {
