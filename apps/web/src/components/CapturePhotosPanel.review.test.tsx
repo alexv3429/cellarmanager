@@ -113,6 +113,16 @@ async function choosePhoto() {
 }
 
 describe("label review", () => {
+  it("hides labels already used in this batch while leaving the next photo picker available", async () => {
+    await act(async () => root.render(
+      <CapturePhotosPanel householdId="household-1" isOnline userId="owner-1" wines={[]}
+        completedSessionIds={["capture-1"]} onUseReviewedDetails={onUseReviewedDetails} />,
+    ))
+    await click("I understand — continue with photos")
+    expect(container.querySelector(".capture-photos__session")).toBeNull()
+    expect(container.querySelector('input[type="file"]')).not.toBeNull()
+  })
+
   it("remembers photo acknowledgement for one account on this device, not another account", async () => {
     await act(async () => root.render(
       <CapturePhotosPanel householdId="household-1" isOnline userId="owner-1" wines={[]} onUseReviewedDetails={onUseReviewedDetails} />,
@@ -179,6 +189,7 @@ describe("label review", () => {
 
     await click("Continue to add bottles")
     expect(onUseReviewedDetails).toHaveBeenCalledExactlyOnceWith({
+      captureSessionId: "capture-1",
       producer: "Jean-Marc Burgaud",
       cuvee: "Côte du Py",
       vintage: 2011,
@@ -264,6 +275,7 @@ describe("label review", () => {
     expect(container.querySelector<HTMLInputElement>('label input[value="Bourgogne"]')).not.toBeNull()
     await click("Continue to add bottles")
     expect(onUseReviewedDetails).toHaveBeenCalledExactlyOnceWith({
+      captureSessionId: "capture-1",
       producer: "Domaine Barraud", cuvee: "En France", appellation: "Pouilly-Fuissé",
       area: "Bourgogne", color: "white", vintage: 2019, formatMl: null,
     })
@@ -285,6 +297,7 @@ describe("label review", () => {
 
     await click("Continue with this wine")
     expect(onUseReviewedDetails).toHaveBeenCalledExactlyOnceWith({
+      captureSessionId: "capture-1",
       wineId: "wine-1",
       producer: "Jean-Marc Burgaud", cuvee: "Côte du Py", vintage: 2011,
       color: "red", appellation: "Morgon", area: "Beaujolais", formatMl: 750,

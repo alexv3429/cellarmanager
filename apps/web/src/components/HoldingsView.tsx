@@ -370,9 +370,13 @@ export function HoldingsView({
   const [adding, setAdding] = useState(false)
   const [capturePrefillMessage, setCapturePrefillMessage] = useState("")
   const [captureWineChoice, setCaptureWineChoice] = useState<{ kind: "existing"; wineId: string } | { kind: "new" } | null>(null)
+  const [activeCaptureSessionId, setActiveCaptureSessionId] = useState<string | null>(null)
+  const [completedCaptureSessionIds, setCompletedCaptureSessionIds] = useState<string[]>([])
+  const [batchQueuedCount, setBatchQueuedCount] = useState(0)
   const [addEntryMode, setAddEntryMode] = useState<"choose" | "photo" | "manual">("choose")
 
   const applyCapturePrefill = (details: {
+    captureSessionId: string
     wineId?: string
     producer: string
     cuvee: string
@@ -390,6 +394,7 @@ export function HoldingsView({
     setAddArea(details.area)
     setAddFormatMl(details.formatMl === null ? "" : String(details.formatMl))
     setAddEntryMode("manual")
+    setActiveCaptureSessionId(details.captureSessionId)
     setCaptureWineChoice(details.wineId ? { kind: "existing", wineId: details.wineId } : null)
     setCapturePrefillMessage(t("Reviewed wine details were copied into the bottle form. Nothing has been added yet."))
     window.setTimeout(() => {
@@ -689,6 +694,13 @@ export function HoldingsView({
       setAddQuantity("1")
       setCaptureWineChoice(null)
       setCapturePrefillMessage("")
+      if (captureChoiceRequired && activeCaptureSessionId) {
+        setCompletedCaptureSessionIds((current) => current.includes(activeCaptureSessionId)
+          ? current : [...current, activeCaptureSessionId])
+        setActiveCaptureSessionId(null)
+        setBatchQueuedCount((current) => current + 1)
+        setAddEntryMode("photo")
+      }
     } catch (caughtError: unknown) {
       setOperationError(
         caughtError instanceof Error
@@ -907,6 +919,7 @@ export function HoldingsView({
             ) : null}
             <button type="button" className="button-secondary" onClick={() => {
               setAddEntryMode("manual")
+              setActiveCaptureSessionId(null)
               setCapturePrefillMessage("")
               setCaptureWineChoice(null)
             }}>
@@ -916,6 +929,8 @@ export function HoldingsView({
         ) : (
           <button type="button" className="button-secondary inventory-add-method-back" onClick={() => {
             setAddEntryMode("choose")
+            setBatchQueuedCount(0)
+            setActiveCaptureSessionId(null)
             setCapturePrefillMessage("")
             setCaptureWineChoice(null)
           }}>
@@ -923,12 +938,23 @@ export function HoldingsView({
           </button>
         )}
 
+        {canManageInventory && addEntryMode === "photo" && batchQueuedCount > 0 ? (
+          <div className="inventory-batch-progress" role="status">
+            <p>{t("Additions queued in this batch: {count}. Photograph the next bottle, or finish for now.", { count: String(batchQueuedCount) })}</p>
+            <button type="button" className="button-secondary" onClick={() => {
+              setBatchQueuedCount(0)
+              setAddEntryMode("choose")
+            }}>{t("Finish for now")}</button>
+          </div>
+        ) : null}
+
         {canManageInventory && addEntryMode === "photo" ? (
           <CapturePhotosPanel
             householdId={householdId}
             isOnline={isOnline}
             userId={userId}
             wines={wines}
+            completedSessionIds={completedCaptureSessionIds}
             onUseReviewedDetails={applyCapturePrefill}
           />
         ) : null}

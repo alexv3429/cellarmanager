@@ -98,6 +98,8 @@ export const frenchTextRuntime: Readonly<Record<string, string>> = {
   "Complete the wine details above to choose an existing wine or create a new one.": "Complétez les informations du vin ci-dessus pour choisir un vin existant ou en créer un nouveau.",
   "Choose the wine above before adding stock.": "Choisissez le vin ci-dessus avant d’ajouter des bouteilles.",
   "Choose an existing wine or confirm a new one before adding bottles.": "Choisissez un vin existant ou confirmez la création d’un nouveau vin avant d’ajouter des bouteilles.",
+  "Additions queued in this batch: {count}. Photograph the next bottle, or finish for now.": "Ajouts mis en attente dans ce lot : {count}. Photographiez la bouteille suivante ou terminez pour le moment.",
+  "Finish for now": "Terminer pour le moment",
   "Multiple catalog wines share this producer, cuvée, vintage, color, and format. Stock will not be added until the reference is selected explicitly.": "Plusieurs vins du catalogue ont le même producteur, la même cuvée, le même millésime, la même couleur et le même format. Choisissez explicitement le vin avant d’ajouter des bouteilles.",
   "Existing wine — stock will be increased.": "Vin existant — le stock sera augmenté.",
   "New wine — the catalog entry will be created when this operation synchronizes.": "Nouveau vin — la fiche du catalogue sera créée lors de la synchronisation de l’opération.",
