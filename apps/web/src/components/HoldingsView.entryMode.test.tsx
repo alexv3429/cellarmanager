@@ -5,20 +5,52 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { HoldingsView } from "./HoldingsView"
 import type { RegisteredDevicesState } from "../devices/useRegisteredDevices"
+import { queueAdd } from "../data/powersync/inventoryOperations"
+
+const queryData = vi.hoisted(() => ({
+  wines: [] as Array<Record<string, unknown>>,
+  locations: [] as Array<Record<string, unknown>>,
+}))
 
 vi.mock("@powersync/react", () => ({
-  useQuery: () => ({ data: [], error: null, isLoading: false, isFetching: false }),
+  useQuery: (sql: string) => ({
+    data: sql.includes("from wines") ? queryData.wines : sql.includes("from locations") ? queryData.locations : [],
+    error: null, isLoading: false, isFetching: false,
+  }),
 }))
 vi.mock("../data/powersync/inventoryOperations", () => ({
   queueAdd: vi.fn(), queueMove: vi.fn(), queueRemove: vi.fn(),
 }))
-vi.mock("./CapturePhotosPanel", () => ({ CapturePhotosPanel: () => <div data-testid="photo-panel">Photo panel</div> }))
+vi.mock("./CapturePhotosPanel", () => ({ CapturePhotosPanel: ({ onUseReviewedDetails }: {
+  onUseReviewedDetails: (details: {
+    wineId?: string; producer: string; cuvee: string; vintage: number | null; color: string;
+    appellation: string; area: string; formatMl: number | null;
+  }) => void
+}) => <div data-testid="photo-panel">
+  Photo panel
+  <button type="button" onClick={() => onUseReviewedDetails({
+    wineId: "saved-wine", producer: "Domaine Barraud", cuvee: "En France", vintage: 2019,
+    color: "white", appellation: "Pouilly-Fuissé", area: "Bourgogne", formatMl: 750,
+  })}>Choose saved label wine</button>
+  <button type="button" onClick={() => onUseReviewedDetails({
+    producer: "Domaine Barraud", cuvee: "En France", vintage: 2020,
+    color: "white", appellation: "Pouilly-Fuissé", area: "Bourgogne", formatMl: 750,
+  })}>Use reviewed label details</button>
+  <button type="button" onClick={() => onUseReviewedDetails({
+    producer: "Domaine Barraud", cuvee: "En France", vintage: 2020,
+    color: "white", appellation: "Pouilly-Fuissé", area: "Bourgogne", formatMl: null,
+  })}>Use label without format</button>
+</div> }))
 
 let root: Root
 let container: HTMLDivElement
 
 beforeEach(() => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true)
+  vi.mocked(queueAdd).mockReset()
+  vi.mocked(queueAdd).mockResolvedValue("operation-1")
+  queryData.wines = []
+  queryData.locations = []
   container = document.createElement("div")
   document.body.append(container)
   root = createRoot(container)
@@ -60,5 +92,90 @@ describe("add-bottles entry mode", () => {
     await click("Enter details manually")
     expect(panel.querySelector(".add-bottles-form")).not.toBeNull()
     expect(panel.querySelector('[data-testid="photo-panel"]')).toBeNull()
+  })
+
+  it("keeps the explicitly selected catalogue wine through the stock confirmation", async () => {
+    const saved = { id: "saved-wine", household_id: "household-1", producer: "Domaine Barraud",
+      cuvee: "En France", vintage: 2019, color: "white", appellation: "Pouilly-Fuissé",
+      area: "Bourgogne", format_ml: 750 }
+    queryData.wines = [saved, { ...saved, id: "duplicate-wine" }]
+    queryData.locations = [{ id: "location-1", household_id: "household-1", cellar_id: "cellar-1",
+      cellar_name: "Home", code: "A1" }]
+    await act(async () => root.render(
+      <HoldingsView userId="owner-1" householdId="household-1" isOnline canManageInventory
+        deviceRegistration={{ deviceIdByHousehold: { "household-1": "device-1" } } as RegisteredDevicesState}
+        onOpenWine={() => undefined} />,
+    ))
+    await click("Use a label photo")
+    await click("Choose saved label wine")
+    const form = container.querySelector<HTMLFormElement>(".add-bottles-form")!
+    expect(form.querySelectorAll('.capture-wine-target input[type="radio"]')).toHaveLength(2)
+    expect(form.querySelector<HTMLInputElement>('.capture-wine-target input[type="radio"]')?.checked).toBe(true)
+    await click("Add bottles")
+    expect(queueAdd).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
+      wineId: "saved-wine", householdId: "household-1", destinationLocationId: "location-1", quantity: 1,
+    }))
+    expect(vi.mocked(queueAdd).mock.calls[0][0]).not.toHaveProperty("wineProducer")
+  })
+
+  it("requires explicit new-wine confirmation after reviewed photo details", async () => {
+    queryData.locations = [{ id: "location-1", household_id: "household-1", cellar_id: "cellar-1",
+      cellar_name: "Home", code: "A1" }]
+    await act(async () => root.render(
+      <HoldingsView userId="owner-1" householdId="household-1" isOnline canManageInventory
+        deviceRegistration={{ deviceIdByHousehold: { "household-1": "device-1" } } as RegisteredDevicesState}
+        onOpenWine={() => undefined} />,
+    ))
+    await click("Use a label photo")
+    await click("Use reviewed label details")
+    const addButton = [...container.querySelectorAll("button")].find((item) => item.textContent?.trim() === "Add bottles")!
+    expect(addButton.disabled).toBe(true)
+    expect(queueAdd).not.toHaveBeenCalled()
+    const createChoice = container.querySelector<HTMLInputElement>('.capture-wine-target input[type="radio"]')!
+    await act(async () => createChoice.click())
+    expect(addButton.disabled).toBe(false)
+    await click("Add bottles")
+    expect(queueAdd).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
+      wineProducer: "Domaine Barraud", wineCuvee: "En France", wineVintage: 2020,
+      wineColor: "white", quantity: 1,
+    }))
+  })
+
+  it("does not silently select an exact catalogue wine from reviewed label fields", async () => {
+    queryData.wines = [{ id: "saved-wine", household_id: "household-1", producer: "Domaine Barraud",
+      cuvee: "En France", vintage: 2020, color: "white", appellation: "Pouilly-Fuissé",
+      area: "Bourgogne", format_ml: 750 }]
+    queryData.locations = [{ id: "location-1", household_id: "household-1", cellar_id: "cellar-1",
+      cellar_name: "Home", code: "A1" }]
+    await act(async () => root.render(
+      <HoldingsView userId="owner-1" householdId="household-1" isOnline canManageInventory
+        deviceRegistration={{ deviceIdByHousehold: { "household-1": "device-1" } } as RegisteredDevicesState}
+        onOpenWine={() => undefined} />,
+    ))
+    await click("Use a label photo")
+    await click("Use reviewed label details")
+    const addButton = [...container.querySelectorAll("button")].find((item) => item.textContent?.trim() === "Add bottles")!
+    const existingChoice = container.querySelector<HTMLInputElement>('.capture-wine-target input[type="radio"]')!
+    expect(existingChoice.checked).toBe(false)
+    expect(addButton.disabled).toBe(true)
+    await act(async () => existingChoice.click())
+    await click("Add bottles")
+    expect(queueAdd).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ wineId: "saved-wine" }))
+  })
+
+  it("does not reuse a previous bottle format when the label did not identify one", async () => {
+    queryData.locations = [{ id: "location-1", household_id: "household-1", cellar_id: "cellar-1",
+      cellar_name: "Home", code: "A1" }]
+    await act(async () => root.render(
+      <HoldingsView userId="owner-1" householdId="household-1" isOnline canManageInventory
+        deviceRegistration={{ deviceIdByHousehold: { "household-1": "device-1" } } as RegisteredDevicesState}
+        onOpenWine={() => undefined} />,
+    ))
+    await click("Use a label photo")
+    await click("Use label without format")
+    const format = [...container.querySelectorAll<HTMLInputElement>('.add-bottles-form input[type="number"]')]
+      .find((input) => input.closest("label")?.textContent?.includes("Bottle format"))!
+    expect(format.value).toBe("")
+    expect([...container.querySelectorAll("button")].find((item) => item.textContent?.trim() === "Add bottles")?.disabled).toBe(true)
   })
 })

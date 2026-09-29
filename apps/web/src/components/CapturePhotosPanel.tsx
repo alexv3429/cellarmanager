@@ -24,6 +24,7 @@ import { formatWineVolume, type WineCatalogEntry } from "../data/wineCatalog"
 import { useLanguage } from "../i18n/useLanguage"
 
 interface CaptureWinePrefill {
+  wineId?: string
   producer: string
   cuvee: string
   vintage: number | null
@@ -147,6 +148,7 @@ function prefillFromSuggestion(suggestion: CaptureWineSuggestion): CaptureWinePr
 
 function prefillFromWine(wine: WineCatalogEntry): CaptureWinePrefill {
   return {
+    wineId: wine.id,
     producer: wine.producer,
     cuvee: wine.cuvee,
     vintage: wine.vintage,

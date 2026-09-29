@@ -369,9 +369,11 @@ export function HoldingsView({
   const [addLocationId, setAddLocationId] = useState("")
   const [adding, setAdding] = useState(false)
   const [capturePrefillMessage, setCapturePrefillMessage] = useState("")
+  const [captureWineChoice, setCaptureWineChoice] = useState<{ kind: "existing"; wineId: string } | { kind: "new" } | null>(null)
   const [addEntryMode, setAddEntryMode] = useState<"choose" | "photo" | "manual">("choose")
 
   const applyCapturePrefill = (details: {
+    wineId?: string
     producer: string
     cuvee: string
     vintage: number | null
@@ -386,12 +388,13 @@ export function HoldingsView({
     setAddColor(details.color)
     setAddAppellation(details.appellation)
     setAddArea(details.area)
-    if (details.formatMl !== null) setAddFormatMl(String(details.formatMl))
+    setAddFormatMl(details.formatMl === null ? "" : String(details.formatMl))
     setAddEntryMode("manual")
+    setCaptureWineChoice(details.wineId ? { kind: "existing", wineId: details.wineId } : null)
     setCapturePrefillMessage(t("Reviewed wine details were copied into the bottle form. Nothing has been added yet."))
     window.setTimeout(() => {
       document.querySelector<HTMLInputElement>(".add-bottles-form input")?.focus({ preventScroll: true })
-      document.querySelector(".add-bottles-form")?.scrollIntoView({ behavior: "smooth", block: "nearest" })
+      document.querySelector(".add-bottles-form")?.scrollIntoView?.({ behavior: "smooth", block: "nearest" })
     }, 0)
   }
 
@@ -463,8 +466,17 @@ export function HoldingsView({
         )
       : undefined
 
+  const chosenCaptureWine = captureWineChoice?.kind === "existing"
+    ? matchingWineCandidates.find((wine) => wine.id === captureWineChoice.wineId)
+    : undefined
+  const addWineIdentityReady = cleanedAddProducer.length > 0 && cleanedAddCuvee.length > 0
+    && addColor.length > 0 && addVintageError === null && addFormatError === null
+  const captureCreatesWine = captureWineChoice?.kind === "new" && addWineIdentityReady
+    && matchingWineCandidates.length === 0
+  const captureChoiceRequired = capturePrefillMessage.length > 0
+  const captureChoiceUnresolved = captureChoiceRequired && !chosenCaptureWine && !captureCreatesWine
   const ambiguousWineIdentity =
-    matchingWineCandidates.length > 1
+    matchingWineCandidates.length > 1 && !chosenCaptureWine
 
   const producerSuggestions = getProducerSuggestions(
     wines,
@@ -586,6 +598,11 @@ export function HoldingsView({
       return
     }
 
+    if (captureChoiceUnresolved) {
+      setOperationError(t("Choose an existing wine or confirm a new one before adding bottles."))
+      return
+    }
+
     if (ambiguousWineIdentity) {
       setOperationError(
         t("Multiple catalog wines share this identity. Select the existing reference explicitly before adding stock."),
@@ -617,7 +634,7 @@ export function HoldingsView({
       return
     }
 
-    const existingWine = findExactWine(
+    const existingWine = captureChoiceRequired ? chosenCaptureWine : findExactWine(
       wines,
       selectedAddLocation.household_id,
       cleanedAddProducer,
@@ -670,6 +687,8 @@ export function HoldingsView({
       setAddArea("")
       setAddFormatMl("750")
       setAddQuantity("1")
+      setCaptureWineChoice(null)
+      setCapturePrefillMessage("")
     } catch (caughtError: unknown) {
       setOperationError(
         caughtError instanceof Error
@@ -886,12 +905,20 @@ export function HoldingsView({
                 {t("Use a label photo")}
               </button>
             ) : null}
-            <button type="button" className="button-secondary" onClick={() => setAddEntryMode("manual")}>
+            <button type="button" className="button-secondary" onClick={() => {
+              setAddEntryMode("manual")
+              setCapturePrefillMessage("")
+              setCaptureWineChoice(null)
+            }}>
               {t("Enter details manually")}
             </button>
           </div>
         ) : (
-          <button type="button" className="button-secondary inventory-add-method-back" onClick={() => setAddEntryMode("choose")}>
+          <button type="button" className="button-secondary inventory-add-method-back" onClick={() => {
+            setAddEntryMode("choose")
+            setCapturePrefillMessage("")
+            setCaptureWineChoice(null)
+          }}>
             {t("Change entry method")}
           </button>
         )}
@@ -1032,6 +1059,43 @@ export function HoldingsView({
           <option value="1500">{t("150 cl / magnum")}</option>
         </datalist>
 
+        {captureChoiceRequired ? (
+          <fieldset className="capture-wine-target">
+            <legend>{t("Choose the wine for these bottles")}</legend>
+            {matchingWineCandidates.length > 0 ? (
+              <>
+                <p>{t("Choose the exact wine already in your catalogue. Its saved details will not be changed by adding stock.")}</p>
+                {matchingWineCandidates.map((wine) => (
+                  <label className="capture-wine-target__choice" key={wine.id}>
+                    <input
+                      type="radio"
+                      name="capture-wine-target"
+                      checked={chosenCaptureWine?.id === wine.id}
+                      onChange={() => setCaptureWineChoice({ kind: "existing", wineId: wine.id })}
+                    />
+                    <span>
+                      <strong>{wine.producer} — {wine.cuvee} · {wine.vintage ?? t("NV")} · {formatWineVolume(wine.format_ml)}</strong>
+                      <small>{[wine.appellation, wine.area].filter(Boolean).join(" · ")}</small>
+                    </span>
+                  </label>
+                ))}
+              </>
+            ) : addWineIdentityReady ? (
+              <label className="capture-wine-target__choice">
+                <input
+                  type="radio"
+                  name="capture-wine-target"
+                  checked={captureCreatesWine}
+                  onChange={() => setCaptureWineChoice({ kind: "new" })}
+                />
+                <span><strong>{t("Create a new catalogue wine")}</strong><small>{t("The new wine is created only when the add operation synchronizes.")}</small></span>
+              </label>
+            ) : (
+              <p>{t("Complete the wine details above to choose an existing wine or create a new one.")}</p>
+            )}
+          </fieldset>
+        ) : null}
+
         <label>{t("Quantity")}<input
             min="1"
             onChange={(event) =>
@@ -1072,11 +1136,13 @@ export function HoldingsView({
         addVintageError === null &&
         addFormatError === null ? (
           <p>
-            {ambiguousWineIdentity
-              ? "Multiple catalog wines share this producer, cuvée, vintage, color, and format. Stock will not be added until the reference is selected explicitly."
-              : matchingWine
-                ? "Existing wine — stock will be increased."
-                : "New wine — the catalog entry will be created when this operation synchronizes."}
+            {captureChoiceRequired && !chosenCaptureWine && !captureCreatesWine
+              ? t("Choose the wine above before adding stock.")
+              : ambiguousWineIdentity
+              ? t("Multiple catalog wines share this producer, cuvée, vintage, color, and format. Stock will not be added until the reference is selected explicitly.")
+              : chosenCaptureWine || matchingWine
+                ? t("Existing wine — stock will be increased.")
+                : t("New wine — the catalog entry will be created when this operation synchronizes.")}
           </p>
         ) : null}
 
@@ -1086,7 +1152,11 @@ export function HoldingsView({
             !selectedAddLocation ||
             addVintageError !== null ||
             addFormatError !== null ||
+            !addWineIdentityReady ||
             addColor.length === 0 ||
+            isLoading ||
+            Boolean(error) ||
+            captureChoiceUnresolved ||
             ambiguousWineIdentity ||
             !deviceRegistration.deviceIdByHousehold[
               selectedAddHouseholdId

@@ -122,7 +122,7 @@ for 0.6.15; this step defines their place in the architecture only.
 | 0.6.8 | Explicitly opt-in Cloudflare Workers AI transcription, private short-lived text draft, and photo deletion after the text is saved — complete |
 | 0.6.9–0.6.11 | Structured field suggestions with OCR evidence, Owner correction, and conservative active-household matching — complete; see [ADR 008](adr/008-capture-label-field-review.md) |
 | 0.6.11 UX follow-up | Plain-language label review with catalogue matches and editable details first; OCR transcript, evidence, and confidence remain available on demand — complete |
-| 0.6.12 | Explicit wine selection/creation and normal ADD; capture review currently prefills the existing Add bottles form, which still requires its normal submit action |
+| 0.6.12 | Explicit wine selection/creation and normal ADD — complete; capture review carries a selected catalogue wine ID or requires confirmation of a new wine before the existing Add bottles form queues stock |
 | 0.6.15 | Barcode scan and approved identifier lookup, converging on the same candidate review |
 
 This order deliberately establishes storage/privacy controls before upload and
@@ -197,6 +197,15 @@ expandable sections instead of dominating the main path. Selecting a photo
 starts one reading sequence without extra confirmation steps; the Owner still
 chooses whether to prefill the normal
 Add bottles form; nothing is written to inventory before its normal submit.
+
+Step 0.6.12 keeps a catalogue wine selected during label review bound to its
+ID through the stock form. If reviewed label details match a saved wine but no
+wine was explicitly selected, the Owner chooses that wine in the form. If no
+exact household wine matches the reviewed identity, the Owner confirms new-
+wine creation. Ambiguous duplicate catalogue entries can be resolved by an
+explicit selection. The normal ADD still asks for quantity and location and
+queues either the chosen wine ID or a new-wine operation; the photo and OCR
+never queue stock themselves.
 
 ## Acceptance for 0.6.4
 

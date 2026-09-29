@@ -427,7 +427,7 @@ and [ADR 005](adr/005-capture-assisted-wine-entry.md).
 | 0.6.8 | Explicitly opt-in Cloudflare Workers AI label transcription; keep only private short-lived text and delete photos after saving — complete |
 | 0.6.9–0.6.11 | Evidence-backed field extraction, editable Owner review, and local household-catalogue suggestions — complete |
 | 0.6.11 UX follow-up | Owner-facing label review with catalogue matches and editable details first; OCR transcript, evidence, and confidence remain available on demand — complete |
-| 0.6.12 | Photo-to-inventory ADD flow |
+| 0.6.12 | Photo-to-inventory ADD with explicit existing-wine selection or new-wine confirmation — complete |
 | 0.6.13 | Batch-entry workflow |
 | 0.6.14 | Location QR codes |
 | 0.6.15 | Wine barcode identifiers, scanning, and provider lookup |
