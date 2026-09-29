@@ -456,8 +456,9 @@ bytes to a private derivative, and removes the upload through the Storage API
 before making the derivative available for authenticated preview. It does not
 repeat pixel decoding/re-encoding, which exceeded the Workers Free CPU limit;
 interrupted requests can be retried after a five-minute processing lease.
-Step 0.6.8 runs transcription only after the Owner chooses the clearly labeled
-Cloudflare AI action. The Worker reads only the sanitized private derivative
+Step 0.6.8 runs transcription only after the Owner has acknowledged the
+external AI transfer once per account and device and selected a bottle photo
+under the photo-reading path. The Worker reads only the sanitized private derivative
 through the owner-authorized
 capture boundary, sends no household or wine identifiers, limits model output,
 and does not retry automatically. On success, text is saved in the private

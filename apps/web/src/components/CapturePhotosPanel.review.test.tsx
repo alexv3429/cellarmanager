@@ -7,10 +7,12 @@ import { CapturePhotosPanel } from "./CapturePhotosPanel"
 import {
   listCaptureOcrResult,
   listCapturePhotoSessions,
+  recognizeCapturePhotoSession,
   suggestCaptureWineCandidate,
+  uploadCapturePhotos,
   type CaptureWineSuggestion,
 } from "../data/capturePhotos"
-import { findCaptureWineMatchCandidates } from "../data/captureWineMatching"
+import { findCaptureWineMatchCandidates, findCaptureWineMatchesFromTranscript } from "../data/captureWineMatching"
 
 vi.mock("../data/capturePhotos", () => ({
   CapturePhotoError: class CapturePhotoError extends Error {},
@@ -26,7 +28,10 @@ vi.mock("../data/capturePhotos", () => ({
   validateCapturePhotoFiles: vi.fn(() => null),
   uploadCapturePhotos: vi.fn(),
 }))
-vi.mock("../data/captureWineMatching", () => ({ findCaptureWineMatchCandidates: vi.fn(() => []) }))
+vi.mock("../data/captureWineMatching", () => ({
+  findCaptureWineMatchCandidates: vi.fn(() => []),
+  findCaptureWineMatchesFromTranscript: vi.fn(() => []),
+}))
 
 const textField = (value: string | null, evidence: string[] = []) => ({ value, evidence, confidence: "high" as const })
 const suggestion: CaptureWineSuggestion = {
@@ -45,6 +50,7 @@ let container: HTMLDivElement
 beforeEach(() => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true)
   vi.resetAllMocks()
+  window.localStorage.clear()
   vi.mocked(listCapturePhotoSessions).mockResolvedValue([{
     sessionId: "capture-1",
     state: "recognized",
@@ -59,6 +65,12 @@ beforeEach(() => {
   })
   vi.mocked(suggestCaptureWineCandidate).mockResolvedValue({ modelVersion: "test", suggestion })
   vi.mocked(findCaptureWineMatchCandidates).mockReturnValue([])
+  vi.mocked(findCaptureWineMatchesFromTranscript).mockReturnValue([])
+  vi.mocked(uploadCapturePhotos).mockResolvedValue({ sessionId: "capture-1", status: "processed" })
+  vi.mocked(recognizeCapturePhotoSession).mockResolvedValue({
+    state: "recognized", engine: "cloudflare",
+    pages: [{ text: "JEAN-MARC BURGAUD\nMORGON CÔTE DU PY\n2011", confidence: 0 }],
+  })
   container = document.createElement("div")
   document.body.append(container)
   root = createRoot(container)
@@ -74,6 +86,7 @@ async function renderReview() {
   await act(async () => root.render(
     <CapturePhotosPanel householdId="household-1" isOnline userId="owner-1" wines={[]} onUseReviewedDetails={onUseReviewedDetails} />,
   ))
+  await click("I understand — continue with photos")
   await click("Review label")
   await click("Suggest wine details")
 }
@@ -84,7 +97,66 @@ async function click(label: string) {
   await act(async () => button!.click())
 }
 
+async function choosePhoto() {
+  const input = container.querySelector<HTMLInputElement>('.capture-photos__picker input[type="file"]')!
+  expect(input).not.toBeNull()
+  const file = new File(["image"], "label.jpg", { type: "image/jpeg" })
+  Object.defineProperty(input, "files", { configurable: true, value: [file] })
+  await act(async () => input.dispatchEvent(new Event("change", { bubbles: true })))
+}
+
 describe("label review", () => {
+  it("remembers photo acknowledgement for one account on this device, not another account", async () => {
+    await act(async () => root.render(
+      <CapturePhotosPanel householdId="household-1" isOnline userId="owner-1" wines={[]} onUseReviewedDetails={onUseReviewedDetails} />,
+    ))
+    await click("I understand — continue with photos")
+    expect(window.localStorage.getItem("cellarmanager:photo-reading-consent:v1:owner-1")).toBe("accepted")
+    expect(container.querySelector('input[type="file"]')).not.toBeNull()
+
+    await act(async () => root.render(
+      <CapturePhotosPanel householdId="household-1" isOnline userId="owner-2" wines={[]} onUseReviewedDetails={onUseReviewedDetails} />,
+    ))
+    expect(container.querySelector('input[type="file"]')).toBeNull()
+    expect(container.textContent).toContain("Before using a label photo")
+  })
+
+  it("starts reading and suggesting after one photo choice, with no repeated confirmation", async () => {
+    await act(async () => root.render(
+      <CapturePhotosPanel householdId="household-1" isOnline userId="owner-1" wines={[]} onUseReviewedDetails={onUseReviewedDetails} />,
+    ))
+    expect(container.querySelector('input[type="file"]')).toBeNull()
+    await click("I understand — continue with photos")
+    expect(container.textContent).toContain("front and back labels of the same bottle")
+    expect(container.querySelector('input[capture="environment"]')).not.toBeNull()
+    expect(container.querySelector('input[multiple]')).not.toBeNull()
+
+    await choosePhoto()
+    expect(uploadCapturePhotos).toHaveBeenCalledTimes(1)
+    expect(recognizeCapturePhotoSession).toHaveBeenCalledExactlyOnceWith("capture-1")
+    expect(suggestCaptureWineCandidate).toHaveBeenCalledExactlyOnceWith("capture-1")
+    expect(container.textContent).toContain("Check the wine details")
+    expect(onUseReviewedDetails).not.toHaveBeenCalled()
+  })
+
+  it("offers a transcript match without paying for field inference", async () => {
+    vi.mocked(findCaptureWineMatchesFromTranscript).mockReturnValue([{
+      id: "barraud", household_id: "household-1", producer: "Domaine Barraud", cuvee: "En France",
+      appellation: "Pouilly-Fuissé", area: "Bourgogne", vintage: 2019, color: "white", format_ml: 750,
+    }])
+    await act(async () => root.render(
+      <CapturePhotosPanel householdId="household-1" isOnline userId="owner-1" wines={[]} onUseReviewedDetails={onUseReviewedDetails} />,
+    ))
+    await click("I understand — continue with photos")
+    await choosePhoto()
+    expect(suggestCaptureWineCandidate).not.toHaveBeenCalled()
+    expect(container.textContent).toContain("Domaine Barraud — En France")
+    await click("Continue with this wine")
+    expect(onUseReviewedDetails).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
+      producer: "Domaine Barraud", cuvee: "En France", appellation: "Pouilly-Fuissé", vintage: 2019,
+    }))
+  })
+
   it("shows editable suggestions first while keeping transcript and evidence available on demand", async () => {
     await renderReview()
     expect(container.textContent).toContain("Check the wine details")

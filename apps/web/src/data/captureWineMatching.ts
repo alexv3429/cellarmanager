@@ -22,6 +22,40 @@ function normalizedWords(value: string): string[] {
     .filter(Boolean)
 }
 
+function containsPrintedPhrase(transcript: string, phrase: string): boolean {
+  const words = normalizedWords(phrase)
+  return words.join(" ").length >= 5 && ` ${transcript} `.includes(` ${words.join(" ")} `)
+}
+
+/** Catalogue-first candidates use only text actually read on the label, never an inferred field role. */
+export function findCaptureWineMatchesFromTranscript(
+  pages: readonly { text: string }[],
+  wines: WineCatalogEntry[],
+  householdId: string,
+): WineCatalogEntry[] {
+  const transcript = normalizedWords(pages.map((page) => page.text).join(" ")).join(" ")
+  if (!transcript) return []
+  const years = new Set((transcript.match(/\b(?:18|19|20)\d{2}\b/gu) ?? []).map(Number))
+  return wines
+    .filter((wine) => wine.household_id === householdId && !wine.merged_into_wine_id)
+    .filter((wine) => containsPrintedPhrase(transcript, wine.producer)
+      && containsPrintedPhrase(transcript, wine.cuvee))
+    .filter((wine) => years.size === 0 || (years.size === 1 && wine.vintage === [...years][0]))
+    .map((wine) => ({
+      wine,
+      appellationOnLabel: wine.appellation ? containsPrintedPhrase(transcript, wine.appellation) : false,
+      vintageOnLabel: wine.vintage !== null && years.has(wine.vintage),
+    }))
+    .filter((match) => match.appellationOnLabel || match.vintageOnLabel)
+    .sort((left, right) => Number(right.appellationOnLabel) - Number(left.appellationOnLabel)
+      || Number(right.vintageOnLabel) - Number(left.vintageOnLabel)
+      || left.wine.producer.localeCompare(right.wine.producer)
+      || left.wine.cuvee.localeCompare(right.wine.cuvee)
+      || left.wine.id.localeCompare(right.wine.id))
+    .slice(0, 3)
+    .map(({ wine }) => wine)
+}
+
 function trigramSet(value: string): Set<string> {
   const compact = value.replaceAll(" ", "")
   if (compact.length <= 3) return new Set([compact])

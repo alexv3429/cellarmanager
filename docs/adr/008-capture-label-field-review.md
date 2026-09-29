@@ -1,6 +1,6 @@
 # ADR 008: evidence-backed wine-label field review
 
-- Status: Accepted — 2026-09-28
+- Status: Accepted — 2026-09-28; catalogue-first UX amendment — 2026-09-29
 - Implemented: Roadmap steps 0.6.9–0.6.11
 
 ## Context
@@ -14,11 +14,14 @@ or incorrect wine records.
 
 ## Decision
 
-- Add a separate, explicit Owner action that sends only the saved OCR text—not
-  the deleted image, account, household, session, or wine identifiers—to the
-  existing server-side Cloudflare Workers AI binding for structured field
-  suggestions. This is a separate external inference from photo transcription
-  and is disclosed in the UI at the point of action.
+- After the Owner's one-time photo-processing acknowledgement and explicit
+  choice of photos for one bottle, send only saved OCR text—not the deleted
+  image, account, household, session, or wine identifiers—to the existing
+  server-side Cloudflare Workers AI binding for structured field suggestions
+  when no conservative local catalogue match is found. This is a separate
+  external inference from photo transcription but part of that acknowledged
+  reading sequence. The Owner may request it manually if a displayed
+  catalogue match is not the right wine.
 - Ask for producer, cuvée/designation, appellation, area, color, format, and
   vintage as distinct fields. Each field is a hypothesis with qualitative
   confidence and exact OCR source-line evidence. Use unknown when unsupported;
@@ -32,7 +35,11 @@ or incorrect wine records.
 - Keep the saved suggestion in a private, owner-only table keyed to the
   existing capture session and subject to its 24-hour expiry. Make generation
   idempotent: duplicate requests return the first persisted suggestion.
-- Match only against the active household's local catalogue. Candidate
+- Before field inference, compare normalized OCR phrases against the active
+  household's local catalogue; require producer and cuvée text plus a matching
+  appellation or visible vintage. This avoids making a known wine invisible
+  when the model swaps a cuvée and appellation. Match only against the active
+  household's local catalogue. Candidate
   ranking is a convenience, not identity resolution: explicit vintage, color,
   and format conflicts exclude a candidate, but no result is selected
   automatically and no external lookup or shared-reference write occurs.

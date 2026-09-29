@@ -141,8 +141,8 @@ decode/re-encode to stay within Workers Free CPU limits. Interrupted processing
 can be retried after its five-minute lease expires. Owners may preview or delete
 the sanitized photo; other household members cannot read it. Step 0.6.8 sends
 only the sanitized JPEG derivative to Cloudflare Workers AI after the Owner
-explicitly selects the clearly labeled
-recognition action. The Worker retrieves the image through the existing
+has acknowledged the transfer once on this device and explicitly selected
+photos of one bottle for reading. The Worker retrieves the image through the existing
 owner-authorized capture boundary, sends no household or wine identifiers, and
 uses no automatic retries. Cloudflare's documented data-use policy says it
 does not use Workers AI customer content to train models or improve services.
@@ -152,26 +152,31 @@ the photo remains private and can be retried or deleted; unread photos and
 recognized text expire within 24 hours. OCR produces text only: it does not map
 wine fields, create a wine, add stock, or change inventory.
 
-Steps 0.6.9–0.6.11 add a second, separately triggered text-only inference. The
-Owner asks Cloudflare Workers AI to classify saved lines into tentative
+Steps 0.6.9–0.6.11 add text-only inference after a successful reading when
+the exact OCR text does not identify a conservative active-household catalogue
+match. The Owner may request it manually when a proposed match is wrong.
+Cloudflare Workers AI classifies saved lines into tentative
 producer, cuvée, appellation, area, color, format, and vintage fields. Each
 suggestion includes quoted OCR evidence and qualitative confidence; unsupported
 values are discarded or left unknown. This is not deterministic string
 parsing: the model proposes the roles, and the Owner can edit them. At most one
 private suggestion is kept per capture for the same 24-hour lifetime. The
-interface compares the reviewed producer/cuvée against the active household's
-local wine catalogue, excludes explicit identity conflicts, and presents up
+interface first compares recognized text against the active household's local
+catalogue, then compares reviewed producer/cuvée if inference was needed.
+It excludes explicit identity conflicts and presents up
 to three possibilities without choosing one. An explicit action copies either
 the reviewed fields or a chosen catalogue wine into the existing Add bottles
 form. It does not create a wine or bottle; the Owner still reviews and submits
 through the normal inventory flow. See
 [ADR 008](adr/008-capture-label-field-review.md).
 
-The 0.6.11 UX follow-up leads with a plain-language review of possible
+The 0.6.11 UX follow-up separates photo and manual entry, uses a one-time
+device/account photo acknowledgement, and leads with a plain-language review of possible
 catalogue matches and editable wine details. The exact OCR transcript, field
 evidence, confidence, and photo-handling explanation remain accessible in
-expandable sections instead of dominating the main path. The Owner still
-explicitly requests each AI step and chooses whether to prefill the normal
+expandable sections instead of dominating the main path. Selecting a photo
+starts one reading sequence without extra confirmation steps; the Owner still
+chooses whether to prefill the normal
 Add bottles form; nothing is written to inventory before its normal submit.
 
 ## Acceptance for 0.6.4

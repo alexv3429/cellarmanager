@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import type { CaptureWineSuggestion } from "./capturePhotos"
-import { findCaptureWineMatchCandidates } from "./captureWineMatching"
+import { findCaptureWineMatchCandidates, findCaptureWineMatchesFromTranscript } from "./captureWineMatching"
 import type { WineCatalogEntry } from "./wineCatalog"
 
 function text(value: string | null, evidence: string[] = []) {
@@ -34,6 +34,24 @@ function wine(overrides: Partial<WineCatalogEntry> = {}): WineCatalogEntry {
 }
 
 describe("capture wine catalogue matching", () => {
+  it("finds a known Pouilly-Fuissé even when the model would confuse appellation and cuvée", () => {
+    const known = wine({
+      id: "barraud", producer: "Domaine Barraud", cuvee: "En France",
+      appellation: "Pouilly-Fuissé", vintage: 2019, color: "white",
+    })
+    const pages = [{ text: "2019\nVin de Bourgogne\nPOUILLY-FUISSÉ\nEn France\nDOMAINE BARRAUD" }]
+
+    expect(findCaptureWineMatchesFromTranscript(pages, [known], "household-1").map((match) => match.id)).toEqual(["barraud"])
+    expect(findCaptureWineMatchesFromTranscript(pages, [known], "household-2")).toEqual([])
+    expect(findCaptureWineMatchesFromTranscript(pages, [{ ...known, vintage: 2020 }], "household-1")).toEqual([])
+    expect(findCaptureWineMatchesFromTranscript([{ text: `${pages[0].text}\n2020` }], [known], "household-1")).toEqual([])
+  })
+
+  it("does not claim a known wine from only a producer or a generic cuvée phrase", () => {
+    const known = wine({ producer: "Domaine Barraud", cuvee: "En France", appellation: "Pouilly-Fuissé", vintage: 2019 })
+    expect(findCaptureWineMatchesFromTranscript([{ text: "DOMAINE BARRAUD\nPOUILLY-FUISSÉ\n2019" }], [known], "household-1")).toEqual([])
+    expect(findCaptureWineMatchesFromTranscript([{ text: "DOMAINE BARRAUD\nEn France" }], [known], "household-1")).toEqual([])
+  })
   it("returns local catalogue possibilities without using them to rewrite the suggestion", () => {
     const wines = [
       wine(),
