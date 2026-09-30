@@ -6,9 +6,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { findWineBarcodeLinks, linkWineBarcode, lookupBarcodeProduct } from "../data/wineBarcodes"
 import { WineBarcodePanel } from "./WineBarcodePanel"
 
-vi.mock("../data/wineBarcodes", async (importOriginal) => {
-  const original = await importOriginal<typeof import("../data/wineBarcodes")>()
-  return { ...original, findWineBarcodeLinks: vi.fn(), linkWineBarcode: vi.fn(), lookupBarcodeProduct: vi.fn() }
+vi.mock("../data/wineBarcodes", async () => {
+  const { normalizeGtin } = await import("../data/gtin")
+  return { normalizeGtin, findWineBarcodeLinks: vi.fn(), linkWineBarcode: vi.fn(), unlinkWineBarcode: vi.fn(), lookupBarcodeProduct: vi.fn() }
 })
 vi.mock("./WineBarcodeScanner", () => ({ WineBarcodeScanner: () => <div>Camera scanner</div> }))
 

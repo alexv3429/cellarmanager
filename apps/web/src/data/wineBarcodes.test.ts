@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { normalizeGtin } from "./wineBarcodes"
+import { normalizeGtin } from "./gtin"
 
 describe("GTIN normalization", () => {
   it("accepts valid EAN-8, UPC-A, EAN-13, and GTIN-14 with one canonical key", () => {
