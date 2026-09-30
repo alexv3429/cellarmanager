@@ -5,6 +5,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { WineBarcodeScanner } from "./WineBarcodeScanner"
 
+vi.mock("../data/wineBarcodes", async () => {
+  const { normalizeGtin } = await import("../data/gtin")
+  return { normalizeGtin }
+})
+
 const scanner = vi.hoisted(() => ({
   callback: null as null | ((result: { getText: () => string; getBarcodeFormat: () => string }, error: unknown, controls: { stop: () => void }) => void),
   formats: [] as string[],
