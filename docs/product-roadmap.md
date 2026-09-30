@@ -12,7 +12,7 @@ crosses a milestone boundary.
 | `v0.3` | A cellar can live safely in CellarManager through daily manual use or guarded CSV import | Released (`v0.3.0`) |
 | `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable evidence | Released (`v0.4.0`) |
 | `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | Released (`v0.5.0`) |
-| `v0.6` | The app is usable in English or French, and adding or identifying wine requires dramatically less typing | In progress (0.6.1–0.6.14 complete) |
+| `v0.6` | The app is usable in English or French, and adding or identifying wine requires dramatically less typing | In progress (0.6.1–0.6.15 complete) |
 | `v0.7` | CellarManager explains what happened to the cellar and what the collection means over time | Planned |
 | `v1.0` | A self-host can install, trust, upgrade, recover, and maintain CellarManager for years | Planned |
 
