@@ -12,7 +12,7 @@ crosses a milestone boundary.
 | `v0.3` | A cellar can live safely in CellarManager through daily manual use or guarded CSV import | Released (`v0.3.0`) |
 | `v0.4` | CellarManager describes wines meaningfully and enriches them from reviewed, attributable evidence | Released (`v0.4.0`) |
 | `v0.5` | Several real users can jointly manage one cellar without compromising local-first correctness | Released (`v0.5.0`) |
-| `v0.6` | The app is usable in English or French, and adding or identifying wine requires dramatically less typing | In progress (0.6.1–0.6.14 complete) |
+| `v0.6` | The app is usable in English or French, and adding or identifying wine requires dramatically less typing | In progress (0.6.1–0.6.15 complete) |
 | `v0.7` | CellarManager explains what happened to the cellar and what the collection means over time | Planned |
 | `v1.0` | A self-host can install, trust, upgrade, recover, and maintain CellarManager for years | Planned |
 
@@ -430,7 +430,7 @@ and [ADR 005](adr/005-capture-assisted-wine-entry.md).
 | 0.6.12 | Photo-to-inventory ADD with explicit existing-wine selection or new-wine confirmation — complete |
 | 0.6.13 | Sequential batch-entry workflow for distinct bottles, each with its own reviewed ADD — complete |
 | 0.6.14 | Location QR codes for printed labels and local camera selection in Inventory — complete |
-| 0.6.15 | Wine barcode identifiers, scanning, and provider lookup |
+| 0.6.15 | Wine barcode identifiers, scanning, and optional provider lookup — complete |
 | 0.6.16 | Restore useful archived v0.1 enrichment identifiers/data |
 | 0.6.17 | Accuracy and privacy acceptance |
 | 0.6.18 | v0.6 release |

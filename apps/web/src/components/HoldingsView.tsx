@@ -51,6 +51,7 @@ import {
 import { Notice } from "./Notice"
 import { CapturePhotosPanel } from "./CapturePhotosPanel"
 import { LocationQrScanner } from "./LocationQrScanner"
+import { WineBarcodePanel } from "./WineBarcodePanel"
 import { useLanguage } from "../i18n/useLanguage"
 import { formatLocalizedNumber } from "../i18n/formatting"
 
@@ -938,6 +939,31 @@ export function HoldingsView({
           }}
         />
       ) : null}
+
+      <WineBarcodePanel
+        key={householdId}
+        householdId={householdId}
+        wines={wines}
+        isOnline={isOnline}
+        canManageInventory={canManageInventory}
+        catalogueLoading={winesLoading}
+        catalogueError={Boolean(winesError)}
+        onOpenWine={onOpenWine}
+        onUseWine={(wine) => {
+          setAddProducer(wine.producer)
+          setAddCuvee(wine.cuvee)
+          setAddVintage(wine.vintage === null ? "" : String(wine.vintage))
+          setAddColor(wine.color)
+          setAddAppellation(wine.appellation ?? "")
+          setAddArea(wine.area ?? "")
+          setAddFormatMl(String(wine.format_ml))
+          setCaptureWineChoice({ kind: "existing", wineId: wine.id })
+          setCapturePrefillMessage(t("Barcode-linked wine selected. Review the bottle quantity and location before confirming."))
+          setActiveCaptureSessionId(null)
+          setAddEntryMode("manual")
+          document.querySelector<HTMLDetailsElement>(".inventory-add-panel")?.setAttribute("open", "")
+        }}
+      />
 
       <details className="inventory-add-panel">
         <summary>

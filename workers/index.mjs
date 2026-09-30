@@ -5,6 +5,7 @@ import { handleCapturePreprocessing, handleCapturePreview } from "./capturePrepr
 import { handleCaptureRecognition } from "./captureRecognition.mjs";
 import { handleCaptureWineSuggestion } from "./captureWineSuggestion.mjs";
 import { validatePreparedCaptureImage } from "./captureImageValidate.mjs";
+import { handleBarcodeLookup } from "./barcodeLookup.mjs";
 
 const WORKER_VERSION = "0.5.0";
 
@@ -27,6 +28,9 @@ export default {
     }
     if (url.pathname === "/api/capture/preview") {
       return handleCapturePreview(request, env);
+    }
+    if (url.pathname === "/api/barcodes/lookup") {
+      return handleBarcodeLookup(request, env);
     }
     if (request.method === "GET" && url.pathname === "/api/research/status") {
       const configuration = researchConfiguration(env);

@@ -54,6 +54,7 @@ vi.mock("./CapturePhotosPanel", () => ({ CapturePhotosPanel: ({ onUseReviewedDet
 vi.mock("./LocationQrScanner", () => ({ LocationQrScanner: ({ onScanned }: { onScanned: (locationId: string) => void }) => (
   <button type="button" onClick={() => onScanned("location-2")}>Scan location 2</button>
 ) }))
+vi.mock("./WineBarcodePanel", () => ({ WineBarcodePanel: () => null }))
 
 let root: Root
 let container: HTMLDivElement
