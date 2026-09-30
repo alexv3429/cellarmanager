@@ -46,6 +46,23 @@ test("unknown and mismatched products do not become wine facts", async () => {
     ? Response.json({ id: "signed-in" }) : Response.json({ product });
   const missing = await handleBarcodeLookup(request(), env, { fetch: (url) => auth(url, null) });
   assert.deepEqual(await missing.json(), { product: null });
+  const missingHttp = await handleBarcodeLookup(request(), env, { fetch: (url) => url.endsWith("/auth/v1/user")
+    ? Response.json({ id: "signed-in" }) : Response.json({ status: "failure" }, { status: 404 }) });
+  assert.deepEqual(await missingHttp.json(), { product: null });
   const mismatch = await handleBarcodeLookup(request(), env, { fetch: (url) => auth(url, { code: "1234567890123" }) });
   assert.equal(mismatch.status, 503);
+});
+
+test("distinguishes authentication and provider failures", async () => {
+  const authUnavailable = await handleBarcodeLookup(request(), env, { fetch: async () => {
+    throw new Error("auth network failure");
+  } });
+  assert.deepEqual(await authUnavailable.json(), { error: "authentication_unavailable" });
+
+  for (const [status, error] of [[403, "provider_denied"], [429, "provider_rate_limited"]]) {
+    const response = await handleBarcodeLookup(request(), env, { fetch: async (url) => url.endsWith("/auth/v1/user")
+      ? Response.json({ id: "signed-in" }) : new Response(null, { status }) });
+    assert.equal(response.status, 503);
+    assert.deepEqual(await response.json(), { error });
+  }
 });

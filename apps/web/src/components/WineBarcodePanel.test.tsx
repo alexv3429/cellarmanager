@@ -81,9 +81,9 @@ describe("wine barcode lookup", () => {
     })
     await click("Find in my catalogue")
     expect(linkWineBarcode).not.toHaveBeenCalled()
-    const search = [...container.querySelectorAll("input")].find((item) => item.placeholder === "Producer or cuvée")
+    const search = [...container.querySelectorAll("input")].find((item) => item.placeholder === "Producer, cuvée, or appellation")
     await act(async () => {
-      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(search, "Barraud")
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(search, "pouilly fuisse")
       search?.dispatchEvent(new Event("input", { bubbles: true }))
     })
     const radio = container.querySelector<HTMLInputElement>('input[type="radio"]')
@@ -91,5 +91,40 @@ describe("wine barcode lookup", () => {
     await act(async () => radio?.click())
     await click("Confirm barcode link")
     expect(linkWineBarcode).toHaveBeenCalledExactlyOnceWith(householdId, wine.id, "00036000291452")
+  })
+
+  it("explains a failed online lookup and lets the user retry", async () => {
+    vi.mocked(findWineBarcodeLinks).mockResolvedValue([])
+    vi.mocked(lookupBarcodeProduct).mockRejectedValueOnce(new Error("barcode_authentication_required"))
+    await act(async () => root.render(<WineBarcodePanel householdId={householdId} wines={[wine]}
+      isOnline canManageInventory onOpenWine={() => undefined} onUseWine={() => undefined} />))
+    const input = container.querySelector<HTMLInputElement>('input[inputmode="numeric"]')
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(input, "036000291452")
+      input?.dispatchEvent(new Event("input", { bubbles: true }))
+    })
+    await click("Find in my catalogue")
+    await click("Check Open Food Facts")
+    expect(container.textContent).toContain("could not verify your session")
+    await click("Retry Open Food Facts")
+    expect(lookupBarcodeProduct).toHaveBeenCalledTimes(2)
+  })
+
+  it("makes an absent catalogue wine explicit instead of leaving a disabled link button unexplained", async () => {
+    vi.mocked(findWineBarcodeLinks).mockResolvedValue([])
+    await act(async () => root.render(<WineBarcodePanel householdId={householdId} wines={[wine]}
+      isOnline canManageInventory onOpenWine={() => undefined} onUseWine={() => undefined} />))
+    const input = container.querySelector<HTMLInputElement>('input[inputmode="numeric"]')
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(input, "036000291452")
+      input?.dispatchEvent(new Event("input", { bubbles: true }))
+    })
+    await click("Find in my catalogue")
+    const search = [...container.querySelectorAll("input")].find((item) => item.placeholder === "Producer, cuvée, or appellation")
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(search, "Campo della Pieve")
+      search?.dispatchEvent(new Event("input", { bubbles: true }))
+    })
+    expect(container.textContent).toContain("No matching wine in this catalogue")
   })
 })

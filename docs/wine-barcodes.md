@@ -13,6 +13,12 @@ The user can open a linked wine card or explicitly choose it for the existing
 ADD form. Scanning and linking never change stock. The normal ADD confirmation
 still requires quantity and location.
 
+A first scan does not automatically identify a wine that has not been linked in
+this household. Search the active catalogue to establish that link. If the wine
+is not there yet, add it by label photo or manual entry first. Open Food Facts
+may have no record for a valid bottle barcode; that is distinct from the
+service being unreachable.
+
 An optional **Check Open Food Facts** action sends only the code (not a photo,
 wine, household, or account identifier) through the Worker to the [Open Food
 Facts product API](https://openfoodfacts.github.io/documentation/docs/Product-Opener/v3/products/get-api-v3-product-code/).

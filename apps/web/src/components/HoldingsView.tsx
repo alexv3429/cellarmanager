@@ -946,6 +946,8 @@ export function HoldingsView({
         wines={wines}
         isOnline={isOnline}
         canManageInventory={canManageInventory}
+        catalogueLoading={winesLoading}
+        catalogueError={Boolean(winesError)}
         onOpenWine={onOpenWine}
         onUseWine={(wine) => {
           setAddProducer(wine.producer)

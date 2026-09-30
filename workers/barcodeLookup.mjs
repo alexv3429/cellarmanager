@@ -43,24 +43,29 @@ export async function handleBarcodeLookup(request, env, dependencies = {}) {
 
   const fetcher = dependencies.fetch ?? fetch;
   try {
-    // A token is never sent to Open Food Facts; only the explicit GTIN is.
     const auth = await fetcher(`${env.SUPABASE_URL}/auth/v1/user`, {
       headers: { apikey: env.SUPABASE_SECRET_KEY, authorization },
       signal: AbortSignal.timeout(10_000),
     });
-    if (!auth.ok) return json({ error: "authentication_required" }, auth.status >= 500 ? 503 : 401);
+    if (!auth.ok) return json({ error: auth.status >= 500 ? "authentication_unavailable" : "authentication_required" }, auth.status >= 500 ? 503 : 401);
     const user = await auth.json();
     if (!user?.id) return json({ error: "authentication_required" }, 401);
+  } catch {
+    return json({ error: "authentication_unavailable" }, 503);
+  }
 
+  try {
+    // A token is never sent to Open Food Facts; only the explicit GTIN is.
     const code = input.gtin14.replace(/^0+(?=\d{8,13}$)/, "");
     const apiUrl = `https://world.openfoodfacts.org/api/v3/product/${code}?fields=code,product_name,brands,quantity`;
     const result = await fetcher(apiUrl, {
       headers: { "user-agent": USER_AGENT, accept: "application/json" },
       redirect: "error",
       signal: AbortSignal.timeout(10_000),
-      cf: { cacheEverything: true, cacheTtl: 86_400 },
     });
     if (result.status === 404) return json({ product: null });
+    if (result.status === 429) return json({ error: "provider_rate_limited" }, 503);
+    if (result.status === 403) return json({ error: "provider_denied" }, 503);
     if (!result.ok || Number(result.headers.get("content-length") ?? 0) > 32_768) {
       return json({ error: "provider_unavailable" }, 503);
     }
