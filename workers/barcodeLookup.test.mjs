@@ -25,7 +25,7 @@ test("looks up only a checked GTIN after verifying the signed-in user", async ()
   } });
   assert.equal(calls.length, 2);
   assert.equal(calls[1].options.headers.authorization, undefined);
-  assert.equal(calls[1].options.redirect, "error");
+  assert.equal(calls[1].options.redirect, "manual");
 });
 
 test("rejects invalid codes and unauthorized callers without querying the provider", async () => {
@@ -65,4 +65,7 @@ test("distinguishes authentication and provider failures", async () => {
     assert.equal(response.status, 503);
     assert.deepEqual(await response.json(), { error });
   }
+  const redirect = await handleBarcodeLookup(request(), env, { fetch: async (url) => url.endsWith("/auth/v1/user")
+    ? Response.json({ id: "signed-in" }) : new Response(null, { status: 302, headers: { location: "https://elsewhere.example" } }) });
+  assert.equal(redirect.status, 503);
 });

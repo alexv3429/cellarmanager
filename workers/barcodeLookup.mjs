@@ -60,7 +60,9 @@ export async function handleBarcodeLookup(request, env, dependencies = {}) {
     const apiUrl = `https://world.openfoodfacts.org/api/v3/product/${code}?fields=code,product_name,brands,quantity`;
     const result = await fetcher(apiUrl, {
       headers: { "user-agent": USER_AGENT, accept: "application/json" },
-      redirect: "error",
+      // Workers reject redirect: "error". Manual mode avoids following a
+      // provider redirect and keeps the code on the approved hostname.
+      redirect: "manual",
       signal: AbortSignal.timeout(10_000),
     });
     if (result.status === 404) return json({ product: null });
