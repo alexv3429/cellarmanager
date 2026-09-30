@@ -1,9 +1,13 @@
 # Bottle barcode lookup (0.6.15)
 
-Inventory can scan a printed EAN/UPC/GTIN code or accept its digits. Camera
+Inventory can scan a printed EAN-13 or UPC-A code or accept barcode digits. Camera
 decoding runs in the browser; the app validates the check digit and normalizes
 8-, 12-, 13-, and 14-digit GTINs to a 14-digit comparison key. No photo is
-uploaded. Manual entry remains available when camera access fails.
+uploaded. To avoid accepting a short, valid-looking fragment of a bottle's
+EAN-13, the camera scanner accepts EAN-13 and UPC-A only and asks the user to
+compare the decoded digits with the bottle before continuing. EAN-8 and
+GTIN-14 can still be entered manually, as can any code when camera access
+fails.
 
 An Owner may explicitly associate that code with a wine already in the active
 household catalogue. Members may read links, but cannot create or delete them.
@@ -22,6 +26,8 @@ service being unreachable.
 An optional **Check Open Food Facts** action sends only the code (not a photo,
 wine, household, or account identifier) through the Worker to the [Open Food
 Facts product API](https://openfoodfacts.github.io/documentation/docs/Product-Opener/v3/products/get-api-v3-product-code/).
+It is available directly after entering the digits; the user does not have to
+run a separate catalogue search first.
 The result is shown with a source link and remains transient. It is *not*
 silently copied into a household wine or shared reference. Unknown codes,
 provider errors, and offline use leave manual entry and label photos available.

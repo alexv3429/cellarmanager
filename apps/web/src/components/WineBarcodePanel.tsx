@@ -64,7 +64,21 @@ export function WineBarcodePanel({ householdId, wines, isOnline, canManageInvent
       && matchesSearch([wine.producer, wine.cuvee, wine.appellation, wine.area, wine.vintage, wine.format_ml], query)).slice(0, 12)
   }, [householdId, linkSearch, wines])
 
-  const lookUp = async (raw: string) => {
+  const checkExternally = async (code: string, generation: number) => {
+    if (!isOnline) return
+    setProviderStatus("loading")
+    try {
+      const result = await lookupBarcodeProduct(code)
+      if (generation === lookupGeneration.current) {
+        setProduct(result)
+        setProviderStatus(result ? "found" : "missing")
+      }
+    } catch (lookupError) {
+      if (generation === lookupGeneration.current) setProviderStatus(providerFailureStatus(lookupError))
+    }
+  }
+
+  const lookUp = async (raw: string, withExternal = false) => {
     const code = normalizeGtin(raw)
     if (!code) {
       setError(t("Enter a valid EAN-8, UPC-A, EAN-13, or GTIN-14 number."))
@@ -76,7 +90,7 @@ export function WineBarcodePanel({ householdId, wines, isOnline, canManageInvent
     setLinks([])
     setProduct(null)
     setError("")
-    setProviderStatus("idle")
+    setProviderStatus(withExternal ? "loading" : "idle")
     setLoading(true)
     const generation = ++lookupGeneration.current
     try {
@@ -86,21 +100,7 @@ export function WineBarcodePanel({ householdId, wines, isOnline, canManageInvent
       if (generation === lookupGeneration.current) setError(t("Could not check saved barcode links. Please try again."))
     }
     if (generation === lookupGeneration.current) setLoading(false)
-  }
-
-  const lookUpExternally = async () => {
-    if (!activeCode || !isOnline) return
-    setProviderStatus("loading")
-    const generation = lookupGeneration.current
-    try {
-      const result = await lookupBarcodeProduct(activeCode)
-      if (generation === lookupGeneration.current) {
-        setProduct(result)
-        setProviderStatus(result ? "found" : "missing")
-      }
-    } catch (lookupError) {
-      if (generation === lookupGeneration.current) setProviderStatus(providerFailureStatus(lookupError))
-    }
+    if (withExternal && generation === lookupGeneration.current) await checkExternally(code, generation)
   }
 
   const linkSelected = async () => {
@@ -135,7 +135,7 @@ export function WineBarcodePanel({ householdId, wines, isOnline, canManageInvent
   return (
     <details className="wine-barcode-panel">
       <summary>{t("Find a wine by bottle barcode")}</summary>
-      <p>{t("Scan the printed EAN or UPC barcode, or enter its digits. A code may be shared by several vintages, so always check the wine.")}</p>
+      <p>{t("Scan a full EAN-13 or UPC-A barcode, or enter any valid barcode digits. A code may be shared by several vintages, so always check the wine.")}</p>
       <div className="wine-barcode-panel__controls">
         <button type="button" className="button-secondary" disabled={loading || linking || Boolean(unlinkingId) || providerStatus === "loading"} onClick={() => setScannerOpen(true)}>{t("Scan bottle barcode")}</button>
         <label>{t("Barcode digits")}
@@ -150,13 +150,17 @@ export function WineBarcodePanel({ householdId, wines, isOnline, canManageInvent
           }} />
         </label>
         <button type="button" disabled={!isOnline || loading} onClick={() => void lookUp(codeInput)}>{loading ? t("Checking your catalogue…") : t("Find in my catalogue")}</button>
+        {isOnline ? <>
+          <p>{t("Optional: send only this barcode number to Open Food Facts for a product hint. No photo or cellar data is sent.")}</p>
+          <button type="button" className="button-secondary" disabled={loading || linking || Boolean(unlinkingId) || providerStatus === "loading"} onClick={() => void lookUp(codeInput, true)}>{t(providerStatus === "idle" ? "Check Open Food Facts" : "Retry Open Food Facts")}</button>
+        </> : null}
       </div>
       {scannerOpen ? <WineBarcodeScanner onClose={() => setScannerOpen(false)} onScanned={(code) => void lookUp(code)} /> : null}
       {error ? <p role="alert">{error}</p> : null}
       {activeCode ? (
         <div className="wine-barcode-panel__results" aria-live="polite">
           <h3>{t("Barcode result")}</h3>
-          <p><code>{activeCode}</code></p>
+          <p><code>{codeInput.replace(/[\s-]/g, "")}</code></p>
           {matchedWines.length > 0 ? (
             <section>
               <h4>{t("Linked wines in your catalogue")}</h4>
@@ -171,7 +175,6 @@ export function WineBarcodePanel({ householdId, wines, isOnline, canManageInvent
               {matchedWines.length > 1 ? <p>{t("Several wines share this code. Select the correct vintage and format.")}</p> : null}
             </section>
           ) : !loading ? <p>{t("No wine in your catalogue is linked to this barcode yet. A printed barcode does not identify the wine in your cellar until you associate it below.")}</p> : null}
-          {isOnline && providerStatus === "idle" ? <p>{t("Optional: send only this barcode number to Open Food Facts for a product hint. No photo or cellar data is sent.")}</p> : null}
           {providerStatus === "loading" ? <p>{t("Checking Open Food Facts…")}</p> : null}
           {providerStatus === "missing" ? <p>{t("Open Food Facts has no entry for this code. You can use a label photo or enter the wine manually.")}</p> : null}
           {providerStatus === "unavailable" ? <p>{t("Open Food Facts is unavailable. Your catalogue and manual entry still work.")}</p> : null}
@@ -181,8 +184,6 @@ export function WineBarcodePanel({ householdId, wines, isOnline, canManageInvent
           {providerStatus === "rate_limited" ? <p role="alert">{t("Open Food Facts is receiving too many requests. Please retry later.")}</p> : null}
           {providerStatus === "denied" ? <p role="alert">{t("Open Food Facts refused this lookup. You can still search your catalogue or add the wine manually.")}</p> : null}
           {providerStatus === "mismatch" ? <p role="alert">{t("Open Food Facts returned a different barcode, so its result was not used.")}</p> : null}
-          {isOnline && providerStatus !== "loading" && providerStatus !== "found" && providerStatus !== "missing"
-            ? <button type="button" className="button-secondary" onClick={() => void lookUpExternally()}>{t(providerStatus === "idle" ? "Check Open Food Facts" : "Retry Open Food Facts")}</button> : null}
           {product ? <section>
             <h4>{t("External product information — verify before use")}</h4>
             <p>{[product.brand, product.name, product.quantity].filter(Boolean).join(" · ") || t("No product details available")}</p>

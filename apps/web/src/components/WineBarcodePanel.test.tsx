@@ -69,6 +69,21 @@ describe("wine barcode lookup", () => {
     expect(lookupBarcodeProduct).toHaveBeenCalledWith("00036000291452")
   })
 
+  it("checks Open Food Facts directly from valid manually entered digits", async () => {
+    vi.mocked(findWineBarcodeLinks).mockResolvedValue([])
+    await act(async () => root.render(<WineBarcodePanel householdId={householdId} wines={[wine]}
+      isOnline canManageInventory onOpenWine={() => undefined} onUseWine={() => undefined} />))
+    const input = container.querySelector<HTMLInputElement>('input[inputmode="numeric"]')
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(input, "5999557600120")
+      input?.dispatchEvent(new Event("input", { bubbles: true }))
+    })
+    await click("Check Open Food Facts")
+    expect(findWineBarcodeLinks).toHaveBeenCalledWith(householdId, "05999557600120")
+    expect(lookupBarcodeProduct).toHaveBeenCalledExactlyOnceWith("05999557600120")
+    expect(container.textContent).toContain("Open Food Facts has no entry")
+  })
+
   it("requires explicit wine selection before saving a code link", async () => {
     vi.mocked(findWineBarcodeLinks).mockResolvedValue([])
     vi.mocked(linkWineBarcode).mockResolvedValue(undefined)
