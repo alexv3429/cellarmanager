@@ -60,7 +60,7 @@ describe("wine barcode scanning", () => {
     await act(async () => scanner.callback?.({ getText: () => "8033749750242", getBarcodeFormat: () => "EAN_13" }, null, { stop: scanner.stop }))
     expect(container.textContent).toContain("8033749750242")
     expect(onScanned).not.toHaveBeenCalled()
-    const confirm = [...container.querySelectorAll("button")].find((button) => button.textContent === "Use this code")
+    const confirm = [...container.querySelectorAll("button")].find((button) => button.textContent === "Search with this number")
     await act(async () => confirm?.click())
     expect(onScanned).toHaveBeenCalledExactlyOnceWith("8033749750242")
   })

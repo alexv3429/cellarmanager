@@ -23,7 +23,7 @@ is not there yet, add it by label photo or manual entry first. Open Food Facts
 may have no record for a valid bottle barcode; that is distinct from the
 service being unreachable.
 
-An optional **Check Open Food Facts** action sends only the code (not a photo,
+An optional **Search online** action sends only the code (not a photo,
 wine, household, or account identifier) through the Worker to the [Open Food
 Facts product API](https://openfoodfacts.github.io/documentation/docs/Product-Opener/v3/products/get-api-v3-product-code/).
 It is available directly after entering the digits; the user does not have to

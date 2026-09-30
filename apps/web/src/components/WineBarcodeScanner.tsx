@@ -22,7 +22,7 @@ export function WineBarcodeScanner({ onScanned, onClose }: WineBarcodeScannerPro
     handledRef.current = false
     const video = videoRef.current
     if (!video || !navigator.mediaDevices?.getUserMedia) {
-      setError(t("Camera unavailable. Enter the digits below instead."))
+      setError(t("Camera unavailable. Type the number instead."))
       return
     }
     void import("@zxing/browser")
@@ -38,7 +38,7 @@ export function WineBarcodeScanner({ onScanned, onClose }: WineBarcodeScannerPro
           const raw = result.getText()
           const code = normalizeGtin(raw)
           if (!code) {
-            setError(t("This is not a valid EAN or UPC barcode. Try again or enter the digits."))
+            setError(t("That barcode could not be read. Try again or type its number."))
             return
           }
           handledRef.current = true
@@ -51,23 +51,23 @@ export function WineBarcodeScanner({ onScanned, onClose }: WineBarcodeScannerPro
         if (active) stop = () => controls.stop()
         else controls.stop()
       })
-      .catch(() => { if (active) setError(t("Camera unavailable. Enter the digits below instead.")) })
+      .catch(() => { if (active) setError(t("Camera unavailable. Type the number instead.")) })
     return () => { active = false; stop?.() }
   }, [attempt, t])
 
   return (
     <section className="location-qr-scanner" aria-label={t("Scan a bottle barcode")}>
       <div className="location-qr-scanner__heading">
-        <strong>{t("Point the camera at the printed bottle barcode")}</strong>
-        <button type="button" className="button-secondary" onClick={onClose}>{t("Close scanner")}</button>
+        <strong>{t("Point the camera at the barcode on the bottle")}</strong>
+        <button type="button" className="button-secondary" onClick={onClose}>{t("Close camera")}</button>
       </div>
       <video ref={videoRef} autoPlay muted playsInline aria-label={t("Camera preview for bottle barcode scanning")} />
       {candidate ? <div>
-        <p role="status">{t("Barcode read: {code}").replace("{code}", candidate)}</p>
-        <p>{t("Check every digit against the bottle before using this code.")}</p>
-        <button type="button" onClick={() => onScanned(candidate)}>{t("Use this code")}</button>
+        <p role="status">{t("Number read: {code}").replace("{code}", candidate)}</p>
+        <p>{t("Does this match the number printed on the bottle?")}</p>
+        <button type="button" onClick={() => onScanned(candidate)}>{t("Search with this number")}</button>
         <button type="button" className="button-secondary" onClick={() => { setCandidate(null); setError(""); setAttempt((current) => current + 1) }}>{t("Scan again")}</button>
-      </div> : error ? <p role="alert">{error}</p> : <p>{t("Scan the full barcode. For an 8-digit code, enter the digits manually. Scanning never changes your cellar.")}</p>}
+      </div> : error ? <p role="alert">{error}</p> : <p>{t("If scanning does not work, type the number instead. Nothing is added to your cellar yet.")}</p>}
     </section>
   )
 }

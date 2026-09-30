@@ -81,7 +81,7 @@ export function WineBarcodePanel({ householdId, wines, isOnline, canManageInvent
   const lookUp = async (raw: string, withExternal = false) => {
     const code = normalizeGtin(raw)
     if (!code) {
-      setError(t("Enter a valid EAN-8, UPC-A, EAN-13, or GTIN-14 number."))
+      setError(t("This number does not look right. Check the digits and try again."))
       return
     }
     setScannerOpen(false)
@@ -97,7 +97,7 @@ export function WineBarcodePanel({ householdId, wines, isOnline, canManageInvent
       const savedLinks = await findWineBarcodeLinks(householdId, code)
       if (generation === lookupGeneration.current) setLinks(savedLinks)
     } catch {
-      if (generation === lookupGeneration.current) setError(t("Could not check saved barcode links. Please try again."))
+      if (generation === lookupGeneration.current) setError(t("Could not search your wines. Please try again."))
     }
     if (generation === lookupGeneration.current) setLoading(false)
     if (withExternal && generation === lookupGeneration.current) await checkExternally(code, generation)
@@ -113,7 +113,7 @@ export function WineBarcodePanel({ householdId, wines, isOnline, canManageInvent
       setSelectedWineId("")
       setLinkSearch("")
     } catch {
-      setError(t("Could not save this barcode link. Your cellar was not changed."))
+      setError(t("Could not save this code for the wine. Nothing changed in your cellar."))
     } finally {
       setLinking(false)
     }
@@ -126,7 +126,7 @@ export function WineBarcodePanel({ householdId, wines, isOnline, canManageInvent
       await unlinkWineBarcode(linkId)
       setLinks((current) => current.filter((link) => link.id !== linkId))
     } catch {
-      setError(t("Could not remove this barcode link. Please try again."))
+      setError(t("Could not remove this code from the wine. Please try again."))
     } finally {
       setUnlinkingId("")
     }
@@ -134,11 +134,11 @@ export function WineBarcodePanel({ householdId, wines, isOnline, canManageInvent
 
   return (
     <details className="wine-barcode-panel">
-      <summary>{t("Find a wine by bottle barcode")}</summary>
-      <p>{t("Scan a full EAN-13 or UPC-A barcode, or enter any valid barcode digits. A code may be shared by several vintages, so always check the wine.")}</p>
+      <summary>{t("Find a wine with its barcode")}</summary>
+      <p>{t("Scan the barcode on the bottle or type its number. Check the wine and vintage before adding bottles.")}</p>
       <div className="wine-barcode-panel__controls">
-        <button type="button" className="button-secondary" disabled={loading || linking || Boolean(unlinkingId) || providerStatus === "loading"} onClick={() => setScannerOpen(true)}>{t("Scan bottle barcode")}</button>
-        <label>{t("Barcode digits")}
+        <button type="button" className="button-secondary" disabled={loading || linking || Boolean(unlinkingId) || providerStatus === "loading"} onClick={() => setScannerOpen(true)}>{t("Scan the barcode")}</button>
+        <label>{t("Or type the number")}
           <input inputMode="numeric" autoComplete="off" disabled={loading || linking || Boolean(unlinkingId) || providerStatus === "loading"} value={codeInput} onChange={(event) => {
             lookupGeneration.current += 1
             setCodeInput(event.target.value)
@@ -149,61 +149,62 @@ export function WineBarcodePanel({ householdId, wines, isOnline, canManageInvent
             setError("")
           }} />
         </label>
-        <button type="button" disabled={!isOnline || loading} onClick={() => void lookUp(codeInput)}>{loading ? t("Checking your catalogue…") : t("Find in my catalogue")}</button>
+        <button type="button" disabled={!isOnline || loading} onClick={() => void lookUp(codeInput)}>{loading ? t("Searching your wines…") : t("Search my wines")}</button>
         {isOnline ? <>
-          <p>{t("Optional: send only this barcode number to Open Food Facts for a product hint. No photo or cellar data is sent.")}</p>
-          <button type="button" className="button-secondary" disabled={loading || linking || Boolean(unlinkingId) || providerStatus === "loading"} onClick={() => void lookUp(codeInput, true)}>{t(providerStatus === "idle" ? "Check Open Food Facts" : "Retry Open Food Facts")}</button>
+          <button type="button" className="button-secondary" disabled={loading || linking || Boolean(unlinkingId) || providerStatus === "loading"} onClick={() => void lookUp(codeInput, true)}>{t(providerStatus === "idle" ? "Search online" : "Try online search again")}</button>
+          <p>{t("Online search is optional. Only the number is sent to Open Food Facts, not your photo or cellar details.")}</p>
         </> : null}
       </div>
       {scannerOpen ? <WineBarcodeScanner onClose={() => setScannerOpen(false)} onScanned={(code) => void lookUp(code)} /> : null}
       {error ? <p role="alert">{error}</p> : null}
       {activeCode ? (
         <div className="wine-barcode-panel__results" aria-live="polite">
-          <h3>{t("Barcode result")}</h3>
+          <h3>{t("Results for this code")}</h3>
           <p><code>{codeInput.replace(/[\s-]/g, "")}</code></p>
           {matchedWines.length > 0 ? (
             <section>
-              <h4>{t("Linked wines in your catalogue")}</h4>
+              <h4>{t("Your wines")}</h4>
               {matchedWines.map(({ wine, link }) => <div className="wine-barcode-panel__match" key={link.id}>
                 <strong>{wineLabel(wine)}</strong>
                 <div>
-                  <button type="button" className="button-secondary" onClick={() => onOpenWine(wine.id)}>{t("Open wine card")}</button>
-                  {canManageInventory ? <button type="button" className="button-secondary" onClick={() => onUseWine(wine)}>{t("Add bottles of this wine")}</button> : null}
-                  {canManageInventory ? <button type="button" className="button-secondary" disabled={unlinkingId === link.id} onClick={() => void unlink(link.id)}>{t("Remove barcode link")}</button> : null}
+                  <button type="button" className="button-secondary" onClick={() => onOpenWine(wine.id)}>{t("View this wine")}</button>
+                  {canManageInventory ? <button type="button" className="button-secondary" onClick={() => onUseWine(wine)}>{t("Add bottles")}</button> : null}
+                  {canManageInventory ? <button type="button" className="button-secondary" disabled={unlinkingId === link.id} onClick={() => void unlink(link.id)}>{t("Forget this code for this wine")}</button> : null}
                 </div>
               </div>)}
-              {matchedWines.length > 1 ? <p>{t("Several wines share this code. Select the correct vintage and format.")}</p> : null}
+              {matchedWines.length > 1 ? <p>{t("This code is used for several wines. Check the vintage and bottle size.")}</p> : null}
             </section>
-          ) : !loading ? <p>{t("No wine in your catalogue is linked to this barcode yet. A printed barcode does not identify the wine in your cellar until you associate it below.")}</p> : null}
-          {providerStatus === "loading" ? <p>{t("Checking Open Food Facts…")}</p> : null}
-          {providerStatus === "missing" ? <p>{t("Open Food Facts has no entry for this code. You can use a label photo or enter the wine manually.")}</p> : null}
-          {providerStatus === "unavailable" ? <p>{t("Open Food Facts is unavailable. Your catalogue and manual entry still work.")}</p> : null}
-          {providerStatus === "session" ? <p role="alert">{t("The online lookup could not verify your session. Sign in again, then retry.")}</p> : null}
-          {providerStatus === "authentication_unavailable" ? <p role="alert">{t("The sign-in service is temporarily unavailable. Please retry later.")}</p> : null}
-          {providerStatus === "configuration" ? <p role="alert">{t("Online barcode lookup is not configured on this preview. Your catalogue still works.")}</p> : null}
-          {providerStatus === "rate_limited" ? <p role="alert">{t("Open Food Facts is receiving too many requests. Please retry later.")}</p> : null}
-          {providerStatus === "denied" ? <p role="alert">{t("Open Food Facts refused this lookup. You can still search your catalogue or add the wine manually.")}</p> : null}
-          {providerStatus === "mismatch" ? <p role="alert">{t("Open Food Facts returned a different barcode, so its result was not used.")}</p> : null}
+          ) : !loading ? <p>{t("This code is not linked to any of your wines yet.")}</p> : null}
+          {providerStatus === "loading" ? <p>{t("Searching online…")}</p> : null}
+          {providerStatus === "missing" ? <p>{t("Nothing found online for this code. You can photograph the label or enter the wine yourself.")}</p> : null}
+          {providerStatus === "unavailable" ? <p>{t("Online search is unavailable for now. You can still search your wines or add a bottle.")}</p> : null}
+          {providerStatus === "session" ? <p role="alert">{t("Please sign in again to search online.")}</p> : null}
+          {providerStatus === "authentication_unavailable" ? <p role="alert">{t("Online search is temporarily unavailable. Please try later.")}</p> : null}
+          {providerStatus === "configuration" ? <p role="alert">{t("Online search is not available here. You can still search your wines.")}</p> : null}
+          {providerStatus === "rate_limited" ? <p role="alert">{t("Online search is busy. Please try again later.")}</p> : null}
+          {providerStatus === "denied" ? <p role="alert">{t("Online search could not be completed. You can still search your wines.")}</p> : null}
+          {providerStatus === "mismatch" ? <p role="alert">{t("The online result did not match this code, so it was not used.")}</p> : null}
           {product ? <section>
-            <h4>{t("External product information — verify before use")}</h4>
+            <h4>{t("Found online — please check")}</h4>
             <p>{[product.brand, product.name, product.quantity].filter(Boolean).join(" · ") || t("No product details available")}</p>
-            <a href={product.sourceUrl} target="_blank" rel="noopener noreferrer">{t("Source: Open Food Facts")}</a>
-            <p>{t("A package barcode does not prove the vintage or exact wine. This information is not saved automatically.")}</p>
+            <a href={product.sourceUrl} target="_blank" rel="noopener noreferrer">{t("View on Open Food Facts")}</a>
+            <p>{t("The barcode may not identify the vintage. Nothing is saved automatically.")}</p>
           </section> : null}
           {canManageInventory && isOnline ? <section>
-            <h4>{t("Link this barcode to a wine already in your catalogue")}</h4>
-            <label>{t("Search your catalogue")}
-              <input value={linkSearch} onChange={(event) => { setLinkSearch(event.target.value); setSelectedWineId("") }} placeholder={t("Producer, cuvée, or appellation")} />
+            <h4>{t("Save this code for one of your wines")}</h4>
+            <p>{t("Choose the exact wine, including its vintage, before saving this code for next time.")}</p>
+            <label>{t("Find a wine")}
+              <input value={linkSearch} onChange={(event) => { setLinkSearch(event.target.value); setSelectedWineId("") }} placeholder={t("Name, producer, or appellation")} />
             </label>
-            {catalogueLoading ? <p>{t("Loading your catalogue…")}</p> : null}
-            {catalogueError ? <p role="alert">{t("Your catalogue could not be loaded. Please refresh before linking a barcode.")}</p> : null}
+            {catalogueLoading ? <p>{t("Loading your wines…")}</p> : null}
+            {catalogueError ? <p role="alert">{t("Your wines could not be loaded. Refresh the page and try again.")}</p> : null}
             {linkCandidates.map((wine) => <label className="wine-barcode-panel__candidate" key={wine.id}>
               <input type="radio" name="barcode-wine-link" checked={selectedWineId === wine.id} onChange={() => setSelectedWineId(wine.id)} />
               <span>{wineLabel(wine)}</span>
             </label>)}
             {!catalogueLoading && !catalogueError && normalizeSearchText(linkSearch).length >= 2 && linkCandidates.length === 0
-              ? <p>{t("No matching wine in this catalogue. Check the active cellar or add the wine using the form below before linking its barcode.")}</p> : null}
-            <button type="button" disabled={!selectedWineId || linking} onClick={() => void linkSelected()}>{t("Confirm barcode link")}</button>
+              ? <p>{t("No wine found here. Check the selected cellar, or add the wine below first.")}</p> : null}
+            <button type="button" disabled={!selectedWineId || linking} onClick={() => void linkSelected()}>{t("Use this code for the selected wine")}</button>
           </section> : null}
         </div>
       ) : null}
