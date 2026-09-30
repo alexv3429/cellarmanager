@@ -430,7 +430,7 @@ and [ADR 005](adr/005-capture-assisted-wine-entry.md).
 | 0.6.12 | Photo-to-inventory ADD with explicit existing-wine selection or new-wine confirmation — complete |
 | 0.6.13 | Sequential batch-entry workflow for distinct bottles, each with its own reviewed ADD — complete |
 | 0.6.14 | Location QR codes for printed labels and local camera selection in Inventory — complete |
-| 0.6.15 | Wine barcode identifiers, scanning, and provider lookup |
+| 0.6.15 | Wine barcode identifiers, scanning, and optional provider lookup — complete |
 | 0.6.16 | Restore useful archived v0.1 enrichment identifiers/data |
 | 0.6.17 | Accuracy and privacy acceptance |
 | 0.6.18 | v0.6 release |
