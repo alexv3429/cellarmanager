@@ -431,16 +431,17 @@ and [ADR 005](adr/005-capture-assisted-wine-entry.md).
 | 0.6.13 | Sequential batch-entry workflow for distinct bottles, each with its own reviewed ADD — complete |
 | 0.6.14 | Location QR codes for printed labels and local camera selection in Inventory — complete |
 | 0.6.15 | Wine barcode identifiers, scanning, and optional provider lookup — complete |
-| 0.6.16 | Restore useful archived v0.1 enrichment identifiers/data |
-| 0.6.17 | Accuracy and privacy acceptance |
+| 0.6.16 | Preview-first tooling for archived v0.1 enrichment — merged; no household import applied |
+| 0.6.17 | Accuracy and privacy acceptance — automated gate and hosted phone check; see [acceptance record](v06-capture-acceptance.md) |
 | 0.6.18 | v0.6 release |
 
-Step 0.6.16 restores only exact-wine, household-visible historical observations
+Step 0.6.16 prepares restoration of exact-wine, household-visible historical observations
 from the verified v0.1 archive. Its retailer/reference identifiers are not
 bottle barcodes or shared canonical matches, and archived profile summaries do
 not replace current facts or recommendations. The preview-first procedure and
 deferred market/review material are documented in
 [`v01-enrichment-restoration.md`](v01-enrichment-restoration.md).
+Merging that tooling did not apply the private import to any household.
 
 Step 0.6.5 selects a private, temporary Supabase Storage design before the app
 uploads user images. It defines live Owner authorization, per-capture object
