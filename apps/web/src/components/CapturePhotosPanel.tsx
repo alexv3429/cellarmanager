@@ -175,6 +175,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, compl
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
+  const [cameraDraft, setCameraDraft] = useState<{ file: File; previewUrl: string | null } | null>(null)
   const [preview, setPreview] = useState<{ sessionId: string; urls: string[] } | null>(null)
   const [ocrResults, setOcrResults] = useState<Record<string, StoredCaptureOcrResult>>({})
   const [shownOcrSession, setShownOcrSession] = useState<string | null>(null)
@@ -191,6 +192,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, compl
     previewRef.current?.urls.forEach((url) => URL.revokeObjectURL(url))
     previewRef.current = null
     setPreview(null)
+    setCameraDraft(null)
   }, [])
 
   const refresh = useCallback(async ({ preserveError = false }: { preserveError?: boolean } = {}) => {
@@ -243,6 +245,10 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, compl
     }
   }, [consentKey, householdId, isOnline, t, userId])
 
+  useEffect(() => () => {
+    if (cameraDraft?.previewUrl) URL.revokeObjectURL(cameraDraft.previewUrl)
+  }, [cameraDraft])
+
   useEffect(() => {
     const now = Date.now()
     const retryAt = sessions
@@ -260,7 +266,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, compl
     setPhotoConsentForUser(userId)
   }
 
-  const upload = async (chosen: FileList | null) => {
+  const upload = async (chosen: FileList | readonly File[] | null) => {
     const selected = chosen ? Array.from(chosen) : []
     if (selected.length === 0) return
     const validation = validateCapturePhotoFiles(selected)
@@ -278,6 +284,7 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, compl
     setMessage("")
     try {
       const result = await uploadCapturePhotos(householdId, selected)
+      setCameraDraft(null)
       await refresh()
       let readyToRead = result.status === "processed"
       for (let attempt = 0; !readyToRead && attempt < 5; attempt += 1) {
@@ -301,6 +308,21 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, compl
     } finally {
       setBusy(false)
     }
+  }
+
+  const stageCameraPhoto = (chosen: FileList | null) => {
+    const selected = chosen ? Array.from(chosen) : []
+    if (selected.length === 0) return
+    const validation = validateCapturePhotoFiles(selected)
+    if (validation) {
+      setError(messageForError(new CapturePhotoError(validation), t))
+      return
+    }
+    let previewUrl: string | null = null
+    try { previewUrl = URL.createObjectURL(selected[0]) } catch { /* The photo can still be sent without a preview. */ }
+    setCameraDraft({ file: selected[0], previewUrl })
+    setError("")
+    setMessage("")
   }
 
   const prepare = async (sessionId: string) => {
@@ -506,11 +528,12 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, compl
           <p>{t("Photograph one bottle at a time. You can use two photos when it has front and back labels.")}</p>
           <details className="capture-photos__privacy">
             <summary>{t("Photo privacy details")}</summary>
-            <p>{t("After you choose a photo, CellarManager prepares it privately and sends it to Cloudflare AI to read the label. If no clear catalogue match is found, the recognized text is sent to the same service for editable suggestions. Cloudflare says it does not use submissions to train or improve its models. The text is saved privately, and the photo is deleted after a successful reading. Unread photos and saved text expire within 24 hours. No wine or bottle is added automatically.")}</p>
+            <p>{t("When you start reading, CellarManager prepares the selected photos privately and sends them to Cloudflare AI to read the labels. If no clear catalogue match is found, the recognized text is sent to the same service for editable suggestions. Cloudflare says it does not use submissions to train or improve its models. The text is saved privately, and the photos are deleted after a successful reading. Unread photos and saved text expire within 24 hours. No wine or bottle is added automatically.")}</p>
             {photoConsent ? (
               <button type="button" className="button-secondary" onClick={() => {
                 try { window.localStorage.removeItem(consentKey) } catch { /* Consent still resets for this visit. */ }
                 setPhotoConsentForUser(null)
+                setCameraDraft(null)
               }}>{t("Forget my photo choice on this device")}</button>
             ) : null}
           </details>
@@ -522,43 +545,76 @@ export function CapturePhotosPanel({ householdId, isOnline, userId, wines, compl
       {!photoConsent ? (
         <div className="capture-photos__consent">
           <h4>{t("Before using a label photo")}</h4>
-          <p>{t("Choosing a photo sends it to an external AI service to read this one bottle's label. If no clear match is found in your catalogue, its recognized text is also sent for editable suggestions. You review the result before adding bottles. Photos and text are temporary; no stock is changed automatically.")}</p>
+          <p>{t("When you start reading, the selected photos are sent to an external AI service to read this one bottle's labels. If no clear match is found in your catalogue, its recognized text is also sent for editable suggestions. You review the result before adding bottles. Photos and text are temporary; no stock is changed automatically.")}</p>
           <button type="button" disabled={!isOnline} onClick={acceptPhotoConsent}>{t("I understand — continue with photos")}</button>
           <small>{t("This choice is remembered on this device for your account. You can review the photo privacy details above at any time.")}</small>
         </div>
       ) : (
         <>
-          <div className="capture-photos__pickers">
-            <label className="capture-photos__picker" aria-disabled={!isOnline || busy}>
-              <span>{t("Take a photo of this bottle")}</span>
-              <input
-                accept="image/jpeg,image/png,.jpg,.jpeg,.png"
-                aria-label={t("Take a photo of this bottle")}
-                capture="environment"
-                disabled={!isOnline || busy}
-                onChange={(event) => {
-                  void upload(event.currentTarget.files)
-                  event.currentTarget.value = ""
-                }}
-                type="file"
-              />
-            </label>
-            <label className="capture-photos__picker" aria-disabled={!isOnline || busy}>
-              <span>{t("Choose photos of this bottle")}</span>
-              <input
-                accept="image/jpeg,image/png,.jpg,.jpeg,.png"
-                aria-label={t("Choose photos of this bottle")}
-                disabled={!isOnline || busy}
-                multiple
-                onChange={(event) => {
-                  void upload(event.currentTarget.files)
-                  event.currentTarget.value = ""
-                }}
-                type="file"
-              />
-            </label>
-          </div>
-          <p className="capture-photos__picker-help">{t("Choose one photo, or two photos of the front and back labels of the same bottle. Selecting photos starts the reading automatically.")}</p>
+          {cameraDraft ? (
+            <div className="capture-photos__camera-draft">
+              <strong>{t("Front-label photo ready")}</strong>
+              {cameraDraft.previewUrl ? <img src={cameraDraft.previewUrl} alt={t("Front-label photo ready")} /> : null}
+              <p>{t("Take a photo of the back label of this same bottle, or read the front label alone. Nothing has been sent yet.")}</p>
+              <div className="capture-photos__pickers">
+                <label className="capture-photos__picker" aria-disabled={!isOnline || busy}>
+                  <span>{t("Take the back-label photo")}</span>
+                  <input
+                    accept="image/jpeg,image/png,.jpg,.jpeg,.png"
+                    aria-label={t("Take the back-label photo")}
+                    capture="environment"
+                    disabled={!isOnline || busy}
+                    onChange={(event) => {
+                      const backPhoto = event.currentTarget.files?.[0]
+                      if (backPhoto) void upload([cameraDraft.file, backPhoto])
+                      event.currentTarget.value = ""
+                    }}
+                    type="file"
+                  />
+                </label>
+                <button type="button" disabled={!isOnline || busy} onClick={() => void upload([cameraDraft.file])}>
+                  {t("Read the front label only")}
+                </button>
+              </div>
+              <button type="button" className="button-secondary" disabled={busy} onClick={() => setCameraDraft(null)}>
+                {t("Discard this photo and start again")}
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="capture-photos__pickers">
+                <label className="capture-photos__picker" aria-disabled={!isOnline || busy}>
+                  <span>{t("Take a photo of this bottle")}</span>
+                  <input
+                    accept="image/jpeg,image/png,.jpg,.jpeg,.png"
+                    aria-label={t("Take a photo of this bottle")}
+                    capture="environment"
+                    disabled={!isOnline || busy}
+                    onChange={(event) => {
+                      stageCameraPhoto(event.currentTarget.files)
+                      event.currentTarget.value = ""
+                    }}
+                    type="file"
+                  />
+                </label>
+                <label className="capture-photos__picker" aria-disabled={!isOnline || busy}>
+                  <span>{t("Choose photos of this bottle")}</span>
+                  <input
+                    accept="image/jpeg,image/png,.jpg,.jpeg,.png"
+                    aria-label={t("Choose photos of this bottle")}
+                    disabled={!isOnline || busy}
+                    multiple
+                    onChange={(event) => {
+                      void upload(event.currentTarget.files)
+                      event.currentTarget.value = ""
+                    }}
+                    type="file"
+                  />
+                </label>
+              </div>
+              <p className="capture-photos__picker-help">{t("Take one or two photos of this bottle before reading, or choose both front and back labels together from your photo library.")}</p>
+            </>
+          )}
         </>
       )}
 

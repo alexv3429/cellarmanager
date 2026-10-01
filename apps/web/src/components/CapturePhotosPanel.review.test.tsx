@@ -105,11 +105,20 @@ async function click(label: string) {
 }
 
 async function choosePhoto() {
-  const input = container.querySelector<HTMLInputElement>('.capture-photos__picker input[type="file"]')!
+  const input = container.querySelector<HTMLInputElement>('.capture-photos__picker input[multiple]')!
   expect(input).not.toBeNull()
   const file = new File(["image"], "label.jpg", { type: "image/jpeg" })
   Object.defineProperty(input, "files", { configurable: true, value: [file] })
   await act(async () => input.dispatchEvent(new Event("change", { bubbles: true })))
+}
+
+async function takeCameraPhoto(name: string) {
+  const input = container.querySelector<HTMLInputElement>('.capture-photos__picker input[capture="environment"]')!
+  expect(input).not.toBeNull()
+  const file = new File(["image"], name, { type: "image/jpeg" })
+  Object.defineProperty(input, "files", { configurable: true, value: [file] })
+  await act(async () => input.dispatchEvent(new Event("change", { bubbles: true })))
+  return file
 }
 
 describe("label review", () => {
@@ -144,7 +153,7 @@ describe("label review", () => {
     ))
     expect(container.querySelector('input[type="file"]')).toBeNull()
     await click("I understand — continue with photos")
-    expect(container.textContent).toContain("front and back labels of the same bottle")
+    expect(container.textContent).toContain("choose both front and back labels together")
     expect(container.querySelector('input[capture="environment"]')).not.toBeNull()
     expect(container.querySelector('input[multiple]')).not.toBeNull()
 
@@ -154,6 +163,35 @@ describe("label review", () => {
     expect(suggestCaptureWineCandidate).toHaveBeenCalledExactlyOnceWith("capture-1")
     expect(container.textContent).toContain("Check the wine details")
     expect(onUseReviewedDetails).not.toHaveBeenCalled()
+  })
+
+  it("waits after the first camera photo and sends front and back labels together", async () => {
+    await act(async () => root.render(
+      <CapturePhotosPanel householdId="household-1" isOnline userId="owner-1" wines={[]} onUseReviewedDetails={onUseReviewedDetails} />,
+    ))
+    await click("I understand — continue with photos")
+    const front = await takeCameraPhoto("front.jpg")
+    expect(container.textContent).toContain("Nothing has been sent yet")
+    expect(container.textContent).toContain("Take the back-label photo")
+    expect(uploadCapturePhotos).not.toHaveBeenCalled()
+    expect(recognizeCapturePhotoSession).not.toHaveBeenCalled()
+
+    const back = await takeCameraPhoto("back.jpg")
+    expect(uploadCapturePhotos).toHaveBeenCalledExactlyOnceWith("household-1", [front, back])
+    expect(recognizeCapturePhotoSession).toHaveBeenCalledExactlyOnceWith("capture-1")
+    expect(suggestCaptureWineCandidate).toHaveBeenCalledExactlyOnceWith("capture-1")
+    expect(container.textContent).not.toContain("Nothing has been sent yet")
+  })
+
+  it("can read only the first camera photo when there is no back label", async () => {
+    await act(async () => root.render(
+      <CapturePhotosPanel householdId="household-1" isOnline userId="owner-1" wines={[]} onUseReviewedDetails={onUseReviewedDetails} />,
+    ))
+    await click("I understand — continue with photos")
+    const front = await takeCameraPhoto("front.jpg")
+    await click("Read the front label only")
+    expect(uploadCapturePhotos).toHaveBeenCalledExactlyOnceWith("household-1", [front])
+    expect(recognizeCapturePhotoSession).toHaveBeenCalledExactlyOnceWith("capture-1")
   })
 
   it("offers a transcript match without paying for field inference", async () => {

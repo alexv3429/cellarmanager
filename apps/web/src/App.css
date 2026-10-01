@@ -2975,7 +2975,8 @@
   gap: 12px;
 }
 
-.capture-photos__pickers label {
+.capture-photos__pickers label,
+.capture-photos__pickers > button {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -3027,6 +3028,28 @@
 }
 
 .capture-photos__picker-help {
+  color: var(--text-muted);
+}
+
+.capture-photos__camera-draft {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.capture-photos__camera-draft > img {
+  display: block;
+  width: min(100%, 260px);
+  max-height: 240px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: var(--bg);
+}
+
+.capture-photos__camera-draft > p {
+  margin: 0;
   color: var(--text-muted);
 }
 
