@@ -4,6 +4,6 @@ import { APP_VERSION } from "./appMetadata";
 
 describe("v0.5 application metadata", () => {
   it("identifies the released application version", () => {
-    expect(APP_VERSION).toBe("0.5.0");
+    expect(APP_VERSION).toBe("0.6.0");
   });
 });

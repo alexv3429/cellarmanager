@@ -1,6 +1,6 @@
 # v0.6 photo and barcode accuracy/privacy acceptance (0.6.17)
 
-Status: **automated review in progress; hosted phone acceptance and v0.6 release are not yet signed off.** This is a release gate, not a new recognition provider or an automatic wine-import feature. The Owner still chooses the wine and confirms each stock ADD. Production cellar data is never reset or used as a test fixture.
+Status: **PR #154 automated checks passed; hosted phone acceptance and the v0.6 release are not yet fully signed off.** This is a release gate, not a new recognition provider or an automatic wine-import feature. The Owner still chooses the wine and confirms each stock ADD. Production cellar data is never reset or used as a test fixture.
 
 ## What the tests prove
 
@@ -34,7 +34,7 @@ The historical Burgaud and Barraud reports are regression cases, not an accuracy
 
 Run `npm run ci` and `npm run audit`. GitHub CI also runs `npm run supabase -- test db`. Require green web, Worker, database, audit, and final CI-gate jobs for this PR's commit. Review test changes before treating the gate as passed; green tests do not establish a live OCR accuracy rate. Service credentials, user photos, private OCR text, and cellar exports must not enter the test repository or CI logs.
 
-Local run on 2026-10-01: `npm run ci` passed (759 web tests across 94 files, production build, and the Worker and other workspace suites); `npm run audit` found zero production high-severity vulnerabilities; `git diff --check` passed. These are local results only. Database isolation and the final CI gate still require the pull request's GitHub checks.
+Local run on 2026-10-01: `npm run ci` passed (759 web tests across 94 files, production build, and the Worker and other workspace suites); `npm run audit` found zero production high-severity vulnerabilities; `git diff --check` passed. PR #154 then passed the web, Worker build, isolated Supabase database, dependency audit, and final CI-gate checks. These checks establish the tested code path, not live recognition accuracy.
 
 ## Hosted phone check before 0.6.18
 
@@ -48,6 +48,6 @@ Use an existing test account/cellar if available; **do not create another test c
 
 Record the build/PR, device/browser, observed result for each applicable step, and any failure before signing off 0.6.18. A missing second label or barcode is **not exercised**, not passed. Database role isolation and expiry use isolated automated tests and do not require a second real cellar.
 
-The prior hosted two-label phone check exposed the immediate first-camera-photo upload and a missed printed volume despite legible OCR. This change addresses both paths in deterministic tests; the corrected behaviour still needs a fresh hosted-phone check before release sign-off.
+The prior hosted two-label phone check exposed the immediate first-camera-photo upload and a missed printed volume despite legible OCR. The first PR #154 preview then exposed a database rule that rejected the newly extracted numeric format; the same readable text and photos could not be saved as a wine suggestion. A corrective migration and SQL regression test were added, the single migration was applied to the linked development project, and the Owner reported the two-photo suggestion working on the updated preview on 2026-10-01. No stock ADD was required. This confirms the reported failure was resolved, but the final confirmation did not separately document camera-sequenced capture, barcode lookup, or deletion on that build. Keep those items marked **not re-exercised** rather than treating the PR check as a full hosted-device sign-off.
 
 The optional v0.1 enrichment import from 0.6.16 has **not** been applied to a household. It is unrelated to barcode recognition and is not evidence for this acceptance gate.

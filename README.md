@@ -2,7 +2,7 @@
 
 CellarManager is a local-first wine cellar inventory application.
 
-**Current release: v0.5.0**
+**Current release: v0.6.0**
 
 ## Architecture
 
@@ -65,6 +65,25 @@ PostgreSQL remains authoritative when concurrent devices submit incompatible
 changes. Existing holdings are preserved when upgrading; apply the committed
 Supabase migrations in order before deploying the v0.5 Worker and web assets.
 
+## v0.6 capabilities
+
+v0.6 reduces typing while keeping every wine and stock change under the
+owner's control:
+
+- English and French interface preferences, including dates and numbers;
+- private, temporary label photos, editable OCR suggestions, and conservative
+  matches to wines already in the household catalogue;
+- front and back photos of one bottle, with printed volume recognition;
+- reviewed, sequential bottle additions that still require explicit stock
+  confirmation;
+- printable location QR labels for selecting a storage location; and
+- bottle barcode scanning, household catalogue links, and an optional external
+  product lookup that sends only the code.
+
+Image and text retention, provider boundaries, and the remaining hosted-device
+acceptance are recorded in
+[`docs/v06-capture-acceptance.md`](docs/v06-capture-acceptance.md).
+
 The canonical [`docs/product-roadmap.md`](docs/product-roadmap.md) now sequences
 shared-household collaboration, English/French localization, photo/OCR/barcode
 capture, history/insight, and v1.0 reliability work. Additional interface
@@ -122,8 +141,8 @@ enrichment worker. Deployment secrets and the source-rights boundary are
 documented in
 [`docs/reviewed-enrichment-research.md`](docs/reviewed-enrichment-research.md).
 
-The v0.5 release and its production acceptance are recorded in
-[`docs/v05-acceptance.md`](docs/v05-acceptance.md). See `apps/web/README.md`
+The v0.6 release gate is recorded in
+[`docs/v06-capture-acceptance.md`](docs/v06-capture-acceptance.md). See `apps/web/README.md`
 for local development and production/PWA testing commands.
 
 ## Documentation
@@ -131,7 +150,7 @@ for local development and production/PWA testing commands.
 See `docs/README.md` for current architecture, roadmap, release, and historical
 migration evidence.
 
-Release notes: `docs/releases/v0.5.0.md`.
+Release notes: `docs/releases/v0.6.0.md`.
 
 Current product roadmap: `docs/product-roadmap.md`.
 
