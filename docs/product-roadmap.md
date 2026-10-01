@@ -435,6 +435,13 @@ and [ADR 005](adr/005-capture-assisted-wine-entry.md).
 | 0.6.17 | Accuracy and privacy acceptance |
 | 0.6.18 | v0.6 release |
 
+Step 0.6.16 restores only exact-wine, household-visible historical observations
+from the verified v0.1 archive. Its retailer/reference identifiers are not
+bottle barcodes or shared canonical matches, and archived profile summaries do
+not replace current facts or recommendations. The preview-first procedure and
+deferred market/review material are documented in
+[`v01-enrichment-restoration.md`](v01-enrichment-restoration.md).
+
 Step 0.6.5 selects a private, temporary Supabase Storage design before the app
 uploads user images. It defines live Owner authorization, per-capture object
 scoping, file validation and quotas, metadata removal, external-recognizer

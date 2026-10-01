@@ -41,6 +41,7 @@ retains only the evidence needed to understand its released migration history.
 - [`v05-acceptance.md`](v05-acceptance.md) - shared-household production acceptance and release gates
 - [`wine-duplicate-merge.md`](wine-duplicate-merge.md) - conservative duplicate candidates, explicit owner merge, stock consolidation, and immutable audit history
 - [`v01-metadata-restoration.md`](v01-metadata-restoration.md) - exact-ID, preview-first restoration of safe archived facts and guidance
+- [`v01-enrichment-restoration.md`](v01-enrichment-restoration.md) - exact-ID, preview-first restoration of private historical identifiers and enrichment summaries
 - [`maturity-knowledge-v2.md`](maturity-knowledge-v2.md) - expanded exact-appellation maturity profiles, evidence inputs, safety boundary, and private aggregate coverage
 - [`maturity-hierarchy-poc.md`](maturity-hierarchy-poc.md) - validated and promoted region, appellation/climat, time-bounded producer, cuvee, interaction, and release model
 - [`enrichment-provider-rights-request.md`](enrichment-provider-rights-request.md) - provider contact drafts for licensing, retention, provenance, and methodology answers
