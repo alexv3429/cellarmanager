@@ -99,6 +99,81 @@ test("transcribes a verified owner photo with Cloudflare AI, saves private text,
   assert.equal(aiCalls.some((call) => JSON.stringify(call).includes("service-secret")), false);
 });
 
+test("reads two labels of one capture in order without sending cellar identity to the model", async () => {
+  const secondObjectName = "6fb9c06a-a8ce-46f3-97d2-cc92f251edb1";
+  const secondImageBytes = new Uint8Array([0xff, 0xd8, 3, 4, 0xff, 0xd9]);
+  const modelInputs = [];
+  let savedPages;
+  const calls = [];
+  const response = await handleCaptureRecognition(request(), env, {
+    fetch: async (url, options = {}) => {
+      const call = { url: String(url), method: options.method ?? "GET", body: options.body };
+      calls.push(call);
+      if (call.url.endsWith("/list_capture_processed_assets")) return jsonResponse([
+        asset(),
+        { object_name: secondObjectName, content_type: "image/jpeg", size_bytes: secondImageBytes.length },
+      ]);
+      if (call.url.endsWith(`/object/authenticated/capture-labels/${objectName}`)) return imageResponse();
+      if (call.url.endsWith(`/object/authenticated/capture-labels/${secondObjectName}`)) return imageResponse(secondImageBytes);
+      if (call.url.endsWith("/complete_capture_ocr")) {
+        savedPages = JSON.parse(call.body).p_pages;
+        return jsonResponse({ state: "ocr_deletion_pending", object_names: [objectName, secondObjectName] });
+      }
+      if (call.url.endsWith("/object/capture-labels") && call.method === "DELETE") return jsonResponse([]);
+      if (call.url.endsWith("/complete_capture_cleanup")) return jsonResponse(true);
+      if (call.url.endsWith("/list_capture_ocr_result")) return jsonResponse({
+        engine_version: "cloudflare-moondream3.1-9b-a2b-v1",
+        recognized_pages: savedPages.map(({ text, confidence }) => ({ text, confidence })),
+      });
+      assert.fail(`Unexpected request ${call.method} ${call.url}`);
+    },
+    runModel: async (model, input) => {
+      modelInputs.push({ model, input });
+      return { answer: modelInputs.length === 1 ? "POUILLY-FUISSÉ\nEn France\n2019" : "DOMAINE BARRAUD" };
+    },
+  });
+
+  assert.equal(response.status, 200);
+  assert.deepEqual((await response.json()).pages, [
+    { text: "POUILLY-FUISSÉ\nEn France\n2019", confidence: 0 },
+    { text: "DOMAINE BARRAUD", confidence: 0 },
+  ]);
+  assert.deepEqual(savedPages.map(({ object_name }) => object_name), [objectName, secondObjectName]);
+  assert.equal(modelInputs.length, 2);
+  assert.deepEqual(Object.keys(modelInputs[0].input).sort(),
+    ["image", "max_tokens", "question", "reasoning", "stream", "task", "temperature"]);
+  assert.equal(modelInputs[0].input.image, `data:image/jpeg;base64,${Buffer.from(imageBytes).toString("base64")}`);
+  assert.equal(modelInputs[1].input.image, `data:image/jpeg;base64,${Buffer.from(secondImageBytes).toString("base64")}`);
+  assert.equal(modelInputs.some(({ input }) => JSON.stringify(input).includes(sessionId)), false);
+  assert.deepEqual(JSON.parse(calls.find(({ method, url }) => method === "DELETE" && url.endsWith("/object/capture-labels")).body), {
+    prefixes: [objectName, secondObjectName],
+  });
+});
+
+test("reports pending image deletion instead of claiming cleanup succeeded", async () => {
+  const calls = [];
+  const response = await handleCaptureRecognition(request(), env, {
+    fetch: async (url, options = {}) => {
+      const call = { url: String(url), method: options.method ?? "GET" };
+      calls.push(call);
+      if (call.url.endsWith("/list_capture_processed_assets")) return jsonResponse([asset()]);
+      if (call.url.endsWith(`/object/authenticated/capture-labels/${objectName}`)) return imageResponse();
+      if (call.url.endsWith("/complete_capture_ocr")) return jsonResponse({ state: "ocr_deletion_pending", object_names: [objectName] });
+      if (call.url.endsWith("/object/capture-labels") && call.method === "DELETE") return jsonResponse({ error: "storage unavailable" }, 503);
+      if (call.url.endsWith("/list_capture_ocr_result")) return jsonResponse({
+        engine_version: "cloudflare-moondream3.1-9b-a2b-v1",
+        recognized_pages: [{ text: "MORGON CÔTE DU PY", confidence: 0 }],
+      });
+      assert.fail(`Unexpected request ${call.method} ${call.url}`);
+    },
+    runModel: async () => ({ answer: "MORGON CÔTE DU PY" }),
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).state, "ocr_deletion_pending");
+  assert.equal(calls.some(({ url }) => url.endsWith("/complete_capture_cleanup")), false);
+});
+
 test("returns the first persisted OCR result when another request saved this session", async () => {
   const calls = [];
   const response = await handleCaptureRecognition(request(), env, {
