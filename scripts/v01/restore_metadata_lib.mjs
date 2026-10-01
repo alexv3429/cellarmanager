@@ -624,6 +624,7 @@ export function renderRestorationSql({
   householdId,
   plan,
   recordedBy,
+  requireUnmerged = false,
 }) {
   const canonicalHousehold = canonicalUuid(householdId)
   const canonicalRecorder = canonicalUuid(recordedBy)
@@ -759,6 +760,7 @@ from _v01_metadata proposed
 join public.wines target
   on target.id = proposed.wine_id
  and target.household_id = ${sqlLiteral(canonicalHousehold)}::uuid
+ ${requireUnmerged ? "and target.merged_into_wine_id is null" : ""}
 where proposed.observation_id is not null
 on conflict (id) do nothing;
 
@@ -887,6 +889,7 @@ from _v01_metadata proposed
 left join public.wines target
   on target.id = proposed.wine_id
  and target.household_id = ${sqlLiteral(canonicalHousehold)}::uuid
+ ${requireUnmerged ? "and target.merged_into_wine_id is null" : ""}
 left join public.household_wine_observations existing_observation
   on existing_observation.id = proposed.observation_id;
 

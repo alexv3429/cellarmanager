@@ -26,4 +26,23 @@ describe("legacy guidance note localization", () => {
     const note = "A tasting note written by the cellar owner."
     expect(formatLegacyGuidanceNote(note, t)).toBe(note)
   })
+
+  it("localizes archived enrichment labels without changing source values", () => {
+    const note = [
+      "Archived v0.1 enrichment (historical reference only; not used for current wine facts, recommendations, or stock).",
+      "Verified source archive: aaaa.",
+      "Archived external identifiers (retailer/reference codes, not bottle barcodes):",
+      "- Shop SKU: SKU-42 (source: https://example.org/wine/42)",
+      "Archived composition: grapes Pinot Noir 100%; alcohol 13%.",
+      "Archived drinking window: 2026–2032.",
+      "2 archived critical-review references remain in the private source archive; excerpts are not restored.",
+    ].join("\n")
+    const translated = formatLegacyGuidanceNote(note, t)
+    expect(translated).toContain("Anciennes recherches v0.1 conservées")
+    expect(translated).toContain("Anciens identifiants externes")
+    expect(translated).toContain("Shop SKU: SKU-42 (source : https://example.org/wine/42)")
+    expect(translated).toContain("Ancienne composition : cépages Pinot Noir 100% ; alcool 13%.")
+    expect(translated).toContain("Ancienne période de dégustation : 2026–2032.")
+    expect(translated).toContain("2 références de critiques")
+  })
 })
