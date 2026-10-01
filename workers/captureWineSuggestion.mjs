@@ -197,18 +197,23 @@ function evidenceSupportsColor(value, evidence) {
   return patterns[value]?.test(normalized) ?? false;
 }
 
-function evidenceSupportsFormat(value, evidence) {
-  return evidence.some((line) => {
+function explicitBottleFormat(sourceLines) {
+  const candidates = new Map();
+  for (const line of sourceLines) {
     const normalized = line.toLocaleLowerCase("en-US").replace(/,/gu, ".");
-    const volumes = [...normalized.matchAll(/(\d+(?:\.\d+)?)\s*(ml|cl|l)\b/giu)];
-    return volumes.some(([, amount, unit]) => {
-      const amountNumber = Number(amount);
-      const millilitres = unit.toLowerCase() === "ml" ? amountNumber
-        : unit.toLowerCase() === "cl" ? amountNumber * 10
-          : amountNumber * 1000;
-      return Number.isInteger(millilitres) && millilitres === value;
-    });
-  });
+    for (const [, amount, unit] of normalized.matchAll(/(?<![\p{L}\p{N}])(\d+(?:\.\d+)?)\s*(ml|cl|l)\b/giu)) {
+      const quantity = Number(amount);
+      const millilitres = unit === "ml" ? quantity : unit === "cl" ? quantity * 10 : quantity * 1000;
+      // Nutrition panels commonly say "per 100 ml". Do not mistake that
+      // reference amount for the bottle format or guess between two volumes.
+      if (Number.isInteger(millilitres) && millilitres >= 187 && millilitres <= 20_000) {
+        candidates.set(millilitres, line);
+      }
+    }
+  }
+  if (candidates.size !== 1) return { value: null, evidence: [], confidence: "low" };
+  const [value, line] = candidates.entries().next().value;
+  return { value, evidence: [line], confidence: "medium" };
 }
 
 function validateField(value, sourceLines, valueIsValid = validTextValue) {
@@ -263,10 +268,7 @@ export function validateCaptureWineSuggestion(value, recognizedPages) {
     : colorField;
   const formatField = validateField(value.format_ml, sourceLines, (candidate) => candidate === null
     || (Number.isInteger(candidate) && candidate > 0 && candidate <= 20_000));
-  const format = formatField?.value !== null && formatField?.value !== undefined
-      && !evidenceSupportsFormat(formatField.value, formatField.evidence)
-    ? { value: null, evidence: [], confidence: "low" }
-    : formatField;
+  const format = formatField ? explicitBottleFormat(lines) : null;
   const suggestion = {
     producer: validateField(value.producer, sourceLines),
     cuvee: validateField(value.cuvee, sourceLines),

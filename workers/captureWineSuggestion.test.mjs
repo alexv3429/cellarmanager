@@ -130,6 +130,36 @@ test("does not infer color or bottle format from unrelated evidence", () => {
   assert.deepEqual(validated?.format_ml.evidence, []);
 });
 
+test("uses an explicit bottle volume from either label even when the model misses it", () => {
+  const front = "PURPLE ROSE\n2024\nTOSCANA\nCASTELLO DI AMA";
+  const back = "PURPLE ROSE\n2024\n13,5% Vol e 750 ml\n100 ml:\nE=308 kJ / 74 kcal";
+  const proposed = candidate();
+  proposed.producer = { value: "CASTELLO DI AMA", evidence: ["CASTELLO DI AMA"], confidence: "high" };
+  proposed.cuvee = { value: "PURPLE ROSE", evidence: ["PURPLE ROSE"], confidence: "high" };
+  proposed.format_ml = { value: null, evidence: [], confidence: "low" };
+
+  const result = validateCaptureWineSuggestion(proposed, [front, back]);
+  assert.deepEqual(result?.format_ml, {
+    value: 750, evidence: ["13,5% Vol e 750 ml"], confidence: "medium",
+  });
+  proposed.format_ml = { value: 100, evidence: ["100 ml:"], confidence: "high" };
+  assert.equal(validateCaptureWineSuggestion(proposed, [front, back])?.format_ml.value, 750);
+});
+
+test("normalizes printed wine-bottle volume units but leaves conflicting volumes unresolved", () => {
+  for (const [printed, expected] of [
+    ["750ml", 750], ["75 cl", 750], ["0,75 l", 750], ["0.75L", 750],
+    ["150cl", 1500], ["70cl", 700], ["50 cl", 500], ["37.5cl", 375],
+  ]) {
+    const result = validateCaptureWineSuggestion(candidate(), [...recognizedPages, printed]);
+    assert.deepEqual(result?.format_ml, { value: expected, evidence: [printed], confidence: "medium" }, printed);
+  }
+  const conflicting = validateCaptureWineSuggestion(candidate(), [...recognizedPages, "750 ml\n150 cl"]);
+  assert.deepEqual(conflicting?.format_ml, { value: null, evidence: [], confidence: "low" });
+  const nutritionOnly = validateCaptureWineSuggestion(candidate(), [...recognizedPages, "100 ml: E=308 kJ"]);
+  assert.equal(nutritionOnly?.format_ml.value, null);
+});
+
 test("returns the persisted suggestion without paying for another model call", async () => {
   const stored = { model_version: CAPTURE_WINE_SUGGESTION_MODEL_VERSION, suggestion: candidate() };
   const rpc = rpcFetcher({ saved: stored });
