@@ -7,7 +7,7 @@ import { handleCaptureWineSuggestion } from "./captureWineSuggestion.mjs";
 import { validatePreparedCaptureImage } from "./captureImageValidate.mjs";
 import { handleBarcodeLookup } from "./barcodeLookup.mjs";
 
-const WORKER_VERSION = "0.5.0";
+const WORKER_VERSION = "0.6.0";
 
 export default {
   async fetch(request, env) {

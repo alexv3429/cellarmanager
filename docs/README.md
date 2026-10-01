@@ -3,10 +3,10 @@
 The repository documentation describes the current local-first application and
 retains only the evidence needed to understand its released migration history.
 
-## Released v0.5 product and active design
+## Released v0.6 product and active design
 
 - [`../README.md`](../README.md) - application, development, validation, and deployment overview
-- [`product-roadmap.md`](product-roadmap.md) - canonical v0.5-to-v1.0 product sequence
+- [`product-roadmap.md`](product-roadmap.md) - canonical milestone sequence through v1.0
 - [`household-permissions.md`](household-permissions.md) - final owner/member capability and enforcement contract for v0.5
 - [`household-switching.md`](household-switching.md) - multi-household selection, isolation, and 0.5.5 acceptance checklist
 - [`household-members.md`](household-members.md) - current collaborators, role changes, access removal, and 0.5.6 validation
@@ -60,6 +60,7 @@ retains only the evidence needed to understand its released migration history.
 
 ## Released history and migration evidence
 
+- [`releases/v0.6.0.md`](releases/v0.6.0.md) - bilingual interface and reviewed label, location-QR, and barcode entry
 - [`releases/v0.5.0.md`](releases/v0.5.0.md) - shared-household collaboration release
 - [`releases/v0.4.0.md`](releases/v0.4.0.md) - reviewed rich-library release
 - [`releases/v0.3.0.md`](releases/v0.3.0.md) - personal-production baseline release
@@ -70,6 +71,6 @@ retains only the evidence needed to understand its released migration history.
 
 The accepted v0.1 FastAPI/SQLite runtime and migration implementation are not
 part of active development or CI. The `v0.1.0`, `v0.2.0`, `v0.3.0`, and
-`v0.4.0`, and `v0.5.0` Git tags preserve the released history if inspection is
-ever required.
+`v0.4.0` and `v0.5.0` Git tags preserve released history if inspection is
+required. The `v0.6.0` tag follows production acceptance of this release.
 New product development belongs in `apps/web/`, `workers/`, and `supabase/`.
