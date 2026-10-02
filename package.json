@@ -12,6 +12,7 @@
     "release:check": "node scripts/check_release.mjs",
     "v01:metadata": "node scripts/v01/restore_metadata.mjs",
     "v01:enrichment": "node scripts/v01/restore_enrichment.mjs",
+    "v01:movements": "node scripts/v01/restore_movements.mjs",
     "v01:test": "node --test scripts/v01/*.test.mjs",
     "lwin:import": "node scripts/lwin/import_snapshot.mjs",
     "lwin:test": "node --test scripts/lwin/*.test.mjs",
