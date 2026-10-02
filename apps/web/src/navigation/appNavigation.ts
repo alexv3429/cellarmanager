@@ -82,6 +82,8 @@ export function getAppRouteFromPathname(
       return { view: "pairing", wineId: null }
     case "/activity":
       return { view: "activity", wineId: null }
+    case "/statistics":
+      return { view: "activity", wineId: null }
     case "/catalog":
       return { view: "catalog", wineId: null }
     case "/data":

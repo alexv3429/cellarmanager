@@ -25,7 +25,7 @@ describe("app navigation", () => {
     expect(getWineDetailReturnView({ wineDetailReturnView: "cellar" })).toBe("cellar")
   })
 
-  it.each(["/wines/test-wine", "/pairing", "/data", "/activity", "/members", "/devices"])("keeps Member read-only deep links for %s", (path) => {
+  it.each(["/wines/test-wine", "/pairing", "/data", "/activity", "/statistics", "/members", "/devices"])("keeps Member read-only deep links for %s", (path) => {
     const route = getAppRouteFromPathname(path)
     expect(getAppRouteForRole(route, "member")).toEqual(route)
   })
@@ -35,6 +35,7 @@ describe("app navigation", () => {
     expect(getAppViewFromPathname("/")).toBe("inventory")
     expect(getAppViewFromPathname("/pairing")).toBe("pairing")
     expect(getAppViewFromPathname("/activity")).toBe("activity")
+    expect(getAppViewFromPathname("/statistics")).toBe("activity")
     expect(getAppViewFromPathname("/catalog")).toBe("catalog")
     expect(getAppViewFromPathname("/data")).toBe("import")
     expect(getAppViewFromPathname("/import")).toBe("import")
@@ -46,6 +47,7 @@ describe("app navigation", () => {
     expect(getAppViewFromPathname("/members/")).toBe("members")
     expect(getAppViewFromPathname("/devices/")).toBe("devices")
     expect(getAppViewFromPathname("/activity/")).toBe("activity")
+    expect(getAppViewFromPathname("/statistics/")).toBe("activity")
     expect(getAppViewFromPathname("/pairing/")).toBe("pairing")
     expect(getAppViewFromPathname("/catalog/")).toBe("catalog")
     expect(getAppViewFromPathname("/data/")).toBe("import")

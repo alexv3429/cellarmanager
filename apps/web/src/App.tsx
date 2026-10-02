@@ -131,13 +131,14 @@ function ReadyAuthenticatedApp({
   useEffect(() => {
     const path = route.view === "wine" ? getWineDetailPath(route.wineId) : getAppViewPath(route.view)
     const foreign = isOtherHouseholdHistory(window.history.state, activeHouseholdId)
+    const search = window.location.pathname === "/statistics" ? "?tab=statistics" : window.location.search
     // Only an in-app wine navigation has a known Back destination. A fresh
     // deep link falls back to the catalog instead of leaving the app.
     const hasReturnView = !foreign && getWineDetailReturnView(window.history.state) !== null
     window.history.replaceState(
       householdHistoryState(activeHouseholdId, route.view === "wine" && hasReturnView ? wineDetailReturnView : undefined),
       "",
-      path + (foreign ? "" : window.location.search + window.location.hash),
+      path + (foreign ? "" : search + window.location.hash),
     )
   }, [activeHouseholdId, route.view, route.wineId, wineDetailReturnView])
   const [hasMountedPairing, setHasMountedPairing] =
@@ -309,6 +310,7 @@ function ReadyAuthenticatedApp({
           }
         />
       ) : null}
+
 
       {hasMountedPairing ? (
         <div hidden={route.view !== "pairing"}>
