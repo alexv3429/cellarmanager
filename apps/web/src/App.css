@@ -8622,15 +8622,16 @@
 .statistics-stock-labels { display: flex; justify-content: space-between; gap: .5rem; font-variant-numeric: tabular-nums; }
 .statistics-chart details summary { cursor: pointer; padding: .5rem 0; }
 .statistics-chart table { width: 100%; }
-.app-shell__content .statistics-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.app-shell__content .statistics-chart { display: grid; grid-template-columns: minmax(0, 1fr); }
+.app-shell__content section.statistics-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.app-shell__content section.statistics-chart { display: grid; grid-template-columns: minmax(0, 1fr); }
 .app-shell__content .statistics-flow-list { width: 100%; min-width: 0; }
+.statistics-stock-labels { width: 100%; }
 @media (prefers-color-scheme: dark) {
   .statistics-flow-values--add { color: #8bd7ae; }
   .statistics-flow-values--remove { color: #e8ab87; }
 }
 @media (max-width: 640px) {
-  .app-shell__content .statistics-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .app-shell__content section.statistics-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .statistics-flow-row { grid-template-columns: 3.8rem minmax(0, 1fr) 4.8rem; gap: .35rem; }
   .statistics-flow-row time, .statistics-flow-values { font-size: .75rem; }
 }
