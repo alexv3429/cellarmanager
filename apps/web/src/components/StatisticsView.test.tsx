@@ -51,7 +51,7 @@ describe("statistics screen", () => {
     await act(async () => root.render(<LanguageContext.Provider value={{
       language: "fr", preference: "fr", setSavedPreference: () => undefined,
       t: (key, values) => translate("fr", key, values),
-    }}><StatisticsView householdId="home" /></LanguageContext.Provider>))
+    }}><StatisticsView householdId="home" onOpenWine={() => undefined} /></LanguageContext.Provider>))
     expect(container.textContent).toContain("Vue d’ensemble")
     expect(container.textContent).toContain("Bouteilles aujourd’hui12")
     expect(container.textContent).toContain("Ajoutées2")
@@ -62,7 +62,7 @@ describe("statistics screen", () => {
 
   it("keeps the confirmed flow but hides an unreliable stock curve", async () => {
     query.stock = 20
-    await act(async () => root.render(<StatisticsView householdId="home" />))
+    await act(async () => root.render(<StatisticsView householdId="home" onOpenWine={() => undefined} />))
     expect(container.textContent).toContain("Bottles today20")
     expect(container.textContent).toContain("Added2")
     expect(container.querySelector(".statistics-stock-plot")).toBeNull()

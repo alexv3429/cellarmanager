@@ -9,6 +9,7 @@ import {
 } from "../data/inventoryInsights"
 import { formatLocalizedNumber } from "../i18n/formatting"
 import { useLanguage } from "../i18n/useLanguage"
+import { ConsumptionHistoryView } from "./ConsumptionHistoryView"
 import { Notice } from "./Notice"
 
 interface StockRow { total: number }
@@ -31,7 +32,7 @@ const LEGACY_QUERY = `
   where household_id = ?
 `
 
-export function StatisticsView({ householdId }: { householdId: string }) {
+export function StatisticsView({ householdId, onOpenWine }: { householdId: string; onOpenWine: (wineId: string) => void }) {
   const { language, t } = useLanguage()
   const [period, setPeriod] = useState<InsightsPeriod>("12m")
   const { data: stockRows, error: stockError, isLoading: stockLoading } =
@@ -129,5 +130,6 @@ export function StatisticsView({ householdId }: { householdId: string }) {
         </> : <p>{t("statistics.stockUnavailable")}</p>}
       </section>
     </> : null}
+    <ConsumptionHistoryView householdId={householdId} onOpenWine={onOpenWine} period={period} />
   </div>
 }
