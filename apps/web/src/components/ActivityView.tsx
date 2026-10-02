@@ -16,6 +16,12 @@ import { formatWineVolume } from "../data/wineCatalog"
 import { InventoryQueueReview } from "./InventoryQueueReview"
 import { useLanguage } from "../i18n/useLanguage"
 import { formatLocalizedDateTime, formatLocalizedNumber } from "../i18n/formatting"
+import {
+  buildLegacyActivity,
+  filterLegacyActivity,
+  type LegacyActivityItem,
+  type LegacyActivityRow,
+} from "../data/legacyActivity"
 
 interface ActivityViewProps {
   householdId: string
@@ -66,6 +72,21 @@ const ACTIVITY_QUERY = `
   limit 100
 `
 
+const LEGACY_ACTIVITY_QUERY = `
+  select
+    legacy.*,
+    coalesce(wine.merged_into_wine_id, wine.id) as catalog_wine_id,
+    wine.producer,
+    wine.cuvee,
+    wine.vintage,
+    wine.color,
+    wine.format_ml
+  from legacy_inventory_events legacy
+  left join wines wine on wine.id = legacy.wine_id
+  where legacy.household_id = ?
+  order by legacy.occurred_at desc, legacy.id desc
+`
+
 function formatActivityDate(value: string, language: "en" | "fr"): string {
   return formatLocalizedDateTime(value, language, {
     dateStyle: "medium",
@@ -107,6 +128,66 @@ function activityWineMeta(
     .join(" · ")
 }
 
+function ArchivedActivityCard({
+  item,
+  language,
+  onOpenWine,
+  t,
+}: {
+  item: LegacyActivityItem
+  language: "en" | "fr"
+  onOpenWine: (wineId: string) => void
+  t: (key: string, values?: Record<string, string>) => string
+}) {
+  if (item.kind === "opening") {
+    return <li className="activity-card activity-card--legacy" key={item.id}>
+      <header>
+        <div className="activity-card__wine">
+          <strong>{t("activity.openingTitle")}</strong>
+          <span>{t("activity.openingNotPurchase")}</span>
+        </div>
+        <span className="activity-status activity-status--history">{t("activity.archivedBadge")}</span>
+      </header>
+      <p className="activity-card__movement">{t("activity.openingSummary", {
+        bottles: formatLocalizedNumber(item.quantity, language),
+        bottleWord: t(item.quantity === 1 ? "bottle" : "bottles"),
+        wines: formatLocalizedNumber(item.wineCount, language),
+        wineWord: t(item.wineCount === 1 ? "wine" : "wines"),
+        positions: formatLocalizedNumber(item.entryCount, language),
+        positionWord: t(item.entryCount === 1 ? "position" : "positions"),
+      })}</p>
+      <p className="activity-card__meta"><time dateTime={item.occurredAt}>
+        {formatActivityDate(item.occurredAt, language)}
+      </time> · {t("activity.openingContext")}</p>
+    </li>
+  }
+
+  const meta = [
+    item.vintage ?? "NV",
+    item.color ? t(item.color.trim().toLowerCase()) : null,
+    item.formatMl ? formatWineVolume(item.formatMl) : null,
+  ].filter((value): value is string | number => value !== null).join(" · ")
+
+  return <li className="activity-card activity-card--legacy" key={item.id}>
+    <header>
+      <div className="activity-card__wine">
+        {item.catalogWineId ? <button className="wine-detail-link" type="button"
+          onClick={() => onOpenWine(item.catalogWineId as string)}>{item.wineLabel}</button>
+          : <strong>{item.wineLabel}</strong>}
+        <span>{meta}</span>
+      </div>
+      <span className="activity-status activity-status--history">{t("activity.archivedBadge")}</span>
+    </header>
+    <p className="activity-card__movement"><strong>{t("activity.archivedDrink", {
+      count: formatLocalizedNumber(item.quantity, language),
+      bottles: t(item.quantity === 1 ? "bottle" : "bottles"),
+    })}</strong>{item.sourceLocation ? ` ${t("activity.fromFormerLocation", { location: item.sourceLocation })}` : null}</p>
+    <p className="activity-card__meta"><time dateTime={item.occurredAt}>
+      {formatActivityDate(item.occurredAt, language)}
+    </time> · {t("activity.archivedContext")}</p>
+  </li>
+}
+
 export function ActivityView({
   householdId,
   userId,
@@ -122,8 +203,14 @@ export function ActivityView({
     ACTIVITY_QUERY,
     [householdId],
   )
+  const {
+    data: legacyRows,
+    error: legacyError,
+    isLoading: legacyIsLoading,
+  } = useQuery<LegacyActivityRow>(LEGACY_ACTIVITY_QUERY, [householdId])
 
   const [search, setSearch] = useState("")
+  const [view, setView] = useState<"movements" | "sync">("movements")
   const [operationType, setOperationType] =
     useState<ActivityFilterValue>("ALL")
   const [status, setStatus] =
@@ -137,37 +224,67 @@ export function ActivityView({
     () => summarizeInventoryActivity(activity),
     [activity],
   )
+  const legacyActivity = useMemo(
+    () => buildLegacyActivity(legacyRows, householdId),
+    [legacyRows, householdId],
+  )
   const visibleActivity = useMemo(
     () =>
       filterInventoryActivity(activity, {
         operationType,
         search,
-        status,
+        status: view === "movements" ? "ACCEPTED" : status,
       }),
-    [activity, operationType, search, status],
+    [activity, operationType, search, status, view],
   )
+  const visibleLegacy = useMemo(
+    () => view === "movements"
+      ? filterLegacyActivity(legacyActivity, { operationType, search, status: "ALL" })
+      : [],
+    [legacyActivity, operationType, search, view],
+  )
+  const timeline = useMemo(() => [
+    ...visibleActivity.map((item) => ({ kind: "modern" as const, key: `operation:${item.id}`, occurredAt: item.created_at_client, item })),
+    ...visibleLegacy.map((item) => ({ kind: "legacy" as const, key: item.id, occurredAt: item.occurredAt, item })),
+  ].sort((a, b) => b.occurredAt.localeCompare(a.occurredAt) || a.key.localeCompare(b.key)),
+  [visibleActivity, visibleLegacy])
+  const totalTimelineEntries = view === "movements"
+    ? summary.acceptedCount + legacyActivity.length
+    : activity.length
+  const isTimelineLoading = isLoading || (view === "movements" && legacyIsLoading)
   const hasFilters =
     search.trim().length > 0 ||
     operationType !== "ALL" ||
-    status !== "ALL"
+    (view === "sync" && status !== "ALL")
 
   return (
     <main>
       <div className="activity-heading">
         <div>
           <h1>{t("Activity")}</h1>
-          <p>{t("Recent inventory changes from every synchronized device in this household.")}</p>
+          <p>{t(view === "movements" ? "activity.timelineIntro" : "activity.syncIntro")}</p>
         </div>
       </div>
 
-      <InventoryQueueReview householdId={householdId} userId={userId} isOnline={isOnline} />
+      <nav aria-label={t("activity.sections")} className="activity-mode-switch">
+        <button aria-pressed={view === "movements"} onClick={() => { setView("movements"); setSearch(""); setOperationType("ALL") }} type="button">
+          {t("activity.movementsTab")}
+        </button>
+        <button aria-pressed={view === "sync"} onClick={() => { setView("sync"); setSearch(""); setOperationType("ALL") }} type="button">
+          {t("activity.syncTab")}
+          {summary.pendingCount > 0 ? <span className="activity-mode-switch__count">{formatLocalizedNumber(summary.pendingCount, language)}</span> : null}
+        </button>
+      </nav>
+
+      {view === "sync" ? <InventoryQueueReview householdId={householdId} userId={userId} isOnline={isOnline} /> : null}
 
       {error ? (
         <Notice role="alert" tone="error">{t("Unable to load activity:")}{String(error)}
         </Notice>
       ) : null}
+      {view === "movements" && legacyError ? <Notice role="alert" tone="error">{t("activity.historyLoadError")}{String(legacyError)}</Notice> : null}
 
-      <section
+      {view === "sync" ? <section
         aria-label={t("Activity summary")}
         className="activity-summary"
       >
@@ -187,9 +304,9 @@ export function ActivityView({
           <strong>{formatLocalizedNumber(summary.acceptedCount, language)}</strong>
           <span>{t("Synced")}</span>
         </div>
-      </section>
+      </section> : null}
 
-      {summary.pendingCount > 0 ? (
+      {view === "sync" && summary.pendingCount > 0 ? (
         <Notice role="status" tone="warning">
           <strong>
             {formatLocalizedNumber(summary.pendingCount, language)}{t(" ")}{t("local")}{t(" ")}{summary.pendingCount === 1 ? "change is" : "changes are"}{t("waiting for server confirmation")}</strong>
@@ -197,24 +314,28 @@ export function ActivityView({
         </Notice>
       ) : null}
 
-      {summary.rejectedCount > 0 ? (
+      {view === "sync" && summary.rejectedCount > 0 ? (
         <Notice role="status" tone="error">
           <strong>
             {formatLocalizedNumber(summary.rejectedCount, language)} {summary.rejectedCount === 1 ? "change was" : "changes were"}{t("rejected")}</strong>
           <p>{t("These are historical rejections, not changes still waiting to upload. They did not change stock. Review the explanation and current stock before making a separate new request.")}</p>
-          <button type="button" onClick={() => { setStatus("REJECTED"); setOperationType("ALL"); setSearch("") }}>{t("Show rejected changes")}</button>
+          <button type="button" onClick={() => { setView("sync"); setStatus("REJECTED"); setOperationType("ALL"); setSearch("") }}>{t("Show rejected changes")}</button>
         </Notice>
+      ) : null}
+
+      {view === "movements" && legacyActivity.length > 0 ? (
+        <p className="activity-import-explainer">{t("activity.importExplainer")}</p>
       ) : null}
 
       <section
         aria-labelledby="activity-filters-heading"
-        className="activity-filters"
+        className={`activity-filters${view === "movements" ? " activity-filters--movements" : ""}`}
       >
-        <h2 id="activity-filters-heading">{t("Filter recent activity")}</h2>
+        <h2 id="activity-filters-heading">{t("activity.filterTitle")}</h2>
 
         <label>{t("Search")}<input
             onChange={(event) => setSearch(event.target.value)}
-            placeholder={t("Wine, cellar, location, device, error…")}
+            placeholder={t(view === "movements" ? "activity.movementSearch" : "Wine, cellar, location, device, error…")}
             type="search"
             value={search}
           />
@@ -235,7 +356,7 @@ export function ActivityView({
           </select>
         </label>
 
-        <label>{t("Synchronization")}<select
+        {view === "sync" ? <label>{t("activity.sourceFilter")}<select
             onChange={(event) =>
               setStatus(
                 event.target.value as ActivityStatusFilter,
@@ -248,7 +369,7 @@ export function ActivityView({
             <option value="ACCEPTED">{t("Synced")}</option>
             <option value="REJECTED">{t("Rejected")}</option>
           </select>
-        </label>
+        </label> : null}
 
         <button
           disabled={!hasFilters}
@@ -261,25 +382,31 @@ export function ActivityView({
         >{t("Clear filters")}</button>
       </section>
 
-      <p aria-live="polite" className="activity-results-summary">{t("activity.resultsSummary", { shown: String(visibleActivity.length), total: String(activity.length) })}</p>
+      <p aria-live="polite" className="activity-results-summary">{t(view === "movements" ? "activity.movementsSummary" : "activity.syncSummary", {
+        shown: formatLocalizedNumber(timeline.length, language),
+        total: formatLocalizedNumber(totalTimelineEntries, language),
+      })}</p>
 
-      {isLoading ? (
+      {isTimelineLoading ? (
         <Notice role="status">{t("Loading activity…")}</Notice>
       ) : null}
 
-      {!isLoading && activity.length === 0 ? (
-        <p>{t("No inventory activity found.")}</p>
+      {!isTimelineLoading && totalTimelineEntries === 0 ? (
+        <p>{t(view === "movements" ? "activity.noMovements" : "No inventory activity found.")}</p>
       ) : null}
 
-      {!isLoading &&
-      activity.length > 0 &&
-      visibleActivity.length === 0 ? (
+      {!isTimelineLoading && totalTimelineEntries > 0 && timeline.length === 0 ? (
         <p>{t("No activity matches the current filters.")}</p>
       ) : null}
 
       <ol className="activity-list">
-        {visibleActivity.map((item) => (
-          <li className="activity-card" key={item.id}>
+        {timeline.map((entry) => {
+          if (entry.kind === "legacy") {
+            return <ArchivedActivityCard item={entry.item} key={entry.key} language={language}
+              onOpenWine={onOpenWine} t={t} />
+          }
+          const item = entry.item
+          return <li className="activity-card" key={entry.key}>
             <header>
               <div className="activity-card__wine">
                 {item.catalog_wine_id ? (
@@ -298,11 +425,11 @@ export function ActivityView({
                 <span>{activityWineMeta(item, t)}</span>
               </div>
 
-              <span
+              {view === "sync" ? <span
                 className={`activity-status activity-status--${item.statusTone}`}
               >
                 {t(item.statusLabel)}
-              </span>
+              </span> : null}
             </header>
 
             <p className="activity-card__movement">
@@ -343,7 +470,7 @@ export function ActivityView({
               </div>
             ) : null}
           </li>
-        ))}
+        })}
       </ol>
     </main>
   )

@@ -7,7 +7,7 @@ import {
 export type ActivityOperationType = "ADD" | "MOVE" | "REMOVE"
 export type ActivityStatus = "ACCEPTED" | "PENDING" | "REJECTED"
 export type ActivityFilterValue = "ALL" | ActivityOperationType
-export type ActivityStatusFilter = "ALL" | ActivityStatus
+export type ActivityStatusFilter = "ALL" | ActivityStatus | "ARCHIVED"
 export type ActivityStatusTone = "error" | "success" | "warning"
 
 export interface InventoryActivityRow {
@@ -173,6 +173,7 @@ export function filterInventoryActivity(
   items: InventoryActivityItem[],
   filters: ActivityFilters,
 ): InventoryActivityItem[] {
+  if (filters.status === "ARCHIVED") return []
   return items.filter((item) => {
     if (
       filters.operationType !== "ALL" &&

@@ -7810,6 +7810,47 @@
   margin: 0 0 6px;
 }
 
+.activity-mode-switch {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.activity-mode-switch > button {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.activity-mode-switch > button[aria-pressed="true"] {
+  border-color: var(--accent-border);
+  background: var(--surface-raised, var(--surface));
+  color: var(--text-h);
+  font-weight: 700;
+}
+
+.activity-mode-switch__count {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 80%, #c68a2c);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.activity-import-explainer {
+  margin: 0;
+  padding: 12px 14px;
+  border-left: 3px solid var(--accent-border);
+  border-radius: 4px;
+  background: var(--surface);
+}
+
 .activity-summary {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -7845,6 +7886,10 @@
   align-items: end;
 }
 
+.app-shell__content .activity-filters--movements {
+  grid-template-columns: minmax(14rem, 2fr) minmax(10rem, 1fr) auto;
+}
+
 .activity-filters > h2 {
   grid-column: 1 / -1;
 }
@@ -7876,6 +7921,11 @@
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--surface);
+}
+
+.activity-card--legacy {
+  border-style: dashed;
+  background: color-mix(in srgb, var(--surface) 93%, var(--text));
 }
 
 .activity-card > header {
@@ -7928,6 +7978,11 @@
 .activity-status--error {
   border-color: #a63d45;
   background: color-mix(in srgb, var(--surface) 88%, #a63d45);
+}
+
+.activity-status--history {
+  border-color: var(--border);
+  background: var(--surface);
 }
 
 .activity-card__movement,
@@ -7987,6 +8042,10 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .app-shell__content .activity-filters--movements {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .activity-filters > h2,
   .activity-filters > label:first-of-type {
     grid-column: 1 / -1;
@@ -7994,6 +8053,7 @@
 }
 
 @media (max-width: 560px) {
+  .activity-mode-switch > button { flex: 1 1 auto; justify-content: center; }
   .inventory-queue-review__heading { align-items: start; }
   .inventory-queue-review__list > li { grid-template-columns: minmax(0, 1fr); padding: 12px; }
   .inventory-queue-review__confirmation { padding: 12px; }
