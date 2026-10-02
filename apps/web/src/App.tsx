@@ -10,7 +10,6 @@ import { AppShell } from "./components/AppShell"
 import { useAccountRoute } from "./navigation/useAccountRoute"
 import { AccountView } from "./components/AccountView"
 import { ActivityView } from "./components/ActivityView"
-import { StatisticsView } from "./components/StatisticsView"
 import { CatalogView } from "./components/CatalogView"
 import { MemberCellarView } from "./components/MemberCellarView"
 import { CellarSetupView } from "./components/CellarSetupView"
@@ -132,13 +131,14 @@ function ReadyAuthenticatedApp({
   useEffect(() => {
     const path = route.view === "wine" ? getWineDetailPath(route.wineId) : getAppViewPath(route.view)
     const foreign = isOtherHouseholdHistory(window.history.state, activeHouseholdId)
+    const search = window.location.pathname === "/statistics" ? "?tab=statistics" : window.location.search
     // Only an in-app wine navigation has a known Back destination. A fresh
     // deep link falls back to the catalog instead of leaving the app.
     const hasReturnView = !foreign && getWineDetailReturnView(window.history.state) !== null
     window.history.replaceState(
       householdHistoryState(activeHouseholdId, route.view === "wine" && hasReturnView ? wineDetailReturnView : undefined),
       "",
-      path + (foreign ? "" : window.location.search + window.location.hash),
+      path + (foreign ? "" : search + window.location.hash),
     )
   }, [activeHouseholdId, route.view, route.wineId, wineDetailReturnView])
   const [hasMountedPairing, setHasMountedPairing] =
@@ -245,7 +245,7 @@ function ReadyAuthenticatedApp({
   const displayedView = route.view === "wine" ? wineDetailReturnView : route.view
   const translatedPageLabels = {
     inventory: t("nav.inventory"), cellar: t("nav.cellar"), pairing: t("nav.pairing"),
-    activity: t("nav.activity"), statistics: t("nav.statistics"), catalog: t("nav.catalog"), import: t("nav.data"), setup: t("nav.setup"),
+    activity: t("nav.activity"), catalog: t("nav.catalog"), import: t("nav.data"), setup: t("nav.setup"),
   }
   const pageLabel = translatedPageLabels[displayedView as keyof typeof translatedPageLabels]
     ?? getAppRouteTitle(route).replace(" · CellarManager", "")
@@ -311,7 +311,6 @@ function ReadyAuthenticatedApp({
         />
       ) : null}
 
-      {route.view === "statistics" ? <StatisticsView householdId={activeHouseholdId} /> : null}
 
       {hasMountedPairing ? (
         <div hidden={route.view !== "pairing"}>

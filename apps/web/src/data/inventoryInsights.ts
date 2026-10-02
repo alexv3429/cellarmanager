@@ -146,7 +146,7 @@ export function buildInventoryInsights(
     legacyArchiveIds.size === 1 &&
     openingDays.size === 1 &&
     openingAt !== null &&
-    openingAt <= startsAt &&
+    openingAt <= nowTime &&
     openingRows.every((row) => validQuantity(row.quantity)) &&
     completeModernHistory &&
     completeLegacyHistory &&
@@ -156,9 +156,11 @@ export function buildInventoryInsights(
   if (stockHistoryAvailable) {
     for (const bucket of buckets) {
       const end = Math.min(nowTime + 1, Date.parse(bucket.end))
-      bucket.closingStock = openingStock + movements
-        .filter((movement) => movement.at < end)
-        .reduce((sum, movement) => sum + movement.added - movement.removed, 0)
+      if (end > openingAt) {
+        bucket.closingStock = openingStock + movements
+          .filter((movement) => movement.at < end)
+          .reduce((sum, movement) => sum + movement.added - movement.removed, 0)
+      }
     }
   }
 

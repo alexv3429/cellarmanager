@@ -56,18 +56,19 @@ export function StatisticsView({ householdId }: { householdId: string }) {
     timeZone: "UTC",
   }).format(new Date(iso))
   const maxFlow = Math.max(1, ...insights.buckets.map((bucket) => Math.max(bucket.added, bucket.removed)))
-  const stockValues = insights.buckets.map((bucket) => bucket.closingStock ?? 0)
-  const minStock = Math.min(...stockValues)
-  const maxStock = Math.max(...stockValues)
+  const stockValues = insights.buckets.flatMap((bucket, index) =>
+    bucket.closingStock === null ? [] : [{ index, value: bucket.closingStock, start: bucket.start }],
+  )
+  const minStock = Math.min(...stockValues.map((point) => point.value))
+  const maxStock = Math.max(...stockValues.map((point) => point.value))
   const stockSpan = Math.max(1, maxStock - minStock)
-  const stockPoints = stockValues.map((value, index) =>
-    `${24 + index * 552 / Math.max(1, stockValues.length - 1)},${155 - (value - minStock) * 120 / stockSpan}`,
+  const stockPoints = stockValues.map(({ value, index }) =>
+    `${24 + index * 552 / Math.max(1, insights.buckets.length - 1)},${155 - (value - minStock) * 120 / stockSpan}`,
   ).join(" ")
 
-  return <main className="statistics-view">
+  return <div className="statistics-view">
     <header className="statistics-heading">
-      <h1>{t("nav.statistics")}</h1>
-      <p>{t("statistics.intro")}</p>
+      <h2>{t("statistics.overview")}</h2>
     </header>
     <div className="statistics-period" role="group" aria-label={t("statistics.period")}>
       <button aria-pressed={period === "30d"} onClick={() => setPeriod("30d")} type="button">{t("statistics.last30")}</button>
@@ -99,7 +100,11 @@ export function StatisticsView({ householdId }: { householdId: string }) {
                   <span aria-label={t("statistics.removedCount", { count: number(bucket.removed) })}
                     className="statistics-flow-bar statistics-flow-bar--remove" style={{ width: `${bucket.removed / maxFlow * 100}%` }} />
                 </div>
-                <span className="statistics-flow-values">+{number(bucket.added)} / −{number(bucket.removed)}</span>
+                <span className="statistics-flow-values">
+                  <span className="statistics-flow-values--add">+{number(bucket.added)}</span>
+                  <span aria-hidden="true"> / </span>
+                  <span className="statistics-flow-values--remove">−{number(bucket.removed)}</span>
+                </span>
               </div>)}
             </div>}
       </section>
@@ -110,19 +115,19 @@ export function StatisticsView({ householdId }: { householdId: string }) {
           <svg aria-label={t("statistics.stockTitle")} className="statistics-stock-plot" role="img" viewBox="0 0 600 180">
             <line x1="24" x2="576" y1="155" y2="155" />
             <polyline fill="none" points={stockPoints} />
-            {stockValues.map((value, index) =>
-              <circle cx={24 + index * 552 / Math.max(1, stockValues.length - 1)}
-                cy={155 - (value - minStock) * 120 / stockSpan} key={insights.buckets[index].start} r="4">
-                <title>{formatPeriod(insights.buckets[index].start)}: {number(value)}</title>
+            {stockValues.map(({ value, index, start }) =>
+              <circle cx={24 + index * 552 / Math.max(1, insights.buckets.length - 1)}
+                cy={155 - (value - minStock) * 120 / stockSpan} key={start} r="4">
+                <title>{formatPeriod(start)}: {number(value)}</title>
               </circle>)}
           </svg>
-          <div className="statistics-stock-labels"><span>{formatPeriod(insights.buckets[0].start)} · {number(stockValues[0])}</span><span>{formatPeriod(insights.buckets.at(-1)?.start ?? "")} · {number(stockValues.at(-1) ?? 0)}</span></div>
+          <div className="statistics-stock-labels"><span>{formatPeriod(stockValues[0].start)} · {number(stockValues[0].value)}</span><span>{formatPeriod(stockValues.at(-1)?.start ?? "")} · {number(stockValues.at(-1)?.value ?? 0)}</span></div>
           <details><summary>{t("statistics.tableTitle")}</summary>
             <table><thead><tr><th>{t("statistics.period")}</th><th>{t("statistics.closingStock")}</th></tr></thead>
-              <tbody>{insights.buckets.map((bucket) => <tr key={bucket.start}><th>{formatPeriod(bucket.start)}</th><td>{number(bucket.closingStock ?? 0)}</td></tr>)}</tbody></table>
+              <tbody>{insights.buckets.map((bucket) => <tr key={bucket.start}><th>{formatPeriod(bucket.start)}</th><td>{bucket.closingStock === null ? "—" : number(bucket.closingStock)}</td></tr>)}</tbody></table>
           </details>
         </> : <p>{t("statistics.stockUnavailable")}</p>}
       </section>
     </> : null}
-  </main>
+  </div>
 }

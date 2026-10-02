@@ -52,7 +52,7 @@ describe("statistics screen", () => {
       language: "fr", preference: "fr", setSavedPreference: () => undefined,
       t: (key, values) => translate("fr", key, values),
     }}><StatisticsView householdId="home" /></LanguageContext.Provider>))
-    expect(container.textContent).toContain("Statistiques")
+    expect(container.textContent).toContain("Vue d’ensemble")
     expect(container.textContent).toContain("Bouteilles aujourd’hui12")
     expect(container.textContent).toContain("Ajoutées2")
     expect(container.querySelector(".statistics-stock-plot")).not.toBeNull()

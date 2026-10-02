@@ -35,7 +35,7 @@ describe("app navigation", () => {
     expect(getAppViewFromPathname("/")).toBe("inventory")
     expect(getAppViewFromPathname("/pairing")).toBe("pairing")
     expect(getAppViewFromPathname("/activity")).toBe("activity")
-    expect(getAppViewFromPathname("/statistics")).toBe("statistics")
+    expect(getAppViewFromPathname("/statistics")).toBe("activity")
     expect(getAppViewFromPathname("/catalog")).toBe("catalog")
     expect(getAppViewFromPathname("/data")).toBe("import")
     expect(getAppViewFromPathname("/import")).toBe("import")
@@ -47,7 +47,7 @@ describe("app navigation", () => {
     expect(getAppViewFromPathname("/members/")).toBe("members")
     expect(getAppViewFromPathname("/devices/")).toBe("devices")
     expect(getAppViewFromPathname("/activity/")).toBe("activity")
-    expect(getAppViewFromPathname("/statistics/")).toBe("statistics")
+    expect(getAppViewFromPathname("/statistics/")).toBe("activity")
     expect(getAppViewFromPathname("/pairing/")).toBe("pairing")
     expect(getAppViewFromPathname("/catalog/")).toBe("catalog")
     expect(getAppViewFromPathname("/data/")).toBe("import")
@@ -102,7 +102,6 @@ describe("app navigation", () => {
     expect(getAppViewPath("inventory")).toBe("/")
     expect(getAppViewPath("pairing")).toBe("/pairing")
     expect(getAppViewPath("activity")).toBe("/activity")
-    expect(getAppViewPath("statistics")).toBe("/statistics")
     expect(getAppViewPath("catalog")).toBe("/catalog")
     expect(getAppViewPath("import")).toBe("/data")
     expect(getAppViewPath("invite")).toBe("/invite")
@@ -124,7 +123,6 @@ describe("app navigation", () => {
     expect(
       getAppRouteTitle({ view: "activity", wineId: null }),
     ).toBe("Activity · CellarManager")
-    expect(getAppRouteTitle({ view: "statistics", wineId: null })).toBe("Statistics · CellarManager")
     expect(
       getAppRouteTitle({ view: "pairing", wineId: null }),
     ).toBe("Food pairing · CellarManager")
@@ -153,7 +151,6 @@ describe("app navigation", () => {
         wineDetailReturnView: "activity",
       }),
     ).toBe("activity")
-    expect(getWineDetailReturnView({ wineDetailReturnView: "statistics" })).toBe("statistics")
 
     expect(
       getWineDetailReturnView({

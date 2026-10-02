@@ -14,6 +14,7 @@ import { Notice } from "./Notice"
 import { describeInventoryRejection } from "../data/inventoryRecovery"
 import { formatWineVolume } from "../data/wineCatalog"
 import { InventoryQueueReview } from "./InventoryQueueReview"
+import { StatisticsView } from "./StatisticsView"
 import { useLanguage } from "../i18n/useLanguage"
 import { formatLocalizedDateTime, formatLocalizedNumber } from "../i18n/formatting"
 import {
@@ -210,7 +211,12 @@ export function ActivityView({
   } = useQuery<LegacyActivityRow>(LEGACY_ACTIVITY_QUERY, [householdId])
 
   const [search, setSearch] = useState("")
-  const [view, setView] = useState<"movements" | "sync">("movements")
+  const [view, setView] = useState<"movements" | "sync" | "statistics">(() =>
+    window.location.pathname === "/statistics" ||
+    new URLSearchParams(window.location.search).get("tab") === "statistics"
+      ? "statistics"
+      : "movements",
+  )
   const [operationType, setOperationType] =
     useState<ActivityFilterValue>("ALL")
   const [status, setStatus] =
@@ -257,25 +263,39 @@ export function ActivityView({
     operationType !== "ALL" ||
     (view === "sync" && status !== "ALL")
 
+  function selectView(nextView: "movements" | "sync" | "statistics") {
+    setView(nextView)
+    setSearch("")
+    setOperationType("ALL")
+    const url = new URL(window.location.href)
+    if (nextView === "statistics") url.searchParams.set("tab", "statistics")
+    else url.searchParams.delete("tab")
+    window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash)
+  }
+
   return (
     <main>
       <div className="activity-heading">
         <div>
           <h1>{t("Activity")}</h1>
-          <p>{t(view === "movements" ? "activity.timelineIntro" : "activity.syncIntro")}</p>
+          <p>{t(view === "movements" ? "activity.timelineIntro" : view === "sync" ? "activity.syncIntro" : "statistics.intro")}</p>
         </div>
       </div>
 
       <nav aria-label={t("activity.sections")} className="activity-mode-switch">
-        <button aria-pressed={view === "movements"} onClick={() => { setView("movements"); setSearch(""); setOperationType("ALL") }} type="button">
+        <button aria-pressed={view === "movements"} onClick={() => selectView("movements")} type="button">
           {t("activity.movementsTab")}
         </button>
-        <button aria-pressed={view === "sync"} onClick={() => { setView("sync"); setSearch(""); setOperationType("ALL") }} type="button">
+        <button aria-pressed={view === "sync"} onClick={() => selectView("sync")} type="button">
           {t("activity.syncTab")}
           {summary.pendingCount > 0 ? <span className="activity-mode-switch__count">{formatLocalizedNumber(summary.pendingCount, language)}</span> : null}
         </button>
+        <button aria-pressed={view === "statistics"} onClick={() => selectView("statistics")} type="button">
+          {t("nav.statistics")}
+        </button>
       </nav>
 
+      {view === "statistics" ? <StatisticsView householdId={householdId} /> : <>
       {view === "sync" ? <InventoryQueueReview householdId={householdId} userId={userId} isOnline={isOnline} /> : null}
 
       {error ? (
@@ -472,6 +492,7 @@ export function ActivityView({
           </li>
         })}
       </ol>
+      </>}
     </main>
   )
 }

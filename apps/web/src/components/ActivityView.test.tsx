@@ -14,6 +14,7 @@ vi.mock("@powersync/react", () => ({ useQuery: (sql: string) => ({
   isLoading: false,
 }) }))
 vi.mock("./InventoryQueueReview", () => ({ InventoryQueueReview: () => <section>Own browser queue</section> }))
+vi.mock("./StatisticsView", () => ({ StatisticsView: () => <section>Household statistics</section> }))
 const onOpenWine = vi.fn()
 const row: InventoryActivityRow = {
   id: "rejected-request", user_id: "self", operation_type: "REMOVE", wine_id: "old-id", catalog_wine_id: "canonical-id",
@@ -34,6 +35,7 @@ const legacyOpening: LegacyActivityRow = {
 let root: Root, container: HTMLDivElement
 beforeEach(() => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true); onOpenWine.mockReset()
+  window.history.replaceState({}, "", "/activity")
   query.rows = [row, { ...row, id: "accepted-request", status: "ACCEPTED", error_code: null, error_message: null }]
   query.legacyRows = []
   container = document.createElement("div"); document.body.append(container); root = createRoot(container)
@@ -57,6 +59,17 @@ async function click(text: string) {
   expect(button).toBeDefined(); await act(async () => button.click())
 }
 describe("rejected-operation UX", () => {
+  it("keeps statistics alongside movements and synchronization", async () => {
+    await render()
+    expect(container.textContent).not.toContain("Household statistics")
+    await click("Statistics")
+    expect(container.textContent).toContain("Household statistics")
+    expect(container.textContent).not.toContain("Showing 1 of")
+    expect(window.location.search).toBe("?tab=statistics")
+    await click("Wine movements")
+    expect(container.textContent).not.toContain("Household statistics")
+    expect(window.location.search).toBe("")
+  })
   it("keeps an unconfirmed request out of wine movements while making the queue discoverable", async () => {
     query.rows = [{ ...row, status: "PENDING", error_code: null, error_message: null }]
     await render()

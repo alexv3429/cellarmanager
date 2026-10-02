@@ -54,6 +54,16 @@ describe("inventory statistics", () => {
     expect(result.buckets.every((bucket) => bucket.closingStock === null)).toBe(true)
   })
 
+  it("starts a reconciled stock curve at the imported snapshot, leaving earlier months blank", () => {
+    const result = buildInventoryInsights([operation], [{
+      ...opening, occurred_at: "2026-07-16T10:00:00Z",
+    }], "home", 14, "12m", now)
+    expect(result.stockHistoryAvailable).toBe(true)
+    expect(result.buckets[0].closingStock).toBeNull()
+    expect(result.buckets.find((bucket) => bucket.start.startsWith("2026-07"))?.closingStock).toBe(10)
+    expect(result.buckets.at(-1)?.closingStock).toBe(14)
+  })
+
   it("withholds the curve for absent or ambiguous opening balances and incomplete receipts", () => {
     expect(buildInventoryInsights([operation], [], "home", 4, "12m", now).stockHistoryAvailable).toBe(false)
     expect(buildInventoryInsights([operation], [
