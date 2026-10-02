@@ -282,6 +282,14 @@ export function AppShell({
           {t("nav.activity")}
         </a>
 
+        <a
+          aria-current={view === "statistics" ? "page" : undefined}
+          href={getAppViewPath("statistics")}
+          onClick={(event) => navigate(event, "statistics")}
+        >
+          {t("nav.statistics")}
+        </a>
+
         {permissions.canManageCatalog ? <a
           aria-current={view === "catalog" ? "page" : undefined}
           href={getAppViewPath("catalog")}

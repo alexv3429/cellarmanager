@@ -10,6 +10,7 @@ import { AppShell } from "./components/AppShell"
 import { useAccountRoute } from "./navigation/useAccountRoute"
 import { AccountView } from "./components/AccountView"
 import { ActivityView } from "./components/ActivityView"
+import { StatisticsView } from "./components/StatisticsView"
 import { CatalogView } from "./components/CatalogView"
 import { MemberCellarView } from "./components/MemberCellarView"
 import { CellarSetupView } from "./components/CellarSetupView"
@@ -244,7 +245,7 @@ function ReadyAuthenticatedApp({
   const displayedView = route.view === "wine" ? wineDetailReturnView : route.view
   const translatedPageLabels = {
     inventory: t("nav.inventory"), cellar: t("nav.cellar"), pairing: t("nav.pairing"),
-    activity: t("nav.activity"), catalog: t("nav.catalog"), import: t("nav.data"), setup: t("nav.setup"),
+    activity: t("nav.activity"), statistics: t("nav.statistics"), catalog: t("nav.catalog"), import: t("nav.data"), setup: t("nav.setup"),
   }
   const pageLabel = translatedPageLabels[displayedView as keyof typeof translatedPageLabels]
     ?? getAppRouteTitle(route).replace(" · CellarManager", "")
@@ -309,6 +310,8 @@ function ReadyAuthenticatedApp({
           }
         />
       ) : null}
+
+      {route.view === "statistics" ? <StatisticsView householdId={activeHouseholdId} /> : null}
 
       {hasMountedPairing ? (
         <div hidden={route.view !== "pairing"}>

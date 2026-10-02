@@ -324,7 +324,7 @@ describe("multi-household workspace isolation", () => {
     await act(async () => container.querySelector<HTMLAnchorElement>('a[href="/members"]')!.click())
     expect(container.textContent).toContain("members in a")
     expect(container.querySelector(".shell-disclosure__panel")).toBeNull()
-    expect(container.querySelectorAll('nav[aria-label="Primary"] a')).toHaveLength(6)
+    expect(container.querySelectorAll('nav[aria-label="Primary"] a')).toHaveLength(7)
   })
 
   it("does not confirm a destination that lost membership while confirmation was open", async () => {
