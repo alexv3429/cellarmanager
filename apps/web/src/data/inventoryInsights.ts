@@ -72,6 +72,14 @@ function makeBuckets(period: InsightsPeriod, now: Date): InsightsBucket[] {
   }))
 }
 
+export function getInsightsPeriodRange(period: InsightsPeriod, now: Date): { start: number; end: number } {
+  const buckets = makeBuckets(period, now)
+  return {
+    start: Date.parse(buckets[0].start),
+    end: Math.min(now.getTime() + 1, Date.parse(buckets[buckets.length - 1].end)),
+  }
+}
+
 export function buildInventoryInsights(
   operations: readonly InsightsOperationRow[],
   legacy: readonly InsightsLegacyRow[],
@@ -123,8 +131,7 @@ export function buildInventoryInsights(
     movements.push({ at, added: 0, removed: row.quantity, consumed: row.remove_reason === "DRANK" ? row.quantity : 0 })
   }
 
-  const startsAt = Date.parse(buckets[0].start)
-  const endsAt = Math.min(nowTime + 1, Date.parse(buckets[buckets.length - 1].end))
+  const { start: startsAt, end: endsAt } = getInsightsPeriodRange(period, now)
   let added = 0
   let removed = 0
   let consumed = 0

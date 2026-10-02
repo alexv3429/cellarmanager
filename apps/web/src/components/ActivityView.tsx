@@ -295,7 +295,7 @@ export function ActivityView({
         </button>
       </nav>
 
-      {view === "statistics" ? <StatisticsView householdId={householdId} /> : <>
+      {view === "statistics" ? <StatisticsView householdId={householdId} onOpenWine={onOpenWine} /> : <>
       {view === "sync" ? <InventoryQueueReview householdId={householdId} userId={userId} isOnline={isOnline} /> : null}
 
       {error ? (

@@ -8626,6 +8626,17 @@
 .app-shell__content section.statistics-chart { display: grid; grid-template-columns: minmax(0, 1fr); }
 .app-shell__content .statistics-flow-list { width: 100%; min-width: 0; }
 .statistics-stock-labels { width: 100%; }
+.consumption-history__scope { display: flex; flex-wrap: wrap; gap: .5rem; }
+.consumption-history__scope button { min-height: 44px; }
+.consumption-history__scope button[aria-pressed="true"] { border-color: var(--accent-border); background: var(--accent-bg); color: var(--text-h); }
+.consumption-history__summary { color: var(--text-h) !important; font-weight: 650; }
+.consumption-history__list { display: grid; gap: .65rem; list-style: none; margin: 0; padding: 0; }
+.consumption-history__entry { display: grid; gap: .25rem; min-width: 0; border-top: 1px solid var(--border); padding: .7rem 0 .1rem; }
+.consumption-history__entry-heading { display: flex; justify-content: space-between; flex-wrap: wrap; gap: .3rem .8rem; font-variant-numeric: tabular-nums; }
+.consumption-history__entry-heading time, .consumption-history__entry small { color: var(--text-muted, #b6aeb2); }
+.consumption-history__wine { justify-self: start; width: auto; min-height: 44px; text-align: left; padding: .3rem .65rem; overflow-wrap: anywhere; }
+.consumption-history__wine-label { overflow-wrap: anywhere; }
+.consumption-history__more { justify-self: start; min-height: 44px; }
 @media (prefers-color-scheme: dark) {
   .statistics-flow-values--add { color: #8bd7ae; }
   .statistics-flow-values--remove { color: #e8ab87; }
