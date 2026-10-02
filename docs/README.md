@@ -45,6 +45,7 @@ retains only the evidence needed to understand its released migration history.
 - [`v06-capture-acceptance.md`](v06-capture-acceptance.md) - photo/barcode accuracy and privacy gates, automated evidence, and safe phone checks before v0.6 release
 - [`v07-history-event-model.md`](v07-history-event-model.md) - accepted-only, household-private reporting events and the local-first history contract for 0.7.1
 - [`v07-legacy-history.md`](v07-legacy-history.md) - verified v0.1 opening stock and confirmed removals, preview-first restoration, and 0.7.2 safety gates
+- [`v07-acquisition-model.md`](v07-acquisition-model.md) - explicit owner-private purchase/acquisition history, separate from stock additions, and 0.7.5 security gates
 - [`maturity-knowledge-v2.md`](maturity-knowledge-v2.md) - expanded exact-appellation maturity profiles, evidence inputs, safety boundary, and private aggregate coverage
 - [`maturity-hierarchy-poc.md`](maturity-hierarchy-poc.md) - validated and promoted region, appellation/climat, time-bounded producer, cuvee, interaction, and release model
 - [`enrichment-provider-rights-request.md`](enrichment-provider-rights-request.md) - provider contact drafts for licensing, retention, provenance, and methodology answers

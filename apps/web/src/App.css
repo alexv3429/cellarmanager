@@ -3456,12 +3456,35 @@
 
 .app-shell__content section.wine-detail-reference,
 .app-shell__content section.wine-facts,
+.app-shell__content section.wine-acquisitions,
 .app-shell__content section.wine-maturity,
 .app-shell__content section.wine-personal-guidance,
 .app-shell__content section.wine-detail-stock {
   display: grid;
   gap: 16px;
   align-items: stretch;
+}
+
+.wine-acquisitions > h2,
+.wine-acquisitions > p { margin: 0; }
+.wine-acquisitions__list { display: grid; gap: .7rem; list-style: none; margin: 0; padding: 0; }
+.wine-acquisitions__list li { display: grid; gap: .45rem; min-width: 0; padding: .85rem; border: 1px solid var(--border); border-radius: .7rem; background: var(--surface-muted); overflow-wrap: anywhere; }
+.wine-acquisitions__record-heading { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: .4rem 1rem; }
+.wine-acquisitions__record-heading time,
+.wine-acquisitions__list small { color: var(--text-muted, #b6aeb2); }
+.wine-acquisitions__actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.wine-acquisitions__actions button { min-height: 44px; }
+.wine-acquisitions__form { min-width: 0; border: 1px solid var(--border); border-radius: .7rem; padding: .8rem; }
+.wine-acquisitions__form summary { cursor: pointer; font-weight: 650; padding: .3rem 0; }
+.wine-acquisitions__form form { display: grid; gap: .8rem; padding-top: .8rem; }
+.wine-acquisitions__form label { display: grid; gap: .35rem; min-width: 0; }
+.wine-acquisitions__form input,
+.wine-acquisitions__form select,
+.wine-acquisitions__form textarea { width: 100%; min-width: 0; }
+.wine-acquisitions__form textarea { min-height: 5rem; }
+.wine-acquisitions__price { display: grid; grid-template-columns: minmax(0, 2fr) minmax(7rem, 1fr); gap: .7rem; }
+@media (max-width: 500px) {
+  .wine-acquisitions__price { grid-template-columns: minmax(0, 1fr); }
 }
 
 .wine-maturity__summary,

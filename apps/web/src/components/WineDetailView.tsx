@@ -37,6 +37,7 @@ import { updateWineCatalog } from "../data/wineCatalogMutations"
 import type { RegisteredDevicesState } from "../devices/useRegisteredDevices"
 import type { AppView } from "../navigation/appNavigation"
 import { Notice } from "./Notice"
+import { WineAcquisitionsPanel } from "./WineAcquisitionsPanel"
 import { WineFactsPanel } from "./WineFactsPanel"
 import { WineReferenceMatchReview } from "./WineReferenceMatchReview"
 import { WineMaturityPanel } from "./WineMaturityPanel"
@@ -1025,6 +1026,8 @@ export function WineDetailView({
       </section>
 
       <WineFactsPanel canManageCellar={canManageCellar} isOnline={isOnline} wine={wine} />
+
+      {canManageCellar ? <WineAcquisitionsPanel householdId={householdId} isOnline={isOnline} key={wine.id} wineId={wine.id} /> : null}
 
       <WineMaturityPanel
         canManageCellar={canManageCellar}

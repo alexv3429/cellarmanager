@@ -60,6 +60,7 @@ describe("Member cellar access", () => {
     for (const action of ["Edit wine", "Edit facts", "Add bottles", "Add more", "Consume/remove", "Reference library match"]) {
       expect(html.includes(action), action).toBe(canManageCellar)
     }
+    expect(html.includes("Acquisitions")).toBe(canManageCellar)
     if (!canManageCellar) {
       expect(html).not.toContain("<form")
       expect(html).toContain("Only an Owner can add, move, or remove bottles")
