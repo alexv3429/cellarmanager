@@ -3469,6 +3469,9 @@
 .wine-acquisitions > p { margin: 0; }
 .wine-acquisitions__list { display: grid; gap: .7rem; list-style: none; margin: 0; padding: 0; }
 .wine-acquisitions__list li { display: grid; gap: .45rem; min-width: 0; padding: .85rem; border: 1px solid var(--border); border-radius: .7rem; background: var(--surface-muted); overflow-wrap: anywhere; }
+.wine-acquisitions__legacy { display: grid; gap: .45rem; min-width: 0; padding: .85rem; border: 1px solid var(--border); border-radius: .7rem; }
+.wine-acquisitions__legacy h3, .wine-acquisitions__legacy p { margin: 0; }
+.wine-acquisitions__legacy ul { margin: 0; padding-left: 1.4rem; }
 .wine-acquisitions__record-heading { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: .4rem 1rem; }
 .wine-acquisitions__record-heading time,
 .wine-acquisitions__list small { color: var(--text-muted, #b6aeb2); }

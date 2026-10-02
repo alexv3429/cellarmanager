@@ -15,6 +15,12 @@ export interface WineAcquisition {
   created_at: string
 }
 
+export interface LegacyHoldingPrice {
+  source_holding_id: string
+  price_bought: number | string | null
+  acquired_on: string | null
+}
+
 export interface WineAcquisitionDraft {
   kind: AcquisitionKind
   quantity: string
@@ -83,6 +89,17 @@ export async function listWineAcquisitions(householdId: string, wineId: string):
     .order("created_at", { ascending: false })
   if (error) throw new Error(error.message)
   return (data ?? []) as WineAcquisition[]
+}
+
+export async function listLegacyHoldingPrices(householdId: string, wineId: string): Promise<LegacyHoldingPrice[]> {
+  const { supabase } = await import("./supabase")
+  const { data, error } = await supabase.from("legacy_holding_prices")
+    .select("source_holding_id, price_bought, acquired_on")
+    .eq("household_id", householdId)
+    .eq("wine_id", wineId)
+    .order("source_holding_id")
+  if (error) throw new Error(error.message)
+  return (data ?? []) as LegacyHoldingPrice[]
 }
 
 export async function saveWineAcquisition(id: string, wineId: string, value: PreparedAcquisition): Promise<void> {
