@@ -6,24 +6,31 @@ and explicit recovery for the signed-in account's blocked browser uploads.
 
 ## Activity
 
-`/activity` shows the latest 100 inventory operations for the active household,
-newest first. Each item identifies the wine, quantity, ADD/MOVE/REMOVE action,
-source or destination, client timestamp, originating device, optional removal
-reason, and synchronization result. Existing catalog wines link to their detail
-page; a pending new wine that is not in the synchronized catalog yet remains
-readable but is not linked.
+`/activity` opens on **Wine movements**. It shows confirmed operations from the
+latest 100 inventory requests for the active household, newest first, along
+with any imported history. Each modern item identifies the wine, quantity,
+ADD/MOVE/REMOVE action, source or destination, client timestamp, originating
+device, and optional removal reason. Existing catalog wines link to their
+detail page.
 
 The view can search the displayed wine, storage, device, reason, and error
-labels, and filter by operation type or synchronization state. The 100-operation
-bound keeps a large CSV import or long-lived household usable on a small device;
-it is a recent operational feed, not an audit export.
+labels, and filter by operation type. The 100-operation bound keeps a large CSV
+import or long-lived household usable on a small device; it is a recent
+operational feed, not an audit export.
 
-Step 0.7.3 also folds the read-only legacy inventory archive into this timeline.
+**Synchronization** is a separate section within Activity. It contains the
+browser upload queue, status counts, past rejections, and status filters. A
+pending-count badge on the section switch is the only synchronization detail
+shown on the default movements view. A pending new wine that is not in the
+synchronized catalog yet remains readable there but is not linked.
+
+Step 0.7.3 also folds the read-only legacy inventory archive into Wine movements.
 Its opening balance is one grouped card with bottle, wine and position totals,
 not hundreds of fabricated purchases or new stock operations. Confirmed drinks
-from the old cellar remain individual historical cards; catalog-linked wines
-open their current wine card. The archived filter separates these from queued,
-synced and rejected device operations. Legacy records are scoped to the active
+recorded by the earlier app remain individual historical cards; catalog-linked wines
+open their current wine card. The UI calls these records **Imported history**
+and explains that they came from an earlier app version, not another cellar.
+Legacy records are scoped to the active
 household in both the [PowerSync Sync Streams rule](../powersync/sync-streams.yaml)
 and the local query. The archive is informational and is never replayed onto
 current stock. Before releasing this feature, deploy the added stream query to

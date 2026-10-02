@@ -53,12 +53,26 @@ async function renderFrench() {
   ))
 }
 async function click(text: string) {
-  const button = [...container.querySelectorAll("button")].find((b) => b.textContent === text)!
+  const button = [...container.querySelectorAll("button")].find((b) => b.textContent?.startsWith(text))!
   expect(button).toBeDefined(); await act(async () => button.click())
 }
 describe("rejected-operation UX", () => {
+  it("keeps an unconfirmed request out of wine movements while making the queue discoverable", async () => {
+    query.rows = [{ ...row, status: "PENDING", error_code: null, error_message: null }]
+    await render()
+    expect(container.querySelectorAll(".activity-card")).toHaveLength(0)
+    expect(container.textContent).toContain("Synchronization1")
+    await click("Synchronization")
+    expect(container.textContent).toContain("Own browser queue")
+    expect(container.textContent).toContain("Stored locally and queued")
+  })
+
   it("distinguishes a past rejection from a blocked upload and describes no stock effect", async () => {
     await render()
+    expect(container.textContent).not.toContain("Own browser queue")
+    expect(container.textContent).not.toContain("Not applied: remove")
+    await click("Synchronization")
+    expect(container.textContent).toContain("Own browser queue")
     expect(container.textContent).toContain("historical rejections, not changes still waiting to upload")
     expect(container.textContent).toContain("Not applied: remove 2 bottles")
     expect(container.textContent).toContain("Not enough bottles at the source")
@@ -81,20 +95,22 @@ describe("rejected-operation UX", () => {
     await renderFrench()
     expect(container.textContent).toContain("Ajout de 2 bouteilles à Marseille ArteVino / 2F")
     expect(container.textContent).toContain("2020 · blanc · 75 cl")
-    expect(container.textContent).toContain("Synchronisé")
+    expect(container.textContent).not.toContain("Synchronisé")
     expect(container.textContent).toContain("Appareil inconnu")
+    await click("Synchronisation")
+    expect(container.textContent).toContain("Synchronisé")
     expect(container.textContent).not.toContain("Added")
     expect(container.textContent).not.toContain("Unknown device")
   })
   it("filters rejected changes and opens current canonical stock without creating an operation", async () => {
-    await render(); await click("Show rejected changes")
+    await render(); await click("Synchronization"); await click("Show rejected changes")
     expect(container.querySelectorAll(".activity-card")).toHaveLength(1)
     await click("Review current stock")
     expect(onOpenWine).toHaveBeenCalledExactlyOnceWith("canonical-id")
     expect(container.textContent).not.toContain("Retry this request")
   })
   it("keeps an unavailable wine readable without creating an invalid detail link", async () => {
-    query.rows = [{ ...row, catalog_wine_id: null, error_code: "LOCATION_ARCHIVED" }]; await render()
+    query.rows = [{ ...row, catalog_wine_id: null, error_code: "LOCATION_ARCHIVED" }]; await render(); await click("Synchronization")
     expect(container.textContent).toContain("storage location is archived")
     expect(container.textContent).toContain("not available in the synchronized catalog yet")
     expect([...container.querySelectorAll("button")].some((button) => button.textContent === "Review current stock")).toBe(false)
@@ -102,7 +118,7 @@ describe("rejected-operation UX", () => {
   })
 })
 
-describe("previous-cellar timeline", () => {
+describe("imported history in movements", () => {
   it("groups opening stock and shows an archived drink without creating operations", async () => {
     query.rows = []
     query.legacyRows = [
@@ -114,7 +130,8 @@ describe("previous-cellar timeline", () => {
     ]
     await renderFrench()
     expect(container.querySelectorAll(".activity-card--legacy")).toHaveLength(2)
-    expect(container.textContent).toContain("Stock initial de l’ancienne cave")
+    expect(container.textContent).toContain("Stock de départ importé")
+    expect(container.textContent).toContain("pas d’une autre cave")
     expect(container.textContent).toContain("5 bouteilles pour 1 vin et 2 positions")
     expect(container.textContent).toContain("Bu 1 bouteille")
     expect(container.textContent).toContain("non rejoué sur le stock actuel")
@@ -122,17 +139,14 @@ describe("previous-cellar timeline", () => {
     expect(onOpenWine).toHaveBeenCalledExactlyOnceWith("canonical-legacy")
   })
 
-  it("does not expose another household’s archive and filters archived-only activity", async () => {
+  it("keeps another household’s archive out and hides imported cards in synchronization", async () => {
     query.legacyRows = [legacyOpening, { ...legacyOpening, household_id: "other", source_record_id: "private" }]
     await render()
     expect(container.querySelectorAll(".activity-card--legacy")).toHaveLength(1)
-    const selector = [...container.querySelectorAll("select")].find((select) =>
-      [...select.options].some((option) => option.value === "ARCHIVED"))!
-    await act(async () => {
-      selector.value = "ARCHIVED"
-      selector.dispatchEvent(new Event("change", { bubbles: true }))
-    })
+    await click("Synchronization")
+    expect(container.querySelectorAll(".activity-card--legacy")).toHaveLength(0)
+    await click("Wine movements")
     expect(container.querySelectorAll(".activity-card--legacy")).toHaveLength(1)
-    expect(container.querySelectorAll(".activity-card:not(.activity-card--legacy)")).toHaveLength(0)
+    expect(container.textContent).not.toContain("Own browser queue")
   })
 })
