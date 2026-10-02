@@ -18,6 +18,17 @@ labels, and filter by operation type or synchronization state. The 100-operation
 bound keeps a large CSV import or long-lived household usable on a small device;
 it is a recent operational feed, not an audit export.
 
+Step 0.7.3 also folds the read-only legacy inventory archive into this timeline.
+Its opening balance is one grouped card with bottle, wine and position totals,
+not hundreds of fabricated purchases or new stock operations. Confirmed drinks
+from the old cellar remain individual historical cards; catalog-linked wines
+open their current wine card. The archived filter separates these from queued,
+synced and rejected device operations. Legacy records are scoped to the active
+household in both the [PowerSync Sync Streams rule](../powersync/sync-streams.yaml)
+and the local query. The archive is informational and is never replayed onto
+current stock. Before releasing this feature, deploy the added stream query to
+the linked PowerSync instance and verify it is active.
+
 Activity states preserve the journal semantics:
 
 - **Queued** means the operation is stored locally and already reflected by the

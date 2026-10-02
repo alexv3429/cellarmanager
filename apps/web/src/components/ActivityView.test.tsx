@@ -4,10 +4,15 @@ import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { ActivityView } from "./ActivityView"
 import type { InventoryActivityRow } from "../data/activityView"
+import type { LegacyActivityRow } from "../data/legacyActivity"
 import { LanguageContext } from "../i18n/LanguageContext"
 import { translate } from "../i18n/messages"
-const query = vi.hoisted(() => ({ rows: [] as InventoryActivityRow[] }))
-vi.mock("@powersync/react", () => ({ useQuery: () => ({ data: query.rows, error: null, isLoading: false }) }))
+const query = vi.hoisted(() => ({ rows: [] as InventoryActivityRow[], legacyRows: [] as LegacyActivityRow[] }))
+vi.mock("@powersync/react", () => ({ useQuery: (sql: string) => ({
+  data: sql.includes("from legacy_inventory_events") ? query.legacyRows : query.rows,
+  error: null,
+  isLoading: false,
+}) }))
 vi.mock("./InventoryQueueReview", () => ({ InventoryQueueReview: () => <section>Own browser queue</section> }))
 const onOpenWine = vi.fn()
 const row: InventoryActivityRow = {
@@ -17,10 +22,20 @@ const row: InventoryActivityRow = {
   remove_reason: "DRANK", status: "REJECTED", error_code: "INSUFFICIENT_STOCK", error_message: "Insufficient stock",
   created_at_client: "2026-09-12T12:00:00Z", received_at_server: "2026-09-12T12:01:00Z", device_name: "Phone",
 }
+const legacyOpening: LegacyActivityRow = {
+  household_id: "home", wine_id: "legacy-wine", source_record_id: "old-opening",
+  archive_source_sha256: "archive", event_type: "OPENING_BALANCE", quantity: 3,
+  remove_reason: null, occurred_at: "2026-07-16T12:00:00Z", recorded_at: "2026-10-01T12:00:00Z",
+  source_from_cellar_id: null, source_from_location: null,
+  source_to_cellar_id: "former-cellar", source_to_location: "A1",
+  catalog_wine_id: "canonical-legacy", producer: "Domaine Archive", cuvee: "Ancien vin",
+  vintage: 2019, color: "red", format_ml: 750,
+}
 let root: Root, container: HTMLDivElement
 beforeEach(() => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true); onOpenWine.mockReset()
   query.rows = [row, { ...row, id: "accepted-request", status: "ACCEPTED", error_code: null, error_message: null }]
+  query.legacyRows = []
   container = document.createElement("div"); document.body.append(container); root = createRoot(container)
 })
 afterEach(async () => { await act(async () => root.unmount()); container.remove(); vi.unstubAllGlobals() })
@@ -84,5 +99,40 @@ describe("rejected-operation UX", () => {
     expect(container.textContent).toContain("not available in the synchronized catalog yet")
     expect([...container.querySelectorAll("button")].some((button) => button.textContent === "Review current stock")).toBe(false)
     expect(onOpenWine).not.toHaveBeenCalled()
+  })
+})
+
+describe("previous-cellar timeline", () => {
+  it("groups opening stock and shows an archived drink without creating operations", async () => {
+    query.rows = []
+    query.legacyRows = [
+      legacyOpening,
+      { ...legacyOpening, source_record_id: "old-opening-2", quantity: 2 },
+      { ...legacyOpening, source_record_id: "old-drink", event_type: "REMOVE", quantity: 1,
+        remove_reason: "DRANK", occurred_at: "2026-07-30T12:00:00Z",
+        source_from_location: "B2", source_to_location: null },
+    ]
+    await renderFrench()
+    expect(container.querySelectorAll(".activity-card--legacy")).toHaveLength(2)
+    expect(container.textContent).toContain("Stock initial de l’ancienne cave")
+    expect(container.textContent).toContain("5 bouteilles pour 1 vin et 2 positions")
+    expect(container.textContent).toContain("Bu 1 bouteille")
+    expect(container.textContent).toContain("non rejoué sur le stock actuel")
+    await click("Domaine Archive — Ancien vin")
+    expect(onOpenWine).toHaveBeenCalledExactlyOnceWith("canonical-legacy")
+  })
+
+  it("does not expose another household’s archive and filters archived-only activity", async () => {
+    query.legacyRows = [legacyOpening, { ...legacyOpening, household_id: "other", source_record_id: "private" }]
+    await render()
+    expect(container.querySelectorAll(".activity-card--legacy")).toHaveLength(1)
+    const selector = [...container.querySelectorAll("select")].find((select) =>
+      [...select.options].some((option) => option.value === "ARCHIVED"))!
+    await act(async () => {
+      selector.value = "ARCHIVED"
+      selector.dispatchEvent(new Event("change", { bubbles: true }))
+    })
+    expect(container.querySelectorAll(".activity-card--legacy")).toHaveLength(1)
+    expect(container.querySelectorAll(".activity-card:not(.activity-card--legacy)")).toHaveLength(0)
   })
 })

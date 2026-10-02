@@ -1,0 +1,61 @@
+# Development PowerSync Sync Streams, based on the active version 3 rule.
+# The legacy inventory stream is read-only and uses the same household scope.
+config:
+  edition: 3
+
+streams:
+  household_data:
+    auto_subscribe: true
+
+    with:
+      user_households: |
+        SELECT household_id
+        FROM household_members
+        WHERE user_id = auth.user_id()
+
+    queries:
+      - |
+        SELECT *
+        FROM households
+        WHERE id IN user_households
+
+      - |
+        SELECT id, household_id, user_id, role, created_at
+        FROM household_members
+        WHERE household_id IN user_households
+
+      - |
+        SELECT *
+        FROM devices
+        WHERE user_id = auth.user_id()
+          AND household_id IN user_households
+
+      - |
+        SELECT *
+        FROM wines
+        WHERE household_id IN user_households
+
+      - |
+        SELECT *
+        FROM cellars
+        WHERE household_id IN user_households
+
+      - |
+        SELECT *
+        FROM locations
+        WHERE household_id IN user_households
+
+      - |
+        SELECT *
+        FROM holdings
+        WHERE household_id IN user_households
+
+      - |
+        SELECT *
+        FROM inventory_operations
+        WHERE household_id IN user_households
+
+      - |
+        SELECT *
+        FROM legacy_inventory_events
+        WHERE household_id IN user_households

@@ -7878,6 +7878,11 @@
   background: var(--surface);
 }
 
+.activity-card--legacy {
+  border-style: dashed;
+  background: color-mix(in srgb, var(--surface) 93%, var(--text));
+}
+
 .activity-card > header {
   display: flex;
   gap: 12px;
@@ -7928,6 +7933,11 @@
 .activity-status--error {
   border-color: #a63d45;
   background: color-mix(in srgb, var(--surface) 88%, #a63d45);
+}
+
+.activity-status--history {
+  border-color: var(--border);
+  background: var(--surface);
 }
 
 .activity-card__movement,
