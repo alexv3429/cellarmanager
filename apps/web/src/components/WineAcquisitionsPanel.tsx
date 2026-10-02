@@ -2,11 +2,13 @@ import { type FormEvent, useEffect, useState } from "react"
 
 import {
   listWineAcquisitions,
+  listLegacyHoldingPrices,
   prepareWineAcquisition,
   saveWineAcquisition,
   voidWineAcquisition,
   type AcquisitionKind,
   type WineAcquisition,
+  type LegacyHoldingPrice,
   type WineAcquisitionDraft,
 } from "../data/wineAcquisitions"
 import { formatLocalizedNumber, localeForLanguage } from "../i18n/formatting"
@@ -33,6 +35,7 @@ function displayDate(value: string | null, language: "en" | "fr", unknown: strin
 export function WineAcquisitionsPanel({ householdId, wineId, isOnline }: WineAcquisitionsPanelProps) {
   const { language, t } = useLanguage()
   const [records, setRecords] = useState<WineAcquisition[]>([])
+  const [legacyPrices, setLegacyPrices] = useState<LegacyHoldingPrice[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [loadAttempt, setLoadAttempt] = useState(0)
@@ -46,9 +49,13 @@ export function WineAcquisitionsPanel({ householdId, wineId, isOnline }: WineAcq
   useEffect(() => {
     if (!isOnline) return
     let cancelled = false
-    void listWineAcquisitions(householdId, wineId).then((next) => {
+    void Promise.all([
+      listWineAcquisitions(householdId, wineId),
+      listLegacyHoldingPrices(householdId, wineId),
+    ]).then(([next, prices]) => {
       if (cancelled) return
       setRecords(next)
+      setLegacyPrices(prices)
       setLoadError(null)
       setLoading(false)
     }).catch((error: unknown) => {
@@ -81,7 +88,12 @@ export function WineAcquisitionsPanel({ householdId, wineId, isOnline }: WineAcq
   }
 
   async function refresh() {
-    setRecords(await listWineAcquisitions(householdId, wineId))
+    const [next, prices] = await Promise.all([
+      listWineAcquisitions(householdId, wineId),
+      listLegacyHoldingPrices(householdId, wineId),
+    ])
+    setRecords(next)
+    setLegacyPrices(prices)
     setLoadError(null)
   }
 
@@ -156,6 +168,18 @@ export function WineAcquisitionsPanel({ householdId, wineId, isOnline }: WineAcq
                 <button disabled={saving} onClick={() => void handleVoid(record)} type="button">{t("acquisition.remove")}</button>
               </div>}
         </li>)}</ul> : null}
+      {!loading && !loadError && legacyPrices.length > 0 ? <div className="wine-acquisitions__legacy">
+        <h3>{t("acquisition.legacyPricesTitle")}</h3>
+        <p>{t("acquisition.legacyPricesHelp")}</p>
+        <ul>{legacyPrices.map((entry) => <li key={entry.source_holding_id}>
+          {entry.price_bought === null
+            ? t("acquisition.legacyDateOnly")
+            : t("acquisition.legacyPrice", { price: formatLocalizedNumber(Number(entry.price_bought), language, {
+              minimumFractionDigits: 2, maximumFractionDigits: 2,
+            }) })}
+          {entry.acquired_on ? ` · ${displayDate(entry.acquired_on, language, t("acquisition.unknownDate"))}` : null}
+        </li>)}</ul>
+      </div> : null}
       {!loading && !loadError ? <details className="wine-acquisitions__form" open={editingId !== null ? true : undefined}>
         <summary>{t(editingId ? "acquisition.editTitle" : "acquisition.addTitle")}</summary>
         <form onSubmit={(event) => void handleSave(event)}>

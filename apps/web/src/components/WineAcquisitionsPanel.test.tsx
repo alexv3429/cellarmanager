@@ -7,10 +7,11 @@ import { LanguageContext } from "../i18n/LanguageContext"
 import { translate } from "../i18n/messages"
 import { WineAcquisitionsPanel } from "./WineAcquisitionsPanel"
 
-const service = vi.hoisted(() => ({ list: vi.fn(), save: vi.fn(), remove: vi.fn() }))
+const service = vi.hoisted(() => ({ list: vi.fn(), legacy: vi.fn(), save: vi.fn(), remove: vi.fn() }))
 vi.mock("../data/wineAcquisitions", async (importOriginal) => ({
   ...await importOriginal<typeof import("../data/wineAcquisitions")>(),
   listWineAcquisitions: service.list,
+  listLegacyHoldingPrices: service.legacy,
   saveWineAcquisition: service.save,
   voidWineAcquisition: service.remove,
 }))
@@ -20,6 +21,7 @@ let container: HTMLDivElement
 beforeEach(() => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true)
   service.list.mockReset().mockResolvedValue([])
+  service.legacy.mockReset().mockResolvedValue([])
   service.save.mockReset().mockResolvedValue(undefined)
   service.remove.mockReset().mockResolvedValue(undefined)
   container = document.createElement("div")
@@ -65,10 +67,24 @@ describe("wine acquisition panel", () => {
     expect(container.textContent).toContain("Acquisition recorded. Stock was not changed.")
   })
 
+  it("labels old holding prices without inventing purchases or currency", async () => {
+    service.legacy.mockResolvedValueOnce([{
+      source_holding_id: "old-1", price_bought: "19.50", acquired_on: null,
+    }])
+    await act(async () => root.render(<LanguageContext.Provider value={{
+      language: "fr", preference: "fr", setSavedPreference: () => undefined,
+      t: (key, values) => translate("fr", key, values),
+    }}><WineAcquisitionsPanel householdId="home" isOnline wineId="wine-1" /></LanguageContext.Provider>))
+    expect(container.textContent).toContain("19,50")
+    expect(container.textContent).toContain("Devise et date non enregistrées")
+    expect(container.textContent).not.toContain("19,50 €")
+  })
+
   it("does not fetch or submit financial history offline", async () => {
     await act(async () => root.render(<WineAcquisitionsPanel householdId="home" isOnline={false} wineId="wine-1" />))
     expect(container.textContent).toContain("Connect to view or update acquisition records")
     expect(container.querySelector("form")).toBeNull()
     expect(service.list).not.toHaveBeenCalled()
+    expect(service.legacy).not.toHaveBeenCalled()
   })
 })

@@ -20,6 +20,8 @@ provenance-labelled v0.1 restoration in step 0.7.6. It does not infer a
 purchase from an opening balance or a modern `ADD`. The accepted v0.1 archive's
 acquisition/allocation tables are empty; any future restoration of purchase
 dates and prices must first establish exact source meaning and wine identity.
+The [0.7.6 audit](v07-legacy-purchase-prices.md) found only price values on old
+holding rows, so it preserves them separately without inventing acquisitions.
 
 The model does not claim that all acquired bottles remain in stock. Cost-based
 valuation in step 0.7.10 will need explicit allocation or a clearly labelled
