@@ -31,13 +31,13 @@ change to an inventory RPC.
 
 ## Next-step boundary
 
-Step 0.7.2 will inspect the preserved v0.1 movement schema, normalize only
-useful records, and add separate, provenance-labelled legacy history. It must
+Step 0.7.2 inspects the preserved v0.1 movement schema, normalizes only
+useful records, and adds separate, provenance-labelled legacy history. It must
 use exact preserved wine UUIDs, a stable source key, and a preview-first,
 idempotent import. A legacy event describes an old action whose effect is
 already reflected in the migrated holdings; it must not invoke ADD/MOVE/REMOVE
 or claim a modern user, device, or timestamp precision that the archive lacks.
-The reporting contract can then include those legacy events without changing
+The reporting contract includes those legacy events without changing
 the authoritative inventory journal. Unmatched, ambiguous, or undated source
 rows must be reported rather than guessed into the timeline.
 

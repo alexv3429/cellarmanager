@@ -116,6 +116,30 @@ const inventory_operations = new Table(
   { indexes: {} }
 );
 
+// Historical v0.1 evidence is synchronized separately from modern stock
+// operations. It is never queued for upload or replayed into holdings.
+const legacy_inventory_events = new Table(
+  {
+    household_id: column.text,
+    wine_id: column.text,
+    archive_source_sha256: column.text,
+    source_record_id: column.text,
+    source_holding_id: column.text,
+    event_type: column.text,
+    quantity: column.integer,
+    remove_reason: column.text,
+    occurred_at: column.text,
+    recorded_at: column.text,
+    source_from_cellar_id: column.text,
+    source_from_location: column.text,
+    source_to_cellar_id: column.text,
+    source_to_location: column.text,
+    imported_at: column.text,
+    imported_by: column.text,
+  },
+  { indexes: {} },
+);
+
 const devices = new Table(
   {
     // id column (text) is automatically included
@@ -148,6 +172,7 @@ export const AppSchema = new Schema({
   locations,
   holdings,
   inventory_operations,
+  legacy_inventory_events,
   inventory_upload_receipts,
   devices
 });
