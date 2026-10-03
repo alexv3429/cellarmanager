@@ -178,6 +178,7 @@ export function WineAcquisitionsPanel({ householdId, wineId, isOnline }: WineAcq
               minimumFractionDigits: 2, maximumFractionDigits: 2,
             }) })}
           {entry.acquired_on ? ` · ${displayDate(entry.acquired_on, language, t("acquisition.unknownDate"))}` : null}
+          {entry.wine_id !== wineId ? <small> · {t("acquisition.legacyMergedWine")}</small> : null}
         </li>)}</ul>
       </div> : null}
       {!loading && !loadError ? <details className="wine-acquisitions__form" open={editingId !== null ? true : undefined}>

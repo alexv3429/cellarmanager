@@ -69,7 +69,7 @@ describe("wine acquisition panel", () => {
 
   it("labels old holding prices without inventing purchases or currency", async () => {
     service.legacy.mockResolvedValueOnce([{
-      source_holding_id: "old-1", price_bought: "19.50", acquired_on: null,
+      source_holding_id: "old-1", wine_id: "wine-1", price_bought: "19.50", acquired_on: null,
     }])
     await act(async () => root.render(<LanguageContext.Provider value={{
       language: "fr", preference: "fr", setSavedPreference: () => undefined,
@@ -78,6 +78,18 @@ describe("wine acquisition panel", () => {
     expect(container.textContent).toContain("19,50")
     expect(container.textContent).toContain("Devise et date non enregistrées")
     expect(container.textContent).not.toContain("19,50 €")
+  })
+
+  it("labels evidence from a wine card merged into the selected wine", async () => {
+    service.legacy.mockResolvedValueOnce([{
+      source_holding_id: "old-2", wine_id: "retired-wine", price_bought: "20.00", acquired_on: null,
+    }])
+    await act(async () => root.render(<LanguageContext.Provider value={{
+      language: "fr", preference: "fr", setSavedPreference: () => undefined,
+      t: (key, values) => translate("fr", key, values),
+    }}><WineAcquisitionsPanel householdId="home" isOnline wineId="wine-1" /></LanguageContext.Provider>))
+    expect(container.textContent).toContain("20,00")
+    expect(container.textContent).toContain("Issu d’une fiche vin fusionnée avec celle-ci")
   })
 
   it("does not fetch or submit financial history offline", async () => {

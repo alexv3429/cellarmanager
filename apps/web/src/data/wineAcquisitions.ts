@@ -17,6 +17,7 @@ export interface WineAcquisition {
 
 export interface LegacyHoldingPrice {
   source_holding_id: string
+  wine_id: string
   price_bought: number | string | null
   acquired_on: string | null
 }
@@ -93,10 +94,27 @@ export async function listWineAcquisitions(householdId: string, wineId: string):
 
 export async function listLegacyHoldingPrices(householdId: string, wineId: string): Promise<LegacyHoldingPrice[]> {
   const { supabase } = await import("./supabase")
+  const wineIds = [wineId]
+  const seen = new Set(wineIds)
+  let frontier = [wineId]
+  for (let depth = 0; frontier.length > 0; depth += 1) {
+    if (depth >= 32) throw new Error("Wine merge chain is too deep")
+    const { data: mergedWines, error: mergedError } = await supabase.from("wines")
+      .select("id")
+      .eq("household_id", householdId)
+      .in("merged_into_wine_id", frontier)
+    if (mergedError) throw new Error(mergedError.message)
+    frontier = (mergedWines ?? []).map((wine) => wine.id)
+    for (const id of frontier) {
+      if (seen.has(id)) throw new Error("Wine merge cycle detected")
+      seen.add(id)
+      wineIds.push(id)
+    }
+  }
   const { data, error } = await supabase.from("legacy_holding_prices")
-    .select("source_holding_id, price_bought, acquired_on")
+    .select("source_holding_id, wine_id, price_bought, acquired_on")
     .eq("household_id", householdId)
-    .eq("wine_id", wineId)
+    .in("wine_id", wineIds)
     .order("source_holding_id")
   if (error) throw new Error(error.message)
   return (data ?? []) as LegacyHoldingPrice[]

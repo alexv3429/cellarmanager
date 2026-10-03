@@ -211,27 +211,32 @@ create temporary table _legacy_prices_source (
 ${load}
 create temporary table _legacy_prices_review on commit drop as
 select count(*)::bigint as source_rows,
-  count(*) filter (where wine.id is null)::bigint as missing_wines,
+  count(*) filter (where survivor.id is null)::bigint as missing_wines,
   count(*) filter (where target.source_holding_id is null)::bigint as new_rows,
   count(*) filter (where target.source_holding_id is not null and (${same}))::bigint as identical_rows,
   count(*) filter (where target.source_holding_id is not null and not (${same}))::bigint as conflicts,
+  count(*) filter (where wine.merged_into_wine_id is not null and survivor.id is not null)::bigint as merged_wine_rows,
   (select count(*) from public.legacy_holding_prices extra
     where extra.household_id = '${household}' and extra.source_sha256 = '${sourceHash}'
       and not exists (select 1 from _legacy_prices_source expected
         where expected.source_holding_id = extra.source_holding_id))::bigint as extra_rows,
   md5('${plan.plan_sha256}' || coalesce(jsonb_agg(
     jsonb_build_array(source.source_holding_id::text,
+      wine.id::text, wine.merged_into_wine_id::text, survivor.id::text,
       to_jsonb(target) - 'imported_at' - 'imported_by')
     order by source.source_holding_id)::text, '[]')) as preview_fingerprint
 from _legacy_prices_source source
 left join public.wines wine on wine.id = source.wine_id
-  and wine.household_id = '${household}' and wine.merged_into_wine_id is null
+  and wine.household_id = '${household}'
+left join public.wines survivor on survivor.id = private.resolve_active_wine_id('${household}', source.wine_id)
+  and survivor.household_id = '${household}' and survivor.merged_into_wine_id is null
 left join public.legacy_holding_prices target
   on target.household_id = '${household}'
   and target.source_sha256 = '${sourceHash}'
   and target.source_holding_id = source.source_holding_id;
 select jsonb_build_object(
   'source_rows', source_rows, 'missing_wines', missing_wines,
+  'merged_wine_rows', merged_wine_rows,
   'new_rows', new_rows, 'existing_identical', identical_rows,
   'conflicts', conflicts, 'extra_rows', extra_rows,
   'preview_fingerprint', preview_fingerprint
