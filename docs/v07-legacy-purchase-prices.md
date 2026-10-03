@@ -35,11 +35,14 @@ npm run v01:prices -- \
 ```
 
 Execute the generated `legacy-prices-preview.sql` against the intended database.
-It reports missing exact wine UUIDs, new/identical/conflicting rows, and a
-target-state fingerprint; the transaction always rolls back. For this source,
-expect 824 evidence rows, 0 acquisition dates, 0 missing wines, 0 conflicts,
-and 0 extra rows before considering a write. An actual apply requires renewed
-Owner approval.
+It reports missing source wine UUIDs, rows whose source wine has been merged
+into an active survivor, new/identical/conflicting rows, and a target-state
+fingerprint; the transaction always rolls back. A merged source wine is still
+stored under its original UUID, while the surviving wine card also displays
+its price with a merged-card label. For the current target, expect 824 evidence
+rows, 0 acquisition dates, 6 merged-source rows, 0 missing wines, 0 conflicts,
+and 0 extra rows before considering a write. A changed merge pointer changes
+the preview fingerprint. An actual apply requires renewed Owner approval.
 
 After reviewing the preview, generate `--rehearse` with
 `--expected-preview-fingerprint FINGERPRINT` and run that SQL first; it executes

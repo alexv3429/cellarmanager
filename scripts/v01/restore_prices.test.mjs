@@ -74,6 +74,21 @@ test("apply SQL requires the reviewed target fingerprint", () => {
   assert.match(sql, /rollback;\s*$/u)
 })
 
+test("merged source wines remain exact evidence and are checked against an active survivor", () => {
+  const sql = renderLegacyPricesSql({ plan: plan(), importedBy: OWNER, mode: "preview" })
+  assert.match(sql, /left join public\.wines wine on wine\.id = source\.wine_id/u)
+  assert.match(sql, /survivor\.id = private\.resolve_active_wine_id/u)
+  assert.match(sql, /survivor\.merged_into_wine_id is null/u)
+  assert.match(sql, /where survivor\.id is null\)::bigint as missing_wines/u)
+  assert.match(sql, /merged_wine_rows/u)
+  assert.match(sql, /wine\.merged_into_wine_id::text, survivor\.id::text/u)
+  assert.match(sql, /target\.wine_id = source\.wine_id/u)
+  const rehearsal = renderLegacyPricesSql({
+    plan: plan(), importedBy: OWNER, mode: "rehearsal", expectedPreviewFingerprint: "b".repeat(32),
+  })
+  assert.match(rehearsal, /select '[^']+', '[^']+', source\.source_holding_id,\s+source\.wine_id/u)
+})
+
 test("the source SQLite file must match its approved hash", async () => {
   const folder = await mkdtemp(path.join(os.tmpdir(), "cellarmanager-prices-test-"))
   const sourceDb = path.join(folder, "source.db")
