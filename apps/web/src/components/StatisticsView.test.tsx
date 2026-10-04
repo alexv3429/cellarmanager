@@ -10,11 +10,13 @@ import { StatisticsView } from "./StatisticsView"
 
 const query = vi.hoisted(() => ({
   stock: 12,
+  stockRows: [] as { household_id: string; quantity: number; color: string; area: string }[],
   operations: [] as InsightsOperationRow[],
   legacy: [] as InsightsLegacyRow[],
 }))
 vi.mock("@powersync/react", () => ({ useQuery: (sql: string) => ({
-  data: sql.includes("from holdings") ? [{ total: query.stock }]
+  data: sql.includes("from holdings") ? (query.stockRows.length > 0 ? query.stockRows
+    : [{ household_id: "home", quantity: query.stock, color: "red", area: "Bourgogne" }])
     : sql.includes("from legacy_inventory_events") ? query.legacy : query.operations,
   error: null,
   isLoading: false,
@@ -26,10 +28,12 @@ beforeEach(() => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true)
   vi.setSystemTime(new Date("2026-10-02T15:00:00Z"))
   query.stock = 12
+  query.stockRows = []
   query.operations = [{
     household_id: "home", operation_type: "ADD", quantity: 2, remove_reason: null,
     status: "ACCEPTED", created_at_client: "2026-09-30T12:00:00Z",
     received_at_server: "2026-09-30T12:00:10Z",
+    color: "red", area: "Bourgogne",
   }]
   query.legacy = [{
     household_id: "home", archive_source_sha256: "archive", event_type: "OPENING_BALANCE",
@@ -58,6 +62,14 @@ describe("statistics screen", () => {
     expect(container.querySelector(".statistics-stock-plot")).not.toBeNull()
     expect(container.querySelectorAll(".statistics-flow-row")).toHaveLength(12)
     expect(container.textContent).toContain("n’est pas forcément un achat")
+    expect(container.textContent).toContain("Par couleur")
+    expect(container.textContent).toContain("Par région / secteur")
+    expect(container.querySelector('table[aria-label="Par couleur"]')?.textContent).toContain("rouge12+2−0")
+    expect(container.querySelector('table[aria-label="Par région / secteur"]')?.textContent).toContain("Bourgogne12+2−0")
+    expect(container.querySelector('ul[aria-label="Par couleur"] li')?.textContent)
+      .toContain("rougeEn cave12Ajoutées+2Retirées−0")
+    expect(container.querySelector('ul[aria-label="Par région / secteur"] li')?.textContent)
+      .toContain("BourgogneEn cave12Ajoutées+2Retirées−0")
   })
 
   it("keeps the confirmed flow but hides an unreliable stock curve", async () => {
@@ -67,5 +79,19 @@ describe("statistics screen", () => {
     expect(container.textContent).toContain("Added2")
     expect(container.querySelector(".statistics-stock-plot")).toBeNull()
     expect(container.textContent).toContain("A reliable stock history is not available yet")
+  })
+
+  it("keeps the region list compact until the reader asks for all regions", async () => {
+    query.operations = []
+    query.stockRows = Array.from({ length: 9 }, (_, index) => ({
+      household_id: "home", quantity: 1, color: "red", area: `Region ${index + 1}`,
+    }))
+    await act(async () => root.render(<StatisticsView householdId="home" onOpenWine={() => undefined} />))
+    expect(container.querySelectorAll('table[aria-label="By region / area"] tbody tr')).toHaveLength(8)
+    expect(container.querySelectorAll('ul[aria-label="By region / area"] li')).toHaveLength(8)
+    const button = [...container.querySelectorAll("button")].find((item) => item.textContent === "Show all regions")
+    await act(async () => button?.click())
+    expect(container.querySelectorAll('table[aria-label="By region / area"] tbody tr')).toHaveLength(9)
+    expect(container.querySelectorAll('ul[aria-label="By region / area"] li')).toHaveLength(9)
   })
 })

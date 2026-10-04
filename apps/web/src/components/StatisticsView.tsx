@@ -6,37 +6,78 @@ import {
   type InsightsLegacyRow,
   type InsightsOperationRow,
   type InsightsPeriod,
+  type InsightsBreakdownRow,
+  type InsightsStockRow,
 } from "../data/inventoryInsights"
 import { formatLocalizedNumber } from "../i18n/formatting"
 import { useLanguage } from "../i18n/useLanguage"
 import { ConsumptionHistoryView } from "./ConsumptionHistoryView"
 import { Notice } from "./Notice"
 
-interface StockRow { total: number }
-
 const STOCK_QUERY = `
-  select coalesce(sum(quantity), 0) as total
-  from holdings
-  where household_id = ?
+  select holding.household_id, holding.quantity, wine.color, wine.area
+  from holdings holding
+  left join wines wine on wine.id = holding.wine_id and wine.household_id = holding.household_id
+  where holding.household_id = ? and holding.quantity > 0
 `
 const OPERATIONS_QUERY = `
-  select household_id, operation_type, quantity, remove_reason, status,
-    created_at_client, received_at_server
-  from inventory_operations
-  where household_id = ? and status = 'ACCEPTED'
+  select operation.household_id, operation.operation_type, operation.quantity,
+    operation.remove_reason, operation.status, operation.created_at_client,
+    operation.received_at_server,
+    coalesce(nullif(trim(operation.wine_color), ''), wine.color) as color,
+    coalesce(nullif(trim(operation.wine_area), ''), wine.area) as area
+  from inventory_operations operation
+  left join wines wine on wine.id = operation.wine_id and wine.household_id = operation.household_id
+  where operation.household_id = ? and operation.status = 'ACCEPTED'
 `
 const LEGACY_QUERY = `
-  select household_id, archive_source_sha256, event_type, quantity,
-    remove_reason, occurred_at
-  from legacy_inventory_events
-  where household_id = ?
+  select legacy.household_id, legacy.archive_source_sha256, legacy.event_type,
+    legacy.quantity, legacy.remove_reason, legacy.occurred_at, wine.color, wine.area
+  from legacy_inventory_events legacy
+  left join wines wine on wine.id = legacy.wine_id and wine.household_id = legacy.household_id
+  where legacy.household_id = ?
 `
+
+function BreakdownTable({ rows, title, dimension, unknown, translateLabels = false }: {
+  rows: readonly InsightsBreakdownRow[]
+  title: string
+  dimension: string
+  unknown: string
+  translateLabels?: boolean
+}) {
+  const { language, t } = useLanguage()
+  const number = (value: number) => formatLocalizedNumber(value, language)
+  if (rows.length === 0) return <p>{t("statistics.noBreakdown")}</p>
+  const label = (row: InsightsBreakdownRow) => row.label === null ? unknown : translateLabels ? t(row.label) : row.label
+  return <>
+    <div className="statistics-breakdown-scroll"><table aria-label={title} className="statistics-breakdown-table">
+      <thead><tr><th scope="col">{dimension}</th><th scope="col">{t("statistics.current")}</th>
+        <th scope="col">{t("statistics.added")}</th><th scope="col">{t("statistics.removed")}</th></tr></thead>
+      <tbody>{rows.map((row) => <tr key={row.key}>
+        <th scope="row">{label(row)}</th>
+        <td>{number(row.current)}</td><td className="statistics-breakdown-added">+{number(row.added)}</td>
+        <td className="statistics-breakdown-removed">−{number(row.removed)}</td>
+      </tr>)}</tbody>
+    </table></div>
+    <ul aria-label={title} className="statistics-breakdown-list">
+      {rows.map((row) => <li key={row.key}>
+        <strong>{label(row)}</strong>
+        <dl>
+          <div><dt>{t("statistics.inCellar")}</dt><dd>{number(row.current)}</dd></div>
+          <div><dt>{t("statistics.added")}</dt><dd className="statistics-breakdown-added">+{number(row.added)}</dd></div>
+          <div><dt>{t("statistics.removed")}</dt><dd className="statistics-breakdown-removed">−{number(row.removed)}</dd></div>
+        </dl>
+      </li>)}
+    </ul>
+  </>
+}
 
 export function StatisticsView({ householdId, onOpenWine }: { householdId: string; onOpenWine: (wineId: string) => void }) {
   const { language, t } = useLanguage()
   const [period, setPeriod] = useState<InsightsPeriod>("12m")
+  const [showAllRegions, setShowAllRegions] = useState(false)
   const { data: stockRows, error: stockError, isLoading: stockLoading } =
-    useQuery<StockRow>(STOCK_QUERY, [householdId])
+    useQuery<InsightsStockRow>(STOCK_QUERY, [householdId])
   const { data: operations, error: operationError, isLoading: operationsLoading } =
     useQuery<InsightsOperationRow>(OPERATIONS_QUERY, [householdId])
   const { data: legacy, error: legacyError, isLoading: legacyLoading } =
@@ -45,7 +86,8 @@ export function StatisticsView({ householdId, onOpenWine }: { householdId: strin
   const error = stockError || operationError || legacyError
   const insights = useMemo(
     () => buildInventoryInsights(
-      operations, legacy, householdId, Number(stockRows[0]?.total ?? 0), period, new Date(),
+      operations, legacy, householdId,
+      stockRows.reduce((sum, row) => sum + Number(row.quantity), 0), period, new Date(), stockRows,
     ),
     [operations, legacy, householdId, stockRows, period],
   )
@@ -108,6 +150,22 @@ export function StatisticsView({ householdId, onOpenWine }: { householdId: strin
                 </span>
               </div>)}
             </div>}
+      </section>
+      <section className="statistics-chart" aria-labelledby="statistics-color-title">
+        <h2 id="statistics-color-title">{t("statistics.byColor")}</h2>
+        <p>{t("statistics.breakdownHelp")}</p>
+        <BreakdownTable rows={insights.byColor} title={t("statistics.byColor")}
+          dimension={t("statistics.color")} unknown={t("statistics.unknownColor")} translateLabels />
+      </section>
+      <section className="statistics-chart" aria-labelledby="statistics-region-title">
+        <h2 id="statistics-region-title">{t("statistics.byRegion")}</h2>
+        <p>{t("statistics.regionHelp")}</p>
+        <BreakdownTable rows={showAllRegions ? insights.byRegion : insights.byRegion.slice(0, 8)}
+          title={t("statistics.byRegion")} dimension={t("statistics.region")}
+          unknown={t("statistics.unknownRegion")} />
+        {insights.byRegion.length > 8 ? <button onClick={() => setShowAllRegions((current) => !current)} type="button">
+          {t(showAllRegions ? "statistics.fewerRegions" : "statistics.allRegions")}
+        </button> : null}
       </section>
       <section className="statistics-chart" aria-labelledby="statistics-stock-title">
         <h2 id="statistics-stock-title">{t("statistics.stockTitle")}</h2>
