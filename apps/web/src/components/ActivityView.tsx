@@ -15,6 +15,7 @@ import { describeInventoryRejection } from "../data/inventoryRecovery"
 import { formatWineVolume } from "../data/wineCatalog"
 import { InventoryQueueReview } from "./InventoryQueueReview"
 import { StatisticsView } from "./StatisticsView"
+import { DrinkingWindowDashboard } from "./DrinkingWindowDashboard"
 import { useLanguage } from "../i18n/useLanguage"
 import { formatLocalizedDateTime, formatLocalizedNumber } from "../i18n/formatting"
 import {
@@ -211,12 +212,12 @@ export function ActivityView({
   } = useQuery<LegacyActivityRow>(LEGACY_ACTIVITY_QUERY, [householdId])
 
   const [search, setSearch] = useState("")
-  const [view, setView] = useState<"movements" | "sync" | "statistics">(() =>
-    window.location.pathname === "/statistics" ||
-    new URLSearchParams(window.location.search).get("tab") === "statistics"
-      ? "statistics"
-      : "movements",
-  )
+  const [view, setView] = useState<"movements" | "sync" | "statistics" | "drinking">(() => {
+    const tab = new URLSearchParams(window.location.search).get("tab")
+    if (tab === "drinking") return "drinking"
+    if (window.location.pathname === "/statistics" || tab === "statistics") return "statistics"
+    return "movements"
+  })
   const [operationType, setOperationType] =
     useState<ActivityFilterValue>("ALL")
   const [status, setStatus] =
@@ -263,12 +264,12 @@ export function ActivityView({
     operationType !== "ALL" ||
     (view === "sync" && status !== "ALL")
 
-  function selectView(nextView: "movements" | "sync" | "statistics") {
+  function selectView(nextView: "movements" | "sync" | "statistics" | "drinking") {
     setView(nextView)
     setSearch("")
     setOperationType("ALL")
     const url = new URL(window.location.href)
-    if (nextView === "statistics") url.searchParams.set("tab", "statistics")
+    if (nextView === "statistics" || nextView === "drinking") url.searchParams.set("tab", nextView)
     else url.searchParams.delete("tab")
     window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash)
   }
@@ -278,7 +279,8 @@ export function ActivityView({
       <div className="activity-heading">
         <div>
           <h1>{t("Activity")}</h1>
-          <p>{t(view === "movements" ? "activity.timelineIntro" : view === "sync" ? "activity.syncIntro" : "statistics.intro")}</p>
+          <p>{t(view === "movements" ? "activity.timelineIntro" : view === "sync" ? "activity.syncIntro"
+            : view === "drinking" ? "drinking.intro" : "statistics.intro")}</p>
         </div>
       </div>
 
@@ -293,9 +295,13 @@ export function ActivityView({
         <button aria-pressed={view === "statistics"} onClick={() => selectView("statistics")} type="button">
           {t("nav.statistics")}
         </button>
+        <button aria-pressed={view === "drinking"} onClick={() => selectView("drinking")} type="button">
+          {t("drinking.title")}
+        </button>
       </nav>
 
-      {view === "statistics" ? <StatisticsView householdId={householdId} onOpenWine={onOpenWine} /> : <>
+      {view === "statistics" ? <StatisticsView householdId={householdId} onOpenWine={onOpenWine} />
+        : view === "drinking" ? <DrinkingWindowDashboard householdId={householdId} isOnline={isOnline} onOpenWine={onOpenWine} /> : <>
       {view === "sync" ? <InventoryQueueReview householdId={householdId} userId={userId} isOnline={isOnline} /> : null}
 
       {error ? (

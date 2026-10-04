@@ -47,6 +47,8 @@ retains only the evidence needed to understand its released migration history.
 - [`v07-legacy-history.md`](v07-legacy-history.md) - verified v0.1 opening stock and confirmed removals, preview-first restoration, and 0.7.2 safety gates
 - [`v07-acquisition-model.md`](v07-acquisition-model.md) - explicit owner-private purchase/acquisition history, separate from stock additions, and 0.7.5 security gates
 - [`v07-legacy-purchase-prices.md`](v07-legacy-purchase-prices.md) - verified v0.1 holding prices without invented purchases, dates, or currency
+- [`v07-inventory-insights.md`](v07-inventory-insights.md) - current stock, accepted movement trends, and color/region breakdowns
+- [`v07-drinking-window-dashboard.md`](v07-drinking-window-dashboard.md) - bottle-weighted drinking groups and wine-card drill-down from existing guidance
 - [`maturity-knowledge-v2.md`](maturity-knowledge-v2.md) - expanded exact-appellation maturity profiles, evidence inputs, safety boundary, and private aggregate coverage
 - [`maturity-hierarchy-poc.md`](maturity-hierarchy-poc.md) - validated and promoted region, appellation/climat, time-bounded producer, cuvee, interaction, and release model
 - [`enrichment-provider-rights-request.md`](enrichment-provider-rights-request.md) - provider contact drafts for licensing, retention, provenance, and methodology answers
