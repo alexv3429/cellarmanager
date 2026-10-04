@@ -48,15 +48,28 @@ function BreakdownTable({ rows, title, dimension, unknown, translateLabels = fal
   const { language, t } = useLanguage()
   const number = (value: number) => formatLocalizedNumber(value, language)
   if (rows.length === 0) return <p>{t("statistics.noBreakdown")}</p>
-  return <div className="statistics-breakdown-scroll"><table aria-label={title} className="statistics-breakdown-table">
-    <thead><tr><th scope="col">{dimension}</th><th scope="col">{t("statistics.current")}</th>
-      <th scope="col">{t("statistics.added")}</th><th scope="col">{t("statistics.removed")}</th></tr></thead>
-    <tbody>{rows.map((row) => <tr key={row.key}>
-      <th scope="row">{row.label === null ? unknown : translateLabels ? t(row.label) : row.label}</th>
-      <td>{number(row.current)}</td><td className="statistics-breakdown-added">+{number(row.added)}</td>
-      <td className="statistics-breakdown-removed">−{number(row.removed)}</td>
-    </tr>)}</tbody>
-  </table></div>
+  const label = (row: InsightsBreakdownRow) => row.label === null ? unknown : translateLabels ? t(row.label) : row.label
+  return <>
+    <div className="statistics-breakdown-scroll"><table aria-label={title} className="statistics-breakdown-table">
+      <thead><tr><th scope="col">{dimension}</th><th scope="col">{t("statistics.current")}</th>
+        <th scope="col">{t("statistics.added")}</th><th scope="col">{t("statistics.removed")}</th></tr></thead>
+      <tbody>{rows.map((row) => <tr key={row.key}>
+        <th scope="row">{label(row)}</th>
+        <td>{number(row.current)}</td><td className="statistics-breakdown-added">+{number(row.added)}</td>
+        <td className="statistics-breakdown-removed">−{number(row.removed)}</td>
+      </tr>)}</tbody>
+    </table></div>
+    <ul aria-label={title} className="statistics-breakdown-list">
+      {rows.map((row) => <li key={row.key}>
+        <strong>{label(row)}</strong>
+        <dl>
+          <div><dt>{t("statistics.inCellar")}</dt><dd>{number(row.current)}</dd></div>
+          <div><dt>{t("statistics.added")}</dt><dd className="statistics-breakdown-added">+{number(row.added)}</dd></div>
+          <div><dt>{t("statistics.removed")}</dt><dd className="statistics-breakdown-removed">−{number(row.removed)}</dd></div>
+        </dl>
+      </li>)}
+    </ul>
+  </>
 }
 
 export function StatisticsView({ householdId, onOpenWine }: { householdId: string; onOpenWine: (wineId: string) => void }) {

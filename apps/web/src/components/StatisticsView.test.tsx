@@ -66,6 +66,10 @@ describe("statistics screen", () => {
     expect(container.textContent).toContain("Par région / secteur")
     expect(container.querySelector('table[aria-label="Par couleur"]')?.textContent).toContain("rouge12+2−0")
     expect(container.querySelector('table[aria-label="Par région / secteur"]')?.textContent).toContain("Bourgogne12+2−0")
+    expect(container.querySelector('ul[aria-label="Par couleur"] li')?.textContent)
+      .toContain("rougeEn cave12Ajoutées+2Retirées−0")
+    expect(container.querySelector('ul[aria-label="Par région / secteur"] li')?.textContent)
+      .toContain("BourgogneEn cave12Ajoutées+2Retirées−0")
   })
 
   it("keeps the confirmed flow but hides an unreliable stock curve", async () => {
@@ -84,8 +88,10 @@ describe("statistics screen", () => {
     }))
     await act(async () => root.render(<StatisticsView householdId="home" onOpenWine={() => undefined} />))
     expect(container.querySelectorAll('table[aria-label="By region / area"] tbody tr')).toHaveLength(8)
+    expect(container.querySelectorAll('ul[aria-label="By region / area"] li')).toHaveLength(8)
     const button = [...container.querySelectorAll("button")].find((item) => item.textContent === "Show all regions")
     await act(async () => button?.click())
     expect(container.querySelectorAll('table[aria-label="By region / area"] tbody tr')).toHaveLength(9)
+    expect(container.querySelectorAll('ul[aria-label="By region / area"] li')).toHaveLength(9)
   })
 })
