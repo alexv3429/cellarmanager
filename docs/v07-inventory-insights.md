@@ -24,3 +24,20 @@ Modern operations use their client action date for period assignment; offline
 devices with an inaccurate clock can put an operation in the wrong period.
 Server receipt is required before it counts. The current inventory total is
 not affected by that clock caveat.
+
+## v0.7.7: color and region breakdown
+
+The same accepted additions and removals are also grouped by color and by the
+wine card's `area` (region / sector). Today's quantities come directly from
+positive holdings joined to household wine cards. Missing classification is
+shown as its own row, so grouped totals do not silently lose bottles. Moves,
+unaccepted operations, and the imported opening balance remain excluded from
+flow counts. The selected 30-day or 12-month period applies to these flows,
+not to today's stock column.
+
+Modern movements prefer the color and area captured on the operation; if those
+snapshots are absent, they use the stored wine card. Archived v0.1 removals
+have no such snapshots and use their stored wine card. Region text is not silently
+mapped to a supposedly canonical geography: spelling or catalog edits can
+therefore affect grouping. These breakdowns describe recorded classifications,
+not provenance-certified historical regions or purchase activity.

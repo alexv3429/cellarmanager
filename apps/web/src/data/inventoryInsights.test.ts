@@ -82,4 +82,35 @@ describe("inventory statistics", () => {
     expect(result.added).toBe(4)
     expect(result.stockHistoryAvailable).toBe(false)
   })
+
+  it("groups present stock and confirmed flows by color and region without losing unknown facts", () => {
+    const result = buildInventoryInsights([
+      { ...operation, quantity: 2, color: "red", area: "Bourgogne" },
+      { ...operation, operation_type: "REMOVE", quantity: 1, color: "white", area: "Bourgogne" },
+      { ...operation, operation_type: "MOVE", quantity: 5, color: "red", area: "Rhône" },
+      { ...operation, status: "PENDING", quantity: 20, color: "red", area: "Rhône" },
+      { ...operation, household_id: "other", quantity: 30, color: "red", area: "Rhône" },
+    ], [opening, {
+      ...opening, event_type: "REMOVE", quantity: 1, remove_reason: "DRANK",
+      occurred_at: "2026-09-27T12:00:00Z", color: "red", area: "Rhône",
+    }], "home", 11, "30d", now, [
+      { household_id: "home", quantity: 5, color: "red", area: "Bourgogne" },
+      { household_id: "home", quantity: 3, color: "white", area: "Bourgogne" },
+      { household_id: "home", quantity: 2, color: "red", area: "Rhône" },
+      { household_id: "home", quantity: 1, color: null, area: null },
+      { household_id: "other", quantity: 50, color: "red", area: "Rhône" },
+    ])
+
+    expect(result).toMatchObject({ added: 2, removed: 2, currentStock: 11 })
+    expect(result.byColor).toEqual([
+      { key: "red", label: "red", current: 7, added: 2, removed: 1 },
+      { key: "white", label: "white", current: 3, added: 0, removed: 1 },
+      { key: "__unknown__", label: null, current: 1, added: 0, removed: 0 },
+    ])
+    expect(result.byRegion).toEqual([
+      { key: "bourgogne", label: "Bourgogne", current: 8, added: 2, removed: 1 },
+      { key: "rhône", label: "Rhône", current: 2, added: 0, removed: 1 },
+      { key: "__unknown__", label: null, current: 1, added: 0, removed: 0 },
+    ])
+  })
 })

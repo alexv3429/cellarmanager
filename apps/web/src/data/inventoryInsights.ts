@@ -8,6 +8,8 @@ export interface InsightsOperationRow {
   status: string
   created_at_client: string
   received_at_server: string | null
+  color?: string | null
+  area?: string | null
 }
 
 export interface InsightsLegacyRow {
@@ -17,6 +19,23 @@ export interface InsightsLegacyRow {
   quantity: number
   remove_reason: string | null
   occurred_at: string
+  color?: string | null
+  area?: string | null
+}
+
+export interface InsightsStockRow {
+  household_id: string
+  quantity: number
+  color: string | null
+  area: string | null
+}
+
+export interface InsightsBreakdownRow {
+  key: string
+  label: string | null
+  current: number
+  added: number
+  removed: number
 }
 
 export interface InsightsBucket {
@@ -36,6 +55,8 @@ export interface InventoryInsights {
   net: number
   buckets: InsightsBucket[]
   stockHistoryAvailable: boolean
+  byColor: InsightsBreakdownRow[]
+  byRegion: InsightsBreakdownRow[]
 }
 
 interface Movement {
@@ -43,6 +64,29 @@ interface Movement {
   added: number
   removed: number
   consumed: number
+  color: string | null
+  area: string | null
+}
+
+function breakdownKey(value: string | null | undefined): { key: string; label: string | null } {
+  const label = value?.trim().replace(/\s+/gu, " ") ?? ""
+  return { key: label.toLowerCase() || "__unknown__", label: label || null }
+}
+
+function addBreakdown(
+  rows: Map<string, InsightsBreakdownRow>, value: string | null | undefined,
+  field: "current" | "added" | "removed", quantity: number,
+): void {
+  const { key, label } = breakdownKey(value)
+  const row = rows.get(key) ?? { key, label, current: 0, added: 0, removed: 0 }
+  row[field] += quantity
+  rows.set(key, row)
+}
+
+function sortedBreakdown(rows: Map<string, InsightsBreakdownRow>): InsightsBreakdownRow[] {
+  return [...rows.values()].sort((left, right) =>
+    right.current - left.current || (right.added + right.removed) - (left.added + left.removed) ||
+    left.key.localeCompare(right.key))
 }
 
 function validQuantity(value: number): boolean {
@@ -87,6 +131,7 @@ export function buildInventoryInsights(
   currentStock: number,
   period: InsightsPeriod,
   now: Date,
+  stockRows: readonly InsightsStockRow[] = [],
 ): InventoryInsights {
   const buckets = makeBuckets(period, now)
   const nowTime = now.getTime()
@@ -106,6 +151,8 @@ export function buildInventoryInsights(
       added: row.operation_type === "ADD" ? row.quantity : 0,
       removed: row.operation_type === "REMOVE" ? row.quantity : 0,
       consumed: row.operation_type === "REMOVE" && row.remove_reason === "DRANK" ? row.quantity : 0,
+      color: row.color ?? null,
+      area: row.area ?? null,
     })
   }
 
@@ -128,10 +175,21 @@ export function buildInventoryInsights(
       completeLegacyHistory = false
       continue
     }
-    movements.push({ at, added: 0, removed: row.quantity, consumed: row.remove_reason === "DRANK" ? row.quantity : 0 })
+    movements.push({
+      at, added: 0, removed: row.quantity,
+      consumed: row.remove_reason === "DRANK" ? row.quantity : 0,
+      color: row.color ?? null, area: row.area ?? null,
+    })
   }
 
   const { start: startsAt, end: endsAt } = getInsightsPeriodRange(period, now)
+  const colorBreakdown = new Map<string, InsightsBreakdownRow>()
+  const regionBreakdown = new Map<string, InsightsBreakdownRow>()
+  for (const row of stockRows) {
+    if (row.household_id !== householdId || !Number.isSafeInteger(row.quantity) || row.quantity <= 0) continue
+    addBreakdown(colorBreakdown, row.color, "current", row.quantity)
+    addBreakdown(regionBreakdown, row.area, "current", row.quantity)
+  }
   let added = 0
   let removed = 0
   let consumed = 0
@@ -145,6 +203,14 @@ export function buildInventoryInsights(
     added += movement.added
     removed += movement.removed
     consumed += movement.consumed
+    if (movement.added > 0) {
+      addBreakdown(colorBreakdown, movement.color, "added", movement.added)
+      addBreakdown(regionBreakdown, movement.area, "added", movement.added)
+    }
+    if (movement.removed > 0) {
+      addBreakdown(colorBreakdown, movement.color, "removed", movement.removed)
+      addBreakdown(regionBreakdown, movement.area, "removed", movement.removed)
+    }
   }
 
   const stockHistoryAvailable =
@@ -171,5 +237,8 @@ export function buildInventoryInsights(
     }
   }
 
-  return { currentStock, added, removed, consumed, net: added - removed, buckets, stockHistoryAvailable }
+  return {
+    currentStock, added, removed, consumed, net: added - removed, buckets, stockHistoryAvailable,
+    byColor: sortedBreakdown(colorBreakdown), byRegion: sortedBreakdown(regionBreakdown),
+  }
 }
