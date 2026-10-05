@@ -36,12 +36,15 @@ curator eligibility where their meanings fit. New storage needs four parts:
    content hash, publication date, and one active version. Rows and their
    applicability are immutable after publication.
 2. `drinking_window_reference_rows`: one reviewed **pair** of absolute calendar
-   years, its scope (`release`, `producer_appellation`, `appellation`, or
-   `region`), canonical IDs required by that scope, region, colour, vintage,
-   applicability group (or expressly reviewed `all-at-this-scope`), evidence,
+   years for the likely best period, its scope (`release`,
+   `producer_appellation`, `appellation`, or `region`), canonical IDs required
+   by that scope, region, colour, vintage, applicability group (or expressly
+   reviewed `all-at-this-scope`), evidence,
    rationale, source pointer, and version. Exact-release rows also retain the
    canonical product/cuvée and release identity. The database validates the
-   canonical hierarchy and `vintage <= start_year <= end_year`.
+   canonical hierarchy and `vintage <= start_year <= end_year`. Optional
+   reviewed start-tasting and drink-by years need their own evidence and must
+   order around the pair; they are not implied by a workbook import.
 3. `drinking_window_ageing_groups` and versioned memberships: locally defined
    groups, their scope and colour, evidence-backed definition, and the
    canonical appellations/products/releases eligible for each group. A
@@ -111,6 +114,10 @@ published claims. For the audited snapshot, the dry-run test must reconcile
 candidates, 71 standard and 71 premium regional pairs, five producer-only
 rows, two start-only producer rows, and two regional rows with no pair.
 
+The workbook's two years map to **likely best start** and **likely best end**,
+not to start tasting and drink by. Their source provenance remains attached
+to both years after publication.
+
 ## Resolve a wine and show why
 
 The server first resolves whichever identity fields it can confirm. It only
@@ -126,13 +133,28 @@ shared row. The existing four-date `wine_maturity_overrides` remain effective
 until the owner explicitly accepts a migration to a pair editor; their
 `best_start_year` and `best_end_year` are not mixed with any other source.
 
+For each outer milestone absent from a selected reference row, keep the
+current four-milestone presentation when a safe existing model projection is
+available. Use that projection's `best_start - first_trial` and
+`drink_by - best_end` gaps, anchored respectively before the reference start
+and after the reference end. Clamp start tasting no earlier than the vintage
+and validate the resulting order. The model supplies **gap estimates only**; it
+never replaces either reviewed best-period year. If its projection is missing
+or inconsistent, leave the corresponding outer milestone unavailable. A row
+with a reviewed outer year uses that year instead. A new private two-year
+override follows the same rule around its manual best pair; an existing
+four-date override keeps its four explicit years. The derivation method is
+versioned and must pass a shadow comparison before visible release.
+
 Store the selected source type, scope, row ID, reference-version ID, exact
-start/end years, input fingerprint, and no-match/review reason in a
-household-scoped resolution. Keep the current model projection separately for
-its four-date estimate and storage guidance. Expose the effective window and
-its explanation through a narrow household-authorized RPC; do not expose the
-service's global candidate queue or another household's data to browsers or
-PowerSync. A reference publication requeues affected resolutions using the
+start/end years, optional outer milestones, **per-milestone provenance**,
+derivation-method version and model projection ID/version when used, input
+fingerprint, and no-match/review reason in a household-scoped resolution.
+Keep the current model projection
+separately for its four-date estimate and storage guidance. Expose the
+effective window and its explanation through a narrow household-authorized
+RPC; do not expose the service's global candidate queue or another household's
+data to browsers or PowerSync. A reference publication requeues affected resolutions using the
 existing demand/job pattern. A wine edit invalidates a stale resolution by
 input fingerprint; old advice remains attributable to its old version.
 
@@ -140,7 +162,8 @@ input fingerprint; old advice remains attributable to its old version.
 
 On a wine card, offer **Suggest a correction or source** beside the displayed
 window and its explanation. A member can propose a missing start/end pair,
-challenge an existing pair, or identify the correct ageing group. The form
+challenge an existing pair or derived outer milestone, supply evidence for
+an explicit outer year, or identify the correct ageing group. The form
 shows the canonical identity and proposed scope, asks for both years and a
 reason/source link, and explicitly distinguishes **save only for my cellar**
 from **propose for the shared library**. A private adjustment works
@@ -180,9 +203,11 @@ than mutating an immutable historical version.
 3. **Selector in shadow mode:** calculate a reference result beside the
    current model for the owner's cellar. Compare coverage and every changed
    date; test manual precedence, group eligibility, vintage/colour separation,
-   missing data, conflicts, and fallback. Do not replace the visible window.
-4. **Household view and contributions:** show the source label and explanation,
-   add private versus shared proposal actions, and test cross-household
+   derived outer-year order and provenance, missing data, conflicts, and
+   fallback. Do not replace the visible window.
+4. **Household view and contributions:** show the best-period source and
+   separate outer-year labels and explanation, add private versus shared
+   proposal actions, and test cross-household
    isolation and curator publication. Release behind a reversible switch
    after the owner reviews the shadow report.
 

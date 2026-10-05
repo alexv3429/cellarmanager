@@ -31,6 +31,11 @@ approved import would convert each offset by adding the row's vintage. Two
 regional 2023 rows have no offsets at all. The nine invalid `Cave` manual-start
 values comprise six `C`, two `x`, and one `75cl`; these are not years.
 
+The workbook's paired min/max values become the **likely best** start/end in
+the four-milestone application view. It supplies no start-tasting or
+preferably-drink-by years for those pairs; any such displayed dates need
+separate reviewed evidence or a visibly labelled derivation.
+
 The workbook's `Cave!O` premium flag is `x` for 674 of the 1,130 identifiable
 wines and blank for 456. It was a two-bin approximation of ageing potential,
 not evidence that every wine shares one global `premium` classification.

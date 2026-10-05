@@ -1,7 +1,8 @@
 # Drinking-window reference policy (design proposal)
 
 This specifies a proposed reference-first selection of *drinking-window dates*,
-with the current additive maturity model retained as a labelled fallback. It
+with the current additive maturity model retained as a labelled fallback and
+as an optional source of outer-milestone gaps. It
 is not deployed and does not change current advice. The workbook audit and
 migration gaps are in
 [`drinking-window-source-audit.md`](drinking-window-source-audit.md). The
@@ -90,13 +91,38 @@ substitutions. These properties are documented in
 [`maturity-projections.md`](maturity-projections.md) and
 [`maturity-hierarchy-poc.md`](maturity-hierarchy-poc.md).
 
-A selected reference row yields only `start_year` and `end_year`; it must not
-manufacture first-assessment or drink-by dates from the current model. A
-selected model result may display its own four dates, with best-start/best-end
-serving as its **estimated** drinking period. The interface and exports need a
-visible source label (`manual`, `reviewed reference`, `model estimate`, or
-`unavailable`) and exact version/row or projection provenance. Pairing,
-storage, and structure estimates are outside this date-selection decision.
+A selected reference row supplies the **likely best start and end** as one
+reviewed pair. The current four-milestone presentation remains the goal:
+start tasting, likely best start, likely best end, and preferably drink by.
+The last date means prioritize or reassess, not that the wine expires.
+The two outer dates cannot be determined uniquely from the pair. If the row
+also has individually reviewed outer dates, use them. Otherwise, a compatible
+four-date model projection may supply only its *gaps* around its own best
+period:
+
+```text
+early_gap = model.best_start_year - model.first_trial_year
+late_gap  = model.drink_by_year - model.best_end_year
+first_trial_year = max(vintage, reference.start_year - early_gap)
+drink_by_year    = reference.end_year + late_gap
+```
+
+This anchors the outer estimates to the reviewed pair without replacing
+either central year with a model year. The projection must pass its existing
+vintage/place/colour checks; both gaps must be non-negative and the derived
+four years must be ordered and within the supported year range. A failure
+leaves the outer milestone(s) **unavailable**, not filled with an unrelated
+reference or a fixed offset. The derivation rule and model projection ID/version are part
+of the displayed provenance and must be checked in shadow mode against real
+windows before release. Its outer dates are labelled **model-derived**, not
+reviewed. A wholly selected model result still displays its own four dates,
+with best-start/best-end serving as its **estimated** drinking period. An
+existing complete four-date household override remains fully manual; a new
+manual best-period pair can use the same clearly labelled outer derivation.
+The interface and exports need provenance for the central pair and the two
+outer milestones separately (`manual`, `reviewed reference`, `model-derived`,
+`model estimate`, or `unavailable`). Pairing, storage, and structure estimates
+are outside this date-selection decision.
 
 ## Identity and validation
 
@@ -120,23 +146,29 @@ storage, and structure estimates are outside this date-selection decision.
 - Both years are integers, `vintage <= start_year <= end_year`, and come from
   the same approved record. An absent, reversed, or implausible pair cannot be
   published. A different vintage cannot be extrapolated from a known one.
-- A manual window is an explicit household-wine pair. A partial edit is a
-  draft to complete or clear, never a licence to combine one manual bound with
-  a shared bound. The currently selected shared pair can remain visible while
-  that draft is incomplete. Clearing the manual pair restores the current
-  shared result; publication never overwrites a manual pair.
+  Optional reviewed outer years must be supported and ordered around that
+  same pair; importing two workbook years never asserts those outer years.
+- A new manual best window is an explicit household-wine pair; an existing
+  four-date override remains one complete manual instruction. A partial edit
+  is a draft to complete or clear, never a licence to combine one manual
+  bound with a shared bound. The currently selected shared pair can remain
+  visible while that draft is incomplete. Clearing the manual pair restores
+  the current shared result; publication never overwrites a manual pair.
 - A deliberately blocked scope (for example a known misidentification) stops
   lookup with a review reason and does not activate the model fallback. It is
   distinct from simply having no profile. A contradictory wine identity also
   blocks the fallback; an absent reviewed row does not.
-- The model fallback may be used only when levels 1–4 have **no published
-  matching row**. An unpublished incomplete or disputed candidate does not
-  block it. A duplicated/invalid published key is a data-integrity failure,
-  not a normal miss: stop and flag it rather than hiding it with the model.
+- The model may supply the **best period** only when levels 1–4 have **no
+  published matching row**. An unpublished incomplete or disputed candidate
+  does not block it. A duplicated/invalid published key is a data-integrity
+  failure, not a normal miss: stop and flag it rather than hiding it with the
+  model.
   A deliberately blocked scope also stops it. Otherwise the model must pass
   its own vintage/place/colour checks and the new appellation-region
-  consistency check. Its four-date projection is retained as one result,
-  never split or spliced into a reference pair.
+  consistency check. When the model alone supplies the best period, its
+  four-date projection is retained as one result. When a reference supplies
+  that period, only validated model *gaps* may derive its outer milestones;
+  the reference start/end years are never replaced or mixed.
 
 ## Reference examples
 
@@ -183,13 +215,27 @@ illustrative only; they are not claims about Bourgogne or Languedoc:
 | Languedoc, red, 2022, structured | 2028–2036 | Same structured cuvée 2022 | Match this complete pair. |
 | Any group-specific regional row | Any | Wine with no confirmed ageing group | No group match; do not assume `standard`. |
 
+The four-milestone derivation also needs fixed acceptance examples. All years
+below are synthetic. For a 2022 wine with a reviewed best pair **2028–2036**,
+a valid model result `2024 / 2027–2032 / 2035` has a three-year lead and a
+three-year tail. The displayed result is **2025 / 2028–2036 / 2039**: the
+central two years remain reviewed, while the outer two are model-derived.
+If that model is unavailable or invalid, display `— / 2028–2036 / —` with
+the two missing milestones marked unavailable. If the same selected row has
+reviewed outer years, those explicit years take precedence over the derived
+ones after ordered-year validation.
+
 ## Shared record and publication contract
 
 Each candidate should retain canonical identity IDs, scope, reviewed ageing
 group and applicability rule, colour, vintage, both absolute years, origin
 (workbook sheet/cell or external source), author, evidence pointers,
 rationale, source-rights decision, review decision, and knowledge version. A
-row's exact key and source pair are immutable after
+row may additionally contain individually reviewed start-tasting and
+drink-by years with their own evidence; absence is distinct from a value
+derived later for display. The derivation method and model projection/version
+used for an effective four-milestone result are retained separately from the
+reference row. A row's exact key and source pair are immutable after
 publication; a correction creates a new version. The version and row ID used
 for a displayed result remain inspectable even after supersession.
 
@@ -227,8 +273,9 @@ current additive profiles are not silently converted into these rows.
 
 Before changing a visible window, implement and test the exact-key selector,
 reviewed ageing-group eligibility and vintage-specific pairs, paired manual
-override, conflict handling, version provenance, labelled model
-fallback, and no-result state. Preserve existing four-date manual overrides
+override, conflict handling, version provenance, four-milestone derivation
+with separate source labels, labelled model fallback, and no-result state.
+Preserve existing four-date manual overrides
 as effective instructions until an owner-reviewed migration to the new pair
 editor exists; do not silently shorten or reinterpret them. Stage and review
 source rows first. Run the selector in shadow mode
