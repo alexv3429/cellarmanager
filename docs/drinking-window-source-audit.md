@@ -17,7 +17,7 @@ The staged conversion and shared-library publication path are specified in
 | Producer sheets, cuvée and appellation blank | 5 complete pairs | None under approved ladder | Do not pretend these are producer-appellation rows; review whether a distinct scope is warranted. |
 | `Millesimes`, region + colour + vintage | 71 complete standard pairs and 71 complete premium pairs; 2 vintages with neither pair | Regional candidates after converting vintage-relative ages to absolute years | The two historical bins need local ageing-group definitions and wine eligibility; they cannot be published as universal classes. |
 | Standalone appellation + region + colour + vintage | 0 | Appellation scope | Needs newly reviewed reference rows; cannot be reconstructed from another tier. |
-| `Cave`, manual start/end | 80 complete valid pairs; 9 invalid start values; 6 end-only rows | Private manual overrides only | Review incomplete entries. Do not publish household data as shared profiles. |
+| `Cave`, manual start/end | 80 complete valid pairs; 9 invalid start values; 6 end-only rows | Private review drafts only | Complete any intended four-milestone overrides with the owner. Do not publish household data as shared profiles. |
 
 The producer sheet columns are vintage, cuvée, appellation, colour, absolute
 start and end. All 79 complete producer rows that name an appellation have a
@@ -31,10 +31,12 @@ approved import would convert each offset by adding the row's vintage. Two
 regional 2023 rows have no offsets at all. The nine invalid `Cave` manual-start
 values comprise six `C`, two `x`, and one `75cl`; these are not years.
 
-The workbook's paired min/max values become the **likely best** start/end in
-the four-milestone application view. It supplies no start-tasting or
-preferably-drink-by years for those pairs; any such displayed dates need
-separate reviewed evidence or a visibly labelled derivation.
+The workbook's paired min/max values become **likely best start/end** in
+staged candidates. It supplies no start-tasting or preferably-drink-by years
+for those pairs. Consequently, this snapshot supplies **zero complete
+four-date shared reference rows**. Both outer years require attributable
+research and explicit review before a candidate can be published. Runtime
+resolution must not infer them from the current model or fixed offsets.
 
 The workbook's `Cave!O` premium flag is `x` for 674 of the 1,130 identifiable
 wines and blank for 456. It was a two-bin approximation of ageing potential,
@@ -65,8 +67,8 @@ apparently covered wines.
 
 The released maturity library contains 151 place-and-colour profiles and 67
 vintage modifiers, with some producer/cuvée adjustments. Those are components
-of an additive four-date estimate, not complete two-year rows at the four
-approved keys. Their current coverage cannot be counted as populated
+of an additive four-date estimate, not complete four-date reference rows at the
+four approved keys. Their current coverage cannot be counted as populated
 reference rows, but a safely calculated current projection can remain a
 **labelled estimate** when no new reference row matches. Historical v0.1
 drinking windows were restored as household observations, explicitly *not*
@@ -84,12 +86,15 @@ versioned migration; it must not silently reinterpret either dataset.
 2. Verify the 79 unique appellation-to-region mappings against their producer
    rows, then link canonical producer/cuvée identities and validate colour.
    Quarantine the five producer-only and two incomplete producer rows.
-3. Review the 80 complete household manual pairs for private migration and the
-   15 incomplete/invalid manual entries with the owner. Do not turn private
-   overrides into shared advice.
-4. Build the missing appellation tier from new, attributable, reviewed
-   evidence. Prioritize uncovered wine/bottle counts, but publish no invented
-   year pair when evidence is absent.
+3. Review the 80 two-year household manual pairs and the 15
+   incomplete/invalid entries with the owner. None becomes an effective
+   four-milestone override without explicit completion and approval; none
+   becomes shared advice.
+4. Research both missing outer years for any workbook-derived candidate,
+   then review all four ordered years as one window. Build the missing
+   appellation tier from new, attributable, reviewed evidence. Prioritize
+   uncovered wine/bottle counts, but publish no invented milestone when
+   evidence is absent.
 5. Preview exact-key coverage and every changed window against current hosted
    data, because workbook counts are historical and the existing model's
    results have different semantics.

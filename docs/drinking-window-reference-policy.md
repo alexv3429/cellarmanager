@@ -1,9 +1,9 @@
 # Drinking-window reference policy (design proposal)
 
 This specifies a proposed reference-first selection of *drinking-window dates*,
-with the current additive maturity model retained as a labelled fallback and
-as an optional source of outer-milestone gaps. It
-is not deployed and does not change current advice. The workbook audit and
+with the current additive maturity model retained only as a labelled,
+four-date fallback when no complete reviewed reference matches. It is not
+deployed and does not change current advice. The workbook audit and
 migration gaps are in
 [`drinking-window-source-audit.md`](drinking-window-source-audit.md). The
 database, import, contribution, and rollout contract is in
@@ -11,12 +11,12 @@ database, import, contribution, and rollout contract is in
 
 ## Decision and scope
 
-For one wine, use the first **complete, reviewed pair of calendar years** in
-this order:
+The four years are four **milestones**, not a four-year duration. For one wine,
+use the first **complete, reviewed four-milestone window** in this order:
 
 | Priority | Required identity | Source scope |
 | --- | --- | --- |
-| 0 | Household wine | Explicit manual start and end |
+| 0 | Household wine | Explicit manual four-date window |
 | 1 | Producer, cuvée, appellation, region, colour, vintage | Exact release |
 | 2 | Producer, appellation, region, colour, vintage | Producer within appellation |
 | 3 | Appellation, region, colour, vintage | Appellation |
@@ -32,7 +32,8 @@ vintage otherwise agree.
 
 At level 5, show **estimated by the maturity model**, not a reviewed reference
 match. If the model cannot calculate safely either, show **no window** and the
-reason. Never combine a start from one row with an end from another. A
+reason. Never combine milestones from different rows or mix reference and
+model years. A
 broader row must be explicitly authored at that scope; omitting a dimension in
 the lookup must not turn a narrower row into a generic one. Colour, vintage and
 region are never dropped or substituted. In particular, neither another
@@ -70,8 +71,9 @@ regional row needs evidence that it is safe across the materially different
 styles in that region; it is not the default.
 
 The window is specific to **vintage × colour × ageing group**, and potentially
-to the producer, appellation, and cuvée above it. Publish two absolute calendar
-years for each reviewed combination. A 2022 red row may be much later than a
+to the producer, appellation, and cuvée above it. Publish four explicit
+absolute calendar years for each reviewed combination: start tasting, likely
+best start, likely best end, and preferably drink by. A 2022 red row may be much later than a
 2021 red row, while 2022 white may be earlier than 2021 white. Do not impose a
 fixed `vintage + N` rule, a monotonic order across vintages, or the same
 vintage adjustment across colours. Converting an individual workbook row's
@@ -91,38 +93,25 @@ substitutions. These properties are documented in
 [`maturity-projections.md`](maturity-projections.md) and
 [`maturity-hierarchy-poc.md`](maturity-hierarchy-poc.md).
 
-A selected reference row supplies the **likely best start and end** as one
-reviewed pair. The current four-milestone presentation remains the goal:
-start tasting, likely best start, likely best end, and preferably drink by.
-The last date means prioritize or reassess, not that the wine expires.
-The two outer dates cannot be determined uniquely from the pair. If the row
-also has individually reviewed outer dates, use them. Otherwise, a compatible
-four-date model projection may supply only its *gaps* around its own best
-period:
+A selected reference row supplies all **four explicit years** as one reviewed
+window: start tasting, likely best start, likely best end, and preferably drink
+by. The last date means prioritize or reassess, not that the wine expires.
+The shared reference database stores these four years directly. Neither the
+current model nor a fixed offset fills missing years in a selected row at
+resolution time. A workbook min/max pair is therefore an **unpublished
+candidate** until its outer years have been researched, entered, and approved
+as part of one coherent four-milestone record. Curators may consult the model as
+context, but its output is not evidence or an automatic publication value.
 
-```text
-early_gap = model.best_start_year - model.first_trial_year
-late_gap  = model.drink_by_year - model.best_end_year
-first_trial_year = max(vintage, reference.start_year - early_gap)
-drink_by_year    = reference.end_year + late_gap
-```
-
-This anchors the outer estimates to the reviewed pair without replacing
-either central year with a model year. The projection must pass its existing
-vintage/place/colour checks; both gaps must be non-negative and the derived
-four years must be ordered and within the supported year range. A failure
-leaves the outer milestone(s) **unavailable**, not filled with an unrelated
-reference or a fixed offset. The derivation rule and model projection ID/version are part
-of the displayed provenance and must be checked in shadow mode against real
-windows before release. Its outer dates are labelled **model-derived**, not
-reviewed. A wholly selected model result still displays its own four dates,
-with best-start/best-end serving as its **estimated** drinking period. An
-existing complete four-date household override remains fully manual; a new
-manual best-period pair can use the same clearly labelled outer derivation.
-The interface and exports need provenance for the central pair and the two
-outer milestones separately (`manual`, `reviewed reference`, `model-derived`,
-`model estimate`, or `unavailable`). Pairing, storage, and structure estimates
-are outside this date-selection decision.
+When no complete published reference matches, the current model may supply
+its **own four-date result** under its existing safety checks. All four dates
+are then labelled as one model estimate. Existing complete four-date
+household overrides remain fully manual. During migration, a two-date manual
+pair remains a private draft or legacy record for owner review; it must not
+be spliced into either the shared reference or model result. The interface
+and exports identify the selected whole-window source (`manual`, `reviewed
+reference`, `model estimate`, or `unavailable`) and its version. Pairing,
+storage, and structure estimates are outside this date-selection decision.
 
 ## Identity and validation
 
@@ -143,100 +132,102 @@ are outside this date-selection decision.
   and applicable group. Multiple matching rows or contradictory evidence
   require review; the resolver must not take the first row or silently fall
   to a broader tier.
-- Both years are integers, `vintage <= start_year <= end_year`, and come from
-  the same approved record. An absent, reversed, or implausible pair cannot be
-  published. A different vintage cannot be extrapolated from a known one.
-  Optional reviewed outer years must be supported and ordered around that
-  same pair; importing two workbook years never asserts those outer years.
-- A new manual best window is an explicit household-wine pair; an existing
-  four-date override remains one complete manual instruction. A partial edit
-  is a draft to complete or clear, never a licence to combine one manual
-  bound with a shared bound. The currently selected shared pair can remain
-  visible while that draft is incomplete. Clearing the manual pair restores
-  the current shared result; publication never overwrites a manual pair.
+- All four years are present as integers in one approved record, ordered
+  `vintage <= first_trial_year <= best_start_year <= best_end_year <= drink_by_year`.
+  An absent, reversed, or implausible milestone cannot be
+  published. The central workbook pair retains its one-source provenance;
+  research for the two outer years is separately attributable, then all four
+  are approved together. A different vintage cannot be extrapolated from a
+  known one. Importing two workbook years never asserts the outer two.
+- A new effective manual window is an explicit four-date household-wine
+  instruction; an existing four-date override remains one complete manual
+  instruction. A partial edit or historical two-year pair is a private draft
+  to complete or clear, never a licence to combine manual and shared years.
+  The currently selected reference or model result can remain visible while
+  that draft is incomplete. Clearing the manual window restores the current
+  non-manual result; publication never overwrites a manual window.
 - A deliberately blocked scope (for example a known misidentification) stops
   lookup with a review reason and does not activate the model fallback. It is
   distinct from simply having no profile. A contradictory wine identity also
   blocks the fallback; an absent reviewed row does not.
-- The model may supply the **best period** only when levels 1–4 have **no
-  published matching row**. An unpublished incomplete or disputed candidate
+- The model may supply a **whole four-date estimate** only when levels 1–4 have
+  **no published matching row**. An unpublished incomplete or disputed candidate
   does not block it. A duplicated/invalid published key is a data-integrity
   failure, not a normal miss: stop and flag it rather than hiding it with the
   model.
   A deliberately blocked scope also stops it. Otherwise the model must pass
   its own vintage/place/colour checks and the new appellation-region
-  consistency check. When the model alone supplies the best period, its
-  four-date projection is retained as one result. When a reference supplies
-  that period, only validated model *gaps* may derive its outer milestones;
-  the reference start/end years are never replaced or mixed.
+  consistency check. When the model is selected, its four-date projection is
+  retained as one result. When a reference is selected, all four years come
+  from that reference row; no model gaps are applied.
 
 ## Reference examples
 
 The names and windows below are synthetic test fixtures, not cellar data or
-published advice. All examples use confirmed region `R1`, colour `white`,
+published advice. A window is written `first trial / best start–best end / drink by`.
+All examples use confirmed region `R1`, colour `white`,
 vintage `2020`, and reviewed ageing group `G1` unless a row says otherwise.
 Published rows are:
 
 | ID | Scope | Key additions | Applicability | Window |
 | --- | --- | --- | --- | --- |
-| E | Release | P1 + C1 + A1 | Exact release | 2026–2034 |
-| P | Producer within appellation | P1 + A1 | G1 | 2025–2031 |
-| A | Appellation | A1 | G1 | 2024–2030 |
-| R | Region | R1 | G1 | 2023–2028 |
+| E | Release | P1 + C1 + A1 | Exact release | 2024 / 2026–2034 / 2037 |
+| P | Producer within appellation | P1 + A1 | G1 | 2023 / 2025–2031 / 2034 |
+| A | Appellation | A1 | G1 | 2022 / 2024–2030 / 2032 |
+| R | Region | R1 | G1 | 2021 / 2023–2028 / 2030 |
 
 | Wine or condition | Result | Why |
 | --- | --- | --- |
-| P1, C1, A1; manual 2027–2030 | 2027–2030, manual | Manual pair wins. |
-| P1, C1, A1; no manual | 2026–2034, E | All six identity dimensions match. |
-| P1, C2, A1 | 2025–2031, P | E is not a cuvée wildcard. |
-| P2, C1, A1 | 2024–2030, A | Same cuvée text does not transfer P1's window. |
-| P2, C2, A2, with R1 confirmed | 2023–2028, R | Only the explicit regional row applies. |
+| P1, C1, A1; complete manual 2025 / 2027–2030 / 2033 | 2025 / 2027–2030 / 2033, manual | The whole manual window wins. |
+| P1, C1, A1; no manual | 2024 / 2026–2034 / 2037, E | All six identity dimensions match. |
+| P1, C2, A1 | 2023 / 2025–2031 / 2034, P | E is not a cuvée wildcard. |
+| P2, C1, A1 | 2022 / 2024–2030 / 2032, A | Same cuvée text does not transfer P1's window. |
+| P2, C2, A2, with R1 confirmed | 2021 / 2023–2028 / 2030, R | Only the explicit regional row applies. |
 | Same wine, but red | No reviewed row; try a valid red model estimate | Colour is never substituted. |
 | Same wine, but 2019 | No reviewed row unless a 2019 row exists; try a valid 2019 model estimate | Vintage is never extrapolated from 2020. |
-| P1, C1, A1; manual start 2027 only | 2026–2034, E, with manual draft flagged | No mixed-source pair. |
+| P1, C1, A1; manual best start 2027 only | 2024 / 2026–2034 / 2037, E, with manual draft flagged | No mixed-source window. |
 | A1 recorded under a contradictory region | Review required | Do not hide the identity conflict behind R. |
 | Two conflicting E rows for the same key | Review required | No arbitrary winner or quiet fallback to P. |
-| P2, C2, A3, R2 with no reference rows; model says best 2027–2032 | 2027–2032, labelled model estimate | A safe estimate is useful, but is not a reference match. |
+| P2, C2, A3, R2 with no reference rows; model says 2025 / 2027–2032 / 2035 | 2025 / 2027–2032 / 2035, labelled model estimate | A safe estimate is useful, but is not a reference match. |
 | Same wine; model has no compatible place/colour | No window | Neither method can assess it safely. |
 
 The next fixtures test broader-group and vintage rules. Their windows are
 illustrative only; they are not claims about Bourgogne or Languedoc:
 
-| Candidate broad row | Window | Wine | Result |
+| Candidate broad row | Four-year window | Wine | Result |
 | --- | --- | --- | --- |
-| Bourgogne, red, 2021, village | 2023–2027 | Confirmed village red 2021 | Match only this row. |
-| Bourgogne, red, 2022, village | 2029–2036 | Confirmed village red 2022 | Match its own 2022 row; no fixed age offset. |
-| Bourgogne, red, 2021, Grand Cru | 2028–2040 | Confirmed Grand Cru red 2021 | Never use the village row. |
-| Bourgogne, white, 2021, village | 2027–2035 | Confirmed village white 2021 | Match its own white 2021 row. |
-| Bourgogne, white, 2022, village | 2024–2030 | Confirmed village white 2022 | It may be earlier than white 2021. |
-| P1 + A1, red, 2022, early-drinking | 2024–2028 | P1's reviewed easy-drinking cuvée 2022 | Match only its producer-appellation group. |
-| P1 + A1, red, 2022, structured | 2028–2037 | P1's reviewed cellar-worthy cuvée 2022 | Same producer and appellation, different window. |
-| Languedoc, red, 2022, early-drinking | 2024–2027 | Confirmed structured cuvée 2022 | No match; seek a structured row or model estimate. |
-| Languedoc, red, 2022, structured | 2028–2036 | Same structured cuvée 2022 | Match this complete pair. |
+| Bourgogne, red, 2021, village | 2022 / 2023–2027 / 2029 | Confirmed village red 2021 | Match only this row. |
+| Bourgogne, red, 2022, village | 2026 / 2029–2036 / 2039 | Confirmed village red 2022 | Match its own 2022 row; no fixed age offset. |
+| Bourgogne, red, 2021, Grand Cru | 2025 / 2028–2040 / 2044 | Confirmed Grand Cru red 2021 | Never use the village row. |
+| Bourgogne, white, 2021, village | 2024 / 2027–2035 / 2038 | Confirmed village white 2021 | Match its own white 2021 row. |
+| Bourgogne, white, 2022, village | 2023 / 2024–2030 / 2032 | Confirmed village white 2022 | It may be earlier than white 2021. |
+| P1 + A1, red, 2022, early-drinking | 2023 / 2024–2028 / 2030 | P1's reviewed easy-drinking cuvée 2022 | Match only its producer-appellation group. |
+| P1 + A1, red, 2022, structured | 2025 / 2028–2037 / 2040 | P1's reviewed cellar-worthy cuvée 2022 | Same producer and appellation, different window. |
+| Languedoc, red, 2022, early-drinking | 2023 / 2024–2027 / 2029 | Confirmed structured cuvée 2022 | No match; seek a structured row or model estimate. |
+| Languedoc, red, 2022, structured | 2025 / 2028–2036 / 2039 | Same structured cuvée 2022 | Match this complete window. |
 | Any group-specific regional row | Any | Wine with no confirmed ageing group | No group match; do not assume `standard`. |
 
-The four-milestone derivation also needs fixed acceptance examples. All years
-below are synthetic. For a 2022 wine with a reviewed best pair **2028–2036**,
-a valid model result `2024 / 2027–2032 / 2035` has a three-year lead and a
-three-year tail. The displayed result is **2025 / 2028–2036 / 2039**: the
-central two years remain reviewed, while the outer two are model-derived.
-If that model is unavailable or invalid, display `— / 2028–2036 / —` with
-the two missing milestones marked unavailable. If the same selected row has
-reviewed outer years, those explicit years take precedence over the derived
-ones after ordered-year validation.
+The four-milestone boundary also needs fixed acceptance examples. All years
+below are synthetic. A 2022 candidate holding only workbook best years
+`2028–2036` is **not publishable**. If no other published row matches, a safe
+model result `2024 / 2027–2032 / 2035` appears in full as a labelled
+estimate. After a curator researches and approves `2025 / 2028–2036 / 2039`
+as one row, that complete reference appears in full instead. If the model is
+unavailable before publication, show no window, not
+`— / 2028–2036 / —`. A missing outer year in any proposed row fails
+publication; runtime resolution never fills it.
 
 ## Shared record and publication contract
 
 Each candidate should retain canonical identity IDs, scope, reviewed ageing
-group and applicability rule, colour, vintage, both absolute years, origin
-(workbook sheet/cell or external source), author, evidence pointers,
+group and applicability rule, colour, vintage, all supplied absolute years,
+origin (workbook sheet/cell or external source), author, evidence pointers,
 rationale, source-rights decision, review decision, and knowledge version. A
-row may additionally contain individually reviewed start-tasting and
-drink-by years with their own evidence; absence is distinct from a value
-derived later for display. The derivation method and model projection/version
-used for an effective four-milestone result are retained separately from the
-reference row. A row's exact key and source pair are immutable after
-publication; a correction creates a new version. The version and row ID used
+candidate may be incomplete; a published row must have all four years,
+their provenance, and one explicit approval of the coherent window. The
+model projection/version used for an effective fallback is retained
+separately from any reference row. A row's exact key and four years are
+immutable after publication; a correction creates a new version. The version and row ID used
 for a displayed result remain inspectable even after supersession.
 
 The contribution path is:
@@ -245,13 +236,13 @@ The contribution path is:
    missing-reference count or a challenged result. Household manual windows
    and tasting notes stay private; they never auto-populate shared candidates.
 2. Validate canonical identities, appellation-region consistency, exact scope,
-   ageing-group definition and membership, colour, vintage, complete years,
+   ageing-group definition and membership, colour, vintage, four complete years,
    overlapping/duplicate keys, and evidence/rights for cross-household reuse.
    Keep source text or URLs as pointers where copying is
    not licensed. A historical workbook row is evidence to review, not an
    automatically published global fact.
-3. An eligible curator reviews the pair and its applicability, including
-   disagreements with existing rows. A conflict or unresolved disagreement
+3. An eligible curator reviews the complete window and its applicability,
+   including disagreements with existing rows. A conflict or unresolved disagreement
    blocks publication. Record decisions and rationale. Where possible, a
    different curator from the proposer should approve a global change.
 4. Build an immutable draft library version, run the reference fixtures and a
@@ -266,18 +257,18 @@ The contribution path is:
 This can reuse the existing reviewed-source, curator, immutable-version, and
 private-report boundaries in [`enrichment-knowledge-schema.md`](enrichment-knowledge-schema.md)
 and [`profile-revision-governance.md`](profile-revision-governance.md), but the
-absolute pair and exact-key constraints need their own schema and tests. The
+four-milestone and exact-key constraints need their own schema and tests. The
 current additive profiles are not silently converted into these rows.
 
 ## Rollout gate
 
 Before changing a visible window, implement and test the exact-key selector,
-reviewed ageing-group eligibility and vintage-specific pairs, paired manual
-override, conflict handling, version provenance, four-milestone derivation
-with separate source labels, labelled model fallback, and no-result state.
-Preserve existing four-date manual overrides
-as effective instructions until an owner-reviewed migration to the new pair
-editor exists; do not silently shorten or reinterpret them. Stage and review
+reviewed ageing-group eligibility and vintage-specific four-milestone rows,
+complete manual override, conflict handling, version provenance,
+whole-window source labels, labelled model fallback, and no-result state.
+Preserve existing four-date manual overrides as effective instructions until
+an owner-reviewed migration to the new four-milestone editor exists; do not
+silently shorten or reinterpret them. Stage and review
 source rows first. Run the selector in shadow mode
 against current wines, inspect changed and newly unassessed cases with the
 owner, then deploy behind a reversible version switch. Historical projections
