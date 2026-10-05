@@ -99,6 +99,28 @@ does **not** publish or change household advice. The aggregate counts and
 known gaps to reconcile are in
 [`drinking-window-source-audit.md`](drinking-window-source-audit.md).
 
+The read-only converter is now available as `npm run drinking-window:audit`.
+It requires an explicit SHA-256 pin and an existing private output directory
+outside Git, then writes `candidates.json` and `report.json` there with
+owner-only file permissions. For the audited snapshot, for example:
+
+```sh
+mkdir -m 700 /tmp/cellarmanager-window-review
+npm run drinking-window:audit -- \
+  --file /path/to/Caves_2.0.xlsx \
+  --out-dir /tmp/cellarmanager-window-review \
+  --expected-sha256 42b935d4fd2e161605d245b15b853d4ee7c1a0a9eed1ea14d460a80857373911
+```
+
+Use a fresh output directory for a repeat run; the converter refuses to
+overwrite existing files. These files are a **local curation preview**, not
+publication-ready rows or a database upload. The report lists each source
+locator still needing canonical identities, source-rights review, regional
+group eligibility where applicable, and both missing outer years. It also
+reports quarantined rows and exact normalized-key overlaps. The importer
+does not extract or output the `Cave` sheet: private manual pairs and historical `x` hints
+remain a separate owner-only review task. No data is sent to a server.
+
 | Workbook source | Staged translation | Review before publication |
 | --- | --- | --- |
 | Producer sheets `A:F`: vintage, cuvée, appellation, colour, start, end | Complete cuvée rows become exact-release **two-year candidates**; blank-cuvée/appellation-present rows become producer-appellation candidates. Keep the two years together. Leave `first_trial_year` and `drink_by_year` empty in staging. | Resolve producer, product, appellation, region, colour, release and evidence to canonical IDs; research and review both outer years. Reject ambiguous aliases. |
