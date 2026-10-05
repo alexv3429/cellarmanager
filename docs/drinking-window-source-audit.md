@@ -13,7 +13,7 @@ Counts here describe that snapshot, not the current hosted cellar.
 | 12 producer sheets, exact cuvée + appellation | 19 complete year pairs | Release scope | Sheets omit region; confirm producer/cuvée/appellation IDs and region. |
 | Producer sheets, cuvée blank + appellation present | 60 complete pairs; 2 start-only | Producer-appellation scope | Confirm region; complete or quarantine the 2 partial pairs. |
 | Producer sheets, cuvée and appellation blank | 5 complete pairs | None under approved ladder | Do not pretend these are producer-appellation rows; review whether a distinct scope is warranted. |
-| `Millesimes`, region + colour + vintage | 71 complete standard pairs and 71 complete premium pairs; 2 vintages with neither pair | Regional scope after converting vintage-relative ages to absolute years | Two different windows share the proposed key; classification policy and source review required. |
+| `Millesimes`, region + colour + vintage | 71 complete standard pairs and 71 complete premium pairs; 2 vintages with neither pair | Regional candidates after converting vintage-relative ages to absolute years | The two historical bins need local ageing-group definitions and wine eligibility; they cannot be published as universal classes. |
 | Standalone appellation + region + colour + vintage | 0 | Appellation scope | Needs newly reviewed reference rows; cannot be reconstructed from another tier. |
 | `Cave`, manual start/end | 80 complete valid pairs; 9 invalid start values; 6 end-only rows | Private manual overrides only | Review incomplete entries. Do not publish household data as shared profiles. |
 
@@ -30,9 +30,12 @@ regional 2023 rows have no offsets at all. The nine invalid `Cave` manual-start
 values comprise six `C`, two `x`, and one `75cl`; these are not years.
 
 The workbook's `Cave!O` premium flag is `x` for 674 of the 1,130 identifiable
-wines and blank for 456. Therefore publishing the standard regional pair for
-every wine would materially change the workbook's original classification;
-the premium decision is not a cosmetic data-cleaning step.
+wines and blank for 456. It was a two-bin approximation of ageing potential,
+not evidence that every wine shares one global `premium` classification.
+Publishing the standard regional pair for every wine would materially change
+the workbook's original classification. The Bourgogne red and white rows for
+2021 and 2022 also have different age offsets by vintage and colour: this
+source was a per-vintage matrix, not one fixed `vintage + N` rule.
 
 The old `Cave!I2:J2` formulas do not implement the proposed policy. They
 resolve the two bounds separately, use a producer sheet's generic
@@ -65,10 +68,12 @@ versioned migration; it must not silently reinterpret either dataset.
 
 ## Completion queue
 
-1. Resolve the standard/premium distinction. Until there is a reviewed
-   classification key, stage both and publish neither as an ambiguous regional
-   pair. If only standard is chosen for initial publication, keep premium
-   rows quarantined and labelled, never silently discard them.
+1. Preserve the standard/premium values and `x` flags as historical source
+   data, then replace the binary shortcut with reviewed, region-appropriate
+   ageing groups and explicit wine eligibility. Legal classification can
+   define some Bourgogne groups; other regions may need reviewed cuvée/style
+   groupings. Stage both regional pairs until those mappings are established.
+   Do not publish standard for all wines or infer a shared group from `x`.
 2. Verify the 79 unique appellation-to-region mappings against their producer
    rows, then link canonical producer/cuvée identities and validate colour.
    Quarantine the five producer-only and two incomplete producer rows.

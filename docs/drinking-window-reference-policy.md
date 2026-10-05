@@ -20,6 +20,13 @@ this order:
 | 4 | Region, colour, vintage | Region |
 | 5 | No reviewed row at levels 1–4 | Current hierarchical estimate, if safely available |
 
+At levels 2–4, a broad row must also be applicable to the wine's **reviewed
+ageing group** when the scope contains materially different styles. This is
+an eligibility condition within each level, not another fallback level. The
+producer → appellation → region order remains unchanged. A row for one group
+cannot match another, even when producer, appellation, region, colour, and
+vintage otherwise agree.
+
 At level 5, show **estimated by the maturity model**, not a reviewed reference
 match. If the model cannot calculate safely either, show **no window** and the
 reason. Never combine a start from one row with an end from another. A
@@ -28,6 +35,47 @@ the lookup must not turn a narrower row into a generic one. Colour, vintage and
 region are never dropped or substituted. In particular, neither another
 region's vintage nor a white-wine profile can stand in for a missing red-wine
 profile.
+
+## Ageing groups and vintage effects
+
+The workbook's `standard`/`premium` split was a useful spreadsheet shortcut,
+but neither value is a universal property of a wine. A legal classification
+such as village, Premier Cru, or Grand Cru can distinguish wines within a
+region. Elsewhere, a reviewed cuvée's structure or intended style may be the
+relevant distinction even when there is no comparable legal classification.
+Do not infer that distinction from price, a producer's reputation, an
+unverified label phrase, or the workbook's `x` alone. Do not create a second
+group merely to restate a classification already captured by a canonical
+appellation; groups describe distinctions that remain at the chosen scope.
+
+The shared library therefore needs **local, reviewed ageing groups** with
+explicit definitions and applicability. A group may be based on a canonical
+appellation/classification or on reviewed product/cuvée facts; its membership
+may be limited to particular vintages when the wine or producer changes. For
+example, a Bourgogne regional fallback might distinguish village and Grand
+Cru, while a Languedoc fallback might distinguish an early-drinking cuvée
+from a structured, cellar-worthy one. These are examples of *different local
+taxonomies*, not a single global ranking called `premium`.
+
+Each broader profile records its group (or an explicitly reviewed
+`all-at-this-scope` applicability). Group membership must be established for
+the wine before that row can match. Overlapping groups at the same lookup
+level and key are a publication conflict. If the wine's group is unknown, do
+not guess or silently choose the `standard` row; continue to a genuinely
+applicable broader row, or use the labelled model estimate. An unrestricted
+regional row needs evidence that it is safe across the materially different
+styles in that region; it is not the default.
+
+The window is specific to **vintage × colour × ageing group**, and potentially
+to the producer, appellation, and cuvée above it. Publish two absolute calendar
+years for each reviewed combination. A 2022 red row may be much later than a
+2021 red row, while 2022 white may be earlier than 2021 white. Do not impose a
+fixed `vintage + N` rule, a monotonic order across vintages, or the same
+vintage adjustment across colours. Converting an individual workbook row's
+vintage-specific age offsets to calendar years is a data representation step,
+not permission to reuse those offsets for other years.
+
+## Model fallback and presentation
 
 The current model starts with a reviewed regional *age-range baseline*, then
 adds applicable appellation/climat, vintage, producer-era, cuvée, and
@@ -62,9 +110,11 @@ storage, and structure estimates are outside this date-selection decision.
   appellation may still use a confirmed region row.
 - Profiles have an explicit scope (`release`, `producer_appellation`,
   `appellation`, `region`). Fields excluded by that scope are null, not
-  wildcards. A published version has at most one active row per scope and full
-  key. Multiple candidate rows or contradictory evidence require review; the
-  resolver must not take the first row or silently fall to a broader tier.
+  wildcards. Broader rows also have explicit, non-overlapping applicability
+  groups. A published version has at most one active row per scope, full key,
+  and applicable group. Multiple matching rows or contradictory evidence
+  require review; the resolver must not take the first row or silently fall
+  to a broader tier.
 - Both years are integers, `vintage <= start_year <= end_year`, and come from
   the same approved record. An absent, reversed, or implausible pair cannot be
   published. A different vintage cannot be extrapolated from a known one.
@@ -89,15 +139,16 @@ storage, and structure estimates are outside this date-selection decision.
 ## Reference examples
 
 The names and windows below are synthetic test fixtures, not cellar data or
-published advice. All examples use confirmed region `R1`, colour `white`, and
-vintage `2020` unless a row says otherwise. Published rows are:
+published advice. All examples use confirmed region `R1`, colour `white`,
+vintage `2020`, and reviewed ageing group `G1` unless a row says otherwise.
+Published rows are:
 
-| ID | Scope | Key additions | Window |
-| --- | --- | --- | --- |
-| E | Release | P1 + C1 + A1 | 2026–2034 |
-| P | Producer within appellation | P1 + A1 | 2025–2031 |
-| A | Appellation | A1 | 2024–2030 |
-| R | Region | R1 | 2023–2028 |
+| ID | Scope | Key additions | Applicability | Window |
+| --- | --- | --- | --- | --- |
+| E | Release | P1 + C1 + A1 | Exact release | 2026–2034 |
+| P | Producer within appellation | P1 + A1 | G1 | 2025–2031 |
+| A | Appellation | A1 | G1 | 2024–2030 |
+| R | Region | R1 | G1 | 2023–2028 |
 
 | Wine or condition | Result | Why |
 | --- | --- | --- |
@@ -114,12 +165,29 @@ vintage `2020` unless a row says otherwise. Published rows are:
 | P2, C2, A3, R2 with no reference rows; model says best 2027–2032 | 2027–2032, labelled model estimate | A safe estimate is useful, but is not a reference match. |
 | Same wine; model has no compatible place/colour | No window | Neither method can assess it safely. |
 
+The next fixtures test broader-group and vintage rules. Their windows are
+illustrative only; they are not claims about Bourgogne or Languedoc:
+
+| Candidate broad row | Window | Wine | Result |
+| --- | --- | --- | --- |
+| Bourgogne, red, 2021, village | 2023–2027 | Confirmed village red 2021 | Match only this row. |
+| Bourgogne, red, 2022, village | 2029–2036 | Confirmed village red 2022 | Match its own 2022 row; no fixed age offset. |
+| Bourgogne, red, 2021, Grand Cru | 2028–2040 | Confirmed Grand Cru red 2021 | Never use the village row. |
+| Bourgogne, white, 2021, village | 2027–2035 | Confirmed village white 2021 | Match its own white 2021 row. |
+| Bourgogne, white, 2022, village | 2024–2030 | Confirmed village white 2022 | It may be earlier than white 2021. |
+| P1 + A1, red, 2022, early-drinking | 2024–2028 | P1's reviewed easy-drinking cuvée 2022 | Match only its producer-appellation group. |
+| P1 + A1, red, 2022, structured | 2028–2037 | P1's reviewed cellar-worthy cuvée 2022 | Same producer and appellation, different window. |
+| Languedoc, red, 2022, early-drinking | 2024–2027 | Confirmed structured cuvée 2022 | No match; seek a structured row or model estimate. |
+| Languedoc, red, 2022, structured | 2028–2036 | Same structured cuvée 2022 | Match this complete pair. |
+| Any group-specific regional row | Any | Wine with no confirmed ageing group | No group match; do not assume `standard`. |
+
 ## Shared record and publication contract
 
-Each candidate should retain canonical identity IDs, scope, colour, vintage,
-both absolute years, origin (workbook sheet/cell or external source), author,
-evidence pointers, rationale, source-rights decision, review decision, and
-knowledge version. A row's exact key and source pair are immutable after
+Each candidate should retain canonical identity IDs, scope, reviewed ageing
+group and applicability rule, colour, vintage, both absolute years, origin
+(workbook sheet/cell or external source), author, evidence pointers,
+rationale, source-rights decision, review decision, and knowledge version. A
+row's exact key and source pair are immutable after
 publication; a correction creates a new version. The version and row ID used
 for a displayed result remain inspectable even after supersession.
 
@@ -129,8 +197,9 @@ The contribution path is:
    missing-reference count or a challenged result. Household manual windows
    and tasting notes stay private; they never auto-populate shared candidates.
 2. Validate canonical identities, appellation-region consistency, exact scope,
-   colour, vintage, complete years, duplicate keys, and evidence/rights for
-   cross-household reuse. Keep source text or URLs as pointers where copying is
+   ageing-group definition and membership, colour, vintage, complete years,
+   overlapping/duplicate keys, and evidence/rights for cross-household reuse.
+   Keep source text or URLs as pointers where copying is
    not licensed. A historical workbook row is evidence to review, not an
    automatically published global fact.
 3. An eligible curator reviews the pair and its applicability, including
@@ -155,7 +224,8 @@ current additive profiles are not silently converted into these rows.
 ## Rollout gate
 
 Before changing a visible window, implement and test the exact-key selector,
-paired manual override, conflict handling, version provenance, labelled model
+reviewed ageing-group eligibility and vintage-specific pairs, paired manual
+override, conflict handling, version provenance, labelled model
 fallback, and no-result state. Preserve existing four-date manual overrides
 as effective instructions until an owner-reviewed migration to the new pair
 editor exists; do not silently shorten or reinterpret them. Stage and review
