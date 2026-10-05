@@ -7,6 +7,9 @@ workbook is not committed or modified. SHA-256:
 Counts here describe that snapshot, not the current hosted cellar.
 The staged conversion and shared-library publication path are specified in
 [`drinking-window-implementation-plan.md`](drinking-window-implementation-plan.md).
+The source-linked review of the two incomplete Castagnier rows and two empty
+2023 regional rows is in
+[`drinking-window-missing-date-review.md`](drinking-window-missing-date-review.md).
 
 ## What the workbook actually supplies
 

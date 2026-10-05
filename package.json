@@ -17,6 +17,8 @@
     "v01:test": "node --test scripts/v01/*.test.mjs",
     "lwin:import": "node scripts/lwin/import_snapshot.mjs",
     "lwin:test": "node --test scripts/lwin/*.test.mjs",
+    "drinking-window:audit": "node scripts/drinking_window/audit_workbook.mjs",
+    "drinking-window:test": "node --test scripts/drinking_window/*.test.mjs",
     "enrichment:trial": "node scripts/enrichment/provider_trial.mjs",
     "enrichment:review": "node scripts/enrichment/provider_review.mjs",
     "enrichment:inference": "node scripts/enrichment/inference_poc.mjs",
@@ -31,7 +33,7 @@
     "web:test": "npm run test --workspace @cellarmanager/web",
     "web:build": "npm run build --workspace @cellarmanager/web",
     "web:ci": "npm run web:lint && npm run web:test && npm run web:build",
-    "ci": "npm run repository:check && npm run release:check && npm run v01:test && npm run lwin:test && npm run enrichment:test && npm run invitations:test && npm run inventory:test && npm run workers:test && npm run web:ci",
+    "ci": "npm run repository:check && npm run release:check && npm run v01:test && npm run lwin:test && npm run drinking-window:test && npm run enrichment:test && npm run invitations:test && npm run inventory:test && npm run workers:test && npm run web:ci",
     "audit": "npm audit --omit=dev --audit-level=high",
     "supabase": "supabase"
   },
