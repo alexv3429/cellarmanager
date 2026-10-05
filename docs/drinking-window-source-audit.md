@@ -5,6 +5,8 @@ records aggregate coverage and import blockers, not private wine rows. The
 workbook is not committed or modified. SHA-256:
 `42b935d4fd2e161605d245b15b853d4ee7c1a0a9eed1ea14d460a80857373911`.
 Counts here describe that snapshot, not the current hosted cellar.
+The staged conversion and shared-library publication path are specified in
+[`drinking-window-implementation-plan.md`](drinking-window-implementation-plan.md).
 
 ## What the workbook actually supplies
 

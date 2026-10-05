@@ -4,7 +4,9 @@ This specifies a proposed reference-first selection of *drinking-window dates*,
 with the current additive maturity model retained as a labelled fallback. It
 is not deployed and does not change current advice. The workbook audit and
 migration gaps are in
-[`drinking-window-source-audit.md`](drinking-window-source-audit.md).
+[`drinking-window-source-audit.md`](drinking-window-source-audit.md). The
+database, import, contribution, and rollout contract is in
+[`drinking-window-implementation-plan.md`](drinking-window-implementation-plan.md).
 
 ## Decision and scope
 
