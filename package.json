@@ -37,10 +37,10 @@
   },
   "devDependencies": {
     "@excel.js/exceljs": "^0.15.0",
-    "supabase": "^2.117.0",
-    "wrangler": "^4.135.0"
+    "supabase": "^2.118.0",
+    "wrangler": "^4.143.0"
   },
   "dependencies": {
-    "nodemailer": "^10.0.10"
+    "nodemailer": "^10.0.12"
   }
 }
