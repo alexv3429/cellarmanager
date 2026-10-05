@@ -91,7 +91,7 @@ create table public.drinking_window_reference_rows (
     constraint drinking_window_reference_rows_group_fk
         foreign key (ageing_group_id, version_id, scope, region_id, wine_color)
         references public.drinking_window_ageing_groups(id, version_id, scope, region_id, wine_color),
-    constraint drinking_window_reference_rows_scope_check check (
+    constraint drinking_window_reference_rows_scope_shape_check check (
         (scope = 'release'
             and producer_id is not null and product_id is not null
             and release_id is not null and appellation_id is not null)
