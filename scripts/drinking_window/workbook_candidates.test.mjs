@@ -9,6 +9,9 @@ const sample = () => ({
     { row: 3, cells: [2021, '', 'Pouilly-Fuissé', 'Blanc', 2025, 2031] },
     { row: 4, cells: [2022, '', '', 'Blanc', 2025, 2032] },
     { row: 5, cells: [2023, '', 'Pouilly-Fuissé', 'Blanc', 2027, null] },
+  ] }, { name: 'Chagnoleau', rows: [
+    { row: 2, cells: [2022, '', '', 'Blanc', 2028, 2033] },
+    { row: 3, cells: [2024, 'Madrigal', 'Pouilly-Fuissé', 'Blanc', 2030, 2035] },
   ] }],
   regionalRows: [
     { row: 3, cells: ['Bourgogne', null, 'Rouge', 2021, null, null, null, null, null, null, null, 2, 6, 4, 8] },
@@ -17,20 +20,31 @@ const sample = () => ({
   ],
 });
 
-test('stages one intact pair per approved source, with no inferred outer years', () => {
+test('stages intact pairs without inventing the missing start-tasting year', () => {
   const { candidates, report } = convertWorkbookRows(sample(), hash);
   assert.deepEqual(report.counts, {
-    release: 1, producer_appellation: 1, regional_standard: 2,
-    regional_premium: 2, producer_only: 1, producer_partial: 1,
+    release: 2, producer_appellation: 1, producer_region: 1, regional_standard: 2,
+    regional_premium: 2, producer_only_unreviewed: 1, producer_partial: 1,
     regional_no_pair: 1, other_quarantine: 0,
   });
-  assert.equal(report.staged_count, 6);
+  assert.equal(report.staged_count, 8);
   assert.equal(report.quarantine_count, 3);
-  assert.equal(report.publishable_four_milestone_count, 0);
+  assert.equal(report.publishable_three_milestone_count, 0);
   const release = candidates.find((candidate) => candidate.source_locator === 'Barraud!E2:F2');
   assert.equal(release.candidate_scope, 'release');
   assert.deepEqual([release.first_trial_year, release.best_start_year,
-    release.best_end_year, release.drink_by_year], [null, 2024, 2030, null]);
+    release.best_end_year], [null, 2024, 2030]);
+  assert.equal('drink_by_year' in release, false);
+  const producer = candidates.find((candidate) => candidate.source_locator === 'Chagnoleau!E2:F2');
+  assert.equal(producer.candidate_scope, 'producer_region');
+  assert.equal(producer.review_status, 'staged');
+  assert.deepEqual([producer.best_start_year, producer.best_end_year], [2028, 2033]);
+  assert.ok(report.unresolved_mappings.find((mapping) => mapping.source_locator === 'Chagnoleau!E2:F2')
+    .needs.includes('canonical_region'));
+  assert.ok(report.unresolved_mappings.find((mapping) => mapping.source_locator === 'Chagnoleau!E2:F2')
+    .needs.includes('ageing_group_membership'));
+  assert.equal(report.unresolved_mappings.find((mapping) => mapping.source_locator === 'Chagnoleau!E2:F2')
+    .needs.includes('canonical_appellation'), false);
   const region = candidates.find((candidate) => candidate.source_locator === 'Millesimes!N4:O4');
   assert.equal(region.source_identity.region, 'Bourgogne');
   assert.equal(region.source_identity.source_cells.region, 'Millesimes!A3');

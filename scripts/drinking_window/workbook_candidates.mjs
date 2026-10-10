@@ -2,6 +2,9 @@ const PRODUCER_SHEETS = [
   'Barraud', 'Barthod', 'Boillot', 'Bouzereau', 'Cal Demoura', 'Carillon',
   'Castagnier', 'Chagnoleau', 'Clavelier', 'Langoureau', 'Montcalmes', 'Pernot',
 ];
+// The owner confirmed these blank-cuvée/appellation rows describe the
+// producer's white wines for each vintage, not an unidentified release.
+const REVIEWED_PRODUCER_WIDE_SHEETS = new Set(['Chagnoleau']);
 
 const normalize = (value) => String(value ?? '').trim();
 const keyText = (value) => normalize(value).normalize('NFD')
@@ -29,7 +32,6 @@ function candidate(sourceSha256, locator, scope, identity, vintage, wineColor, s
     first_trial_year: null,
     best_start_year: start,
     best_end_year: end,
-    drink_by_year: null,
     review_status: reason ? 'needs-review' : 'staged',
     ...(reason ? { review_reason: reason } : {}),
   };
@@ -41,8 +43,8 @@ export function convertWorkbookRows({ producerSheets, regionalRows }, sourceSha2
   if (!/^[0-9a-f]{64}$/.test(sourceSha256)) throw new Error('A SHA-256 source hash is required');
   const candidates = [];
   const counts = {
-    release: 0, producer_appellation: 0, regional_standard: 0,
-    regional_premium: 0, producer_only: 0, producer_partial: 0,
+    release: 0, producer_appellation: 0, producer_region: 0, regional_standard: 0,
+    regional_premium: 0, producer_only_unreviewed: 0, producer_partial: 0,
     regional_no_pair: 0, other_quarantine: 0,
   };
 
@@ -77,18 +79,21 @@ export function convertWorkbookRows({ producerSheets, regionalRows }, sourceSha2
       let reason = null;
       if (!hasCompletePair) {
         reason = 'incomplete_pair'; counts.producer_partial++;
-      } else if (!appellation) {
-        reason = 'producer_only_scope_not_approved'; counts.producer_only++;
       } else if (vintage === null || wineColor === null || start === null || end === null ||
                  start > end || start < vintage) {
         reason = 'invalid_identity_or_years'; counts.other_quarantine++;
+      } else if (!appellation && !cuvee && REVIEWED_PRODUCER_WIDE_SHEETS.has(name)) {
+        counts.producer_region++;
+      } else if (!appellation) {
+        reason = 'producer_only_scope_not_reviewed'; counts.producer_only_unreviewed++;
       } else if (cuvee) {
         counts.release++;
       } else {
         counts.producer_appellation++;
       }
       candidates.push(candidate(sourceSha256, `${name}!E${row}:F${row}`,
-        cuvee ? 'release' : 'producer_appellation', identity, vintage, wineColor,
+        cuvee ? 'release' : appellation ? 'producer_appellation' : 'producer_region',
+        identity, vintage, wineColor,
         hasCompletePair ? start : null, hasCompletePair ? end : null, reason));
     }
   }
@@ -172,9 +177,12 @@ export function convertWorkbookRows({ producerSheets, regionalRows }, sourceSha2
   const unresolvedMappings = candidates.filter((item) => item.review_status === 'staged').map((item) => ({
     source_locator: item.source_locator,
     needs: item.candidate_scope === 'region'
-      ? ['canonical_region', 'ageing_group_membership', 'source_rights', 'first_trial_year', 'drink_by_year']
+      ? ['canonical_region', 'ageing_group_membership', 'source_rights', 'first_trial_year']
       : ['canonical_producer', ...(item.candidate_scope === 'release' ? ['canonical_cuvee'] : []),
-        'canonical_appellation', 'canonical_region', 'source_rights', 'first_trial_year', 'drink_by_year'],
+        ...(item.candidate_scope === 'producer_region' ? [] : ['canonical_appellation']),
+        'canonical_region',
+        ...(item.candidate_scope === 'release' ? [] : ['ageing_group_membership']),
+        'source_rights', 'first_trial_year'],
   }));
   return {
     candidates,
@@ -183,7 +191,7 @@ export function convertWorkbookRows({ producerSheets, regionalRows }, sourceSha2
       counts,
       staged_count: candidates.filter((item) => item.review_status === 'staged').length,
       quarantine_count: candidates.filter((item) => item.review_status === 'needs-review').length,
-      publishable_four_milestone_count: 0,
+      publishable_three_milestone_count: 0,
       unresolved_mappings: unresolvedMappings,
       overlaps,
       quarantine: candidates.filter((item) => item.review_status === 'needs-review')

@@ -52,7 +52,7 @@ async function run() {
     counts: report.counts,
     staged_count: report.staged_count,
     quarantine_count: report.quarantine_count,
-    publishable_four_milestone_count: report.publishable_four_milestone_count,
+    publishable_three_milestone_count: report.publishable_three_milestone_count,
     overlap_count: report.overlaps.length,
     output_directory: outDir,
   }, null, 2)}\n`);
