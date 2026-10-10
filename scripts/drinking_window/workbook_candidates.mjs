@@ -59,16 +59,23 @@ export function convertWorkbookRows({ producerSheets, regionalRows }, sourceSha2
       const wineColor = color(colorRaw);
       const start = year(startRaw);
       const end = year(endRaw);
+      const hasCompletePair = hasStart && hasEnd;
       const identity = {
         producer: name, cuvee, appellation, color: normalize(colorRaw),
         source_cells: {
           vintage: `${name}!A${row}`, cuvee: `${name}!B${row}`,
           appellation: `${name}!C${row}`, color: `${name}!D${row}`,
-          best_start: `${name}!E${row}`, best_end: `${name}!F${row}`,
+          ...(hasCompletePair
+            ? { best_start: `${name}!E${row}`, best_end: `${name}!F${row}` }
+            : { unpaired_start: `${name}!E${row}`, unpaired_end: `${name}!F${row}` }),
         },
+        ...(!hasCompletePair ? {
+          unpaired_start_year: start,
+          unpaired_end_year: end,
+        } : {}),
       };
       let reason = null;
-      if (!hasStart || !hasEnd) {
+      if (!hasCompletePair) {
         reason = 'incomplete_pair'; counts.producer_partial++;
       } else if (!appellation) {
         reason = 'producer_only_scope_not_approved'; counts.producer_only++;
@@ -82,7 +89,7 @@ export function convertWorkbookRows({ producerSheets, regionalRows }, sourceSha2
       }
       candidates.push(candidate(sourceSha256, `${name}!E${row}:F${row}`,
         cuvee ? 'release' : 'producer_appellation', identity, vintage, wineColor,
-        start, end, reason));
+        hasCompletePair ? start : null, hasCompletePair ? end : null, reason));
     }
   }
 

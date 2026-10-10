@@ -37,6 +37,11 @@ test('stages one intact pair per approved source, with no inferred outer years',
   assert.equal(region.source_identity.source_cells.color, 'Millesimes!C3');
   assert.equal(region.source_identity.historical_bin, 'premium');
   assert.deepEqual([region.best_start_year, region.best_end_year], [2027, 2032]);
+  const partial = candidates.find((candidate) => candidate.source_locator === 'Barraud!E5:F5');
+  assert.equal(partial.review_status, 'needs-review');
+  assert.deepEqual([partial.best_start_year, partial.best_end_year], [null, null]);
+  assert.equal(partial.source_identity.unpaired_start_year, 2027);
+  assert.equal(partial.source_identity.source_cells.unpaired_start, 'Barraud!E5');
   const rose = candidates.find((candidate) => candidate.source_locator === 'Millesimes!L5:O5');
   assert.equal(rose.wine_color, 'rose');
   assert.equal(rose.review_status, 'needs-review');
