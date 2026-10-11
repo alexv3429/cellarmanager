@@ -126,6 +126,14 @@ reports quarantined rows and exact normalized-key overlaps. The importer
 does not extract or output the `Cave` sheet: private manual pairs and historical `x` hints
 remain a separate owner-only review task. No data is sent to a server.
 
+The next read-only curation slice is
+[`drinking-window-identity-review.md`](drinking-window-identity-review.md):
+`npm run drinking-window:snapshot` captures only shared reference identities
+from the linked development catalogue, and `npm run drinking-window:review`
+compares them with the private candidate file. It records exact-name/alias
+suggestions, ambiguities, and unresolved fields without verifying identities,
+writing database rows, or changing visible advice.
+
 | Workbook source | Staged translation | Review before publication |
 | --- | --- | --- |
 | Producer sheets `A:F`: vintage, cuvée, appellation, colour, start, end | Complete cuvée rows become exact-release **two-year candidates**; blank-cuvée/appellation-present rows become producer-appellation candidates. Keep the two years together and leave `first_trial_year` empty. | Resolve producer, product, appellation, region, colour, release and evidence to canonical IDs; research and review the first year. Reject ambiguous aliases. |
