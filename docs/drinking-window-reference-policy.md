@@ -3,8 +3,9 @@
 This specifies a proposed reference-first selection of *drinking-window dates*,
 with the current additive maturity model retained only as a labelled fallback
 when no complete reviewed reference matches. This revised three-date policy
-is not deployed and does not change current advice or the existing four-date
-database foundation. The workbook audit and
+is not deployed and does not change current advice. The inert draft database
+foundation has a separate three-date alignment migration, but no selector or
+publication path. The workbook audit and
 migration gaps are in
 [`drinking-window-source-audit.md`](drinking-window-source-audit.md). The
 database, import, contribution, and rollout contract is in
