@@ -71,3 +71,42 @@ identities, settle classification-versus-appellation labels, and review the
 producer-wide region/eligibility. Only after that should evidence and all
 three years be reviewed as one window. No draft row should be published simply
 because it acquired an identity suggestion.
+
+## Workbook-specific producer research, 11 October 2026
+
+The optional, source-hash-pinned research file
+`scripts/drinking_window/producer_research_20261011.json` documents four
+possible matches to the development catalogue. It is **not** a global alias
+list or an owner/curator approval. Use it with a new private output directory:
+
+```sh
+npm run drinking-window:review -- \
+  --candidates /tmp/cellarmanager-window-review/candidates.json \
+  --identity-snapshot /tmp/cellarmanager-window-review/identity_snapshot.json \
+  --out-dir /tmp/cellarmanager-window-research-results \
+  --producer-research scripts/drinking_window/producer_research_20261011.json
+```
+
+The reviewer validates the workbook hash, exact source sheet and producer
+text, a unique canonical producer name in the current snapshot, and any
+conflicting catalogue alias. It refuses stale or ambiguous mappings. A
+`research_supported` producer permits *further read-only comparison* of
+products and releases, but is not counted as a confirmed scope identity and
+cannot publish a window.
+
+| Workbook sheet | Catalogue producer proposed | Rows | Why it is plausible | Still open |
+| --- | --- | ---: | --- | --- |
+| Barraud | Daniel Barraud | 1 | [Domaine history](https://www.domainebarraud.com/le-domaine.html) names Daniel and the family domaine. | Confirm the 2023 Sur la Roche cuvée and its Premier Cru classification; that product is absent from this snapshot. |
+| Boillot | Louis Boillot | 13 | [Producer range](https://www.bbr.com/producer-847-louis-boillot) covers Burgundy and Beaujolais. | Confirm the short surname, each appellation tier, and eligibility of the producer-appellation rows. |
+| Cal Demoura | Mas Cal Demoura | 5 | The [domaine](https://www.caldemoura.com/the-estate) identifies its name and [lists the cuvées](https://www.caldemoura.com/les-vins). | Check the 2023 Belle Fiolle label: the *current* domaine page calls it Vin de France, whereas workbook cell `Cal Demoura!C4` says Terrasses du Larzac. Do not assume the current classification applied in 2023. None of the five 2023 releases exists in this snapshot. |
+| Chagnoleau | Frantz Chagnoleau | 6 | The [domaine distributor](https://www.dvp-vins-domaines.com/fr/domaine/8/domaine-chagnoleau) names the producer and Pouilly-Fuissé Madrigal. | Madrigal is absent as a catalogue product; five other rows are producer-wide and still need a reviewed region and eligible wines. |
+
+This research adds a candidate producer ID to 25 of the 84 producer-level
+rows, leaving 59 without a producer candidate. The other workbook sheets
+(`Barthod`, `Bouzereau`, `Carillon`, `Castagnier`, `Clavelier`, and
+`Montcalmes`) have no corresponding producer in this development snapshot;
+they need their own canonical-entity review, not a guessed surname alias.
+There are still **zero publishable windows**: no first-tasting year, rights,
+ageing-group membership, or complete identity has been approved. The next
+curation pass should confirm or reject each producer proposal and settle the
+wine/place disagreements before any shared-data write.

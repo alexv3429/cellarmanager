@@ -6,8 +6,8 @@ import { reviewIdentities } from './review_identities.mjs';
 function parseArgs(argv) {
   const options = {};
   for (let index = 0; index < argv.length; index += 2) {
-    if (!['--candidates', '--identity-snapshot', '--out-dir'].includes(argv[index]) || !argv[index + 1]) {
-      throw new Error('Usage: review_candidates.mjs --candidates PRIVATE_JSON --identity-snapshot PRIVATE_JSON --out-dir EXISTING_PRIVATE_DIRECTORY');
+    if (!['--candidates', '--identity-snapshot', '--out-dir', '--producer-research'].includes(argv[index]) || !argv[index + 1]) {
+      throw new Error('Usage: review_candidates.mjs --candidates PRIVATE_JSON --identity-snapshot PRIVATE_JSON --out-dir EXISTING_PRIVATE_DIRECTORY [--producer-research JSON]');
     }
     options[argv[index]] = argv[index + 1];
   }
@@ -28,7 +28,9 @@ async function run() {
   const candidates = JSON.parse(await readFile(await realpath(options['--candidates']), 'utf8'));
   const snapshotInput = JSON.parse(await readFile(await realpath(options['--identity-snapshot']), 'utf8'));
   const snapshot = snapshotInput.rows?.[0]?.snapshot ?? snapshotInput.snapshot ?? snapshotInput;
-  const { rows, summary } = reviewIdentities(candidates, snapshot);
+  const producerResearch = options['--producer-research']
+    ? JSON.parse(await readFile(await realpath(options['--producer-research']), 'utf8')) : undefined;
+  const { rows, summary } = reviewIdentities(candidates, snapshot, { producerResearch });
   const outputPaths = ['identity_review.json', 'identity_summary.json'].map((name) => resolve(outDir, name));
   for (const path of outputPaths) {
     try {
