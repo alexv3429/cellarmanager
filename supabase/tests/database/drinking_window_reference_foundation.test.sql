@@ -1,11 +1,11 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(15);
+select plan(22);
 
 select has_table('public', 'drinking_window_reference_versions', 'Reference versions exist');
 select has_table('public', 'drinking_window_ageing_groups', 'Local ageing groups exist');
-select has_table('public', 'drinking_window_reference_rows', 'Four-date reference rows exist');
+select has_table('public', 'drinking_window_reference_rows', 'Three-date reference rows exist');
 select has_table('public', 'drinking_window_candidates', 'Incomplete candidates have separate staging');
 
 select ok(
@@ -13,10 +13,17 @@ select ok(
      from pg_catalog.pg_attribute
      where attrelid = 'public.drinking_window_reference_rows'::regclass
        and attname in (
-           'first_trial_year', 'best_start_year', 'best_end_year', 'drink_by_year'
+           'first_trial_year', 'best_start_year', 'best_end_year'
        )),
-    'All four reference milestones are required by the database'
+    'All three reference milestones are required by the database'
 );
+
+select hasnt_column('public', 'drinking_window_reference_rows', 'drink_by_year',
+    'Reference rows have no drink-by milestone');
+select hasnt_column('public', 'drinking_window_candidates', 'drink_by_year',
+    'Candidates have no drink-by milestone');
+select has_column('public', 'wine_maturity_overrides', 'drink_by_year',
+    'Existing household manual overrides remain untouched');
 
 select ok(
     (select bool_and(relrowsecurity)
@@ -68,19 +75,19 @@ select throws_ok(
 
 insert into public.drinking_window_reference_rows (
     version_id, scope, region_id, wine_color, vintage_year, all_at_scope,
-    first_trial_year, best_start_year, best_end_year, drink_by_year, rationale
+    first_trial_year, best_start_year, best_end_year, rationale
 ) values (
     'f5000000-0000-4000-8000-000000000002', 'region',
     'f5000000-0000-4000-8000-000000000001', 'red', 2022, true,
-    2025, 2028, 2036, 2039, 'Synthetic ordered test window'
+    2025, 2028, 2036, 'Synthetic ordered test window'
 );
 
 select is(
     (select first_trial_year::text || '/' || best_start_year::text || '/' ||
-            best_end_year::text || '/' || drink_by_year::text
+            best_end_year::text
      from public.drinking_window_reference_rows),
-    '2025/2028/2036/2039',
-    'A draft reference stores the four explicit years together'
+    '2025/2028/2036',
+    'A draft reference stores the three explicit years together'
 );
 
 select throws_ok(
@@ -96,23 +103,79 @@ select throws_ok(
     $test$,
     '23502',
     'null value in column "first_trial_year" of relation "drinking_window_reference_rows" violates not-null constraint',
-    'A workbook best-period pair cannot masquerade as a published four-date row'
+    'A workbook best-period pair cannot masquerade as a complete three-date row'
 );
 
 select throws_ok(
     $test$
         insert into public.drinking_window_reference_rows (
             version_id, scope, region_id, wine_color, vintage_year, all_at_scope,
-            first_trial_year, best_start_year, best_end_year, drink_by_year, rationale
+            first_trial_year, best_start_year, best_end_year, rationale
         ) values (
             'f5000000-0000-4000-8000-000000000002', 'region',
             'f5000000-0000-4000-8000-000000000001', 'white', 2022, true,
-            2030, 2028, 2036, 2039, 'Reversed test window'
+            2030, 2028, 2036, 'Reversed test window'
         )
     $test$,
     '23514',
     'new row for relation "drinking_window_reference_rows" violates check constraint "drinking_window_reference_rows_years_check"',
-    'Four milestones must be ordered and no earlier than the vintage'
+    'Three milestones must be ordered and no earlier than the vintage'
+);
+
+insert into public.wine_reference_entities (id, entity_type)
+values ('f5000000-0000-4000-8000-000000000003', 'producer');
+insert into public.wine_reference_producers (id, canonical_name)
+values ('f5000000-0000-4000-8000-000000000003', 'Synthetic Reference Producer');
+
+insert into public.drinking_window_ageing_groups (
+    id, version_id, scope, region_id, wine_color, group_key, definition
+) values (
+    'f5000000-0000-4000-8000-000000000004',
+    'f5000000-0000-4000-8000-000000000002', 'producer_region',
+    'f5000000-0000-4000-8000-000000000001', 'white',
+    'synthetic-white', 'Synthetic producer-wide white-wine eligibility'
+);
+
+select is(
+    (select count(*) from public.drinking_window_ageing_groups
+     where scope = 'producer_region'),
+    1::bigint,
+    'Producer-region ageing groups can be drafted'
+);
+
+insert into public.drinking_window_reference_rows (
+    version_id, scope, producer_id, region_id, wine_color, vintage_year,
+    ageing_group_id, first_trial_year, best_start_year, best_end_year, rationale
+) values (
+    'f5000000-0000-4000-8000-000000000002', 'producer_region',
+    'f5000000-0000-4000-8000-000000000003',
+    'f5000000-0000-4000-8000-000000000001', 'white', 2022,
+    'f5000000-0000-4000-8000-000000000004',
+    2025, 2028, 2033, 'Synthetic producer-wide test window'
+);
+
+select is(
+    (select count(*) from public.drinking_window_reference_rows
+     where scope = 'producer_region' and producer_id is not null
+       and product_id is null and release_id is null and appellation_id is null),
+    1::bigint,
+    'Producer-wide reference requires producer and region but no appellation'
+);
+
+select throws_ok(
+    $test$
+        insert into public.drinking_window_reference_rows (
+            version_id, scope, region_id, wine_color, vintage_year, all_at_scope,
+            first_trial_year, best_start_year, best_end_year, rationale
+        ) values (
+            'f5000000-0000-4000-8000-000000000002', 'producer_region',
+            'f5000000-0000-4000-8000-000000000001', 'white', 2023, true,
+            2026, 2029, 2034, 'Missing producer must fail'
+        )
+    $test$,
+    '23514',
+    'new row for relation "drinking_window_reference_rows" violates check constraint "drinking_window_reference_rows_scope_shape_check"',
+    'Producer-wide guidance cannot be published without a producer'
 );
 
 insert into public.drinking_window_candidates (
@@ -126,10 +189,26 @@ insert into public.drinking_window_candidates (
 
 select is(
     (select count(*) from public.drinking_window_candidates
-     where first_trial_year is null and drink_by_year is null
+     where first_trial_year is null
        and best_start_year = 2028 and best_end_year = 2036),
     1::bigint,
     'A two-year workbook pair remains an incomplete staged candidate'
+);
+
+insert into public.drinking_window_candidates (
+    source_sha256, source_locator, candidate_scope, source_identity,
+    wine_color, vintage_year, best_start_year, best_end_year
+) values (
+    repeat('a', 64), 'Chagnoleau!E8:F8', 'producer_region',
+    '{"producer":"Chagnoleau","cuvee":"","appellation":""}'::jsonb,
+    'white', 2022, 2028, 2033
+);
+
+select is(
+    (select count(*) from public.drinking_window_candidates
+     where candidate_scope = 'producer_region' and first_trial_year is null),
+    1::bigint,
+    'Producer-wide workbook pairs can be staged without being publishable'
 );
 
 select is(

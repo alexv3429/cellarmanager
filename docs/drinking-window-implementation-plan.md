@@ -6,8 +6,8 @@ how the owner's workbook becomes reviewed, shareable reference data and how
 other households can improve that data. The first migration adds only
 service-private draft storage; it cannot publish or resolve advice. Existing
 maturity advice remains unchanged until the rollout gates below pass. The
-existing inert foundation still requires four years and has no producer-wide
-scope; it must be migrated and retested before this revised policy can publish.
+inert foundation now has a follow-up migration for three years and
+`producer_region` scope; it still cannot publish or resolve advice.
 
 ## Keep the three kinds of data separate
 
@@ -45,10 +45,10 @@ curator eligibility where their meanings fit. New storage needs four parts:
    reviewed `all-at-this-scope`), evidence,
    rationale, source pointer, and version. Exact-release rows also retain the
    canonical product/cuvée and release identity. The foundation database
-   currently requires four years and only four scopes. A separate reviewed
-   migration must replace those draft constraints before publication, while
-   preserving existing data and manual overrides. Publication validation
-   will then confirm the canonical hierarchy and
+   initially required four years and only four scopes. The follow-up
+   migration aligns the inert draft schema to this policy; it refuses to
+   discard any populated fourth-year data and leaves household overrides
+   untouched. Future publication validation must confirm the canonical hierarchy and
    `vintage <= first_trial_year <= best_start_year <= best_end_year`.
    Evidence for the central pair and researched first year
    remains attributable; one curator approves the complete window. No date
@@ -220,12 +220,13 @@ than mutating an immutable historical version.
 
 ## Delivery order and release gate
 
-1. **Align the inert foundation:** migrate its draft reference rows from four
-   required years to three and add `producer_region` scope with region/colour/
-   vintage and eligibility constraints. Preserve existing manual overrides.
-   Publication remains blocked; no visible advice changes. Keep the read-only
-   workbook converter and report separate from database writes. Add rights
-   checks, group memberships, evidence links, and publication validation.
+1. **Align the inert foundation:** the follow-up migration changes draft
+   reference rows from four required years to three and adds `producer_region`
+   scope with region/colour/vintage and eligibility constraints. Existing
+   manual overrides remain intact. Publication stays blocked and visible
+   advice stays unchanged. Keep the read-only workbook converter and report
+   separate from database writes. Next add rights checks, group memberships,
+   evidence links, and publication validation.
 2. **Curate the seed:** resolve identities and region/colour mappings, define
    ageing groups and memberships, review source pairs, research and approve
    all three years per row, and fill missing appellation/region coverage where
