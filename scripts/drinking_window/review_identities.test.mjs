@@ -152,3 +152,109 @@ test('rejects malformed catalogue relationships and duplicate source locators', 
   const row = candidate('region', { region: 'Bourgogne' }, 'Millesimes!L3:M3');
   assert.throws(() => reviewIdentities([row, row], catalogue()), /duplicate source locator/);
 });
+
+test('keeps the raw Barraud label but reviews its appellation and Premier Cru separately', () => {
+  const snapshot = catalogue();
+  snapshot.places.push({ id: 'pc1', parent_id: 'a1', place_type: 'classification',
+    canonical_name: 'Pouilly-Fuissé Premier Cru' });
+  const row = candidate('release', { producer: 'Barraud', cuvee: 'Sur la Roche',
+    appellation: 'Pouilly-Fuissé 1C', color: 'Blanc' }, 'Barraud!E5:F5', 2023);
+  const manifest = { source_sha256: sourceSha, row_interpretations: [{
+    source_locator: row.source_locator,
+    expected: { producer: 'Barraud', cuvee: 'Sur la Roche', appellation: 'Pouilly-Fuissé 1C',
+      color: 'Blanc', vintage_year: 2023 },
+    corrected: { appellation: 'Pouilly-Fuissé', classification: 'Pouilly-Fuissé Premier Cru' },
+    owner_note: 'Owner confirmed the appellation and classification.',
+  }], scope_interpretations: [] };
+  const result = reviewIdentities([row], snapshot, { sourceInterpretations: manifest }).rows[0];
+  assert.equal(result.source_identity.appellation, 'Pouilly-Fuissé 1C');
+  assert.equal(result.review_identity.appellation, 'Pouilly-Fuissé');
+  assert.deepEqual(result.matches.appellation, { status: 'suggested', ids: ['a1'] });
+  assert.deepEqual(result.matches.classification, { status: 'suggested', ids: ['pc1'] });
+  assert.ok(result.review_reasons.includes('classification_eligibility_required'));
+  assert.equal(result.publishable, false);
+});
+
+test('a corrected Vin de France designation cannot inherit a false appellation or region', () => {
+  const snapshot = catalogue();
+  snapshot.places.push({ id: 'a2', parent_id: 'rg1', place_type: 'appellation',
+    canonical_name: 'Terrasses du Larzac' });
+  const row = candidate('release', { producer: 'Cal Demoura', cuvee: 'Belle Fiolle',
+    appellation: 'Terrasses du Larzac', color: 'Rouge' }, 'Cal Demoura!E4:F4', 2023);
+  const manifest = { source_sha256: sourceSha, row_interpretations: [{
+    source_locator: row.source_locator,
+    expected: { producer: 'Cal Demoura', cuvee: 'Belle Fiolle',
+      appellation: 'Terrasses du Larzac', color: 'Rouge', vintage_year: 2023 },
+    corrected: { appellation: null, designation: 'Vin de France' },
+    owner_note: 'Owner confirmed Vin de France.',
+  }], scope_interpretations: [] };
+  const result = reviewIdentities([row], snapshot, { sourceInterpretations: manifest }).rows[0];
+  assert.equal(result.source_identity.appellation, 'Terrasses du Larzac');
+  assert.equal(result.review_identity.designation, 'Vin de France');
+  assert.deepEqual(result.matches.appellation, { status: 'not_applicable', ids: [] });
+  assert.deepEqual(result.matches.region, { status: 'missing', ids: [] });
+  assert.ok(result.review_reasons.includes('designation_model_review_required'));
+  assert.equal(result.publishable, false);
+});
+
+test('records grouped and producer-wide intent without establishing wine eligibility', () => {
+  const rows = [candidate('producer_appellation', { producer: 'Boillot', cuvee: '',
+    appellation: 'Volnay', color: 'Rouge' }, 'Boillot!E50:F50', 2022),
+  candidate('producer_region', { producer: 'Chagnoleau', cuvee: '',
+    appellation: '', color: 'Blanc' }, 'Chagnoleau!E2:F2', 2016)];
+  const manifest = { source_sha256: sourceSha, row_interpretations: [], scope_interpretations: [
+    { source_sheet: 'Boillot', candidate_scope: 'producer_appellation', expected_count: 1,
+      intent: 'grouped_cuvees', owner_note: 'Cuvée membership needs review.' },
+    { source_sheet: 'Chagnoleau', candidate_scope: 'producer_region', expected_count: 1,
+      intent: 'producer_vintage_guidance', owner_note: 'Partial producer advice.' },
+  ] };
+  const result = reviewIdentities(rows, catalogue(), { sourceInterpretations: manifest });
+  assert.equal(result.rows[0].scope_interpretation.intent, 'grouped_cuvees');
+  assert.ok(result.rows[0].review_reasons.includes('grouped_cuvee_membership_required'));
+  assert.equal(result.rows[1].scope_interpretation.intent, 'producer_vintage_guidance');
+  assert.ok(result.rows[1].review_reasons.includes('producer_wine_eligibility_required'));
+  assert.equal(result.summary.owner_interpreted_scope_rows, 2);
+  assert.equal(result.summary.publishable_count, 0);
+});
+
+test('rejects stale owner interpretations rather than applying them to changed source rows', () => {
+  const row = candidate('release', { producer: 'Barraud', cuvee: 'Sur la Roche',
+    appellation: 'Pouilly-Fuissé 1C', color: 'Blanc' }, 'Barraud!E5:F5', 2023);
+  const entry = { source_locator: row.source_locator,
+    expected: { producer: 'Barraud', cuvee: 'Sur la Roche', appellation: 'Pouilly-Fuissé 1C',
+      color: 'Blanc', vintage_year: 2023 },
+    corrected: { appellation: 'Pouilly-Fuissé', classification: 'Pouilly-Fuissé Premier Cru' },
+    owner_note: 'Confirmed.' };
+  const manifest = { source_sha256: sourceSha, row_interpretations: [entry], scope_interpretations: [] };
+  assert.throws(() => reviewIdentities([row], catalogue(), { sourceInterpretations: {
+    ...manifest, source_sha256: 'b'.repeat(64),
+  } }), /workbook SHA-256/);
+  assert.throws(() => reviewIdentities([row], catalogue(), { sourceInterpretations: {
+    ...manifest, row_interpretations: [{ ...entry, expected: { ...entry.expected, vintage_year: 2022 } }],
+  } }), /stale or invalid/);
+  assert.throws(() => reviewIdentities([row], catalogue(), { sourceInterpretations: {
+    ...manifest, scope_interpretations: [{ source_sheet: 'Barraud', candidate_scope: 'producer_appellation',
+      expected_count: 1, intent: 'grouped_cuvees', owner_note: 'Wrong scope.' }],
+  } }), /stale or invalid/);
+});
+
+test('a classification under another appellation is flagged as incompatible', () => {
+  const snapshot = catalogue();
+  snapshot.places.push({ id: 'a2', parent_id: 'rg1', place_type: 'appellation',
+    canonical_name: 'Another appellation' },
+  { id: 'pc2', parent_id: 'a2', place_type: 'classification',
+    canonical_name: 'Pouilly-Fuissé Premier Cru' });
+  const row = candidate('release', { producer: 'Barraud', cuvee: 'Sur la Roche',
+    appellation: 'Pouilly-Fuissé 1C', color: 'Blanc' }, 'Barraud!E5:F5', 2023);
+  const manifest = { source_sha256: sourceSha, row_interpretations: [{
+    source_locator: row.source_locator,
+    expected: { producer: 'Barraud', cuvee: 'Sur la Roche', appellation: 'Pouilly-Fuissé 1C',
+      color: 'Blanc', vintage_year: 2023 },
+    corrected: { appellation: 'Pouilly-Fuissé', classification: 'Pouilly-Fuissé Premier Cru' },
+    owner_note: 'Confirmed.',
+  }], scope_interpretations: [] };
+  const result = reviewIdentities([row], snapshot, { sourceInterpretations: manifest }).rows[0];
+  assert.equal(result.matches.classification.status, 'incompatible');
+  assert.ok(result.review_reasons.includes('classification_appellation_conflict'));
+  assert.equal(result.publishable, false);
+});

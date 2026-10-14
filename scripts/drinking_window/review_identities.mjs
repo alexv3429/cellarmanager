@@ -1,6 +1,8 @@
 // Read-only curation of workbook candidates against a snapshot of the shared
 // reference catalogue. A name or alias match is a review suggestion, never a
 // verified identity or a publishable drinking window.
+import { sourceInterpretations } from './source_interpretations.mjs';
+
 const normalize = (value) => String(value ?? '').normalize('NFD')
   .replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('fr')
   .replace(/[^\p{L}\p{N}]+/gu, ' ').trim().replace(/\s+/g, ' ');
@@ -95,6 +97,7 @@ export function reviewIdentities(candidates, snapshot, options = {}) {
   const productIndex = byId(snapshot.products);
   const placeIndex = byId(snapshot.places);
   const researchIndex = producerResearchIndex(candidates, snapshot, options.producerResearch);
+  const interpretationIndex = sourceInterpretations(candidates, options.sourceInterpretations);
   for (const place of snapshot.places) {
     if (place.parent_id && !placeIndex.has(place.parent_id)) throw new Error('Place has no parent in snapshot');
   }
@@ -115,6 +118,11 @@ export function reviewIdentities(candidates, snapshot, options = {}) {
     }
     seen.add(`${candidate.source_sha256}:${candidate.source_locator}`);
     const source = candidate.source_identity;
+    const interpretation = interpretationIndex.rows.get(candidate.source_locator);
+    const reviewIdentity = interpretation
+      ? { ...source, ...interpretation.corrected } : source;
+    const scopeInterpretation = interpretationIndex.scopes.get(
+      `${candidate.source_locator.split('!')[0]}:${candidate.candidate_scope}`);
     const matches = {};
     const nameHints = {};
     const reasons = [];
@@ -124,7 +132,7 @@ export function reviewIdentities(candidates, snapshot, options = {}) {
       matches.region = placeLookup(snapshot.places, snapshot.place_aliases, source.region, ['region']);
     } else if (['release', 'producer_appellation', 'producer_region'].includes(candidate.candidate_scope)) {
       matches.producer = lookup(snapshot.producers, snapshot.wine_aliases,
-        source.producer, 'producer');
+        reviewIdentity.producer, 'producer');
       const sheet = candidate.source_locator.split('!')[0];
       const research = researchIndex.get(sheet);
       if (research) {
@@ -143,15 +151,32 @@ export function reviewIdentities(candidates, snapshot, options = {}) {
         nameHints.producer = possibleNameHints(snapshot.producers, source.producer);
       }
       if (candidate.candidate_scope !== 'producer_region') {
-        matches.appellation = placeLookup(snapshot.places, snapshot.place_aliases,
-          source.appellation, ['appellation']);
-        if (matches.appellation.status === 'suggested') {
+        matches.appellation = reviewIdentity.designation
+          ? { status: 'not_applicable', ids: [] }
+          : placeLookup(snapshot.places, snapshot.place_aliases,
+            reviewIdentity.appellation, ['appellation']);
+        if (reviewIdentity.designation) {
+          // Vin de France is a national designation, not evidence that this
+          // wine belongs to the workbook's former geographic appellation.
+          matches.region = { status: 'missing', ids: [] };
+          reasons.push('designation_model_review_required');
+        } else if (matches.appellation.status === 'suggested') {
           const regionId = regionAncestor(matches.appellation.ids[0], placeIndex);
           matches.region = regionId
             ? { status: 'suggested_from_appellation', ids: [regionId] }
             : { status: 'missing', ids: [] };
         } else {
           matches.region = { status: 'blocked_by_appellation', ids: [] };
+        }
+        if (reviewIdentity.classification) {
+          matches.classification = placeLookup(snapshot.places, snapshot.place_aliases,
+            reviewIdentity.classification, ['classification']);
+          if (matches.appellation.status === 'suggested' && matches.classification.status === 'suggested' &&
+              placeIndex.get(matches.classification.ids[0]).parent_id !== matches.appellation.ids[0]) {
+            matches.classification = { status: 'incompatible', ids: matches.classification.ids };
+            reasons.push('classification_appellation_conflict');
+          }
+          reasons.push('classification_eligibility_required');
         }
       } else {
         // Producer-wide rows have no place on the source sheet. A producer's
@@ -160,7 +185,7 @@ export function reviewIdentities(candidates, snapshot, options = {}) {
       }
       if (candidate.candidate_scope === 'release') {
         matches.product = ['suggested', 'research_supported'].includes(matches.producer.status)
-          ? lookup(snapshot.products, snapshot.wine_aliases, source.cuvee, 'product',
+          ? lookup(snapshot.products, snapshot.wine_aliases, reviewIdentity.cuvee, 'product',
             (product) => product.producer_id === matches.producer.ids[0])
           : { status: 'blocked_by_producer', ids: [] };
         const releaseIds = matches.product.status === 'suggested'
@@ -181,12 +206,19 @@ export function reviewIdentities(candidates, snapshot, options = {}) {
     if (candidate.review_status === 'staged') {
       reasons.push('identity_confirmation_required', 'source_rights_required', 'first_trial_year_required');
       if (candidate.candidate_scope !== 'release') reasons.push('ageing_group_eligibility_required');
+      if (scopeInterpretation?.intent === 'grouped_cuvees') reasons.push('grouped_cuvee_membership_required');
+      if (scopeInterpretation?.intent === 'producer_vintage_guidance') reasons.push('producer_wine_eligibility_required');
     }
     return {
       source_sha256: candidate.source_sha256,
       source_locator: candidate.source_locator,
       candidate_scope: candidate.candidate_scope,
       source_identity: source,
+      ...(interpretation ? {
+        review_identity: reviewIdentity,
+        source_interpretation: { provenance: 'owner_confirmed', owner_note: interpretation.owner_note },
+      } : {}),
+      ...(scopeInterpretation ? { scope_interpretation: scopeInterpretation } : {}),
       wine_color: candidate.wine_color,
       vintage_year: candidate.vintage_year,
       first_trial_year: candidate.first_trial_year,
@@ -213,6 +245,8 @@ export function reviewIdentities(candidates, snapshot, options = {}) {
     ambiguous_producer_name_hints: rows.filter((row) => row.name_hints.producer?.length > 1).length,
     research_supported_producer_candidates: rows.filter((row) =>
       row.matches.producer?.status === 'research_supported').length,
+    owner_interpreted_rows: rows.filter((row) => row.source_interpretation).length,
+    owner_interpreted_scope_rows: rows.filter((row) => row.scope_interpretation).length,
     publishable_count: 0,
     reason_counts: Object.fromEntries(unique(rows.flatMap((row) => row.review_reasons))
       .map((reason) => [reason, rows.filter((row) => row.review_reasons.includes(reason)).length])),
