@@ -133,6 +133,10 @@ from the linked development catalogue, and `npm run drinking-window:review`
 compares them with the private candidate file. It records exact-name/alias
 suggestions, ambiguities, and unresolved fields without verifying identities,
 writing database rows, or changing visible advice.
+An optional, workbook-hash-pinned [producer research pass](drinking-window-identity-review.md#workbook-specific-producer-research-11-october-2026)
+now exposes four evidence-backed producer candidates for curator review. These
+are local to this workbook; they do not create catalogue aliases or approve
+the wine, place, or drinking-window identities.
 
 | Workbook source | Staged translation | Review before publication |
 | --- | --- | --- |

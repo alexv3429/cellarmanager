@@ -64,6 +64,52 @@ test('offers surname hints without treating them as verified identities', () => 
   assert.equal(result.publishable, false);
 });
 
+test('keeps researched producer mappings workbook-scoped and unverified', () => {
+  const snapshot = catalogue();
+  snapshot.wine_aliases = [];
+  const row = candidate('release', { producer: 'Barraud', cuvee: 'En France',
+    appellation: 'Pouilly-Fuissé' }, 'Barraud!E2:F2');
+  const producerResearch = { source_sha256: sourceSha, mappings: [{
+    source_sheet: 'Barraud', workbook_producer: 'Barraud', canonical_producer: 'Domaine Barraud',
+    evidence_urls: ['https://example.org/domaine'], research_note: 'Candidate only.',
+  }] };
+  const result = reviewIdentities([row], snapshot, { producerResearch });
+  assert.deepEqual(result.rows[0].matches.producer, {
+    status: 'research_supported', ids: ['p1'], evidence_urls: ['https://example.org/domaine'],
+    research_note: 'Candidate only.',
+  });
+  assert.equal(result.rows[0].matches.product.status, 'suggested');
+  assert.ok(result.rows[0].review_reasons.includes('producer_confirmation_required'));
+  assert.equal(result.summary.research_supported_producer_candidates, 1);
+  assert.equal(result.summary.scope_identity_suggestions, 0);
+  assert.equal(result.rows[0].publishable, false);
+  assert.deepEqual(snapshot.wine_aliases, []);
+});
+
+test('rejects stale, ambiguous, and conflicting producer research', () => {
+  const row = candidate('producer_appellation', { producer: 'Barraud',
+    appellation: 'Pouilly-Fuissé' }, 'Barraud!E2:F2');
+  const mapping = { source_sheet: 'Barraud', workbook_producer: 'Barraud',
+    canonical_producer: 'Domaine Barraud', evidence_urls: ['https://example.org/domaine'],
+    research_note: 'Candidate only.' };
+  assert.throws(() => reviewIdentities([row], catalogue(), { producerResearch: {
+    source_sha256: 'b'.repeat(64), mappings: [mapping],
+  } }), /workbook SHA-256/);
+  const ambiguous = catalogue();
+  ambiguous.producers.push({ id: 'p3', canonical_name: 'Domaine Barraud' });
+  assert.throws(() => reviewIdentities([row], ambiguous, { producerResearch: {
+    source_sha256: sourceSha, mappings: [mapping],
+  } }), /missing or ambiguous/);
+  const conflicting = catalogue();
+  conflicting.wine_aliases.push({ entity_id: 'p2', entity_type: 'producer', alias_value: 'Barraud' });
+  assert.throws(() => reviewIdentities([row], conflicting, { producerResearch: {
+    source_sha256: sourceSha, mappings: [mapping],
+  } }), /conflicts with catalogue/);
+  assert.throws(() => reviewIdentities([row], catalogue(), { producerResearch: {
+    source_sha256: sourceSha, mappings: [{ ...mapping, source_sheet: 'Other' }],
+  } }), /no matching source rows/);
+});
+
 test('requires explicit region review for producer-wide guidance and eligibility for regional bins', () => {
   const rows = [candidate('producer_region', { producer: 'Chagnoleau' }, 'Chagnoleau!E2:F2'),
     candidate('region', { region: 'Bourgogne', historical_bin: 'standard' }, 'Millesimes!L3:M3')];

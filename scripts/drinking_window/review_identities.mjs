@@ -53,7 +53,34 @@ function regionAncestor(placeId, placeIndex) {
   return null;
 }
 
-export function reviewIdentities(candidates, snapshot) {
+function producerResearchIndex(candidates, snapshot, research) {
+  if (research === undefined) return new Map();
+  if (!research || !/^[a-f0-9]{64}$/.test(research.source_sha256) || !Array.isArray(research.mappings)) {
+    throw new Error('Producer research needs a source SHA-256 and mappings array');
+  }
+  if (candidates.some((candidate) => candidate.source_sha256 !== research.source_sha256)) {
+    throw new Error('Producer research does not match the candidate workbook SHA-256');
+  }
+  const index = new Map();
+  for (const mapping of research.mappings) {
+    const { source_sheet: sheet, workbook_producer: source, canonical_producer: target,
+      evidence_urls: urls, research_note: note } = mapping;
+    if (!sheet || !source || !target || !Array.isArray(urls) || urls.length === 0 ||
+        urls.some((url) => typeof url !== 'string' || !url.startsWith('https://')) ||
+        typeof note !== 'string' || !note.trim() || index.has(sheet)) {
+      throw new Error('Producer research has an invalid or duplicate mapping');
+    }
+    const sourceRows = candidates.filter((candidate) => candidate.review_status === 'staged' &&
+      candidate.source_locator.startsWith(`${sheet}!`) && candidate.source_identity?.producer === source);
+    if (sourceRows.length === 0) throw new Error(`Producer research has no matching source rows: ${sheet}`);
+    const targets = snapshot.producers.filter((producer) => normalize(producer.canonical_name) === normalize(target));
+    if (targets.length !== 1) throw new Error(`Producer research target is missing or ambiguous: ${target}`);
+    index.set(sheet, { source, id: targets[0].id, evidence_urls: urls, research_note: note });
+  }
+  return index;
+}
+
+export function reviewIdentities(candidates, snapshot, options = {}) {
   if (!Array.isArray(candidates)) throw new Error('Candidates must be an array');
   for (const table of ['producers', 'products', 'releases', 'places', 'place_aliases', 'wine_aliases']) {
     if (!Array.isArray(snapshot?.[table])) throw new Error(`Identity snapshot is missing ${table}`);
@@ -67,6 +94,7 @@ export function reviewIdentities(candidates, snapshot) {
   const producerIndex = byId(snapshot.producers);
   const productIndex = byId(snapshot.products);
   const placeIndex = byId(snapshot.places);
+  const researchIndex = producerResearchIndex(candidates, snapshot, options.producerResearch);
   for (const place of snapshot.places) {
     if (place.parent_id && !placeIndex.has(place.parent_id)) throw new Error('Place has no parent in snapshot');
   }
@@ -97,6 +125,20 @@ export function reviewIdentities(candidates, snapshot) {
     } else if (['release', 'producer_appellation', 'producer_region'].includes(candidate.candidate_scope)) {
       matches.producer = lookup(snapshot.producers, snapshot.wine_aliases,
         source.producer, 'producer');
+      const sheet = candidate.source_locator.split('!')[0];
+      const research = researchIndex.get(sheet);
+      if (research) {
+        if (source.producer !== research.source) throw new Error(`Producer research source mismatch: ${sheet}`);
+        if (matches.producer.status !== 'missing' &&
+            (matches.producer.status !== 'suggested' || matches.producer.ids[0] !== research.id)) {
+          throw new Error(`Producer research conflicts with catalogue identity: ${sheet}`);
+        }
+        if (matches.producer.status === 'missing') {
+          matches.producer = { status: 'research_supported', ids: [research.id],
+            evidence_urls: research.evidence_urls, research_note: research.research_note };
+          reasons.push('producer_confirmation_required');
+        }
+      }
       if (matches.producer.status === 'missing') {
         nameHints.producer = possibleNameHints(snapshot.producers, source.producer);
       }
@@ -117,7 +159,7 @@ export function reviewIdentities(candidates, snapshot) {
         matches.region = { status: 'missing', ids: [] };
       }
       if (candidate.candidate_scope === 'release') {
-        matches.product = matches.producer.status === 'suggested'
+        matches.product = ['suggested', 'research_supported'].includes(matches.producer.status)
           ? lookup(snapshot.products, snapshot.wine_aliases, source.cuvee, 'product',
             (product) => product.producer_id === matches.producer.ids[0])
           : { status: 'blocked_by_producer', ids: [] };
@@ -169,6 +211,8 @@ export function reviewIdentities(candidates, snapshot) {
         [scope, rows.filter((row) => row.candidate_scope === scope && fullySuggested(row)).length])),
     possible_producer_name_hints: rows.filter((row) => row.name_hints.producer?.length === 1).length,
     ambiguous_producer_name_hints: rows.filter((row) => row.name_hints.producer?.length > 1).length,
+    research_supported_producer_candidates: rows.filter((row) =>
+      row.matches.producer?.status === 'research_supported').length,
     publishable_count: 0,
     reason_counts: Object.fromEntries(unique(rows.flatMap((row) => row.review_reasons))
       .map((reason) => [reason, rows.filter((row) => row.review_reasons.includes(reason)).length])),
