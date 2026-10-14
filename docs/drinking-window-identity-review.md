@@ -77,7 +77,9 @@ because it acquired an identity suggestion.
 The optional, source-hash-pinned research file
 `scripts/drinking_window/producer_research_20261011.json` documents four
 possible matches to the development catalogue. It is **not** a global alias
-list or an owner/curator approval. Use it with a new private output directory:
+list or an owner/curator approval. The open questions in this historical
+research table are updated by the owner-confirmed interpretations below.
+Use it with a new private output directory:
 
 ```sh
 npm run drinking-window:review -- \
@@ -110,3 +112,42 @@ There are still **zero publishable windows**: no first-tasting year, rights,
 ageing-group membership, or complete identity has been approved. The next
 curation pass should confirm or reject each producer proposal and settle the
 wine/place disagreements before any shared-data write.
+
+## Owner-confirmed source interpretations, 15 October 2026
+
+The optional, workbook-hash-pinned
+`scripts/drinking_window/source_interpretations_20261015.json` records what the
+owner clarified after the research pass. It is a review overlay, not a change
+to the workbook, a global catalogue alias, or drinking advice. The original
+`source_identity` stays in the private report; `review_identity` shows a
+corrected interpretation only for the two exact source rows below. The
+reviewer rejects a changed workbook hash, locator, vintage, or source text.
+
+| Source | Owner-confirmed interpretation | Remaining work |
+| --- | --- | --- |
+| `Barraud!E5:F5` | Sur la Roche 2023: `Pouilly-Fuissé` appellation and `Pouilly-Fuissé Premier Cru` classification, rather than treating `1C` as part of the appellation name. | Create/confirm the canonical cuvée and release; review Premier Cru eligibility, source rights, and start-tasting year. |
+| `Cal Demoura!E4:F4` | Belle Fiolle 2023: `Vin de France`, not the workbook's `Terrasses du Larzac`. | Model this national designation separately from a geographic appellation, review the wine's region and release, source rights, and start-tasting year. Never infer a Terrasses du Larzac match from this row. |
+| Boillot's 13 producer-appellation rows | Blank cuvée means an intentional group of several cuvées, not every cuvée under that producer and appellation. | Define reviewed eligible cuvées/releases for each group and settle the `1C` place tiers. |
+| Chagnoleau's five producer-wide rows | Vintage-wide white-wine guidance received from the producer; blank appellation is intentional. | Confirm region and eligible wines; retain only the vintages present, without interpolation. Madrigal remains a separate release row. |
+
+Run the review with both optional files and a **fresh** private output
+directory (the development identity snapshot above is dated 11 October and
+should be refreshed before any catalogue decision):
+
+```sh
+npm run drinking-window:review -- \
+  --candidates /tmp/cellarmanager-window-review/candidates.json \
+  --identity-snapshot /tmp/cellarmanager-window-review/identity_snapshot.json \
+  --out-dir /tmp/cellarmanager-window-owner-results \
+  --producer-research scripts/drinking_window/producer_research_20261011.json \
+  --source-interpretations scripts/drinking_window/source_interpretations_20261015.json
+```
+
+Against that 11 October development snapshot, 2 rows receive an exact
+owner-confirmed correction and 18 receive a scope-intent note (13 Boillot,
+5 Chagnoleau). Barraud's corrected appellation and classification each find
+one catalogue suggestion, but Sur la Roche is still absent as a product.
+Belle Fiolle no longer suggests the wrong appellation or region. The report
+still has **zero publishable windows**. The owner's clarification establishes
+these interpretations, not the missing start-tasting dates, evidence rights,
+catalogue entities, or wine-to-group memberships.

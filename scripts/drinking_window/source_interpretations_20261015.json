@@ -1,0 +1,51 @@
+{
+  "source_sha256": "42b935d4fd2e161605d245b15b853d4ee7c1a0a9eed1ea14d460a80857373911",
+  "row_interpretations": [
+    {
+      "source_locator": "Barraud!E5:F5",
+      "expected": {
+        "producer": "Barraud",
+        "cuvee": "Sur la Roche",
+        "appellation": "Pouilly-Fuissé 1C",
+        "color": "Blanc",
+        "vintage_year": 2023
+      },
+      "corrected": {
+        "appellation": "Pouilly-Fuissé",
+        "classification": "Pouilly-Fuissé Premier Cru"
+      },
+      "owner_note": "The owner confirms Sur la Roche 2023 is Pouilly-Fuissé Premier Cru. Separate the geographic appellation from the Premier Cru classification."
+    },
+    {
+      "source_locator": "Cal Demoura!E4:F4",
+      "expected": {
+        "producer": "Cal Demoura",
+        "cuvee": "Belle Fiolle",
+        "appellation": "Terrasses du Larzac",
+        "color": "Rouge",
+        "vintage_year": 2023
+      },
+      "corrected": {
+        "appellation": null,
+        "designation": "Vin de France"
+      },
+      "owner_note": "The owner confirms Belle Fiolle is Vin de France, not Terrasses du Larzac. Vin de France is a national designation and cannot supply a geographic region."
+    }
+  ],
+  "scope_interpretations": [
+    {
+      "source_sheet": "Boillot",
+      "candidate_scope": "producer_appellation",
+      "expected_count": 13,
+      "intent": "grouped_cuvees",
+      "owner_note": "These workbook rows deliberately group several cuvées. Review exact eligible cuvées or releases before applying a producer-appellation window; a blank cuvée does not mean all cuvées."
+    },
+    {
+      "source_sheet": "Chagnoleau",
+      "candidate_scope": "producer_region",
+      "expected_count": 5,
+      "intent": "producer_vintage_guidance",
+      "owner_note": "These five vintage-wide white-wine rows are guidance the owner received from the producer. Missing appellations are intentional, but region and eligible wines still need review; do not interpolate absent vintages."
+    }
+  ]
+}

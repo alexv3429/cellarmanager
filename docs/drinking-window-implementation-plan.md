@@ -137,6 +137,12 @@ An optional, workbook-hash-pinned [producer research pass](drinking-window-ident
 now exposes four evidence-backed producer candidates for curator review. These
 are local to this workbook; they do not create catalogue aliases or approve
 the wine, place, or drinking-window identities.
+An optional [owner-confirmed interpretation pass](drinking-window-identity-review.md#owner-confirmed-source-interpretations-15-october-2026)
+then separates a Premier Cru classification from Barraud's appellation,
+prevents Belle Fiolle's Vin de France designation from matching the wrong
+appellation, and annotates Boillot's grouped-cuvée and Chagnoleau's
+producer-wide intent. It preserves the original source cells and still makes
+no reference publishable.
 
 | Workbook source | Staged translation | Review before publication |
 | --- | --- | --- |
