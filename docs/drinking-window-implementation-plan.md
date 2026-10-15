@@ -7,8 +7,9 @@ other households can improve that data. The first migration adds only
 service-private draft storage; it cannot publish or resolve advice. Existing
 maturity advice remains unchanged until the rollout gates below pass. The
 inert foundation now has follow-up migrations for three years,
-`producer_region` scope, and draft-only membership and evidence links. It
-still cannot publish or resolve advice.
+`producer_region` scope, draft-only membership and evidence links, and a
+service-only draft match preview. It still cannot publish or resolve visible
+advice.
 
 ## Keep the three kinds of data separate
 
@@ -128,6 +129,19 @@ the existing rights/review report still applies separately. These checks
 cannot read the source's words or prove that a pointer actually supports a
 particular year. A curator must verify that meaning before approving the
 whole three-milestone row. A zero-issue report is not publication approval.
+
+The service-only `drinking_window_preview_draft_match` function now exercises
+the proposed reference order against **one draft version**: exact release,
+producer-appellation, producer-region, appellation, then region. It requires
+canonical IDs, colour, and vintage, checks identity consistency, and applies
+place/product/release memberships at the row's scope. It returns all three
+years and the row ID from one row, `no_match` when none applies, or `ambiguous`
+without dates when multiple rows tie at the highest applicable scope. Its
+`draft_match` status is only an algorithm preview: the function does **not**
+check evidence, rights, or current curator decisions. It cannot select a
+household override, trigger model fallback, publish a version, or change the
+app's displayed advice. The later shadow resolver must use only a fully
+validated/published version and handle those missing layers separately.
 
 Use constraints and publication-time validation to reject incomplete windows,
 duplicate keys, overlapping applicable groups, conflicting memberships,
@@ -313,7 +327,8 @@ than mutating an immutable historical version.
    all three years per row, and fill missing appellation/region coverage where
    evidence exists. Publish nothing that still lacks a milestone or
    classification decision.
-3. **Selector in shadow mode:** calculate a reference result beside the
+3. **Selector in shadow mode:** promote the service-only draft selector to a
+   validated published-version resolver, then calculate a reference result beside the
    current model for the owner's cellar. Compare coverage and every changed
    date; test manual precedence, group eligibility, vintage/colour separation,
    three-milestone order and whole-window provenance, missing data, conflicts, and
