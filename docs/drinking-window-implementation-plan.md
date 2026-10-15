@@ -85,8 +85,9 @@ member eligible for a row's vintage, and direct `all-at-this-scope` or
 member-group overlaps. It is read-only and cannot activate a version. A
 zero-issue result is **not** publication approval: place-to-product
 eligibility and less direct membership overlaps are checked in the separate
-eligibility report below; source-to-claim fit, curator decisions, and the
-complete version gate still require review. The publication-blocking trigger
+eligibility report below; source-to-claim metadata fit is checked separately,
+while semantic source review, curator decisions, and the complete version gate
+still require review. The publication-blocking trigger
 remains in force.
 
 An append-only service-private review record now captures an eligible
@@ -100,8 +101,8 @@ these makes the old approval stale; a new decision is required. The separate
 approvals, stale decisions without replacement, and current disagreements.
 Curators currently have no drinking-window review UI, and the trusted service
 must identify the human reviewer before recording a decision. Neither report
-is a publication command. Publication still needs source-to-claim fit,
-the remaining eligibility and evidence checks, a complete version validator,
+is a publication command. Publication still needs semantic source-to-claim
+review, the remaining eligibility and evidence checks, a complete version validator,
 and a shadow comparison before the publication trigger can be removed.
 
 Ageing groups now carry the producer and/or appellation identities appropriate
@@ -116,6 +117,17 @@ preserved but reported for correction. The service-only
 outside a group's place, another producer's cuvée, and overlapping place/
 product memberships in competing groups at the same lookup key. It is an
 additional review gate, **not** a publication certificate. No advice changes.
+
+The service-only `drinking_window_evidence_fit_issues(version_id)` report now
+checks linked **supporting** evidence against the draft claim. It detects
+contradictory producer, product, release, place, colour, or vintage metadata;
+wrong claim types (for example, a food-pairing record used to justify a
+drinking date); and a single cuvée or appellation source used to justify a
+broader regional window. Context links are not mistaken for support, and
+the existing rights/review report still applies separately. These checks
+cannot read the source's words or prove that a pointer actually supports a
+particular year. A curator must verify that meaning before approving the
+whole three-milestone row. A zero-issue report is not publication approval.
 
 Use constraints and publication-time validation to reject incomplete windows,
 duplicate keys, overlapping applicable groups, conflicting memberships,
