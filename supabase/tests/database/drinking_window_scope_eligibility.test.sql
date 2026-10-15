@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(13);
+select plan(14);
 
 create function pg_temp.rejects_with(command text, expected_state text)
 returns boolean language plpgsql as $$
@@ -60,6 +60,13 @@ select ok(pg_temp.rejects_with($test$
         'c1000000-0000-4000-8000-000000000002', 'red',
         'structured', 'Missing appellation identity')
 $test$, '23514'), 'New appellation groups require an appellation identity');
+select ok(pg_temp.rejects_with($test$
+    insert into public.drinking_window_ageing_groups
+        (version_id, scope, region_id, wine_color, group_key, definition)
+    values ('c1000000-0000-4000-8000-000000000001', 'producer_region',
+        'c1000000-0000-4000-8000-000000000002', 'red',
+        'structured', 'Missing producer identity')
+$test$, '23514'), 'New producer-region groups require a producer identity');
 
 insert into public.drinking_window_ageing_groups
     (id, version_id, scope, region_id, wine_color, group_key, definition,

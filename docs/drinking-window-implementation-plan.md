@@ -104,9 +104,10 @@ is a publication command. Publication still needs source-to-claim fit,
 the remaining eligibility and evidence checks, a complete version validator,
 and a shadow comparison before the publication trigger can be removed.
 
-Ageing groups now carry the producer and appellation identities appropriate
-to their scope. The same group name can be used independently in different
-appellations; a row borrowing a group from another appellation or producer is
+Ageing groups now carry the producer and/or appellation identities appropriate
+to their scope, including producer-wide regional groups. The same group name
+can be used independently in different appellations; a row borrowing a group
+from another appellation or producer is
 reported as a draft issue. Product and release memberships can now include a
 place anchor, so a cuvée can be eligible in one appellation without claiming
 eligibility everywhere it is sold. Existing unanchored draft memberships are

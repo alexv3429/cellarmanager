@@ -26,6 +26,8 @@ alter table public.drinking_window_ageing_groups
     add constraint drinking_window_ageing_groups_scope_identity_check check (
         (scope = 'region' and producer_id is null and appellation_id is null)
         or (scope = 'appellation' and producer_id is null and appellation_id is not null)
+        or (scope = 'producer_region'
+            and producer_id is not null and appellation_id is null)
         or (scope = 'producer_appellation'
             and producer_id is not null and appellation_id is not null)
     ) not valid;
@@ -110,6 +112,7 @@ begin
             g.id, null::uuid as other_id
         from groups_in_version g
         where (g.scope = 'appellation' and g.appellation_id is null)
+           or (g.scope = 'producer_region' and g.producer_id is null)
            or (g.scope = 'producer_appellation'
                and (g.appellation_id is null or g.producer_id is null))
 
@@ -129,7 +132,7 @@ begin
         join groups_in_version g on g.id = r.ageing_group_id
         where (g.scope in ('appellation', 'producer_appellation')
                 and r.appellation_id is distinct from g.appellation_id)
-           or (g.scope = 'producer_appellation'
+           or (g.scope in ('producer_region', 'producer_appellation')
                 and r.producer_id is distinct from g.producer_id)
 
         union all
@@ -160,7 +163,7 @@ begin
               select 1 from public.wine_reference_releases release
               where release.id = m.member_release_id and release.product_id = p.id
           ))
-        where g.scope = 'producer_appellation'
+        where g.scope in ('producer_region', 'producer_appellation')
           and p.producer_id is distinct from g.producer_id
 
         union all
