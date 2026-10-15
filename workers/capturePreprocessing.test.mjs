@@ -9,7 +9,7 @@ const sourceName = "f47ac10b-58cc-4372-a567-0e02b2c3d479";
 const normalizedName = "0f8fad5b-d9cb-469f-a165-70867728950e";
 const sourceBytes = new Uint8Array([0xff, 0xd8, 1, 2, 0xff, 0xd9]);
 const normalizedBytes = new Uint8Array([0xff, 0xd8, 3, 4, 0xff, 0xd9]);
-const env = { SUPABASE_URL: "https://db.example.test", SUPABASE_SECRET_KEY: "service-secret" };
+const env = { SUPABASE_URL: "https://db.example.test", SUPABASE_SECRET_KEY: "sb_secret_test" };
 
 function request({ origin = "https://cellar.example.test", token = "user-access-token", body = { sessionId } } = {}) {
   return new Request("https://cellar.example.test/api/capture/process", {
@@ -95,7 +95,7 @@ test("validates the source, promotes the prepared bytes, and deletes the source 
   assert.equal(calls[3].url.endsWith("/object/capture-labels"), true);
   assert.deepEqual(JSON.parse(calls[3].body), { prefixes: [sourceName] });
   assert.equal(calls[4].url.endsWith("/complete_capture_preprocessing"), true);
-  assert.equal(JSON.stringify(calls).includes("service-secret"), true);
+  assert.equal(JSON.stringify(calls).includes("sb_secret_test"), true);
   assert.equal(JSON.stringify(calls).includes("user-access-token"), true);
   assert.equal(calls.some((call) => String(call.body ?? "").includes("\"user-access-token\"")), false);
 });
@@ -215,7 +215,8 @@ test("serves only an authorized prepared preview with explicit no-store response
   assert.deepEqual(new Uint8Array(await response.arrayBuffer()), normalizedBytes);
   assert.equal(calls.length, 2);
   assert.equal(calls[0].headers.authorization, "Bearer user-access-token");
-  assert.equal(calls[1].headers.authorization, "Bearer service-secret");
+  assert.equal(calls[1].headers.apikey, "sb_secret_test");
+  assert.equal(calls[1].headers.authorization, undefined);
 });
 
 test("does not read storage when the requested key is not in the owner's processed session", async () => {

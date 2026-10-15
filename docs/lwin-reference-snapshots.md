@@ -100,10 +100,10 @@ Or download and validate the current official snapshot:
 After the migration is deployed, a trusted operator can perform the import:
 
     SUPABASE_URL=https://project.supabase.co \
-    SUPABASE_SERVICE_ROLE_KEY=... \
+    SUPABASE_SECRET_KEY=... \
     npm run lwin:import -- --file /absolute/path/LWINdatabase.xlsx
 
-Use only a server-side service-role key. Never put it in a `VITE_` variable,
+Use only a server-side Supabase secret key. Never put it in a `VITE_` variable,
 browser code, committed file, log, or screenshot. Useful options are
 `--batch-size` and `--keep-superseded`; run with `--help` for bounds and
 defaults.

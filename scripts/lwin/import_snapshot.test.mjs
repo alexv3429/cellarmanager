@@ -22,7 +22,7 @@ test("uses service credentials only in headers and encodes snapshot lookup", asy
   const requests = [];
   const client = createSupabaseClient({
     supabaseUrl: "http://127.0.0.1:54321",
-    serviceRoleKey: "test-service-key",
+    secretKey: "sb_secret_test",
     fetchImpl: async (url, options) => {
       requests.push({ url, options });
       return new Response(
@@ -42,12 +42,9 @@ test("uses service credentials only in headers and encodes snapshot lookup", asy
   assert.equal(result.id, "snapshot-id");
   assert.equal(requests.length, 1);
   assert.match(requests[0].url, /content_sha256=eq\.a{64}/);
-  assert.doesNotMatch(requests[0].url, /test-service-key/);
-  assert.equal(requests[0].options.headers.apikey, "test-service-key");
-  assert.equal(
-    requests[0].options.headers.authorization,
-    "Bearer test-service-key",
-  );
+  assert.doesNotMatch(requests[0].url, /sb_secret_test/);
+  assert.equal(requests[0].options.headers.apikey, "sb_secret_test");
+  assert.equal(requests[0].options.headers.authorization, undefined);
 });
 
 test("rejects insecure non-local Supabase URLs", () => {

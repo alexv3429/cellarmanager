@@ -1,4 +1,5 @@
 import { CaptureImageError } from "./captureImageValidate.mjs";
+import { supabaseServiceHeaders } from "./supabaseServiceHeaders.mjs";
 
 const BUCKET = "capture-labels";
 const MAX_REQUEST_BYTES = 4_096;
@@ -10,11 +11,7 @@ function bearerToken(request) {
 }
 
 function serviceHeaders(env, contentType = "application/json") {
-  return {
-    apikey: env.SUPABASE_SECRET_KEY,
-    authorization: `Bearer ${env.SUPABASE_SECRET_KEY}`,
-    "content-type": contentType,
-  };
+  return supabaseServiceHeaders(env.SUPABASE_SECRET_KEY, contentType);
 }
 
 function userHeaders(env, authorization) {

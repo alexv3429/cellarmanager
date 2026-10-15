@@ -1,14 +1,11 @@
+import { supabaseServiceHeaders } from "./supabaseServiceHeaders.mjs";
+
 const BUCKET = "capture-labels";
 const BATCH_SIZE = 10;
 const OBJECT_KEY_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function serviceHeaders(env) {
-  const headers = {
-    apikey: env.SUPABASE_SECRET_KEY,
-    authorization: `Bearer ${env.SUPABASE_SECRET_KEY}`,
-    "content-type": "application/json",
-  };
-  return headers;
+  return supabaseServiceHeaders(env.SUPABASE_SECRET_KEY);
 }
 
 async function postRpc(fetcher, env, name, body) {
