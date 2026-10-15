@@ -88,6 +88,21 @@ eligibility, source-to-claim fit, curator decisions, and less direct
 membership overlaps still require review. The publication-blocking trigger
 remains in force.
 
+An append-only service-private review record now captures an eligible
+drinking-window curator's approval or disagreement for each complete row,
+ageing-group definition, and eligibility membership. This authority requires
+an explicit `drinking-window` curator grant; existing profile grants do not
+confer it. The decision stores a server-computed hash of the exact subject,
+its evidence links, evidence review state, and source policy. Editing any of
+these makes the old approval stale; a new decision is required. The separate
+`drinking_window_review_issues(version_id)` report flags missing current
+approvals, stale decisions without replacement, and current disagreements.
+Curators currently have no drinking-window review UI, and the trusted service
+must identify the human reviewer before recording a decision. Neither report
+is a publication command. Publication still needs source-to-claim fit,
+broader eligibility-conflict checks, a complete version validator, and a
+shadow comparison before the publication trigger can be removed.
+
 Use constraints and publication-time validation to reject incomplete windows,
 duplicate keys, overlapping applicable groups, conflicting memberships,
 unreviewed evidence, and an `all-at-this-scope` row that overlaps a more
