@@ -143,6 +143,21 @@ household override, trigger model fallback, publish a version, or change the
 app's displayed advice. The later shadow resolver must use only a fully
 validated/published version and handle those missing layers separately.
 
+The same service can now submit a bounded batch of up to 250 **canonical
+lookup keys** to `drinking_window_preview_draft_batch` and summarize
+the outcomes with `drinking_window_preview_draft_coverage`. Only producer,
+product, release, appellation, region, optional place, colour, and vintage
+fields are accepted; household/wine IDs, bottle data, notes, and prices are
+rejected. Input order is preserved, including missing keys, identity conflicts,
+and ambiguous matches. This is useful for measuring *algorithmic* coverage of
+a draft, but it does not query a cellar, save the submitted keys, compare the
+current model, check evidence/review readiness, or replace advice. A batch
+derived from a real cellar can still reveal a distinctive wine list even
+without household IDs; only synthetic keys or an explicitly authorized,
+appropriately protected private shadow job should be supplied. A proper
+private shadow comparison still requires curated reference data and the
+published-version resolver below.
+
 Use constraints and publication-time validation to reject incomplete windows,
 duplicate keys, overlapping applicable groups, conflicting memberships,
 unreviewed evidence, and an `all-at-this-scope` row that overlaps a more
@@ -327,9 +342,11 @@ than mutating an immutable historical version.
    all three years per row, and fill missing appellation/region coverage where
    evidence exists. Publish nothing that still lacks a milestone or
    classification decision.
-3. **Selector in shadow mode:** promote the service-only draft selector to a
-   validated published-version resolver, then calculate a reference result beside the
-   current model for the owner's cellar. Compare coverage and every changed
+3. **Selector in shadow mode:** use synthetic canonical keys in the draft batch
+   preview to exercise candidate coverage. Promote
+   the selector to a validated published-version resolver, then calculate a
+   reference result beside the current model for the owner's cellar. Compare
+   coverage and every changed
    date; test manual precedence, group eligibility, vintage/colour separation,
    three-milestone order and whole-window provenance, missing data, conflicts, and
    fallback. Do not replace the visible window.
