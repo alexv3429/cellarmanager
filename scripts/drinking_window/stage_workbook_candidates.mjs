@@ -3,6 +3,7 @@
 import { readFile, realpath, stat } from 'node:fs/promises';
 import { isAbsolute, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { supabaseServiceHeaders } from '../../workers/supabaseServiceHeaders.mjs';
 
 const REFERENCE_SHEETS = 'Barraud|Barthod|Boillot|Bouzereau|Cal Demoura|Carillon|Castagnier|Chagnoleau|Clavelier|Langoureau|Montcalmes|Pernot|Millesimes';
 const LOCATOR = new RegExp(`^(${REFERENCE_SHEETS})![A-O][0-9]+:[A-O][0-9]+$`);
@@ -110,8 +111,9 @@ export function validateCandidates(rows, expectedSha256) {
   return { total: rows.length, staged, quarantined, source_sha256: expectedSha256 };
 }
 
-export async function stageCandidates(rows, { supabaseUrl, serviceRoleKey, fetchImpl = fetch }) {
-  if (!serviceRoleKey || !supabaseUrl) throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required for --apply');
+export async function stageCandidates(rows, { supabaseUrl, secretKey, serviceRoleKey, fetchImpl = fetch }) {
+  const key = secretKey ?? serviceRoleKey;
+  if (!key || !supabaseUrl) throw new Error('SUPABASE_URL and SUPABASE_SECRET_KEY are required for --apply');
   const url = new URL(supabaseUrl);
   if (url.username || url.password || url.search || url.hash
       || (url.protocol !== 'https:'
@@ -120,11 +122,7 @@ export async function stageCandidates(rows, { supabaseUrl, serviceRoleKey, fetch
   }
   const response = await fetchImpl(new URL('/rest/v1/rpc/drinking_window_stage_workbook_candidates', url), {
     method: 'POST',
-    headers: {
-      apikey: serviceRoleKey,
-      authorization: `Bearer ${serviceRoleKey}`,
-      'content-type': 'application/json',
-    },
+    headers: supabaseServiceHeaders(key),
     body: JSON.stringify({ p_rows: rows }),
   });
   if (!response.ok) throw new Error(`Private candidate staging failed (HTTP ${response.status}); no candidate contents were logged`);
@@ -155,7 +153,7 @@ async function run() {
   }
   const result = await stageCandidates(rows, {
     supabaseUrl: process.env.SUPABASE_URL,
-    serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    secretKey: process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY,
   });
   process.stdout.write(`${JSON.stringify({ mode: 'applied', ...summary, ...result }, null, 2)}\n`);
 }

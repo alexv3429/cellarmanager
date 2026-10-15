@@ -8,7 +8,7 @@ const objectName = "f47ac10b-58cc-4372-a567-0e02b2c3d479";
 const imageBytes = new Uint8Array([0xff, 0xd8, 1, 2, 0xff, 0xd9]);
 const env = {
   SUPABASE_URL: "https://db.example.test",
-  SUPABASE_SECRET_KEY: "service-secret",
+  SUPABASE_SECRET_KEY: "sb_secret_test",
 };
 
 function request({ origin = "https://cellar.example.test", token = "user-access-token", body = { sessionId } } = {}) {
@@ -95,8 +95,9 @@ test("transcribes a verified owner photo with Cloudflare AI, saves private text,
   assert.equal(calls.at(-1).url.endsWith("/list_capture_ocr_result"), true);
   assert.equal(calls.at(-1).headers.authorization, "Bearer user-access-token");
   assert.equal(calls[0].headers.authorization, "Bearer user-access-token");
-  assert.equal(calls[1].headers.authorization, "Bearer service-secret");
-  assert.equal(aiCalls.some((call) => JSON.stringify(call).includes("service-secret")), false);
+  assert.equal(calls[1].headers.apikey, "sb_secret_test");
+  assert.equal(calls[1].headers.authorization, undefined);
+  assert.equal(aiCalls.some((call) => JSON.stringify(call).includes("sb_secret_test")), false);
 });
 
 test("reads two labels of one capture in order without sending cellar identity to the model", async () => {

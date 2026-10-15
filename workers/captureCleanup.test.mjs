@@ -5,7 +5,7 @@ import { cleanupExpiredCaptureSessions } from "./captureCleanup.mjs";
 
 const env = {
   SUPABASE_URL: "https://cellar.example.test",
-  SUPABASE_SECRET_KEY: "test-secret",
+  SUPABASE_SECRET_KEY: "sb_secret_test",
 };
 const sessionId = "550e8400-e29b-41d4-a716-446655440000";
 const objectOne = "f47ac10b-58cc-4372-a567-0e02b2c3d479";
@@ -32,6 +32,9 @@ test("removes only claimed exact objects through Storage API before finalizing",
   assert.deepEqual(result, { status: "completed", claimed: 1, deleted: 1, failed: 0 });
   assert.equal(calls.length, 3);
   assert.equal(calls[1].options.method, "DELETE");
+  assert.equal(calls[0].options.headers.apikey, "sb_secret_test");
+  assert.equal(calls[0].options.headers.authorization, undefined);
+  assert.equal(calls[1].options.headers.authorization, undefined);
   assert.deepEqual(JSON.parse(calls[1].options.body), { prefixes: [objectOne, objectTwo] });
   assert.equal(calls[2].url.endsWith("/complete_capture_cleanup"), true);
   assert.equal(calls.some(({ url }) => url.includes("/rest/v1/storage.objects")), false);

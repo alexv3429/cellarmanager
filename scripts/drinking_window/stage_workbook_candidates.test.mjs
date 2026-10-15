@@ -54,7 +54,7 @@ test('quarantine reason is retained while unknown reasons are rejected', () => {
 test('apply uses one atomic RPC request and reports counts only', async () => {
   const calls = [];
   const result = await stageCandidates([row()], {
-    supabaseUrl: 'https://example.supabase.co', serviceRoleKey: 'test-key',
+    supabaseUrl: 'https://example.supabase.co', secretKey: 'sb_secret_test',
     fetchImpl: async (url, options) => {
       calls.push({ url: String(url), options });
       return { ok: true, json: async () => [{ inserted_count: 1, unchanged_count: 0 }] };
@@ -64,6 +64,8 @@ test('apply uses one atomic RPC request and reports counts only', async () => {
   assert.equal(calls.length, 1);
   assert.equal(calls[0].url, 'https://example.supabase.co/rest/v1/rpc/drinking_window_stage_workbook_candidates');
   assert.equal(JSON.parse(calls[0].options.body).p_rows.length, 1);
+  assert.equal(calls[0].options.headers.apikey, 'sb_secret_test');
+  assert.equal(calls[0].options.headers.authorization, undefined);
 });
 
 test('apply rejects non-local HTTP and never echoes a failed response body', async () => {

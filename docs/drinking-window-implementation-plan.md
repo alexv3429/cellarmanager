@@ -76,7 +76,7 @@ and `report.json` there. Then run
 `node scripts/drinking_window/stage_workbook_candidates.mjs --candidates
 PRIVATE_DIR/candidates.json --expected-sha256 HASH` for a dry-run count.
 Only after checking that summary and the destination project, explicitly add
-`--apply` with `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in the private
+`--apply` with `SUPABASE_URL` and `SUPABASE_SECRET_KEY` in the private
 operator environment. The service-only RPC accepts one atomic batch of at most
 250 reference-sheet candidates. Exact replays are harmless; conflicting
 replays abort rather than overwriting review work. It rejects the private

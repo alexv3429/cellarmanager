@@ -18,6 +18,7 @@ import {
   loadLwinSnapshot,
   lwinEntryBatches,
 } from "./snapshot.mjs";
+import { supabaseServiceHeaders } from "../../workers/supabaseServiceHeaders.mjs";
 
 const MAX_DOWNLOAD_BYTES = 100 * 1024 * 1024;
 
@@ -34,7 +35,7 @@ Options:
 
 Required for a real import:
   SUPABASE_URL
-  SUPABASE_SERVICE_ROLE_KEY
+  SUPABASE_SECRET_KEY (legacy SUPABASE_SERVICE_ROLE_KEY is also accepted)
 `;
 }
 
@@ -119,18 +120,18 @@ function validateSupabaseUrl(value) {
   return value.replace(/\/$/, "");
 }
 
-export function createSupabaseClient({ supabaseUrl, serviceRoleKey, fetchImpl = fetch }) {
+export function createSupabaseClient({ supabaseUrl, secretKey, serviceRoleKey, fetchImpl = fetch }) {
   const restUrl = `${validateSupabaseUrl(supabaseUrl)}/rest/v1`;
-  if (!serviceRoleKey || serviceRoleKey.trim().length === 0) {
-    throw new Error("SUPABASE_SERVICE_ROLE_KEY is required");
+  const key = secretKey ?? serviceRoleKey;
+  if (!key || key.trim().length === 0) {
+    throw new Error("SUPABASE_SECRET_KEY is required");
   }
 
   async function request(path, { method = "GET", body, prefer } = {}) {
     const response = await fetchImpl(`${restUrl}${path}`, {
       method,
       headers: {
-        apikey: serviceRoleKey,
-        authorization: `Bearer ${serviceRoleKey}`,
+        ...supabaseServiceHeaders(key),
         ...(body === undefined ? {} : { "content-type": "application/json" }),
         ...(prefer ? { prefer } : {}),
       },
@@ -230,7 +231,7 @@ export async function runImport(options, environment = process.env) {
 
     const client = createSupabaseClient({
       supabaseUrl: environment.SUPABASE_URL,
-      serviceRoleKey: environment.SUPABASE_SERVICE_ROLE_KEY,
+      secretKey: environment.SUPABASE_SECRET_KEY ?? environment.SUPABASE_SERVICE_ROLE_KEY,
     });
     const existing = await client.findSnapshot(snapshot.contentSha256);
     if (existing && existing.import_status !== "failed") {

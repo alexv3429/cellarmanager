@@ -1,3 +1,5 @@
+import { supabaseServiceHeaders } from "./supabaseServiceHeaders.mjs";
+
 const BUCKET = "capture-labels";
 const MODEL = "@cf/moondream/moondream3.1-9B-A2B";
 const MODEL_VERSION = "cloudflare-moondream3.1-9b-a2b-v1";
@@ -19,11 +21,7 @@ function bearerToken(request) {
 }
 
 function headersForService(env, contentType = "application/json") {
-  return {
-    apikey: env.SUPABASE_SECRET_KEY,
-    authorization: `Bearer ${env.SUPABASE_SECRET_KEY}`,
-    "content-type": contentType,
-  };
+  return supabaseServiceHeaders(env.SUPABASE_SECRET_KEY, contentType);
 }
 
 function headersForUser(env, authorization) {
