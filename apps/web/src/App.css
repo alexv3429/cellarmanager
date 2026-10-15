@@ -6182,6 +6182,21 @@
   .import-storage-family-editor__rules > li > button { width: 100%; }
 }
 
+.producer-preferences { min-width: 0; border: 1px solid var(--border); border-radius: .75rem; padding: 1rem; }
+.producer-preferences > summary { cursor: pointer; font-weight: 650; }
+.producer-preferences__body { display: grid; gap: 1rem; min-width: 0; padding-top: 1rem; }
+.producer-preferences__body > p { margin: 0; }
+.producer-preferences label { display: grid; gap: .4rem; min-width: 0; }
+.producer-preferences input { box-sizing: border-box; width: 100%; min-width: 0; }
+.producer-preferences__sources, .producer-preferences__results { display: grid; gap: .5rem; min-width: 0; max-height: 18rem; overflow-y: auto; }
+.producer-preferences__sources button, .producer-preferences__results button { min-width: 0; width: 100%; text-align: left; overflow-wrap: anywhere; }
+.producer-preferences__sources button { display: grid; gap: .15rem; }
+.producer-preferences__sources button span { color: var(--text-muted, #b6aeb2); font-size: .85rem; }
+.producer-preferences button.is-selected { border-color: var(--accent-border); background: var(--accent-bg); }
+.producer-preferences__editor { display: grid; gap: .75rem; min-width: 0; border-top: 1px solid var(--border); padding-top: 1rem; }
+.producer-preferences__editor h3, .producer-preferences__editor p { margin: 0; overflow-wrap: anywhere; }
+.producer-preferences__actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+
 .import-confirmation {
   background: color-mix(in srgb, var(--surface) 92%, var(--accent));
   border: 1px solid var(--border);

@@ -34,6 +34,7 @@ import {
 } from "../data/cellarSetupView"
 import { Notice } from "./Notice"
 import { LocationQrLabel } from "./LocationQrLabel"
+import { ProducerPreferencesPanel } from "./ProducerPreferencesPanel"
 import { useLanguage } from "../i18n/useLanguage"
 import { formatLocalizedNumber } from "../i18n/formatting"
 
@@ -1050,6 +1051,7 @@ function OwnerCellarSetupView({
           </ul>
         </section>
       ) : null}
+      <ProducerPreferencesPanel householdId={householdId} isOnline={isOnline} />
     </main>
   )
 }
