@@ -183,11 +183,17 @@ alias or publishes a window.
 
 For live wine matching, the existing
 `wine_reference_household_producer_preferences` table is the household-scoped
-place for a remembered producer shorthand. A private workbook review file is
-not automatically a preference for every wine in that household. Neither this
-migration nor the review command inserts household preferences. A future
-curation step must explicitly verify and apply those decisions to the intended
-household only. The report still requires wine/place identity, source-rights,
+place for a remembered producer shorthand. The owner-only **Producer names for
+this household** panel in Cellar setup lists names actually present in that
+household's wine catalogue and lets the owner select an existing canonical
+producer, replace a stale choice, or remove it. It never creates a global alias,
+renames a wine, or copies a choice to another household. The database checks
+the owner's live role and requires the displayed prior choice to still match
+before a change is accepted. A private workbook review file is not
+automatically a preference for every wine in that household: the owner must
+make each live-catalogue choice explicitly. Neither the shared seed nor the
+review command inserts household preferences. The report still requires
+wine/place identity, source-rights,
 ageing-group eligibility, and a first-tasting year before publication.
 
 Earlier workbook-specific research and interpretation files mentioned above
