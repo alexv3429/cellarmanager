@@ -78,6 +78,16 @@ place/product hierarchy, membership overlaps and coverage, complete supporting
 evidence, source-rights policy, and the coherent three-date row before any
 version can activate.
 
+The service-only `drinking_window_draft_issues(version_id)` diagnostic now
+lists missing date/group/membership evidence, unreviewed or unlicensed source
+links, contradictory evidence, identity-hierarchy errors, groups with no
+member eligible for a row's vintage, and direct `all-at-this-scope` or
+member-group overlaps. It is read-only and cannot activate a version. A
+zero-issue result is **not** publication approval: place-to-product
+eligibility, source-to-claim fit, curator decisions, and less direct
+membership overlaps still require review. The publication-blocking trigger
+remains in force.
+
 Use constraints and publication-time validation to reject incomplete windows,
 duplicate keys, overlapping applicable groups, conflicting memberships,
 unreviewed evidence, and an `all-at-this-scope` row that overlaps a more
