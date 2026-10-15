@@ -1,5 +1,10 @@
 # Drinking-window identity review
 
+The dated results below are a one-owner curation case study, not a shared
+mapping table or an application default. Source-specific JSON inputs belong
+outside Git; only canonical identities and fully reviewed windows may enter
+the shared reference catalogue.
+
 The workbook audit and the shared reference catalogue now have a read-only
 comparison step. It suggests exact normalized name/alias matches for each
 candidate's required identity fields and keeps all decisions open. Surname
@@ -20,7 +25,7 @@ mkdir -m 700 /tmp/cellarmanager-window-review
 npm run drinking-window:audit -- \
   --file /path/to/Caves_2.0.xlsx \
   --out-dir /tmp/cellarmanager-window-review \
-  --expected-sha256 42b935d4fd2e161605d245b15b853d4ee7c1a0a9eed1ea14d460a80857373911
+  --expected-sha256 YOUR_WORKBOOK_SHA256
 npm run drinking-window:snapshot -- \
   --project-ref YOUR_LINKED_DEV_PROJECT_REF \
   --out-dir /tmp/cellarmanager-window-review
@@ -74,11 +79,11 @@ because it acquired an identity suggestion.
 
 ## Workbook-specific producer research, 11 October 2026
 
-The optional, source-hash-pinned research file
-`scripts/drinking_window/producer_research_20261011.json` documents four
-possible matches to the development catalogue. It is **not** a global alias
-list or an owner/curator approval. The open questions in this historical
-research table are updated by the owner-confirmed interpretations below.
+The optional, source-hash-pinned research file is kept in the owner's private
+review directory. In this historical review it documents four possible
+matches to the development catalogue. It is **not** a global alias list or an
+owner/curator approval. The open questions in this historical research table
+are updated by the owner-confirmed interpretations below.
 Use it with a new private output directory:
 
 ```sh
@@ -86,7 +91,7 @@ npm run drinking-window:review -- \
   --candidates /tmp/cellarmanager-window-review/candidates.json \
   --identity-snapshot /tmp/cellarmanager-window-review/identity_snapshot.json \
   --out-dir /tmp/cellarmanager-window-research-results \
-  --producer-research scripts/drinking_window/producer_research_20261011.json
+  --producer-research /private/path/producer_research.json
 ```
 
 The reviewer validates the workbook hash, exact source sheet and producer
@@ -115,9 +120,8 @@ wine/place disagreements before any shared-data write.
 
 ## Owner-confirmed source interpretations, 15 October 2026
 
-The optional, workbook-hash-pinned
-`scripts/drinking_window/source_interpretations_20261015.json` records what the
-owner clarified after the research pass. It is a review overlay, not a change
+The optional, workbook-hash-pinned private source-interpretation file records
+what the owner clarified after the research pass. It is a review overlay, not a change
 to the workbook, a global catalogue alias, or drinking advice. The original
 `source_identity` stays in the private report; `review_identity` shows a
 corrected interpretation only for the two exact source rows below. The
@@ -139,8 +143,8 @@ npm run drinking-window:review -- \
   --candidates /tmp/cellarmanager-window-review/candidates.json \
   --identity-snapshot /tmp/cellarmanager-window-review/identity_snapshot.json \
   --out-dir /tmp/cellarmanager-window-owner-results \
-  --producer-research scripts/drinking_window/producer_research_20261011.json \
-  --source-interpretations scripts/drinking_window/source_interpretations_20261015.json
+  --producer-research /private/path/producer_research.json \
+  --source-interpretations /private/path/source_interpretations.json
 ```
 
 Against that 11 October development snapshot, 2 rows receive an exact
@@ -151,3 +155,44 @@ Belle Fiolle no longer suggests the wrong appellation or region. The report
 still has **zero publishable windows**. The owner's clarification establishes
 these interpretations, not the missing start-tasting dates, evidence rights,
 catalogue entities, or wine-to-group memberships.
+
+## Shared producer identities versus household decisions
+
+`20261016120000_shared_producer_catalogue_seed.sql` adds six independently
+identifiable canonical producers to the shared reference catalogue. Canonical
+producer names are reusable domain facts; they say nothing about what a short
+name in any one cellar or workbook means. The migration creates **no** global
+surname aliases, products, releases, drinking windows, or publication rights.
+
+A shared drinking-window row must refer to the canonical producer **ID** and
+display that producer's full canonical name—for example, `Ghislaine Barthod`,
+never a workbook sheet label such as `Barthod`. Its three years, eligibility,
+and evidence are reviewed against that canonical scope. A household preference
+can help resolve a household wine to the ID; it must not become the reference
+row's title, evidence, or a rule for other households.
+
+An owner's confirmation that a workbook shorthand refers to one of these
+producers is a **private owner decision**. Keep that mapping, its workbook
+hash, and its evidence in an owner-only file outside Git. The optional
+`--producer-confirmations /private/path/to/confirmations.json` argument loads
+such a file for one read-only review run. Its `source_sha256` must match every
+candidate, and each mapping names a source sheet, exact workbook producer,
+canonical producer, HTTPS evidence URLs, and an owner note. The reviewer
+refuses a missing, ambiguous, or conflicting target. It never writes a global
+alias or publishes a window.
+
+For live wine matching, the existing
+`wine_reference_household_producer_preferences` table is the household-scoped
+place for a remembered producer shorthand. A private workbook review file is
+not automatically a preference for every wine in that household. Neither this
+migration nor the review command inserts household preferences. A future
+curation step must explicitly verify and apply those decisions to the intended
+household only. The report still requires wine/place identity, source-rights,
+ageing-group eligibility, and a first-tasting year before publication.
+
+Earlier workbook-specific research and interpretation files mentioned above
+are now in the same private, owner-scoped workflow, not application defaults.
+The workbook-specific candidate staging script and its legacy locator checks
+remain a one-off curation tool for this source, not a generic multi-household
+import API. A multi-household importer must introduce explicit owner/source
+scope rather than reuse those hard-coded sheet names.

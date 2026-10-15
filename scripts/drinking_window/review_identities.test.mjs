@@ -110,6 +110,62 @@ test('rejects stale, ambiguous, and conflicting producer research', () => {
   } }), /no matching source rows/);
 });
 
+test('uses an owner-confirmed producer only for the pinned workbook sheet', () => {
+  const snapshot = catalogue();
+  snapshot.producers.push({ id: 'p3', canonical_name: 'Jacques Carillon' });
+  const rows = [candidate('release', { producer: 'Carillon', cuvee: 'Les Referts',
+    appellation: 'Pouilly-Fuissé' }, 'Carillon!E2:F2'),
+  candidate('producer_appellation', { producer: 'Barraud', appellation: 'Pouilly-Fuissé' },
+    'Barraud!E3:F3')];
+  const producerConfirmations = { source_sha256: sourceSha, mappings: [{
+    source_sheet: 'Carillon', workbook_producer: 'Carillon',
+    canonical_producer: 'Jacques Carillon', evidence_urls: ['https://example.org/wines'],
+    owner_note: 'Confirmed by owner for this workbook.',
+  }] };
+  const result = reviewIdentities(rows, snapshot, { producerConfirmations });
+  assert.deepEqual(result.rows[0].matches.producer, {
+    status: 'owner_confirmed', ids: ['p3'], evidence_urls: ['https://example.org/wines'],
+    owner_note: 'Confirmed by owner for this workbook.',
+  });
+  assert.equal(result.rows[0].matches.product.status, 'missing');
+  assert.equal(result.rows[1].matches.producer.status, 'suggested');
+  assert.equal(result.summary.owner_confirmed_producer_candidates, 1);
+  assert.equal(result.summary.publishable_count, 0);
+  assert.ok(result.rows[0].review_reasons.includes('first_trial_year_required'));
+  assert.ok(result.rows[0].review_reasons.includes('source_rights_required'));
+  assert.deepEqual(snapshot.wine_aliases.filter((alias) => alias.alias_value === 'Carillon'), []);
+});
+
+test('rejects stale, missing, ambiguous, and conflicting owner confirmations', () => {
+  const row = candidate('producer_appellation', { producer: 'Carillon',
+    appellation: 'Pouilly-Fuissé' }, 'Carillon!E2:F2');
+  const snapshot = catalogue();
+  snapshot.producers.push({ id: 'p3', canonical_name: 'Jacques Carillon' });
+  const mapping = { source_sheet: 'Carillon', workbook_producer: 'Carillon',
+    canonical_producer: 'Jacques Carillon', evidence_urls: ['https://example.org/wines'],
+    owner_note: 'Confirmed by owner.' };
+  const producerConfirmations = { source_sha256: sourceSha, mappings: [mapping] };
+  assert.throws(() => reviewIdentities([row], snapshot, { producerConfirmations: {
+    ...producerConfirmations, source_sha256: 'b'.repeat(64),
+  } }), /workbook SHA-256/);
+  assert.throws(() => reviewIdentities([row], catalogue(), { producerConfirmations }),
+    /missing or ambiguous/);
+  const ambiguous = { ...snapshot, producers: [...snapshot.producers,
+    { id: 'p4', canonical_name: 'Jacques Carillon' }] };
+  assert.throws(() => reviewIdentities([row], ambiguous, { producerConfirmations }),
+    /missing or ambiguous/);
+  const conflicting = { ...snapshot, wine_aliases: [...snapshot.wine_aliases,
+    { entity_type: 'producer', entity_id: 'p1', alias_value: 'Carillon' }] };
+  assert.throws(() => reviewIdentities([row], conflicting, { producerConfirmations }),
+    /conflicts with catalogue/);
+  assert.throws(() => reviewIdentities([row], snapshot, { producerConfirmations: {
+    ...producerConfirmations, mappings: [mapping, mapping],
+  } }), /duplicate mapping/);
+  assert.throws(() => reviewIdentities([row], snapshot, { producerConfirmations: {
+    ...producerConfirmations, mappings: [{ ...mapping, workbook_producer: 'Different' }],
+  } }), /no matching source rows/);
+});
+
 test('requires explicit region review for producer-wide guidance and eligibility for regional bins', () => {
   const rows = [candidate('producer_region', { producer: 'Chagnoleau' }, 'Chagnoleau!E2:F2'),
     candidate('region', { region: 'Bourgogne', historical_bin: 'standard' }, 'Millesimes!L3:M3')];
