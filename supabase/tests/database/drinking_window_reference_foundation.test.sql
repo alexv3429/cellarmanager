@@ -128,12 +128,13 @@ insert into public.wine_reference_producers (id, canonical_name)
 values ('f5000000-0000-4000-8000-000000000003', 'Synthetic Reference Producer');
 
 insert into public.drinking_window_ageing_groups (
-    id, version_id, scope, region_id, wine_color, group_key, definition
+    id, version_id, scope, region_id, wine_color, group_key, definition, producer_id
 ) values (
     'f5000000-0000-4000-8000-000000000004',
     'f5000000-0000-4000-8000-000000000002', 'producer_region',
     'f5000000-0000-4000-8000-000000000001', 'white',
-    'synthetic-white', 'Synthetic producer-wide white-wine eligibility'
+    'synthetic-white', 'Synthetic producer-wide white-wine eligibility',
+    'f5000000-0000-4000-8000-000000000003'
 );
 
 select is(

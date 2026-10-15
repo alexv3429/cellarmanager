@@ -84,8 +84,9 @@ links, contradictory evidence, identity-hierarchy errors, groups with no
 member eligible for a row's vintage, and direct `all-at-this-scope` or
 member-group overlaps. It is read-only and cannot activate a version. A
 zero-issue result is **not** publication approval: place-to-product
-eligibility, source-to-claim fit, curator decisions, and less direct
-membership overlaps still require review. The publication-blocking trigger
+eligibility and less direct membership overlaps are checked in the separate
+eligibility report below; source-to-claim fit, curator decisions, and the
+complete version gate still require review. The publication-blocking trigger
 remains in force.
 
 An append-only service-private review record now captures an eligible
@@ -100,8 +101,21 @@ approvals, stale decisions without replacement, and current disagreements.
 Curators currently have no drinking-window review UI, and the trusted service
 must identify the human reviewer before recording a decision. Neither report
 is a publication command. Publication still needs source-to-claim fit,
-broader eligibility-conflict checks, a complete version validator, and a
-shadow comparison before the publication trigger can be removed.
+the remaining eligibility and evidence checks, a complete version validator,
+and a shadow comparison before the publication trigger can be removed.
+
+Ageing groups now carry the producer and/or appellation identities appropriate
+to their scope, including producer-wide regional groups. The same group name
+can be used independently in different appellations; a row borrowing a group
+from another appellation or producer is
+reported as a draft issue. Product and release memberships can now include a
+place anchor, so a cuvée can be eligible in one appellation without claiming
+eligibility everywhere it is sold. Existing unanchored draft memberships are
+preserved but reported for correction. The service-only
+`drinking_window_eligibility_issues(version_id)` report also flags memberships
+outside a group's place, another producer's cuvée, and overlapping place/
+product memberships in competing groups at the same lookup key. It is an
+additional review gate, **not** a publication certificate. No advice changes.
 
 Use constraints and publication-time validation to reject incomplete windows,
 duplicate keys, overlapping applicable groups, conflicting memberships,
