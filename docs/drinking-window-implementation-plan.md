@@ -68,6 +68,23 @@ curator eligibility where their meanings fit. New storage needs four parts:
    rows, household proposals, duplicate/conflict links, source-rights and
    curator decisions. Candidates are not published rows.
 
+The original workbook's reference sheets can now be loaded into the
+service-private candidate queue after a read-only audit. Run
+`scripts/drinking_window/audit_workbook.mjs` with an expected workbook SHA-256
+and an existing private directory **outside Git**; it writes `candidates.json`
+and `report.json` there. Then run
+`node scripts/drinking_window/stage_workbook_candidates.mjs --candidates
+PRIVATE_DIR/candidates.json --expected-sha256 HASH` for a dry-run count.
+Only after checking that summary and the destination project, explicitly add
+`--apply` with `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in the private
+operator environment. The service-only RPC accepts one atomic batch of at most
+250 reference-sheet candidates. Exact replays are harmless; conflicting
+replays abort rather than overwriting review work. It rejects the private
+`Cave` sheet, household fields, and invented first-trial years. Quarantined
+source rows retain their reason. No workbook, candidate JSON, or private
+cellar data belongs in a commit or a browser request. Staging is not source
+rights approval, three-date completion, shared publication, or advice rollout.
+
 The draft-only membership table now records a specific place, product/cuvée,
 or release, with an optional vintage interval and rationale, against one
 versioned local group. Its exact target shape and same-version relationship
