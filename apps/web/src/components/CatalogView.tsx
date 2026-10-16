@@ -49,6 +49,7 @@ import { EnrichmentResearchInbox } from "./EnrichmentResearchInbox"
 import { Notice } from "./Notice"
 import { ProfileReviewInbox } from "./ProfileReviewInbox"
 import { ProfileGovernanceInbox } from "./ProfileGovernanceInbox"
+import { DrinkingWindowReviewWorkspace } from "./DrinkingWindowReviewWorkspace"
 import { WineDuplicateReview } from "./WineDuplicateReview"
 import { WineIdentityReviewPanel } from "./WineIdentityReviewPanel"
 import { useLanguage } from "../i18n/useLanguage"
@@ -1211,6 +1212,7 @@ export function CatalogView({
         />
 
         <ProfileGovernanceInbox isOnline={isOnline} />
+        <DrinkingWindowReviewWorkspace isOnline={isOnline} />
       </section>
 
       <WineIdentityReviewPanel key={householdId} isOnline={isOnline} wines={catalogWines} />
