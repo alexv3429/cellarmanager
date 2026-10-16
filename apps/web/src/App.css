@@ -6197,6 +6197,24 @@
 .producer-preferences__editor h3, .producer-preferences__editor p { margin: 0; overflow-wrap: anywhere; }
 .producer-preferences__actions { display: flex; flex-wrap: wrap; gap: .5rem; }
 
+.wine-identity-review { min-width: 0; border: 1px solid var(--border); border-radius: .75rem; padding: 1rem; margin-block: 1rem; }
+.wine-identity-review > summary { cursor: pointer; font-weight: 650; }
+.wine-identity-review__body { display: grid; gap: 1rem; min-width: 0; padding-top: 1rem; }
+.wine-identity-review__body > p { margin: 0; }
+.wine-identity-review label { display: grid; gap: .4rem; min-width: 0; }
+.wine-identity-review input[type="search"] { box-sizing: border-box; width: 100%; min-width: 0; }
+.wine-identity-review__toggle { display: flex !important; align-items: center; }
+.wine-identity-review__layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; min-width: 0; }
+.wine-identity-review__wines, .wine-identity-review__results { display: grid; align-content: start; gap: .5rem; min-width: 0; max-height: 22rem; overflow-y: auto; }
+.wine-identity-review__wines button, .wine-identity-review__results button { display: grid; gap: .2rem; min-width: 0; width: 100%; text-align: left; overflow-wrap: anywhere; }
+.wine-identity-review__wines button span, .wine-identity-review__results button span { color: var(--text-muted, #b6aeb2); font-size: .85rem; }
+.wine-identity-review button.is-selected { border-color: var(--accent-border); background: var(--accent-bg); }
+.wine-identity-review__editor { display: grid; align-content: start; gap: .75rem; min-width: 0; }
+.wine-identity-review__editor h3, .wine-identity-review__editor p { margin: 0; overflow-wrap: anywhere; }
+.wine-identity-review__editor p button { display: block; margin-top: .5rem; }
+.wine-identity-review__confirm { display: grid; gap: .5rem; padding: .75rem; border: 1px solid var(--border); border-radius: .5rem; }
+@media (max-width: 700px) { .wine-identity-review__layout { grid-template-columns: minmax(0, 1fr); } }
+
 .import-confirmation {
   background: color-mix(in srgb, var(--surface) 92%, var(--accent));
   border: 1px solid var(--border);

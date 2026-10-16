@@ -285,6 +285,17 @@ as comparison context during review, but cannot auto-fill those fields.
 
 ## Resolve a wine and show why
 
+The owner can now review complete household wine identities in the Catalogue.
+The review queue lists wines without a shared link, searches existing shared
+products or releases, and confirms only a release of the *same vintage* (or a
+product for an NV wine). The confirmed link and an append-only decision record
+remain household-specific; neither the wine's text nor a global alias/product
+is changed. If no shared entry exists, the owner can submit a private,
+idempotent missing-identity request. It is not a published identity or a
+drinking-window contribution; trusted curation must still normalize and
+review it. The existing Liv-ex suggestion workflow remains available on each
+wine card. This identity review does not activate the new reference selector.
+
 The server first resolves whichever identity fields it can confirm. It only
 considers a scope when that scope's required IDs, region, colour, and vintage
 are confirmed. At each scope it checks the identity key and applicable
