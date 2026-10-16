@@ -50,6 +50,7 @@ import { Notice } from "./Notice"
 import { ProfileReviewInbox } from "./ProfileReviewInbox"
 import { ProfileGovernanceInbox } from "./ProfileGovernanceInbox"
 import { WineDuplicateReview } from "./WineDuplicateReview"
+import { WineIdentityReviewPanel } from "./WineIdentityReviewPanel"
 import { useLanguage } from "../i18n/useLanguage"
 import { formatLocalizedNumber } from "../i18n/formatting"
 
@@ -1211,6 +1212,8 @@ export function CatalogView({
 
         <ProfileGovernanceInbox isOnline={isOnline} />
       </section>
+
+      <WineIdentityReviewPanel key={householdId} isOnline={isOnline} wines={catalogWines} />
 
       <WineDuplicateReview
         householdId={householdId}
