@@ -202,3 +202,21 @@ The workbook-specific candidate staging script and its legacy locator checks
 remain a one-off curation tool for this source, not a generic multi-household
 import API. A multi-household importer must introduce explicit owner/source
 scope rather than reuse those hard-coded sheet names.
+
+## Sur la Roche 2023: shared identity only
+
+The owner identified Barraud's 2023 **Sur la Roche** as a Pouilly-Fuissé
+Premier Cru. The [Bourgogne wine authority's appellation sheet](https://www.bourgogne-wines.com/wine-and-terroir/bourgogne-and-its-appellations/gallery_files/site/321/402/57644/71032.pdf)
+lists Sur la Roche among the Premier Cru climats in Vergisson, and the
+[producer's distributor](https://www.skurnik.com/producer/daniel-et-julien-barraud/)
+lists the Barraud Sur La Roche wine. The producer's older web page uses the
+shorter heading “La Roche”; that heading alone is not treated as a global
+synonym for this wine.
+
+`20261016150000_barraud_sur_la_roche_2023_identity.sql` records one canonical
+producer, product, and 2023 release in the shared identity catalogue. It
+reuses an exact normalized identity if one already exists and fails closed on
+ambiguous or differently worded Sur la Roche products under that producer.
+It does **not** claim that a particular household's `Barraud` shorthand means
+this producer, link a household wine, assign an ageing group, create a
+drinking-window suggestion, or publish advice. Those remain separate reviews.
