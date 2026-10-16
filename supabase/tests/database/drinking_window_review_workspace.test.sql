@@ -66,6 +66,7 @@ select throws_ok($test$
         array['https://example.test/source'], 'reuse-allowed', 'propose')
 $test$, '40001', 'Candidate review changed; refresh before saving',
     'Concurrent stale draft cannot overwrite a newer curator review');
+reset role;
 select is((select count(*) from public.drinking_window_reference_rows),
     0::bigint, 'Candidate reviews do not create effective reference rows');
 select is((select count(*) from private.drinking_window_candidate_review_drafts
