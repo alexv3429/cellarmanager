@@ -8726,3 +8726,55 @@
   .statistics-breakdown-list dt { color: var(--text-muted, #b6aeb2); font-size: .75rem; line-height: 1.2; }
   .statistics-breakdown-list dd { margin: .2rem 0 0; font-variant-numeric: tabular-nums; font-weight: 600; }
 }
+.drinking-window-review-workspace h3 {
+  margin-block: 1.5rem 0.35rem;
+}
+
+.drinking-window-review-list {
+  display: grid;
+  gap: 0.5rem;
+  list-style: none;
+  padding: 0;
+}
+
+.drinking-window-review-list li {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+  padding: 0.7rem;
+  border: 1px solid var(--border-color, #54434a);
+  border-radius: 0.6rem;
+}
+
+.drinking-window-review-list li > button {
+  width: 100%;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.drinking-window-review-layout,
+.drinking-window-review-form,
+.drinking-window-review-years {
+  display: grid;
+  gap: 0.8rem;
+  min-width: 0;
+}
+
+.drinking-window-review-form {
+  padding: 0.9rem;
+  border: 1px solid var(--border-color, #54434a);
+  border-radius: 0.6rem;
+}
+
+.drinking-window-review-form label {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.drinking-window-review-form input,
+.drinking-window-review-form select,
+.drinking-window-review-form textarea {
+  width: 100%;
+  min-width: 0;
+}
