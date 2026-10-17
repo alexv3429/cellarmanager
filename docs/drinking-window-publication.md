@@ -14,7 +14,7 @@ owner approval, and trusted publication.
 2. Run `record_drinking_window_publication_preflight(version_id)` as the
    trusted service. It must record zero issues. Any subsequent draft/source
    change changes the fingerprint and requires a new preflight.
-3. For **every** currently populated household, run
+3. For an affected pilot household, run
    `record_drinking_window_shadow_report(version_id, household_id)` as the
    trusted service. In Catalogue, the owner opens “Review a proposed
    drinking-window update”, compares current and proposed three-date windows,
@@ -25,11 +25,18 @@ owner approval, and trusted publication.
    private year-shift; manual household windows are shown and preserved.
 4. Run `publish_drinking_window_reference(version_id)` as the trusted service.
    It locks the relevant reference, source, identity, and cellar tables while
-   checking the current zero-issue gates, exact draft fingerprint, latest
-   approval from a current owner of each populated household, and a fresh
-   full-cellar comparison. A changed cellar, rejected report, missing owner
-   review, or changed source rights blocks publication. The old version is
-   superseded and the new version activated in the same transaction.
+   checking the current zero-issue gates, exact draft fingerprint, and at
+   least one affected pilot owner's latest approval and fresh full-cellar
+   comparison. A changed pilot cellar or source rights blocks that pilot;
+   publication requires another current approved pilot if none remains. The
+   old version is superseded and the new version published in one transaction,
+   but only approved pilot households select it. Other households retain their
+   previous reference selection or model until their own owner reviews and
+   enables the new version.
+
+After publication, any household owner can request a new private comparison
+from Catalogue and approve the published version for that cellar. This is
+described in [staged rollout](drinking-window-staged-rollout.md).
 
 Only `service_role` can invoke publication or the emergency runtime switch;
 browser users cannot set an active status directly. The publication hash and

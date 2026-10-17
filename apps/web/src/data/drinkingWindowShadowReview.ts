@@ -65,6 +65,42 @@ export interface ShadowReport extends ShadowReportListing {
   rows: ShadowComparisonRow[]
 }
 
+export interface DrinkingWindowRolloutStatus {
+  activeVersionNumber: number | null
+  selectedVersionNumber: number | null
+  selectedEnabled: boolean
+  globalEnabled: boolean
+}
+
+function boolean(value: unknown): boolean {
+  if (typeof value !== "boolean") throw new Error("Invalid drinking-window review response")
+  return value
+}
+
+export async function getDrinkingWindowRolloutStatus(
+  householdId: string,
+  rpcClient?: RpcClient,
+): Promise<DrinkingWindowRolloutStatus> {
+  const raw = item(await call("get_drinking_window_rollout_status", {
+    p_household_id: householdId,
+  }, rpcClient))
+  return {
+    activeVersionNumber: optionalInteger(raw.active_version_number),
+    selectedVersionNumber: optionalInteger(raw.selected_version_number),
+    selectedEnabled: boolean(raw.selected_enabled),
+    globalEnabled: boolean(raw.global_enabled),
+  }
+}
+
+export async function requestDrinkingWindowShadowReport(
+  householdId: string,
+  rpcClient?: RpcClient,
+): Promise<string> {
+  return string(await call("request_drinking_window_shadow_report", {
+    p_household_id: householdId,
+  }, rpcClient))
+}
+
 function optionalString(value: unknown): string | null {
   return value === null ? null : string(value)
 }
