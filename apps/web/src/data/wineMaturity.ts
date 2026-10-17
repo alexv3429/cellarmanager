@@ -45,6 +45,23 @@ export interface MaturityOverviewItem {
   urgency: string | null
   urgencyScore: number
   wineId: string
+  effectiveSource?: DrinkingWindowSource
+}
+
+export type DrinkingWindowSource =
+  | "manual"
+  | "reviewed_reference"
+  | "model_estimate"
+  | "unavailable"
+
+export interface WineMaturityReference {
+  bestEndYear: number
+  bestStartYear: number
+  firstTrialYear: number
+  matchedScope: string
+  rationale: string
+  referenceRowId: string
+  versionNumber: number
 }
 
 export interface MaturityRecommendation {
@@ -132,6 +149,9 @@ export interface WineMaturity {
   override: WineMaturityOverride | null
   projection: WineMaturityProjection | null
   wineId: string
+  effectiveSource?: DrinkingWindowSource
+  reference?: WineMaturityReference | null
+  referenceStatus?: { reason: string; status: string } | null
 }
 
 interface RpcClient {
@@ -231,6 +251,18 @@ function verdict(value: unknown): MaturityVerdict {
 
 function optionalVerdict(value: unknown): MaturityVerdict | null {
   return value === null ? null : verdict(value)
+}
+
+function parseDrinkingWindowSource(value: unknown): DrinkingWindowSource {
+  if (
+    value !== "manual" &&
+    value !== "reviewed_reference" &&
+    value !== "model_estimate" &&
+    value !== "unavailable"
+  ) {
+    throw new Error("Invalid maturity response: effective source")
+  }
+  return value
 }
 
 function assessmentReason(value: unknown): MaturityAssessmentReason {
@@ -459,6 +491,10 @@ export function parseMaturityOverview(value: unknown): MaturityOverviewItem[] {
       urgency: optionalText(item.urgency, "urgency"),
       urgencyScore: integer(item.urgency_score, "urgency score"),
       wineId: text(item.wine_id, "wine id"),
+      effectiveSource:
+        item.effective_source === undefined
+          ? undefined
+          : parseDrinkingWindowSource(item.effective_source),
     }
   })
 }
@@ -507,6 +543,30 @@ export function parseWineMaturity(value: unknown): WineMaturity {
     }
   }
 
+  const rawReference = item.reference
+  let reference: WineMaturityReference | null = null
+  if (rawReference !== undefined && rawReference !== null) {
+    const parsed = record(rawReference, "reviewed reference")
+    reference = {
+      bestEndYear: integer(parsed.best_end_year, "reference best end year"),
+      bestStartYear: integer(parsed.best_start_year, "reference best start year"),
+      firstTrialYear: integer(parsed.first_trial_year, "reference first trial year"),
+      matchedScope: text(parsed.matched_scope, "reference scope"),
+      rationale: text(parsed.rationale, "reference rationale"),
+      referenceRowId: text(parsed.reference_row_id, "reference row ID"),
+      versionNumber: integer(parsed.version_number, "reference version number"),
+    }
+  }
+
+  let referenceStatus: WineMaturity["referenceStatus"] = null
+  if (item.reference_status !== undefined && item.reference_status !== null) {
+    const parsed = record(item.reference_status, "reference status")
+    referenceStatus = {
+      reason: text(parsed.reason, "reference status reason"),
+      status: text(parsed.status, "reference status"),
+    }
+  }
+
   return {
     assessmentReason: optionalAssessmentReason(item.assessment_reason),
     calibration,
@@ -515,6 +575,12 @@ export function parseWineMaturity(value: unknown): WineMaturity {
     override,
     projection: parseProjection(item.projection),
     wineId: text(item.wine_id, "wine id"),
+    effectiveSource:
+      item.effective_source === undefined
+        ? undefined
+        : parseDrinkingWindowSource(item.effective_source),
+    reference,
+    referenceStatus,
   }
 }
 

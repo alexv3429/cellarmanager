@@ -50,6 +50,7 @@ import { Notice } from "./Notice"
 import { ProfileReviewInbox } from "./ProfileReviewInbox"
 import { ProfileGovernanceInbox } from "./ProfileGovernanceInbox"
 import { DrinkingWindowReviewWorkspace } from "./DrinkingWindowReviewWorkspace"
+import { DrinkingWindowShadowReviewPanel } from "./DrinkingWindowShadowReviewPanel"
 import { WineDuplicateReview } from "./WineDuplicateReview"
 import { WineIdentityReviewPanel } from "./WineIdentityReviewPanel"
 import { useLanguage } from "../i18n/useLanguage"
@@ -1213,6 +1214,12 @@ export function CatalogView({
 
         <ProfileGovernanceInbox isOnline={isOnline} />
         <DrinkingWindowReviewWorkspace isOnline={isOnline} />
+        <DrinkingWindowShadowReviewPanel
+          householdId={householdId}
+          isOnline={isOnline}
+          onOpenWine={onOpenWine}
+          wines={catalogWines}
+        />
       </section>
 
       <WineIdentityReviewPanel key={householdId} isOnline={isOnline} wines={catalogWines} />
@@ -1334,6 +1341,11 @@ export function CatalogView({
                           className={`maturity-badge maturity-badge--${maturity.state}`}
                         >
                           {maturity.stateLabel ? t(maturity.stateLabel) : ""}
+                          {maturity.effectiveSource === "reviewed_reference"
+                            ? ` · ${t("Reviewed reference")}`
+                            : maturity.effectiveSource === "model_estimate"
+                              ? ` · ${t("Model estimate")}`
+                              : ""}
                           {maturity.drinkByYear
                             ? ` · ${t("Suggested drink-by")} ${maturity.drinkByYear}`
                             : ""}
