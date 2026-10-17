@@ -285,6 +285,13 @@ attributable evidence and an explicit value for the missing year, confirm the
 whole ordered window, and only then publish. The current model may be shown
 as comparison context during review, but cannot auto-fill those fields.
 
+The [first review batch](drinking-window-first-review-batch.md) records the
+owner's later Alsace/Beaujolais 2022–2023 three-date estimates separately from
+their historical workbook bins. It checks the source coordinates and exposes
+numerical differences or absent pairs without assuming equivalent group scope;
+it does not promote any of the eight proposals
+to a shared reference.
+
 ## Resolve a wine and show why
 
 The owner can now review complete household wine identities in the Catalogue.
