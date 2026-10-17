@@ -304,7 +304,7 @@ export function WineMaturityPanel({
           String(data.get("note") ?? ""),
         ),
       )
-      setMessage(t("Your maturity window now takes priority over the model."))
+      setMessage(t("Your manual window now takes priority."))
     } catch (caughtError: unknown) {
       setError(
         caughtError instanceof Error
@@ -328,7 +328,7 @@ export function WineMaturityPanel({
 
     try {
       setResult(await clearWineMaturityOverride(wineId))
-      setMessage(t("The model result is active again."))
+      setMessage(t("Shared guidance is active again."))
     } catch (caughtError: unknown) {
       setError(
         caughtError instanceof Error
@@ -827,7 +827,9 @@ export function WineMaturityPanel({
 
           {canManageCellar ? <details className="wine-maturity__override">
             <summary>{override ? "Edit your window" : "Adjust this window"}</summary>
-            <p>{t("Your values take priority in the app; the original model and its evidence remain unchanged.")}</p>
+            <p>{activeReference
+              ? t("Your values take priority; the reviewed reference remains unchanged.")
+              : t("Your values take priority in the app; the original model and its evidence remain unchanged.")}</p>
             <form
               key={override?.updatedAt ?? projection?.calculatedAt ?? activeReference?.referenceRowId}
               onSubmit={(event) => void saveOverride(event)}
@@ -894,7 +896,9 @@ export function WineMaturityPanel({
                   >
                     {busyAction === "clear-override"
                       ? "Clearing…"
-                      : "Use model again"}
+                      : result?.reference
+                        ? t("Use shared guidance again")
+                        : "Use model again"}
                   </button>
                 ) : null}
               </div>

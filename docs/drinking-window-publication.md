@@ -20,7 +20,9 @@ owner approval, and trusted publication.
    drinking-window update”, compares current and proposed three-date windows,
    and explicitly approves or rejects the exact report with a reason. The
    report contains no shared write to their cellar. It is private to that
-   household and includes all active wines, not only a sample.
+   household and includes all active wines, not only a sample. The current
+   model column is the canonical baseline, not an individual account's
+   private year-shift; manual household windows are shown and preserved.
 4. Run `publish_drinking_window_reference(version_id)` as the trusted service.
    It locks the relevant reference, source, identity, and cellar tables while
    checking the current zero-issue gates, exact draft fingerprint, latest

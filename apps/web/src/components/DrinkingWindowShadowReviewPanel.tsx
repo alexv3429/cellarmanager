@@ -30,6 +30,40 @@ function windowText(first: number | null, start: number | null, end: number | nu
     : `${first} / ${start}–${end}`
 }
 
+function comparisonLabel(status: string): string {
+  switch (status) {
+    case "changed": return "Proposed dates differ"
+    case "unchanged": return "Same dates"
+    case "manual_preserved": return "Your manual dates stay"
+    case "new_reference_no_baseline": return "New proposed dates"
+    case "expired_baseline": return "Previous estimate expired"
+    case "no_match": return "No reviewed match"
+    case "missing_key": return "Not enough confirmed details"
+    case "ambiguous": return "Several possible matches"
+    case "identity_conflict": return "Wine details conflict"
+    default: return "Needs review"
+  }
+}
+
+function sourceLabel(source: string): string {
+  switch (source) {
+    case "manual_override": return "Manual window"
+    case "model": return "Model estimate"
+    case "expired_model": return "Previous model estimate"
+    default: return "No previous window"
+  }
+}
+
+function scopeLabel(scope: string): string {
+  switch (scope) {
+    case "release": return "Exact wine and vintage"
+    case "producer_appellation": return "Producer and appellation"
+    case "producer_region": return "Producer and region"
+    case "appellation": return "Appellation"
+    default: return "Region"
+  }
+}
+
 export function DrinkingWindowShadowReviewPanel({
   householdId, isOnline, onOpenWine, wines,
 }: Props) {
@@ -121,22 +155,26 @@ export function DrinkingWindowShadowReviewPanel({
       onClick={() => void openReport(entry)}
       type="button"
     >{t("Reference version")} {entry.versionNumber} · {entry.wineCount} {t("wines")}
-      {entry.latestVerdict ? ` · ${entry.latestVerdict}` : ""}
+      {` · ${t(entry.latestVerdict === "approve"
+        ? "Approved"
+        : entry.latestVerdict === "reject"
+          ? "Rejected"
+          : "Awaiting your review")}`}
     </button>)}
 
     {report ? <section aria-label={t("Detailed drinking-window comparison")}>
       <h3>{t("Reference version")} {report.versionNumber}</h3>
       <p>{report.wineCount} {t("wines")} · {changedCount} {t("changed windows")} · {report.draftIssueCount} {t("reference issues")}</p>
+      <p>{t("Current model dates are the shared baseline; your private timing adjustment is not included in this comparison.")}</p>
       {report.draftIssueCount > 0 ? <Notice tone="warning">{t("This draft still has reference issues and cannot be approved.")}</Notice> : null}
       <ol className="drinking-window-shadow-review__rows">
         {orderedRows.slice(0, shown).map((row) => <li key={row.wineId}>
           <button className="wine-detail-link" onClick={() => onOpenWine(row.wineId)} type="button">
             {names.get(row.wineId) ?? row.wineId}
           </button>
-          <span>{t(row.comparisonStatus.replaceAll("_", " "))}</span>
-          <span>{t("Current")}: {windowText(row.currentFirstTrialYear, row.currentBestStartYear, row.currentBestEndYear)} ({t(row.currentSource.replaceAll("_", " "))})</span>
-          <span>{t("Proposed")}: {windowText(row.proposedFirstTrialYear, row.proposedBestStartYear, row.proposedBestEndYear)}{row.matchedScope ? ` · ${t(row.matchedScope.replaceAll("_", " "))}` : ""}</span>
-          {row.reason ? <span>{t(row.reason.replaceAll("_", " "))}</span> : null}
+          <span>{t(comparisonLabel(row.comparisonStatus))}</span>
+          <span>{t("Current")}: {windowText(row.currentFirstTrialYear, row.currentBestStartYear, row.currentBestEndYear)} ({t(sourceLabel(row.currentSource))})</span>
+          <span>{t("Proposed")}: {windowText(row.proposedFirstTrialYear, row.proposedBestStartYear, row.proposedBestEndYear)}{row.matchedScope ? ` · ${t(scopeLabel(row.matchedScope))}` : ""}</span>
         </li>)}
       </ol>
       {shown < orderedRows.length ? <button onClick={() => setShown(shown + 30)} type="button">
