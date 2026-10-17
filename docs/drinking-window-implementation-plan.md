@@ -9,7 +9,9 @@ maturity advice remains unchanged until the rollout gates below pass. The
 inert foundation now has follow-up migrations for three years,
 `producer_region` scope, draft-only membership and evidence links, and a
 service-only draft match preview. It still cannot publish or resolve visible
-advice.
+advice. The [publication preflight](drinking-window-publication-preflight.md)
+now combines the draft checks and records immutable review snapshots; it does
+not relax the publication block or replace the required shadow comparison.
 
 ## Keep the three kinds of data separate
 
