@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(23);
+select plan(26);
 
 create function pg_temp.publication_rejects(command text, expected_state text)
 returns boolean language plpgsql as $$
@@ -129,9 +129,25 @@ select ok((select public.review_drinking_window_shadow_report(
     from private.drinking_window_shadow_reports
     where version_id = 'f6000000-0000-4000-8000-000000000002'),
     'Owner approves the exact report');
+select ok(pg_temp.publication_rejects($test$
+    select public.publish_drinking_window_reference(
+        'f6000000-0000-4000-8000-000000000002')
+$test$, '23514'), 'Another populated household cannot be skipped');
+select is((select draft_issue_count from public.record_drinking_window_shadow_report(
+    'f6000000-0000-4000-8000-000000000002',
+    '00000000-0000-4000-8000-000000000200')), 0::bigint,
+    'Second household receives its own full comparison');
+set local request.jwt.claim.sub = '00000000-0000-4000-8000-000000000002';
+select ok((select public.review_drinking_window_shadow_report(
+    id, content_sha256, 'approve', 'I reviewed my whole cellar comparison') is not null
+    from private.drinking_window_shadow_reports
+    where version_id = 'f6000000-0000-4000-8000-000000000002'
+      and household_id = '00000000-0000-4000-8000-000000000200'),
+    'Second owner independently approves their private report');
+set local request.jwt.claim.sub = '00000000-0000-4000-8000-000000000001';
 
 select is((select reviewed_household_count from public.publish_drinking_window_reference(
-    'f6000000-0000-4000-8000-000000000002')), 1,
+    'f6000000-0000-4000-8000-000000000002')), 2,
     'Trusted publication atomically activates a fully approved version');
 select is((select status from public.drinking_window_reference_versions
     where id = 'f6000000-0000-4000-8000-000000000002'),

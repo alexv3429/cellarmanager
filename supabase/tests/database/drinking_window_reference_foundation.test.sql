@@ -69,7 +69,7 @@ select throws_ok(
         where id = 'f5000000-0000-4000-8000-000000000002'
     $test$,
     '23514',
-    'Drinking-window reference publication is not enabled',
+    'Drinking-window reference publication requires the trusted publisher',
     'First slice cannot activate reference advice'
 );
 
