@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(17);
+select plan(18);
 
 create function pg_temp.shadow_rejects(command text, expected_state text)
 returns boolean language plpgsql as $$
@@ -57,6 +57,11 @@ values
      '00000000-0000-4000-8000-000000000100', 'Shadow Producer',
      'No Region', 2022, 'red', 'Shadow Test Appellation', 'Unmapped Region');
 
+-- Fresh databases intentionally have no active legacy maturity knowledge.
+-- Publish the existing test baseline so this comparison has a real model
+-- projection rather than silently exercising only the no-baseline path.
+do $$ begin perform public.install_initial_maturity_knowledge(); end $$;
+
 insert into public.wine_enrichment_projections
     (household_id, wine_id, knowledge_version_id, projection_type, method,
      specificity, confidence, input_fingerprint, recommendation)
@@ -66,6 +71,11 @@ select '00000000-0000-4000-8000-000000000100',
     repeat('a', 64),
     '{"schema_version":"1","state":"ready","urgency":"ready", "warnings":[],"reasons":[],"first_trial_year":2023,"best_start_year":2025,"best_end_year":2030,"drink_by_year":2035}'::jsonb
 from public.enrichment_knowledge_versions v where v.status = 'active';
+
+select is((select count(*) from public.wine_enrichment_projections
+    where wine_id = 'e5000000-0000-4000-8000-000000000010'
+      and projection_type = 'maturity' and status = 'current'),
+    1::bigint, 'The synthetic model baseline exists before comparison');
 
 insert into public.wine_maturity_overrides
     (household_id, wine_id, first_trial_year, best_start_year,
