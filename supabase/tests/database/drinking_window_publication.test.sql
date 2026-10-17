@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(26);
+select plan(34);
 
 create function pg_temp.publication_rejects(command text, expected_state text)
 returns boolean language plpgsql as $$
@@ -39,6 +39,10 @@ update public.wines set area = 'Synthetic Published Region',
     vintage = 2022, color = 'white', appellation = null,
     wine_reference_id = null, wine_reference_type = null
 where id = '00000000-0000-4000-8000-000000000110';
+update public.wines set area = 'Synthetic Published Region',
+    vintage = 2022, color = 'white', appellation = null,
+    wine_reference_id = null, wine_reference_type = null
+where id = '00000000-0000-4000-8000-000000000210';
 
 select ok(pg_temp.publication_rejects($test$
     update public.drinking_window_reference_versions set status = 'active'
@@ -129,35 +133,65 @@ select ok((select public.review_drinking_window_shadow_report(
     from private.drinking_window_shadow_reports
     where version_id = 'f6000000-0000-4000-8000-000000000002'),
     'Owner approves the exact report');
-select ok(pg_temp.publication_rejects($test$
-    select public.publish_drinking_window_reference(
-        'f6000000-0000-4000-8000-000000000002')
-$test$, '23514'), 'Another populated household cannot be skipped');
-select is((select draft_issue_count from public.record_drinking_window_shadow_report(
-    'f6000000-0000-4000-8000-000000000002',
-    '00000000-0000-4000-8000-000000000200')), 0::bigint,
-    'Second household receives its own full comparison');
-set local request.jwt.claim.sub = '00000000-0000-4000-8000-000000000002';
-select ok((select public.review_drinking_window_shadow_report(
-    id, content_sha256, 'approve', 'I reviewed my whole cellar comparison') is not null
-    from private.drinking_window_shadow_reports
-    where version_id = 'f6000000-0000-4000-8000-000000000002'
-      and household_id = '00000000-0000-4000-8000-000000000200'),
-    'Second owner independently approves their private report');
-set local request.jwt.claim.sub = '00000000-0000-4000-8000-000000000001';
-
 select is((select reviewed_household_count from public.publish_drinking_window_reference(
-    'f6000000-0000-4000-8000-000000000002')), 2,
-    'Trusted publication atomically activates a fully approved version');
+    'f6000000-0000-4000-8000-000000000002')), 1,
+    'Trusted publication starts with one affected, owner-approved pilot');
 select is((select status from public.drinking_window_reference_versions
     where id = 'f6000000-0000-4000-8000-000000000002'),
     'active', 'Published version is the sole active reference');
+select is((select version_id from private.drinking_window_household_rollouts
+    where household_id = '00000000-0000-4000-8000-000000000100'),
+    'f6000000-0000-4000-8000-000000000002'::uuid,
+    'Pilot household is enabled at publication');
+select is((select count(*) from private.drinking_window_household_rollouts
+    where household_id = '00000000-0000-4000-8000-000000000200'), 0::bigint,
+    'Unreviewed household is not enabled by another owner');
 select is(public.get_wine_maturity('00000000-0000-4000-8000-000000000110')
     ->> 'effective_source', 'reviewed_reference',
     'Wine card selects the reviewed reference before any model result');
 select is((public.get_wine_maturity('00000000-0000-4000-8000-000000000110')
     -> 'reference' ->> 'best_end_year')::integer, 2031,
     'Selected window uses the exact published row');
+set local request.jwt.claim.sub = '00000000-0000-4000-8000-000000000002';
+select ok(public.get_wine_maturity('00000000-0000-4000-8000-000000000210')
+    ->> 'effective_source' <> 'reviewed_reference',
+    'Other household keeps its existing advice after publication');
+select ok(pg_temp.publication_rejects($test$
+    select public.request_drinking_window_shadow_report(
+        '00000000-0000-4000-8000-000000000100')
+$test$, '42501'), 'An owner cannot request another household comparison');
+select ok(public.request_drinking_window_shadow_report(
+    '00000000-0000-4000-8000-000000000200') is not null,
+    'Second owner can request a post-publication comparison');
+select ok((select public.review_drinking_window_shadow_report(
+    id, content_sha256, 'approve', 'I choose these reviewed reference dates') is not null
+    from private.drinking_window_shadow_reports
+    where version_id = 'f6000000-0000-4000-8000-000000000002'
+      and household_id = '00000000-0000-4000-8000-000000000200'
+    order by report_sequence desc limit 1),
+    'Second owner enables the published version after review');
+select is(public.get_wine_maturity('00000000-0000-4000-8000-000000000210')
+    ->> 'effective_source', 'reviewed_reference',
+    'Second household now receives reference advice');
+select is((public.get_drinking_window_rollout_status(
+    '00000000-0000-4000-8000-000000000200') ->> 'selected_enabled')::boolean,
+    true, 'Owner can see that the reference is selected');
+select ok((select public.review_drinking_window_shadow_report(
+    id, content_sha256, 'reject', 'Keep my existing model dates for this cellar') is not null
+    from private.drinking_window_shadow_reports
+    where household_id = '00000000-0000-4000-8000-000000000200'
+    order by report_sequence desc limit 1),
+    'Owner can turn the reference off for only their cellar');
+select ok(public.get_wine_maturity('00000000-0000-4000-8000-000000000210')
+    ->> 'effective_source' <> 'reviewed_reference',
+    'Owner rejection restores that household model advice');
+select ok((select public.review_drinking_window_shadow_report(
+    id, content_sha256, 'approve', 'I reviewed and choose the reference again') is not null
+    from private.drinking_window_shadow_reports
+    where household_id = '00000000-0000-4000-8000-000000000200'
+    order by report_sequence desc limit 1),
+    'Owner can re-enable the same still-current comparison');
+set local request.jwt.claim.sub = '00000000-0000-4000-8000-000000000001';
 select is((public.get_household_maturity_overview(
     '00000000-0000-4000-8000-000000000100') -> 0 ->> 'effective_source'),
     'reviewed_reference', 'Catalogue overview uses the same published reference');
