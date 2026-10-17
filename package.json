@@ -20,6 +20,7 @@
     "drinking-window:audit": "node scripts/drinking_window/audit_workbook.mjs",
     "drinking-window:review": "node scripts/drinking_window/review_candidates.mjs",
     "drinking-window:snapshot": "node scripts/drinking_window/capture_identity_snapshot.mjs",
+    "drinking-window:first-batch": "node scripts/drinking_window/first_review_batch.mjs",
     "drinking-window:test": "node --test scripts/drinking_window/*.test.mjs",
     "enrichment:trial": "node scripts/enrichment/provider_trial.mjs",
     "enrichment:review": "node scripts/enrichment/provider_review.mjs",

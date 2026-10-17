@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "batch_id": "alsace-beaujolais-2022-2023-owner-review",
+  "source_sha256": "42b935d4fd2e161605d245b15b853d4ee7c1a0a9eed1ea14d460a80857373911",
+  "status": "research-only",
+  "source_note": "Owner-proposed three-year estimates from the drinking-window discussion; not an approved shared reference or a replacement for the workbook.",
+  "entries": [
+    {
+      "key": "alsace-white-generic-2022",
+      "region": "ALSACE",
+      "wine_color": "white",
+      "vintage_year": 2022,
+      "proposed_group": "generic dry white; membership to define",
+      "first_trial_year": 2024,
+      "best_start_year": 2026,
+      "best_end_year": 2030,
+      "workbook": { "source_locator": "Millesimes!L10:M10", "historical_bin": "standard", "best_start_year": 2025, "best_end_year": 2030 }
+    },
+    {
+      "key": "alsace-white-generic-2023",
+      "region": "ALSACE",
+      "wine_color": "white",
+      "vintage_year": 2023,
+      "proposed_group": "generic dry white; membership to define",
+      "first_trial_year": 2025,
+      "best_start_year": 2026,
+      "best_end_year": 2030,
+      "workbook": { "source_locator": "Millesimes!L11:O11", "historical_bin": null, "best_start_year": null, "best_end_year": null }
+    },
+    {
+      "key": "alsace-white-grand-cru-2022",
+      "region": "ALSACE",
+      "wine_color": "white",
+      "vintage_year": 2022,
+      "proposed_group": "eligible Grand Cru white; grape, style and site to verify",
+      "first_trial_year": 2025,
+      "best_start_year": 2028,
+      "best_end_year": 2038,
+      "workbook": { "source_locator": "Millesimes!N10:O10", "historical_bin": "premium", "best_start_year": 2029, "best_end_year": 2037 }
+    },
+    {
+      "key": "alsace-white-grand-cru-2023",
+      "region": "ALSACE",
+      "wine_color": "white",
+      "vintage_year": 2023,
+      "proposed_group": "eligible Grand Cru white; grape, style and site to verify",
+      "first_trial_year": 2026,
+      "best_start_year": 2028,
+      "best_end_year": 2038,
+      "workbook": { "source_locator": "Millesimes!L11:O11", "historical_bin": null, "best_start_year": null, "best_end_year": null }
+    },
+    {
+      "key": "beaujolais-red-generic-2022",
+      "region": "BEAUJOLAIS",
+      "wine_color": "red",
+      "vintage_year": 2022,
+      "proposed_group": "non-Nouveau Beaujolais or Villages; membership to verify",
+      "first_trial_year": 2024,
+      "best_start_year": 2025,
+      "best_end_year": 2029,
+      "workbook": { "source_locator": "Millesimes!L20:M20", "historical_bin": "standard", "best_start_year": 2030, "best_end_year": 2037 }
+    },
+    {
+      "key": "beaujolais-red-generic-2023",
+      "region": "BEAUJOLAIS",
+      "wine_color": "red",
+      "vintage_year": 2023,
+      "proposed_group": "non-Nouveau Beaujolais or Villages; membership to verify",
+      "first_trial_year": 2024,
+      "best_start_year": 2025,
+      "best_end_year": 2029,
+      "workbook": { "source_locator": "Millesimes!L21:O21", "historical_bin": null, "best_start_year": null, "best_end_year": null }
+    },
+    {
+      "key": "beaujolais-red-cru-2022",
+      "region": "BEAUJOLAIS",
+      "wine_color": "red",
+      "vintage_year": 2022,
+      "proposed_group": "eligible Cru; appellation and cuvée structure to verify",
+      "first_trial_year": 2025,
+      "best_start_year": 2028,
+      "best_end_year": 2035,
+      "workbook": { "source_locator": "Millesimes!N20:O20", "historical_bin": "premium", "best_start_year": 2034, "best_end_year": 2047 }
+    },
+    {
+      "key": "beaujolais-red-cru-2023",
+      "region": "BEAUJOLAIS",
+      "wine_color": "red",
+      "vintage_year": 2023,
+      "proposed_group": "eligible Cru; appellation and cuvée structure to verify",
+      "first_trial_year": 2024,
+      "best_start_year": 2026,
+      "best_end_year": 2033,
+      "workbook": { "source_locator": "Millesimes!L21:O21", "historical_bin": null, "best_start_year": null, "best_end_year": null }
+    }
+  ]
+}
