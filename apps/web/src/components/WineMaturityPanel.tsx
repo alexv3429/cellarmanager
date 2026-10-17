@@ -542,7 +542,9 @@ export function WineMaturityPanel({
                     ? t("Reviewed reference")
                   : activePersonalizedModel
                     ? t("Personal timing")
-                    : t(model?.stateLabel ?? "")}
+                    : result?.effectiveSource === "model_estimate"
+                      ? t("Model estimate")
+                      : t(model?.stateLabel ?? "")}
               </span>
               <h3>
                 {override
