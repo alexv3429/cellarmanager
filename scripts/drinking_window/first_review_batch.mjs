@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 const expectedKeys = new Set([
   'key', 'region', 'wine_color', 'vintage_year', 'proposed_group',
-  'first_trial_year', 'best_start_year', 'best_end_year', 'workbook',
+  'comparison_scope', 'first_trial_year', 'best_start_year', 'best_end_year', 'workbook',
 ]);
 const expectedWorkbookKeys = new Set([
   'source_locator', 'historical_bin', 'best_start_year', 'best_end_year',
@@ -38,6 +38,7 @@ function validateEntry(entry) {
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)+$/.test(entry.key)
       || !['ALSACE', 'BEAUJOLAIS'].includes(entry.region)
       || !['white', 'red'].includes(entry.wine_color)
+      || entry.comparison_scope !== 'unverified'
       || typeof entry.proposed_group !== 'string'
       || entry.proposed_group.trim().length < 15) {
     throw new Error(`Invalid identity or group in ${entry.key}`);
@@ -104,20 +105,23 @@ export function validateFirstReviewBatch(batch, candidates = null) {
     return {
       key: entry.key,
       proposed_years: [entry.first_trial_year, entry.best_start_year, entry.best_end_year],
-      workbook_years: [entry.workbook.best_start_year, entry.workbook.best_end_year],
-      source_locator: entry.workbook.source_locator,
-      source_assessment: entry.workbook.best_start_year === null
-        ? 'workbook_has_no_pair'
+      historical_workbook_years: [entry.workbook.best_start_year, entry.workbook.best_end_year],
+      historical_workbook_locator: entry.workbook.source_locator,
+      comparison_scope: entry.comparison_scope,
+      historical_comparison: entry.workbook.best_start_year === null
+        ? 'no_historical_pair'
         : entry.best_start_year === entry.workbook.best_start_year
           && entry.best_end_year === entry.workbook.best_end_year
-          ? 'same_optimal_period' : 'conflicts_with_workbook',
-      review_required: [
-        'confirm_complete_window', 'define_and_verify_group_membership',
-        'verify_specific_evidence_and_reuse_rights',
+          ? 'same_years_scope_unverified' : 'different_years_scope_unverified',
+      owner_review: [
+        'review_group_definition', 'review_complete_three_milestone_estimate',
+      ],
+      curator_work: [
+        'verify_group_membership', 'verify_specific_evidence_and_reuse_rights',
       ],
     };
   });
-  const pairKeys = new Set(batch.entries.map((entry) => `${entry.region}|${entry.wine_color}|${entry.vintage_year}|${entry.workbook.historical_bin ?? entry.proposed_group}`));
+  const pairKeys = new Set(batch.entries.map((entry) => `${entry.region}|${entry.wine_color}|${entry.vintage_year}|${entry.proposed_group}`));
   if (pairKeys.size !== batch.entries.length) throw new Error('Duplicate region/colour/vintage/group proposal');
   return {
     batch_id: batch.batch_id,

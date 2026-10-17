@@ -27,9 +27,10 @@ test('the first research batch retains eight triplets but approves none', () => 
   assert.equal(report.workbook_export_checked, true);
   assert.equal(report.proposal_count, 8);
   assert.equal(report.approved_reference_count, 0);
-  assert.equal(report.rows.filter((row) => row.source_assessment === 'conflicts_with_workbook').length, 4);
-  assert.equal(report.rows.filter((row) => row.source_assessment === 'workbook_has_no_pair').length, 4);
-  assert.ok(report.rows.every((row) => row.review_required.includes('verify_specific_evidence_and_reuse_rights')));
+  assert.equal(report.rows.filter((row) => row.historical_comparison === 'different_years_scope_unverified').length, 4);
+  assert.equal(report.rows.filter((row) => row.historical_comparison === 'no_historical_pair').length, 4);
+  assert.ok(report.rows.every((row) => row.comparison_scope === 'unverified'));
+  assert.ok(report.rows.every((row) => row.curator_work.includes('verify_specific_evidence_and_reuse_rights')));
 });
 
 test('a changed workbook pair is rejected instead of silently adopting the proposal', () => {
@@ -51,6 +52,9 @@ test('invalid chronological order or publication status is rejected', () => {
   const published = clone(batch);
   published.status = 'approved';
   assert.throws(() => validateFirstReviewBatch(published), /research-only batch/);
+  const assumedSameScope = clone(batch);
+  assumedSameScope.entries[0].comparison_scope = 'equivalent';
+  assert.throws(() => validateFirstReviewBatch(assumedSameScope), /Invalid identity or group/);
 });
 
 test('duplicate or unrecorded fields are rejected', () => {

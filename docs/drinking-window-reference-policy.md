@@ -65,13 +65,27 @@ group merely to restate a classification already captured by a canonical
 appellation; groups describe distinctions that remain at the chosen scope.
 
 The shared library therefore needs **local, reviewed ageing groups** with
-explicit definitions and applicability. A group may be based on a canonical
-appellation/classification or on reviewed product/cuvée facts; its membership
-may be limited to particular vintages when the wine or producer changes. For
-example, a Bourgogne regional fallback might distinguish village and Grand
-Cru, while a Languedoc fallback might distinguish an early-drinking cuvée
-from a structured, cellar-worthy one. These are examples of *different local
-taxonomies*, not a single global ranking called `premium`.
+explicit definitions and applicability. Where a meaningful legal hierarchy
+exists, use its canonical classification as the starting distinction, while
+allowing more precise producer/cuvée windows and reviewed exceptions. A legal
+rank is not itself a drinking date. Where no useful legal hierarchy separates
+ageing styles, define a controlled local ageing class such as *early-drinking*,
+*representative*, or *long-ageing*. Those terms describe expected development,
+not quality or price; their eligibility criteria and members must be specified
+for that region/appellation and colour. A class may be based on reviewed
+product/cuvée facts, and membership may be limited to particular vintages
+when the wine or producer changes. For example, a Bourgogne regional fallback
+might use village and Grand Cru distinctions, while a Pic Saint-Loup fallback
+could distinguish a wine intended for early drinking from a structured,
+cellar-worthy cuvée. Neither `premium` nor `standard` is a global class.
+
+An owner may choose or correct an ageing class for a wine in their own cellar;
+that is a **local preference**, not an automatic change to shared membership.
+It can be proposed for curator review. Until membership is known, the wine is
+*unclassified* for the broader shared profile and cannot silently receive its
+representative class. The existing schema's group key, definition, and
+membership records are the place to express this reviewed distinction; the
+research-only batch does not create or assign such groups.
 
 Each broader profile records its group (or an explicitly reviewed
 `all-at-this-scope` applicability). Group membership must be established for
