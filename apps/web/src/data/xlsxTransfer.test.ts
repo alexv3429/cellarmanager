@@ -200,6 +200,25 @@ describe("Excel cellar transfer", () => {
     expect(row?.[11]).toBeNull()
   })
 
+  it("exports a reviewed three-date reference without inventing a drink-by year", async () => {
+    const records = createCsvExportRecords(
+      [sourceWine], [sourceHolding], sourceLocations, false,
+    )
+    const blob = await buildPortableXlsxExport(records, [{
+      ...sourceMaturity,
+      effectiveSource: "reviewed_reference",
+      drinkByYear: null,
+      firstTrialYear: 2025,
+      bestStartYear: 2027,
+      bestEndYear: 2033,
+    }])
+    const sheets = await readXlsxFile(await blob.arrayBuffer())
+    const row = sheets.find((sheet) => sheet.sheet === "Drinking windows")?.data[1]
+    expect(row?.[6]).toBe(2025)
+    expect(row?.[9]).toBeNull()
+    expect(row?.[10]).toBe("Reviewed shared reference")
+  })
+
   it("labels privately calibrated guidance without treating it as a manual window", async () => {
     const records = createCsvExportRecords(
       [sourceWine],

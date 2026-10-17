@@ -198,7 +198,7 @@ select is((select reference_row_id from public.drinking_window_preview_draft_bat
 select throws_ok($test$
     update public.drinking_window_reference_versions set status = 'active'
     where id = 'e4000000-0000-4000-8000-000000000001'
-$test$, '23514', 'Drinking-window reference publication is not enabled',
+$test$, '23514', 'Drinking-window reference publication requires the trusted publisher',
     'Batch preview does not open publication');
 
 select * from finish();

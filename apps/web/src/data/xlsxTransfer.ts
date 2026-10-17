@@ -294,7 +294,9 @@ function maturityTable(
         maturity?.bestStartYear ?? null,
         maturity?.bestEndYear ?? null,
         maturity?.drinkByYear ?? null,
-        maturity?.isOverride
+        maturity?.effectiveSource === "reviewed_reference"
+          ? "Reviewed shared reference"
+          : maturity?.isOverride
           ? "Personal window"
           : maturity?.isPersonalized
             ? `Personal timing (${maturityCalibrationLabel(

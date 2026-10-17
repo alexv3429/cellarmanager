@@ -396,3 +396,7 @@ than mutating an immutable historical version.
 The first success measure is not the number of imported rows. It is the
 number of current wines with a *defensible* complete three-milestone reference, plus an
 explicit explanation for every model estimate or unavailable result.
+
+The guarded publisher, runtime selector, owner report review, and emergency
+switch are specified in [drinking-window-publication.md](drinking-window-publication.md).
+They do not publish the incomplete workbook candidates by themselves.

@@ -123,6 +123,25 @@ describe("maturity RPC boundary", () => {
     })
   })
 
+  it("keeps a published three-date reference separate from the model", () => {
+    const result = parseWineMaturity({
+      ...maturityResponse(),
+      effective_source: "reviewed_reference",
+      reference: {
+        status: "match", version_number: 3,
+        reference_row_id: "reference-1", matched_scope: "region",
+        first_trial_year: 2024, best_start_year: 2026,
+        best_end_year: 2032, rationale: "Reviewed regional evidence.",
+      },
+    })
+    expect(result.effectiveSource).toBe("reviewed_reference")
+    expect(result.reference).toMatchObject({
+      firstTrialYear: 2024, bestStartYear: 2026,
+      bestEndYear: 2032, versionNumber: 3,
+    })
+    expect(result.projection?.maturity.bestEndYear).toBe(2031)
+  })
+
   it("keeps v1/v2 recommendations compatible when no hierarchy trace exists", () => {
     const response = maturityResponse()
     Reflect.deleteProperty(response.projection.maturity, "contributions")
