@@ -35,7 +35,7 @@ here, not when its PR merges. Dates are not delivery promises.
 
 | Gate | Status | Immediate outcome |
 | --- | --- | --- |
-| 0. Reconcile deployment state | Not started | Know exactly what is live and rehearse the pending migrations safely. |
+| 0. Reconcile deployment state | In progress | Linked migrations and static risks audited; live preflight, private rehearsal, and restore evidence still needed. |
 | 1. Close owner-facing behavior | Not started | Three-date editing, personal choices, and an honest comparison are usable. |
 | 2. Deploy database capabilities | Blocked by gates 0–1 and operator approval | New machinery is present but no advice changes by default. |
 | 3. Publish one real pilot | Blocked by gate 2 and human reviews | One approved cellar can see a verified real window. |
@@ -44,6 +44,11 @@ here, not when its PR merges. Dates are not delivery promises.
 | 6. Release and operate | Blocked by gates 3–5 | The supported feature has repeatable checks, monitoring, and rollback. |
 
 ## Gate 0 — reconcile the actual deployment (technical owner)
+
+The [22 October read-only audit](drinking-window-gate0-audit.md) confirmed 13
+pending migrations and identified the seed and reader-compatibility checks.
+It did **not** prove the active Worker commit or rehearse against existing
+private data. Gate 0 is not accepted.
 
 1. Compare the deployed Worker build and linked database migration history with
    the merged repository. Record exact hashes and pending migrations here.
@@ -203,6 +208,7 @@ meaningful. At minimum, each update must:
 | Date / change | Gate and decision | Evidence / remaining risk |
 | --- | --- | --- |
 | 2026-10-22 · PR #201 | Establish this tracked release plan and CI update guard. All delivery gates remain open. No live advice or database state changes. | Existing merged implementation and draft are described above; CI proves a plan update accompanies future relevant PRs, but cannot judge its quality. |
+| 2026-10-22 · `codex/drinking-window-gate0-audit` | Gate 0 moved to In progress after read-only linked migration/status checks and static review. No live advice, permission, or database change. | [Audit](drinking-window-gate0-audit.md) records 13 pending migrations, seed conflicts to preflight, and reader compatibility risk. Private rehearsal, backup/restore, active deployment hash, and owner authorization remain open. |
 
 **Next action:** complete gate 0's read-only live-state and migration audit,
 then update this record with exact evidence. Do not ask the owner to merge a
