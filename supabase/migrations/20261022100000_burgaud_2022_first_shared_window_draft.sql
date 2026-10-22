@@ -31,6 +31,30 @@ declare
     v_james_evidence_id uuid := private.enrichment_seed_uuid('evidence:burgaud-2022:james-membership');
     v_review_url text := 'https://github.com/alexv3429/cellarmanager/blob/main/docs/drinking-window-first-shared-draft.md';
 begin
+    -- A fresh installation may have no Beaujolais place identities yet. The
+    -- deterministic keys match existing catalogues; conflicting identities
+    -- still fail instead of being merged on a name guess.
+    v_region_id := private.enrichment_seed_uuid('place:beaujolais');
+    v_appellation_id := private.enrichment_seed_uuid('place:morgon');
+    if exists (
+        select 1 from public.enrichment_places
+        where canonical_name = 'Beaujolais' and id <> v_region_id
+    ) or exists (
+        select 1 from public.enrichment_places
+        where canonical_name = 'Morgon' and id <> v_appellation_id
+    ) then
+        raise exception using errcode = '23505',
+            message = 'Existing Beaujolais or Morgon place identity needs review';
+    end if;
+    insert into public.enrichment_places (
+        id, place_type, canonical_name, country_code
+    ) values (v_region_id, 'region', 'Beaujolais', 'FR')
+    on conflict (id) do nothing;
+    insert into public.enrichment_places (
+        id, parent_id, place_type, canonical_name, country_code
+    ) values (v_appellation_id, v_region_id, 'appellation', 'Morgon', 'FR')
+    on conflict (id) do nothing;
+
     if exists (select 1 from public.drinking_window_reference_versions) then
         raise exception using errcode = '23505',
             message = 'First shared drinking-window version requires an empty reference library';
