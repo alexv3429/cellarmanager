@@ -25,7 +25,7 @@ must come from `npm run drinking-window:audit` for the hash recorded in
 | --- | ---: | --- |
 | Different years from a 2022 historical bin; scope unverified | 4 | A numerical difference is not a conflict between equivalent profiles. The old bin and proposed group stay separate. |
 | No 2023 workbook pair | 4 | These are new estimates, not workbook-derived dates. |
-| Approved shared references | 0 | No group membership, specific evidence, reuse-rights decision or whole-window curator approval is asserted. |
+| Approved shared references | 0 | The owner permits these estimates to be shared once membership is explicitly reviewed; no group membership, specific evidence, reuse-rights decision or whole-window curator approval is asserted yet. |
 
 The workbook's `standard`/`premium` labels are *not* established synonyms for
 generic/Grand Cru or generic/Cru. The checker validates only that the archived

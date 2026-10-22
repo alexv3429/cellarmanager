@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  getDrinkingWindowRolloutStatus,
   getShadowReport,
   listShadowReports,
+  requestDrinkingWindowShadowReport,
   reviewShadowReport,
 } from "./drinkingWindowShadowReview"
 
@@ -57,6 +59,29 @@ describe("private drinking-window comparison review", () => {
         p_expected_content_sha256: "b".repeat(64),
         p_verdict: "approve", p_rationale: "I checked the dates",
       },
+    }])
+  })
+
+  it("shows a published version without treating an unselected cellar as enabled", async () => {
+    expect(await getDrinkingWindowRolloutStatus("household-1", rpc({
+      active_version_number: 8, selected_version_number: null,
+      selected_enabled: false, global_enabled: true,
+    }))).toEqual({
+      activeVersionNumber: 8, selectedVersionNumber: null,
+      selectedEnabled: false, globalEnabled: true,
+    })
+  })
+
+  it("requests a comparison only for the selected household", async () => {
+    const calls: { name: string; args: Record<string, unknown> }[] = []
+    const client = { rpc: async (name: string, args: Record<string, unknown>) => {
+      calls.push({ name, args })
+      return { data: "report-2", error: null }
+    } }
+    expect(await requestDrinkingWindowShadowReport("household-1", client)).toBe("report-2")
+    expect(calls).toEqual([{
+      name: "request_drinking_window_shadow_report",
+      args: { p_household_id: "household-1" },
     }])
   })
 })
