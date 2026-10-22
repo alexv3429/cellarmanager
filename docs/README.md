@@ -26,6 +26,7 @@ retains only the evidence needed to understand its released migration history.
 - [`enrichment-publishing-and-jobs.md`](enrichment-publishing-and-jobs.md) - atomic reviewed-knowledge publication and provider-neutral asynchronous demand/job lifecycle
 - [`maturity-projections.md`](maturity-projections.md) - production maturity windows, urgency, location purpose, moving hints, review, and owner adjustment
 - [`drinking-window-reference-policy.md`](drinking-window-reference-policy.md) - proposed exact-key, same-source drinking-window selection and shared-profile governance
+- [`drinking-window-release-plan.md`](drinking-window-release-plan.md) - living delivery gates, acceptance evidence, risks, and change log for the shared three-milestone feature
 - [`drinking-window-source-audit.md`](drinking-window-source-audit.md) - private workbook aggregate audit, import blockers, and missing-reference queue
 - [`pairing-projections.md`](pairing-projections.md) - reviewed dish profiles, in-stock food-pairing suggestions, personal preferences, explanations, and repeated feedback
 - [`personal-observations-serving.md`](personal-observations-serving.md) - household and personal notes, derived serving estimates, explicit owner adjustments, and editing
