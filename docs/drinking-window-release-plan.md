@@ -202,7 +202,7 @@ meaningful. At minimum, each update must:
 
 | Date / change | Gate and decision | Evidence / remaining risk |
 | --- | --- | --- |
-| 2026-10-22 · `codex/drinking-window-release-plan` | Establish this tracked release plan and CI update guard. All delivery gates remain open. No live advice or database state changes. | Existing merged implementation and draft are described above; CI proves a plan update accompanies future relevant PRs, but cannot judge its quality. |
+| 2026-10-22 · PR #201 | Establish this tracked release plan and CI update guard. All delivery gates remain open. No live advice or database state changes. | Existing merged implementation and draft are described above; CI proves a plan update accompanies future relevant PRs, but cannot judge its quality. |
 
 **Next action:** complete gate 0's read-only live-state and migration audit,
 then update this record with exact evidence. Do not ask the owner to merge a
