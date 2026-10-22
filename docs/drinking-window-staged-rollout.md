@@ -22,15 +22,15 @@ pilot's current report, owner and entire cellar. An unreviewed household never
 blocks publication and never receives the new dates by default. A household
 created after publication can request its own comparison.
 
-This rollout change does **not** create or publish reference dates. The
-private workbook audit still finds 226 staged two-date pairs and zero
+The private workbook audit still finds 226 staged two-date pairs, not
 publishable three-date rows. The eight 2022–2023 Alsace/Beaujolais proposals
-are owner estimates, not source-published exact years. The owner permits their
-sharing only for explicitly reviewed ageing-category members; group boundaries,
-canonical memberships, supporting evidence and reuse rights still require
-curator review. Do not turn a regional vintage article into evidence for an
-exact year it never states, or apply a generic white profile to every Alsace
-grape or a single Cru profile to every Beaujolais cru.
+are owner estimates, not source-published exact years. The [first shared
+draft](drinking-window-first-shared-draft.md) records one of those estimates
+for two specifically identified 2022 releases. It is **not published** and
+still needs curator approval and a pilot cellar's fresh comparison. Do not
+turn a regional vintage article into evidence for an exact year it never
+states, or apply a generic white profile to every Alsace grape or a single
+Cru profile to every Beaujolais cru.
 
 ## First real publication checklist
 

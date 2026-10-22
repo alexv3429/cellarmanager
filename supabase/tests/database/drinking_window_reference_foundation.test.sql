@@ -51,16 +51,17 @@ select ok(
 );
 
 select is(
-    (select count(*) from public.drinking_window_reference_rows),
+    (select count(*) from public.drinking_window_reference_versions
+     where status = 'active'),
     0::bigint,
-    'Migration publishes no advice'
+    'An existing draft publishes no advice'
 );
 
 insert into public.enrichment_places (id, place_type, canonical_name)
 values ('f5000000-0000-4000-8000-000000000001', 'region', 'Synthetic Reference Region');
 
 insert into public.drinking_window_reference_versions (id, version_number)
-values ('f5000000-0000-4000-8000-000000000002', 1);
+values ('f5000000-0000-4000-8000-000000000002', 991001);
 
 select throws_ok(
     $test$
@@ -85,7 +86,8 @@ insert into public.drinking_window_reference_rows (
 select is(
     (select first_trial_year::text || '/' || best_start_year::text || '/' ||
             best_end_year::text
-     from public.drinking_window_reference_rows),
+     from public.drinking_window_reference_rows
+     where version_id = 'f5000000-0000-4000-8000-000000000002'),
     '2025/2028/2036',
     'A draft reference stores the three explicit years together'
 );
