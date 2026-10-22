@@ -38,10 +38,14 @@ Before anyone sees these dates as advice:
 1. Apply the earlier identity, evidence, review, publication and staged-rollout
    migrations in order, followed by this draft. The linked database was still
    behind those migrations when this draft was prepared.
-2. Have an authorized curator check the exact three years, group boundary,
-   both release identities, and every evidence pointer, then record decisions
-   for the row, group and two memberships. Recheck the draft diagnostics and
-   publication preflight; they must have no issues.
+2. Grant an authorized curator the explicit `drinking-window` scope. In
+   Catalogue → Shared drinking-window review → Actual reference drafts, check
+   the exact three years, group boundary, both release identities, and every
+   evidence pointer. Record an approval or disagreement with a rationale for
+   the row, group, and two memberships. This is separate from reviewing
+   historical workbook candidates. A reference edit invalidates its earlier
+   decision. Recheck the draft diagnostics and publication preflight; they
+   must have no issues.
 3. Have the pilot cellar owner review a fresh **whole-cellar** comparison and
    approve that report. Publish only after the server rechecks this approval.
    Other households remain on their existing advice until they opt in.

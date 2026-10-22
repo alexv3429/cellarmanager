@@ -10,6 +10,7 @@ vi.mock("../data/drinkingWindowReview", () => ({
   getDrinkingWindowReviewWorkspace: vi.fn(),
   saveDrinkingWindowCandidateReview: vi.fn(),
 }))
+vi.mock("./ReferenceDraftReview", () => ({ ReferenceDraftReview: () => <div>Reference drafts</div> }))
 
 const workspace = {
   eligible: true,
