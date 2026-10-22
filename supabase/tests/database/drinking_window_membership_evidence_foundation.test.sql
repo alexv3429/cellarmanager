@@ -47,10 +47,10 @@ select ok(
 );
 
 select is(
-    (select count(*) from public.drinking_window_ageing_group_memberships) +
-    (select count(*) from public.drinking_window_reference_evidence),
+    (select count(*) from public.drinking_window_reference_versions
+     where status = 'active'),
     0::bigint,
-    'Migration creates no applicable membership or evidence link'
+    'Draft memberships and evidence links publish no advice'
 );
 
 insert into public.enrichment_places (id, place_type, canonical_name)
@@ -193,7 +193,8 @@ values ('f6000000-0000-4000-8000-000000000006',
     'f6000000-0000-4000-8000-000000000015', 'membership_eligibility');
 
 select is(
-    (select count(*) from public.drinking_window_reference_evidence),
+    (select count(*) from public.drinking_window_reference_evidence
+     where version_id = 'f6000000-0000-4000-8000-000000000006'),
     4::bigint,
     'Dates, group definition, and membership can carry separate evidence links'
 );

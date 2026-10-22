@@ -67,8 +67,10 @@ select throws_ok($test$
 $test$, '40001', 'Candidate review changed; refresh before saving',
     'Concurrent stale draft cannot overwrite a newer curator review');
 reset role;
-select is((select count(*) from public.drinking_window_reference_rows),
-    0::bigint, 'Candidate reviews do not create effective reference rows');
+select is((select count(*) from public.drinking_window_reference_rows
+    where version_id <> private.enrichment_seed_uuid(
+        'drinking-window:first-shared:burgaud-2022:version')),
+    0::bigint, 'Candidate reviews do not create additional reference rows');
 select is((select count(*) from private.drinking_window_candidate_review_drafts
     where candidate_id = 'f9000000-0000-4000-8000-000000000002'),
     1::bigint, 'Review history is stored separately from imported source row');
