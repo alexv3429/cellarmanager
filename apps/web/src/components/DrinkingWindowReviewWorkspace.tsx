@@ -12,6 +12,7 @@ import {
 } from "../data/drinkingWindowReview"
 import { useLanguage } from "../i18n/useLanguage"
 import { Notice } from "./Notice"
+import { ReferenceDraftReview } from "./ReferenceDraftReview"
 
 interface Props { isOnline: boolean }
 
@@ -163,6 +164,8 @@ export function DrinkingWindowReviewWorkspace({ isOnline }: Props) {
           {request.sourceChanged ? <small>{t("Owner data changed since this request; verify before acting.")}</small> : null}
         </li>
       )}</ul>}
+
+    <ReferenceDraftReview isOnline={isOnline} />
 
     <h3>{t("Reference candidates")} ({workspace.candidates.length})</h3>
     <p>{t("Workbook dates are historical candidates, not approved advice. Supply a coherent three-date proposal and traceable evidence.")}</p>
