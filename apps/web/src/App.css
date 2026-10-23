@@ -6216,6 +6216,16 @@
 .wine-identity-review__confirm { display: grid; gap: .5rem; padding: .75rem; border: 1px solid var(--border); border-radius: .5rem; }
 @media (max-width: 700px) { .wine-identity-review__layout { grid-template-columns: minmax(0, 1fr); } }
 
+.wine-ageing-review { min-width: 0; border: 1px solid var(--border); border-radius: .75rem; padding: 1rem; margin-block: 1rem; }
+.wine-ageing-review > summary { cursor: pointer; font-weight: 650; }
+.wine-ageing-review > p, .wine-ageing-review section { margin-block: .75rem 0; }
+.wine-ageing-review section, .wine-ageing-review__scope { display: grid; gap: .75rem; min-width: 0; }
+.wine-ageing-review section h3, .wine-ageing-review__scope p { margin: 0; }
+.wine-ageing-review__scope { border-top: 1px solid var(--border); padding-top: .75rem; }
+.wine-ageing-review__scope label { display: grid; gap: .4rem; min-width: 0; }
+.wine-ageing-review__scope select { box-sizing: border-box; width: 100%; min-width: 0; }
+.wine-ageing-review__scope div, .wine-ageing-review__scope p { overflow-wrap: anywhere; }
+
 .import-confirmation {
   background: color-mix(in srgb, var(--surface) 92%, var(--accent));
   border: 1px solid var(--border);
