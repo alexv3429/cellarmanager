@@ -57,6 +57,9 @@ export interface ShadowComparisonRow {
   proposedFirstTrialYear: number | null
   proposedBestStartYear: number | null
   proposedBestEndYear: number | null
+  proposedGroupKey: string | null
+  proposedGroupDefinition: string | null
+  proposedReferenceRationale: string | null
   reason: string | null
 }
 
@@ -158,6 +161,9 @@ export async function getShadowReport(
         proposedFirstTrialYear: optionalInteger(row.proposed_first_trial_year),
         proposedBestStartYear: optionalInteger(row.proposed_best_start_year),
         proposedBestEndYear: optionalInteger(row.proposed_best_end_year),
+        proposedGroupKey: optionalString(row.proposed_group_key ?? null),
+        proposedGroupDefinition: optionalString(row.proposed_group_definition ?? null),
+        proposedReferenceRationale: optionalString(row.proposed_reference_rationale ?? null),
         reason: optionalString(row.reason),
       }
     }),

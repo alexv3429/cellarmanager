@@ -13,7 +13,10 @@ import { useLanguage } from "../i18n/useLanguage"
 import { Notice } from "./Notice"
 
 interface Props {
+  compact?: boolean
+  initialWineId?: string
   isOnline: boolean
+  onChanged?: () => void
   wines: WineCatalogEntry[]
 }
 
@@ -21,12 +24,12 @@ function wineLabel(wine: WineCatalogEntry): string {
   return [wine.producer, wine.cuvee, wine.vintage ?? "NV"].join(" · ")
 }
 
-export function WineIdentityReviewPanel({ isOnline, wines }: Props) {
+export function WineIdentityReviewPanel({ compact = false, initialWineId = "", isOnline, onChanged, wines }: Props) {
   const { t } = useLanguage()
   const [open, setOpen] = useState(false)
   const [localSearch, setLocalSearch] = useState("")
   const [showLinked, setShowLinked] = useState(false)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(initialWineId || null)
   const [status, setStatus] = useState<HouseholdWineIdentityStatus | null>(null)
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<SharedWineIdentity[]>([])
@@ -108,6 +111,7 @@ export function WineIdentityReviewPanel({ isOnline, wines }: Props) {
       setLocalLinks((current) => ({ ...current, [selected.id]: nextId }))
       setStatus(await getHouseholdWineIdentityStatus(selected.id))
       setChoice(null)
+      onChanged?.()
       setMessage(action === "link"
         ? t("Shared wine linked for this household. Your wine description was not changed.")
         : t("Shared wine link removed. Your wine description was not changed."))
@@ -135,22 +139,32 @@ export function WineIdentityReviewPanel({ isOnline, wines }: Props) {
   }
 
   return (
-    <details className="wine-identity-review" open={open} onToggle={(event) => setOpen(event.currentTarget.open)}>
-      <summary>{t("Review shared wine identities")} ({unmatchedCount} {t("without a link")})</summary>
+    <details
+      className={compact ? "wine-identity-review wine-identity-review--compact" : "wine-identity-review"}
+      open={open}
+      onToggle={(event) => setOpen(event.currentTarget.open)}
+    >
+      <summary>{compact
+        ? t("Review this wine’s shared identity")
+        : <>{t("Review shared wine identities")} ({unmatchedCount} {t("without a link")})</>}</summary>
       <div className="wine-identity-review__body">
-        <p>{t("Choose a wine from your catalogue, then confirm an existing shared wine with the same vintage. The link belongs only to this household; it does not rename your wine or change the shared library.")}</p>
+        <p>{t(compact
+          ? "Confirm this wine against the shared library. The link stays in your cellar and does not change the shared wine."
+          : "Choose a wine from your catalogue, then confirm an existing shared wine with the same vintage. The link belongs only to this household; it does not rename your wine or change the shared library.")}</p>
         {!isOnline ? <Notice tone="warning">{t("Reconnect to review wine identities.")}</Notice> : null}
         {error ? <Notice role="alert" tone="error">{error}</Notice> : null}
         {message ? <Notice role="status" tone="success">{message}</Notice> : null}
-        <label>{t("Find a wine in your catalogue")}
-          <input type="search" value={localSearch} onChange={(event) => setLocalSearch(event.target.value)} />
-        </label>
-        <label className="wine-identity-review__toggle">
-          <input type="checkbox" checked={showLinked} onChange={(event) => setShowLinked(event.target.checked)} />
-          {t("Include already linked wines")}
-        </label>
+        {!compact ? <>
+          <label>{t("Find a wine in your catalogue")}
+            <input type="search" value={localSearch} onChange={(event) => setLocalSearch(event.target.value)} />
+          </label>
+          <label className="wine-identity-review__toggle">
+            <input type="checkbox" checked={showLinked} onChange={(event) => setShowLinked(event.target.checked)} />
+            {t("Include already linked wines")}
+          </label>
+        </> : null}
         <div className="wine-identity-review__layout">
-          <div className="wine-identity-review__wines" role="group" aria-label={t("Your catalogue wines")}>
+          {!compact ? <div className="wine-identity-review__wines" role="group" aria-label={t("Your catalogue wines")}>
             {filtered.length === 0 ? <p>{t("No wines to review here.")}</p> : null}
             {filtered.slice(0, 60).map((wine) => (
               <button
@@ -164,7 +178,7 @@ export function WineIdentityReviewPanel({ isOnline, wines }: Props) {
               </button>
             ))}
             {filtered.length > 60 ? <p>{t("Showing 60 wines. Narrow the catalogue search to find another.")}</p> : null}
-          </div>
+          </div> : null}
           {selected ? (
             <div className="wine-identity-review__editor">
               <h3>{wineLabel(selected)}</h3>

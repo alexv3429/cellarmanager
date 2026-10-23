@@ -18,14 +18,16 @@ release target.
 
 ## Status at 23 October 2026
 
-**Not released.** The merged work through PR #203 provides the database
+**Not released.** The merged work through PR #204 provides the database
 foundation, candidate staging, draft diagnostics, review decisions, shadow
 comparison, publication/opt-in mechanisms, and a curator review screen. The
 Burgaud 2022 Côte du Py / James row is a **draft**, not approved or active.
 The linked `cellarmanager-v02-dev` project was observed with 13 pending
 drinking-window/identity migrations in a read-only dry run. The workbook audit
-has 226 two-date pairs but no complete three-date shared rows. PR #203's
-three-date manual editor is merged, but its migration is not deployed. These are
+has 226 two-date pairs but no complete three-date shared rows. PRs #203 and
+#204 (three-date manual editing and owner-visible comparison) are merged, but their
+migrations are not deployed. This branch adds one more migration to include
+ageing-group context in the owner report. These are
 point-in-time observations, not a claim that the live project remains
 unchanged; recheck them before a deployment decision. The existing model and
 personal timing controls remain in use.
@@ -36,8 +38,8 @@ here, not when its PR merges. Dates are not delivery promises.
 
 | Gate | Status | Immediate outcome |
 | --- | --- | --- |
-| 0. Reconcile deployment state | In progress | The earlier 13 migrations and recovery replayed on a private clone with unchanged existing advice. PR #203 and this branch add two more migrations, tested locally but not yet replayed on that clone; active commit and pilot link remain open. |
-| 1. Close owner-facing behavior | In progress | Three-date manual editing and an owner-specific comparison are implemented locally; identity linking, mobile/edge-case testing, and owner walkthrough remain open. |
+| 0. Reconcile deployment state | In progress | The earlier 13 migrations and recovery replayed on a private clone with unchanged existing advice. PRs #203–#204 and this branch add three more migrations, tested locally but not yet replayed on that clone; active commit and pilot link remain open. |
+| 1. Close owner-facing behavior | In progress | Three-date manual editing and an owner-specific comparison are merged. This branch adds wine-card identity review and group rationale; local ageing-group preference, mobile/edge-case testing, and owner walkthrough remain open. |
 | 2. Deploy database capabilities | Blocked by gates 0–1 and operator approval | New machinery is present but no advice changes by default. |
 | 3. Publish one real pilot | Blocked by gate 2 and human reviews | One approved cellar can see a verified real window. |
 | 4. Make reference maintenance routine | Not started | Authorized curators can add/correct evidence-backed versions in the app. |
@@ -89,7 +91,7 @@ web lint, 829 tests, and build passed. This is
 **not deployed** and does not accept Gate 1. The new migration must join the
 fresh private-clone rehearsal before Gate 0 can pass.
 
-This branch addresses action 3: a new owner-bound shadow report compares the
+PR #204 addressed action 3: a new owner-bound shadow report compares the
 proposed three dates with the current manual window, currently selected shared
 reference, or model **after that owner's personal timing adjustment**. If an
 active reference has an ambiguous/conflicting identity, the baseline is shown
@@ -100,9 +102,18 @@ an earlier review stale. Each request makes a fresh report. Old reports lack an
 owner binding and are hidden from the new owner list; a fresh comparison is
 required. The migration and 26 comparison, 24 owner-review, and 34 publication database
 assertions passed in rollback-only local transactions. This remains
-**not deployed or owner-walked-through** and does not accept Gate 1. Gate 0
-must now rehearse 15 pending migrations, including this one, before any live
-write is proposed.
+**not deployed or owner-walked-through** and does not accept Gate 1.
+
+This branch makes the existing private canonical-identity review reachable
+from an individual wine card, then refreshes maturity and match details after
+an owner changes the link. A new report snapshot carries the matched
+ageing-group definition and reference-row rationale together with the proposed
+dates; editing that definition changes the review hash. Six new database
+assertions and 84 existing shadow/comparison/publication assertions passed in
+rollback-only local transactions; focused web tests and build passed. This
+does **not** add a local ageing-group override or activate any shared date.
+Gate 0 must now rehearse **16 pending migrations** on a fresh private clone;
+the prior 13-migration rehearsal is not sufficient evidence for this batch.
 
 1. Make the private manual override use the agreed **three** milestones. Keep
    legacy four-year records readable without inventing or silently dropping a
@@ -111,9 +122,12 @@ write is proposed.
 2. Give an owner a comprehensible way to confirm/change the wine's canonical
    identity and local ageing-group eligibility or preference where needed;
    never let that private choice silently alter the shared group definition.
+   Identity review is now reachable from the wine card, and a matched group's
+   definition appears in the comparison. A private group preference is still
+   missing; owner review of that behavior remains required.
 3. Make the whole-cellar comparison show the **dates the owner actually sees**,
    including any private model timing adjustment, as well as proposed three
-   dates and their sources. Implemented locally in this branch; verify against
+   dates and their sources. Implemented in merged PR #204; verify against
    the actual pilot cellar before accepting the gate.
 4. Test mobile layout, manual edit/clear, no match, ambiguous match, changed
    identity, stale comparison, and emergency-off behavior with real UI paths.

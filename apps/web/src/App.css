@@ -6205,6 +6205,7 @@
 .wine-identity-review input[type="search"] { box-sizing: border-box; width: 100%; min-width: 0; }
 .wine-identity-review__toggle { display: flex !important; align-items: center; }
 .wine-identity-review__layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; min-width: 0; }
+.wine-identity-review--compact .wine-identity-review__layout { grid-template-columns: minmax(0, 1fr); }
 .wine-identity-review__wines, .wine-identity-review__results { display: grid; align-content: start; gap: .5rem; min-width: 0; max-height: 22rem; overflow-y: auto; }
 .wine-identity-review__wines button, .wine-identity-review__results button { display: grid; gap: .2rem; min-width: 0; width: 100%; text-align: left; overflow-wrap: anywhere; }
 .wine-identity-review__wines button span, .wine-identity-review__results button span { color: var(--text-muted, #b6aeb2); font-size: .85rem; }

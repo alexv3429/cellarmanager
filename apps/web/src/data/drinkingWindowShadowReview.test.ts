@@ -35,11 +35,18 @@ describe("private drinking-window comparison review", () => {
         matched_scope: "region", current_first_trial_year: 2024,
         current_best_start_year: 2026, current_best_end_year: 2030,
         proposed_first_trial_year: 2025, proposed_best_start_year: 2027,
-        proposed_best_end_year: 2032, reason: null,
+        proposed_best_end_year: 2032,
+        proposed_group_key: "reviewed-long-ageing-2022-morgon",
+        proposed_group_definition: "Individually reviewed long-ageing wines",
+        proposed_reference_rationale: "Owner-authored estimate",
+        reason: null,
       }],
     }))
     expect(report.rows[0]).toMatchObject({
       currentBestEndYear: 2030, proposedBestEndYear: 2032,
+      proposedGroupKey: "reviewed-long-ageing-2022-morgon",
+      proposedGroupDefinition: "Individually reviewed long-ageing wines",
+      proposedReferenceRationale: "Owner-authored estimate",
     })
   })
 
