@@ -114,6 +114,9 @@ select ok(pg_temp.publication_rejects($test$
     select public.publish_drinking_window_reference(
         'f6000000-0000-4000-8000-000000000002')
 $test$, '23514'), 'A cellar owner must review the full impact first');
+-- A report that can be approved must be generated for the reviewing owner;
+-- their personal timing is part of its fingerprint.
+set local request.jwt.claim.sub = '00000000-0000-4000-8000-000000000001';
 select is((select draft_issue_count from public.record_drinking_window_shadow_report(
     'f6000000-0000-4000-8000-000000000002',
     '00000000-0000-4000-8000-000000000100')), 0::bigint,

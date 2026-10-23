@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(19);
+select plan(24);
 
 create function pg_temp.shadow_rejects(command text, expected_state text)
 returns boolean language plpgsql as $$
@@ -154,6 +154,36 @@ select is((select draft_issue_count
         'f5000000-0000-4000-8000-000000000002',
         '00000000-0000-4000-8000-000000000100')),
     0::bigint, 'Fresh whole-household shadow report is ready for review');
+select is((select requested_by from private.drinking_window_shadow_reports
+    where version_id = 'f5000000-0000-4000-8000-000000000002'
+      and draft_issue_count = 0),
+    '00000000-0000-4000-8000-000000000001'::uuid,
+    'Fresh report is bound to the owner whose dates it compared');
+insert into auth.users (id, email) values
+    ('f5000000-0000-4000-8000-000000000008',
+     'second-shadow-owner@example.test');
+insert into public.household_members (household_id, user_id, role) values
+    ('00000000-0000-4000-8000-000000000100',
+     'f5000000-0000-4000-8000-000000000008', 'owner');
+select set_config('request.jwt.claim.sub',
+    'f5000000-0000-4000-8000-000000000008', true);
+select is(jsonb_array_length(public.list_drinking_window_shadow_reports(
+    '00000000-0000-4000-8000-000000000100')), 0,
+    'Another owner is not shown a report with someone else’s timing');
+select ok(pg_temp.shadow_rejects(format(
+    'select public.review_drinking_window_shadow_report(%L::uuid,%L,%L,%L)',
+    (select id from private.drinking_window_shadow_reports
+     where version_id = 'f5000000-0000-4000-8000-000000000002'
+       and requested_by = '00000000-0000-4000-8000-000000000001'
+       and draft_issue_count = 0),
+    (select content_sha256 from private.drinking_window_shadow_reports
+     where version_id = 'f5000000-0000-4000-8000-000000000002'
+       and requested_by = '00000000-0000-4000-8000-000000000001'
+       and draft_issue_count = 0),
+    'approve', 'I reviewed all changed windows'), '42501'),
+    'Another owner cannot approve dates calculated for someone else');
+select set_config('request.jwt.claim.sub',
+    '00000000-0000-4000-8000-000000000001', true);
 
 select ok(pg_temp.shadow_rejects(format(
     'select public.review_drinking_window_shadow_report(%L::uuid,%L,%L,%L)',
@@ -175,6 +205,27 @@ select is((select public.get_drinking_window_shadow_report(id)
     where version_id = 'f5000000-0000-4000-8000-000000000002'
       and draft_issue_count = 0),
     'approve', 'Owner sees the recorded latest decision');
+select set_config('request.jwt.claim.sub',
+    'f5000000-0000-4000-8000-000000000008', true);
+select is((select draft_issue_count
+    from public.record_drinking_window_shadow_report(
+        'f5000000-0000-4000-8000-000000000002',
+        '00000000-0000-4000-8000-000000000100')),
+    0::bigint, 'A second owner can request their own fresh comparison');
+select set_config('request.jwt.claim.sub',
+    '00000000-0000-4000-8000-000000000001', true);
+select ok(pg_temp.shadow_rejects(format(
+    'select public.review_drinking_window_shadow_report(%L::uuid,%L,%L,%L)',
+    (select id from private.drinking_window_shadow_reports
+     where version_id = 'f5000000-0000-4000-8000-000000000002'
+       and requested_by = '00000000-0000-4000-8000-000000000001'
+       and draft_issue_count = 0),
+    (select content_sha256 from private.drinking_window_shadow_reports
+     where version_id = 'f5000000-0000-4000-8000-000000000002'
+       and requested_by = '00000000-0000-4000-8000-000000000001'
+       and draft_issue_count = 0),
+    'approve', 'I reviewed all changed windows'), '40001'),
+    'A later household comparison makes an earlier approval stale');
 
 update public.wines set vintage = 2023
 where id = '00000000-0000-4000-8000-000000000110';
@@ -182,9 +233,11 @@ select ok(pg_temp.shadow_rejects(format(
     'select public.review_drinking_window_shadow_report(%L::uuid,%L,%L,%L)',
     (select id from private.drinking_window_shadow_reports
      where version_id = 'f5000000-0000-4000-8000-000000000002'
+       and requested_by = '00000000-0000-4000-8000-000000000001'
        and draft_issue_count = 0),
     (select content_sha256 from private.drinking_window_shadow_reports
      where version_id = 'f5000000-0000-4000-8000-000000000002'
+       and requested_by = '00000000-0000-4000-8000-000000000001'
        and draft_issue_count = 0),
     'approve', 'I reviewed all changed windows'), '40001'),
     'A changed cellar invalidates the old snapshot');

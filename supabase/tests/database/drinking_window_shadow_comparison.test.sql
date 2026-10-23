@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(18);
+select plan(26);
 
 create function pg_temp.shadow_rejects(command text, expected_state text)
 returns boolean language plpgsql as $$
@@ -169,6 +169,69 @@ select is((select status from public.drinking_window_reference_versions
 select is((select first_trial_year from public.wine_maturity_overrides
     where wine_id = 'e5000000-0000-4000-8000-000000000011'),
     2023, 'Shadow comparison leaves manual advice unchanged');
+
+select set_config('request.jwt.claim.sub',
+    '00000000-0000-4000-8000-000000000001', true);
+insert into private.member_maturity_calibrations (user_id, year_shift)
+values ('00000000-0000-4000-8000-000000000001', 1)
+on conflict (user_id) do update set year_shift = excluded.year_shift;
+select is((select current_source from public.drinking_window_shadow_compare(
+    'e5000000-0000-4000-8000-000000000003',
+    '00000000-0000-4000-8000-000000000100', pg_temp.shadow_ids())
+    where wine_id = 'e5000000-0000-4000-8000-000000000010'),
+    'personalized_model', 'The baseline identifies the owner-adjusted model');
+select is((select current_first_trial_year::text || '/' || current_best_start_year
+    || '/' || current_best_end_year
+    from public.drinking_window_shadow_compare(
+    'e5000000-0000-4000-8000-000000000003',
+    '00000000-0000-4000-8000-000000000100', pg_temp.shadow_ids())
+    where wine_id = 'e5000000-0000-4000-8000-000000000010'),
+    '2024/2026/2031', 'Current comparison dates include personal timing');
+select is((select first_trial_delta::text || '/' || best_start_delta
+    || '/' || best_end_delta
+    from public.drinking_window_shadow_compare(
+    'e5000000-0000-4000-8000-000000000003',
+    '00000000-0000-4000-8000-000000000100', pg_temp.shadow_ids())
+    where wine_id = 'e5000000-0000-4000-8000-000000000010'),
+    '0/0/1', 'Comparison differences use visible, not raw model dates');
+select is((select current_first_trial_year::text || '/' || current_best_start_year
+    || '/' || current_best_end_year
+    from public.drinking_window_shadow_compare(
+    'e5000000-0000-4000-8000-000000000003',
+    '00000000-0000-4000-8000-000000000100', pg_temp.shadow_ids())
+    where wine_id = 'e5000000-0000-4000-8000-000000000011'),
+    '2023/2027/2031', 'Personal timing does not shift manual dates');
+select set_config('test.shadow_hash_before',
+    private.drinking_window_shadow_snapshot(
+        'e5000000-0000-4000-8000-000000000003',
+        '00000000-0000-4000-8000-000000000100') ->> 'content_sha256',
+    true);
+update private.member_maturity_calibrations set year_shift = 2
+where user_id = '00000000-0000-4000-8000-000000000001';
+select isnt(private.drinking_window_shadow_snapshot(
+    'e5000000-0000-4000-8000-000000000003',
+    '00000000-0000-4000-8000-000000000100') ->> 'content_sha256',
+    current_setting('test.shadow_hash_before'),
+    'Changing owner timing invalidates the reviewed snapshot hash');
+select ok((select report_id is not null
+    from public.record_drinking_window_shadow_report(
+        'e5000000-0000-4000-8000-000000000003',
+        '00000000-0000-4000-8000-000000000100')),
+    'The personalized full-cellar report is recorded for the owner');
+select set_config('request.jwt.claim.sub', '', true);
+select is((select current_first_trial_year from
+    public.drinking_window_shadow_compare(
+        'e5000000-0000-4000-8000-000000000003',
+        '00000000-0000-4000-8000-000000000100', pg_temp.shadow_ids())
+    where wine_id = 'e5000000-0000-4000-8000-000000000010'),
+    2025, 'Service-side replay uses the bound owner timing');
+select is(private.drinking_window_shadow_snapshot(
+    'e5000000-0000-4000-8000-000000000003',
+    '00000000-0000-4000-8000-000000000100') ->> 'content_sha256',
+    (select content_sha256 from private.drinking_window_shadow_reports
+     where version_id = 'e5000000-0000-4000-8000-000000000003'
+     order by report_sequence desc limit 1),
+    'Service-side publication replays the owner-bound report hash');
 
 select * from finish();
 rollback;
