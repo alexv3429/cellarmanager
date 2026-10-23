@@ -10,6 +10,7 @@ import {
   reviewWineMaturity,
   setMemberMaturityCalibration,
   setWineMaturityOverride,
+  supportsThreeMilestoneManualOverrides,
 } from "./wineMaturity"
 
 function maturityResponse() {
@@ -409,5 +410,16 @@ describe("maturity RPC boundary", () => {
       p_storage_purpose: null,
       p_wine_id: "wine-1",
     })
+  })
+
+  it("keeps the old editor until the database confirms three-date support", async () => {
+    const missingRpc = vi.fn().mockResolvedValue({ data: null, error: { message: "Function not found" } })
+    const supportedRpc = vi.fn().mockResolvedValue({ data: true, error: null })
+    const failedRpc = vi.fn().mockRejectedValue(new Error("Network unavailable"))
+
+    await expect(supportsThreeMilestoneManualOverrides({ rpc: missingRpc })).resolves.toBe(false)
+    await expect(supportsThreeMilestoneManualOverrides({ rpc: failedRpc })).resolves.toBe(false)
+    await expect(supportsThreeMilestoneManualOverrides({ rpc: supportedRpc })).resolves.toBe(true)
+    expect(supportedRpc).toHaveBeenCalledWith("supports_three_milestone_manual_overrides", {})
   })
 })

@@ -2,6 +2,22 @@
 -- Keep an optional fourth year on old rows so editing does not erase a date
 -- that the owner previously entered. The old RPC signature stays compatible.
 
+-- The new client asks for this capability before offering a three-date save.
+-- Against the pre-migration database, the RPC is absent and the client keeps
+-- the existing four-date editor, so an early client deployment is harmless.
+create function public.supports_three_milestone_manual_overrides()
+returns boolean
+language sql
+stable
+security invoker
+set search_path = ''
+as $$ select true $$;
+
+revoke all on function public.supports_three_milestone_manual_overrides()
+from public, anon, authenticated, powersync_role, service_role;
+grant execute on function public.supports_three_milestone_manual_overrides()
+to authenticated, service_role;
+
 alter table public.wine_maturity_overrides
     alter column drink_by_year drop not null;
 

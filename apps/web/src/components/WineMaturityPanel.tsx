@@ -14,6 +14,7 @@ import {
   reviewWineMaturity,
   setMemberMaturityCalibration,
   setWineMaturityOverride,
+  supportsThreeMilestoneManualOverrides,
   type MaturityRecommendation,
   type MaturityVerdict,
   type WineMaturity,
@@ -171,6 +172,7 @@ export function WineMaturityPanel({
   const [result, setResult] = useState<WineMaturity | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [busyAction, setBusyAction] = useState<string | null>(null)
+  const [threeMilestoneEditing, setThreeMilestoneEditing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [profileReviewInbox, setProfileReviewInbox] =
@@ -179,6 +181,16 @@ export function WineMaturityPanel({
     ProfileReviewTarget[]
   >([])
   const [reviewTarget, setReviewTarget] = useState<IssueReviewTarget | null>(null)
+
+  useEffect(() => {
+    setThreeMilestoneEditing(false)
+    if (!isOnline || !canManageCellar) return
+    let active = true
+    void supportsThreeMilestoneManualOverrides().then((supported) => {
+      if (active) setThreeMilestoneEditing(supported)
+    })
+    return () => { active = false }
+  }, [canManageCellar, isOnline])
 
   useEffect(() => {
     setResult(null)
@@ -302,7 +314,9 @@ export function WineMaturityPanel({
           {
             bestEndYear: yearInput(form, "bestEndYear"),
             bestStartYear: yearInput(form, "bestStartYear"),
-            drinkByYear: optionalYearInput(form, "drinkByYear"),
+            drinkByYear: threeMilestoneEditing
+              ? optionalYearInput(form, "drinkByYear")
+              : yearInput(form, "drinkByYear"),
             firstTrialYear: yearInput(form, "firstTrialYear"),
           },
           purpose,
@@ -845,6 +859,7 @@ export function WineMaturityPanel({
             <p>{activeReference
               ? t("Your values take priority; the reviewed reference remains unchanged.")
               : t("Your values take priority in the app; the original model and its evidence remain unchanged.")}</p>
+            {!threeMilestoneEditing ? <p>{t("The three-date editor is not active in this cellar yet. You can keep using the current four-date form.")}</p> : null}
             <form
               key={override?.updatedAt ?? projection?.calculatedAt ?? activeReference?.referenceRowId}
               onSubmit={(event) => void saveOverride(event)}
@@ -873,10 +888,18 @@ export function WineMaturityPanel({
                   type="number"
                 />
               </label>
-              {override?.drinkByYear !== null && override?.drinkByYear !== undefined ? <label>{t("Previously recorded personal drink-by year (optional)")}<input
+              {threeMilestoneEditing && override?.drinkByYear !== null && override?.drinkByYear !== undefined ? <label>{t("Previously recorded personal drink-by year (optional)")}<input
                   defaultValue={override.drinkByYear}
                   min="1800"
                   name="drinkByYear"
+                  type="number"
+                />
+              </label> : null}
+              {!threeMilestoneEditing ? <label>{t("Drink by")}<input
+                  defaultValue={override?.drinkByYear ?? ("drinkByYear" in displayedYears ? displayedYears.drinkByYear ?? "" : "")}
+                  min="1800"
+                  name="drinkByYear"
+                  required
                   type="number"
                 />
               </label> : null}

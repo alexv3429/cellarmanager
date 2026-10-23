@@ -3,7 +3,7 @@ import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { getWineMaturity, setWineMaturityOverride, type WineMaturity } from "../data/wineMaturity"
+import { getWineMaturity, setWineMaturityOverride, supportsThreeMilestoneManualOverrides, type WineMaturity } from "../data/wineMaturity"
 import { getProfileReviewInbox, getWineProfileReviewTargets } from "../data/profileReviews"
 import { WineMaturityPanel } from "./WineMaturityPanel"
 
@@ -11,6 +11,7 @@ vi.mock("../data/wineMaturity", async (importOriginal) => ({
   ...await importOriginal<typeof import("../data/wineMaturity")>(),
   getWineMaturity: vi.fn(),
   setWineMaturityOverride: vi.fn(),
+  supportsThreeMilestoneManualOverrides: vi.fn(),
 }))
 vi.mock("../data/profileReviews", async (importOriginal) => ({
   ...await importOriginal<typeof import("../data/profileReviews")>(),
@@ -57,6 +58,7 @@ beforeEach(() => {
   vi.mocked(getProfileReviewInbox).mockResolvedValue({ items: [] } as Awaited<ReturnType<typeof getProfileReviewInbox>>)
   vi.mocked(getWineProfileReviewTargets).mockResolvedValue([])
   vi.mocked(setWineMaturityOverride).mockResolvedValue(maturity(null, true))
+  vi.mocked(supportsThreeMilestoneManualOverrides).mockResolvedValue(true)
   container = document.createElement("div")
   document.body.append(container)
   root = createRoot(container)
@@ -97,6 +99,26 @@ describe("wine maturity manual window", () => {
     expect(setWineMaturityOverride).toHaveBeenCalledWith(
       "wine-1",
       { firstTrialYear: 2025, bestStartYear: 2028, bestEndYear: 2035, drinkByYear: null },
+      null,
+      "",
+    )
+  })
+
+  it("keeps the required fourth field on a database that has not migrated", async () => {
+    vi.mocked(supportsThreeMilestoneManualOverrides).mockResolvedValue(false)
+    vi.mocked(getWineMaturity).mockResolvedValue(maturity(2040, true))
+    await act(async () => root.render(<WineMaturityPanel canManageCellar householdId="household-1" isOnline wineId="wine-1" />))
+
+    const legacyInput = container.querySelector('input[name="drinkByYear"]') as HTMLInputElement
+    expect(legacyInput.required).toBe(true)
+    expect(legacyInput.value).toBe("2040")
+    expect(container.textContent).toContain("The three-date editor is not active in this cellar yet")
+
+    const form = legacyInput.closest("form") as HTMLFormElement
+    await act(async () => { form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })) })
+    expect(setWineMaturityOverride).toHaveBeenCalledWith(
+      "wine-1",
+      { firstTrialYear: 2025, bestStartYear: 2028, bestEndYear: 2035, drinkByYear: 2040 },
       null,
       "",
     )

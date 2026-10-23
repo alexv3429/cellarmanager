@@ -487,6 +487,7 @@ export const frenchTextRuntime: Readonly<Record<string, string>> = {
   "This older date is kept unless you clear it; it is not an expiry date.": "Cette ancienne date est conservée tant que vous ne l’effacez pas ; ce n’est pas une date de péremption.",
   "Existing model drink-by estimate": "Estimation « à boire avant » du modèle actuel",
   "This is not an expiry date.": "Ce n’est pas une date de péremption.",
+  "The three-date editor is not active in this cellar yet. You can keep using the current four-date form.": "Le formulaire à trois dates n’est pas encore actif dans cette cave. Vous pouvez continuer avec le formulaire actuel à quatre dates.",
   "Decision needed": "Décision requise",
   "Approved · awaiting publication": "Approuvé · en attente de publication",
   "Disputed · replacement needed": "Contesté · remplacement nécessaire",

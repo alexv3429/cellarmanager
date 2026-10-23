@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(72);
+select plan(74);
 
 select has_column(
     'public',
@@ -96,6 +96,12 @@ select ok(
     and not has_function_privilege('authenticated', 'public.get_household_maturity_overview_legacy_four_date(uuid)', 'EXECUTE')
     and not has_function_privilege('anon', 'public.get_household_maturity_overview_legacy_four_date(uuid)', 'EXECUTE'),
     'The three-date overview adapter does not expose internal readers'
+);
+
+select ok(
+    has_function_privilege('authenticated', 'public.supports_three_milestone_manual_overrides()', 'EXECUTE')
+    and not has_function_privilege('anon', 'public.supports_three_milestone_manual_overrides()', 'EXECUTE'),
+    'Only signed-in clients can check the staged three-date capability'
 );
 
 select ok(
@@ -400,6 +406,12 @@ select is(
 set local role authenticated;
 set local request.jwt.claim.sub =
     '00000000-0000-4000-8000-000000000001';
+
+select is(
+    public.supports_three_milestone_manual_overrides(),
+    true,
+    'The migrated database explicitly enables three-date manual editing'
+);
 
 select is(
     jsonb_array_length(

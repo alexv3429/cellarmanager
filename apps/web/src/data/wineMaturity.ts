@@ -740,6 +740,19 @@ export async function setWineMaturityOverride(
   )
 }
 
+/** Keep the legacy editor when the database has not yet gained three-date saves. */
+export async function supportsThreeMilestoneManualOverrides(
+  rpcClient?: RpcClient,
+): Promise<boolean> {
+  try {
+    const client = rpcClient ?? await defaultClient()
+    const { data, error } = await client.rpc("supports_three_milestone_manual_overrides", {})
+    return error === null && data === true
+  } catch {
+    return false
+  }
+}
+
 export async function clearWineMaturityOverride(
   wineId: string,
   rpcClient?: RpcClient,
