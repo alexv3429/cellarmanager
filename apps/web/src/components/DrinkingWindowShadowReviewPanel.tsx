@@ -52,7 +52,9 @@ function sourceLabel(source: string): string {
   switch (source) {
     case "manual_override": return "Manual window"
     case "model": return "Model estimate"
+    case "personalized_model": return "Model estimate with your timing"
     case "expired_model": return "Previous model estimate"
+    case "expired_personalized_model": return "Previous model estimate with your timing"
     case "reviewed_reference": return "Current reviewed reference"
     default: return "No previous window"
   }
@@ -209,7 +211,7 @@ export function DrinkingWindowShadowReviewPanel({
     {report ? <section aria-label={t("Detailed drinking-window comparison")}>
       <h3>{t("Reference version")} {report.versionNumber}</h3>
       <p>{report.wineCount} {t("wines")} · {changedCount} {t("changed windows")} · {report.draftIssueCount} {t("reference issues")}</p>
-      <p>{t("Current dates show your selected reference or the model. Your private model timing adjustment is not included.")}</p>
+      <p>{t("The current dates are the ones you see in your cellar, including your personal timing choice.")}</p>
       {report.draftIssueCount > 0 ? <Notice tone="warning">{t("This draft still has reference issues and cannot be approved.")}</Notice> : null}
       <ol className="drinking-window-shadow-review__rows">
         {orderedRows.slice(0, shown).map((row) => <li key={row.wineId}>

@@ -18,13 +18,14 @@ release target.
 
 ## Status at 23 October 2026
 
-**Not released.** The merged work through PR #200 provides the database
+**Not released.** The merged work through PR #203 provides the database
 foundation, candidate staging, draft diagnostics, review decisions, shadow
 comparison, publication/opt-in mechanisms, and a curator review screen. The
 Burgaud 2022 Côte du Py / James row is a **draft**, not approved or active.
 The linked `cellarmanager-v02-dev` project was observed with 13 pending
 drinking-window/identity migrations in a read-only dry run. The workbook audit
-has 226 two-date pairs but no complete three-date shared rows. These are
+has 226 two-date pairs but no complete three-date shared rows. PR #203's
+three-date manual editor is merged, but its migration is not deployed. These are
 point-in-time observations, not a claim that the live project remains
 unchanged; recheck them before a deployment decision. The existing model and
 personal timing controls remain in use.
@@ -35,8 +36,8 @@ here, not when its PR merges. Dates are not delivery promises.
 
 | Gate | Status | Immediate outcome |
 | --- | --- | --- |
-| 0. Reconcile deployment state | In progress | The earlier 13 migrations and recovery replayed on a private clone with unchanged existing advice. This branch adds a fourteenth migration, tested locally but not yet replayed on that clone; active commit and pilot link remain open. |
-| 1. Close owner-facing behavior | In progress | Three-date manual editing and legacy fourth-date retention are implemented locally, with an old-database compatibility fallback; identity linking, comparison, and owner walkthrough remain open. |
+| 0. Reconcile deployment state | In progress | The earlier 13 migrations and recovery replayed on a private clone with unchanged existing advice. PR #203 and this branch add two more migrations, tested locally but not yet replayed on that clone; active commit and pilot link remain open. |
+| 1. Close owner-facing behavior | In progress | Three-date manual editing and an owner-specific comparison are implemented locally; identity linking, mobile/edge-case testing, and owner walkthrough remain open. |
 | 2. Deploy database capabilities | Blocked by gates 0–1 and operator approval | New machinery is present but no advice changes by default. |
 | 3. Publish one real pilot | Blocked by gate 2 and human reviews | One approved cellar can see a verified real window. |
 | 4. Make reference maintenance routine | Not started | Authorized curators can add/correct evidence-backed versions in the app. |
@@ -88,6 +89,21 @@ web lint, 829 tests, and build passed. This is
 **not deployed** and does not accept Gate 1. The new migration must join the
 fresh private-clone rehearsal before Gate 0 can pass.
 
+This branch addresses action 3: a new owner-bound shadow report compares the
+proposed three dates with the current manual window, currently selected shared
+reference, or model **after that owner's personal timing adjustment**. If an
+active reference has an ambiguous/conflicting identity, the baseline is shown
+as unavailable, as on the cellar screen. The report hash changes when the
+owner's timing changes; service-side publication replays that same owner-bound
+hash. Owners cannot approve one another's reports, and a later report makes
+an earlier review stale. Each request makes a fresh report. Old reports lack an
+owner binding and are hidden from the new owner list; a fresh comparison is
+required. The migration and 26 comparison, 24 owner-review, and 34 publication database
+assertions passed in rollback-only local transactions. This remains
+**not deployed or owner-walked-through** and does not accept Gate 1. Gate 0
+must now rehearse 15 pending migrations, including this one, before any live
+write is proposed.
+
 1. Make the private manual override use the agreed **three** milestones. Keep
    legacy four-year records readable without inventing or silently dropping a
    `drink by` date. Prove precedence: manual override > opted-in reviewed
@@ -97,9 +113,8 @@ fresh private-clone rehearsal before Gate 0 can pass.
    never let that private choice silently alter the shared group definition.
 3. Make the whole-cellar comparison show the **dates the owner actually sees**,
    including any private model timing adjustment, as well as proposed three
-   dates and their sources. Today the comparison explicitly says that private
-   model timing is not included; that discrepancy must be resolved or clearly
-   excluded with owner approval before opt-in.
+   dates and their sources. Implemented locally in this branch; verify against
+   the actual pilot cellar before accepting the gate.
 4. Test mobile layout, manual edit/clear, no match, ambiguous match, changed
    identity, stale comparison, and emergency-off behavior with real UI paths.
 
