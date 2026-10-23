@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(66);
+select plan(72);
 
 select has_column(
     'public',
@@ -41,6 +41,24 @@ select has_table(
     'Owner-adjusted windows are stored separately from model output'
 );
 
+select is(
+    private.maturity_state_from_window(2040, 2028, 2030, 2034, null),
+    'assess-now',
+    'A three-date window remains assessable after its optimal period without an invented expiry'
+);
+
+select is(
+    private.maturity_state_from_window(2037, 2028, 2030, 2034, 2040),
+    'priority',
+    'A legacy fourth date retains its previous priority state'
+);
+
+select is(
+    private.maturity_state_from_window(2037, null, 2030, 2034, null),
+    null::text,
+    'A missing required milestone does not produce a state'
+);
+
 select ok(
     to_regprocedure('public.install_initial_maturity_knowledge()') is not null
     and to_regprocedure('public.install_expanded_maturity_knowledge()') is not null
@@ -71,6 +89,13 @@ select ok(
     and has_function_privilege('authenticated', 'public.set_wine_maturity_override(uuid,integer,integer,integer,integer,text,text)', 'EXECUTE')
     and has_function_privilege('authenticated', 'public.clear_wine_maturity_override(uuid)', 'EXECUTE'),
     'Authenticated users can use only the reviewed household maturity APIs'
+);
+
+select ok(
+    not has_function_privilege('authenticated', 'public.get_household_maturity_overview_before_references(uuid)', 'EXECUTE')
+    and not has_function_privilege('authenticated', 'public.get_household_maturity_overview_legacy_four_date(uuid)', 'EXECUTE')
+    and not has_function_privilege('anon', 'public.get_household_maturity_overview_legacy_four_date(uuid)', 'EXECUTE'),
+    'The three-date overview adapter does not expose internal readers'
 );
 
 select ok(
@@ -438,9 +463,38 @@ select is(
 select ok(
     (
         select item ->> 'state' = 'hold'
+           and (item ->> 'drink_by_year')::integer = 2040
+        from jsonb_array_elements(
+            public.get_household_maturity_overview(
+                '00000000-0000-4000-8000-000000000100'
+            )
+        ) item
+        where item ->> 'wine_id' =
+            '00000000-0000-4000-8000-000000000110'
+    ),
+    'The household overview still exposes a previously entered fourth date'
+);
+
+select is(
+    public.set_wine_maturity_override(
+        '00000000-0000-4000-8000-000000000110',
+        2028,
+        2030,
+        2034,
+        null,
+        'overflow',
+        'Three milestones only'
+    ) #>> '{override,drink_by_year}',
+    null::text,
+    'A member can explicitly clear the legacy fourth date and save three milestones'
+);
+
+select ok(
+    (
+        select item ->> 'state' = 'hold'
            and (item ->> 'is_override')::boolean
            and item ->> 'confidence_label' = 'owner'
-           and (item ->> 'drink_by_year')::integer = 2040
+           and item ->> 'drink_by_year' is null
         from jsonb_array_elements(
             public.get_household_maturity_overview(
                 '00000000-0000-4000-8000-000000000100'

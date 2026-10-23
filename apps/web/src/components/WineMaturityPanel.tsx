@@ -156,6 +156,11 @@ function yearInput(form: HTMLFormElement, name: string): number {
   return value
 }
 
+function optionalYearInput(form: HTMLFormElement, name: string): number | null {
+  const raw = new FormData(form).get(name)
+  return raw === null || String(raw).trim() === "" ? null : yearInput(form, name)
+}
+
 export function WineMaturityPanel({
   canManageCellar = false,
   householdId,
@@ -297,7 +302,7 @@ export function WineMaturityPanel({
           {
             bestEndYear: yearInput(form, "bestEndYear"),
             bestStartYear: yearInput(form, "bestStartYear"),
-            drinkByYear: yearInput(form, "drinkByYear"),
+            drinkByYear: optionalYearInput(form, "drinkByYear"),
             firstTrialYear: yearInput(form, "firstTrialYear"),
           },
           purpose,
@@ -531,7 +536,7 @@ export function WineMaturityPanel({
         <Notice tone="warning">{t("The wine identity needs review before a drinking window can be suggested.")}</Notice>
       ) : null}
 
-      {displayedYears && (activeReference || (projection && model)) && result?.effectiveSource !== "unavailable" ? (
+      {displayedYears && (override || activeReference || (projection && model)) && result?.effectiveSource !== "unavailable" ? (
         <>
           <div className={`wine-maturity__summary wine-maturity__summary--${referenceState ?? displayedRecommendation?.state ?? model?.state ?? "assess"}`}>
             <div>
@@ -570,20 +575,30 @@ export function WineMaturityPanel({
 
           <dl className="wine-maturity__window">
             <div>
-              <dt>{t("First assessment")}</dt>
+              <dt>{t("Start tasting")}</dt>
               <dd>{displayedYears.firstTrialYear}</dd>
             </div>
             <div>
-              <dt>{t("Likely best period")}</dt>
-              <dd>
-                {displayedYears.bestStartYear}–{displayedYears.bestEndYear}
-              </dd>
+              <dt>{t("Probable optimal period starts")}</dt>
+              <dd>{displayedYears.bestStartYear}</dd>
             </div>
-            {!activeReference ? <div>
-              <dt>{t("Preferably drink by")}</dt>
-              <dd>{"drinkByYear" in displayedYears ? displayedYears.drinkByYear : null}</dd>
-            </div> : null}
+            <div>
+              <dt>{t("Probable optimal period ends")}</dt>
+              <dd>{displayedYears.bestEndYear}</dd>
+            </div>
           </dl>
+
+          {!override && !activeReference && "drinkByYear" in displayedYears ? (
+            <p className="wine-maturity__confidence">
+              {t("Existing model drink-by estimate")}: {displayedYears.drinkByYear}. {t("This is not an expiry date.")}
+            </p>
+          ) : null}
+
+          {override?.drinkByYear !== null && override?.drinkByYear !== undefined ? (
+            <p className="wine-maturity__confidence">
+              {t("Previously recorded personal drink-by year")}: {override.drinkByYear}. {t("This older date is kept unless you clear it; it is not an expiry date.")}
+            </p>
+          ) : null}
 
           {activeReference ? <p className="wine-maturity__confidence">
             {t("Selected from reviewed shared references")}: {t(maturityLayerLabel(activeReference.matchedScope))}.
@@ -834,7 +849,7 @@ export function WineMaturityPanel({
               key={override?.updatedAt ?? projection?.calculatedAt ?? activeReference?.referenceRowId}
               onSubmit={(event) => void saveOverride(event)}
             >
-              <label>{t("First assessment")}<input
+              <label>{t("Start tasting")}<input
                   defaultValue={displayedYears.firstTrialYear}
                   min="1800"
                   name="firstTrialYear"
@@ -842,7 +857,7 @@ export function WineMaturityPanel({
                   type="number"
                 />
               </label>
-              <label>{t("Best from")}<input
+              <label>{t("Probable optimal period starts")}<input
                   defaultValue={displayedYears.bestStartYear}
                   min="1800"
                   name="bestStartYear"
@@ -850,7 +865,7 @@ export function WineMaturityPanel({
                   type="number"
                 />
               </label>
-              <label>{t("Best until")}<input
+              <label>{t("Probable optimal period ends")}<input
                   defaultValue={displayedYears.bestEndYear}
                   min="1800"
                   name="bestEndYear"
@@ -858,14 +873,13 @@ export function WineMaturityPanel({
                   type="number"
                 />
               </label>
-              <label>{t("Drink by")}<input
-                  defaultValue={"drinkByYear" in displayedYears ? displayedYears.drinkByYear : activeReference?.bestEndYear}
+              {override?.drinkByYear !== null && override?.drinkByYear !== undefined ? <label>{t("Previously recorded personal drink-by year (optional)")}<input
+                  defaultValue={override.drinkByYear}
                   min="1800"
                   name="drinkByYear"
-                  required
                   type="number"
                 />
-              </label>
+              </label> : null}
               <label>{t("Preferred storage (optional)")}<select
                   defaultValue={override?.storagePurpose ?? ""}
                   name="storagePurpose"

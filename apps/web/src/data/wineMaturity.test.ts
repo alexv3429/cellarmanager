@@ -90,6 +90,27 @@ function maturityResponse() {
 }
 
 describe("maturity RPC boundary", () => {
+  it("keeps legacy drink-by dates but accepts a three-milestone manual window", () => {
+    const oldWindow = {
+      ...maturityResponse(),
+      override: {
+        first_trial_year: 2028,
+        best_start_year: 2030,
+        best_end_year: 2034,
+        drink_by_year: 2040,
+        storage_purpose: null,
+        note: null,
+        updated_at: "2026-10-23T10:00:00Z",
+      },
+    }
+
+    expect(parseWineMaturity(oldWindow).override?.drinkByYear).toBe(2040)
+    expect(parseWineMaturity({
+      ...oldWindow,
+      override: { ...oldWindow.override, drink_by_year: null },
+    }).override?.drinkByYear).toBeNull()
+  })
+
   it("parses explainable maturity and storage advice", () => {
     const result = parseWineMaturity(maturityResponse())
 
@@ -352,5 +373,41 @@ describe("maturity RPC boundary", () => {
       ),
     ).rejects.toThrow("chronological order")
     expect(rpc).not.toHaveBeenCalled()
+  })
+
+  it("sends a three-milestone manual window without inventing a drink-by date", async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: {
+        ...maturityResponse(),
+        override: {
+          first_trial_year: 2028,
+          best_start_year: 2030,
+          best_end_year: 2034,
+          drink_by_year: null,
+          storage_purpose: null,
+          note: null,
+          updated_at: "2026-10-23T10:00:00Z",
+        },
+      },
+      error: null,
+    })
+
+    await expect(setWineMaturityOverride(
+      "wine-1",
+      { firstTrialYear: 2028, bestStartYear: 2030, bestEndYear: 2034, drinkByYear: null },
+      null,
+      "",
+      { rpc },
+    )).resolves.toMatchObject({ override: { drinkByYear: null } })
+
+    expect(rpc).toHaveBeenCalledWith("set_wine_maturity_override", {
+      p_best_end_year: 2034,
+      p_best_start_year: 2030,
+      p_drink_by_year: null,
+      p_first_trial_year: 2028,
+      p_note: null,
+      p_storage_purpose: null,
+      p_wine_id: "wine-1",
+    })
   })
 })
