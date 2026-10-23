@@ -81,12 +81,15 @@ included in this record.
   no application advice or access policy was changed there.
 - The proposed pilot has **one plausible household wine** by producer,
   cuvée, and vintage, but **no canonical release link**. It would not match
-  the release-scoped membership yet. This is a private identity-review task,
-  not permission to infer or auto-link it from a similar name.
+  the release-scoped membership yet. On 23 October, the cellar owner confirmed
+  that this entry is the intended Jean-Marc Burgaud Morgon Côte du Py 2022.
+  This confirms the wine's identity only: it does not authorize a live link,
+  publication, opt-in, or migration. No private row identifier is recorded here.
 
 **Gate 0 decision: no-go for a live migration today.** The private replay and
 recovery checks passed, but the deployed Worker commit is still unverified,
-the pilot identity needs owner confirmation, and Gate 1 remains open. A
+the confirmed pilot wine still lacks its canonical release link, and Gate 1
+remains open. A
 fresh preflight and separate operator authorization are required before any
 live migration.
 
@@ -123,10 +126,11 @@ live migration.
 2. Recheck the aggregate preflight immediately before seeding and resolve any
    new duplicate/conflicting identity or nonempty reference library. Do not
    change live data merely to make the preflight green.
-3. Ask the owner to confirm the one plausible pilot wine's exact identity;
-   link it to the canonical release only through an authorized local-review
-   workflow. No automatic name-based link is accepted.
+3. The owner confirmed the plausible pilot wine's exact identity. Link it to
+   the canonical release only through an authorized local-review workflow,
+   then produce a fresh pilot match report. No automatic name-based link is
+   accepted; the confirmation alone did not change live data.
 4. At deployment time, take a **new** protected backup, rerun the preflight,
    and obtain separate authorization for the named live migration batch.
    The prior snapshot was deliberately deleted. Gate 0 remains **In progress**
-   until the active build and pilot identity are verified.
+   until the active build and actual pilot release link are verified.
