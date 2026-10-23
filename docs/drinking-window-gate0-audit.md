@@ -1,6 +1,6 @@
 # Gate 0: linked deployment audit (22–23 October 2026)
 
-This is a **read-only, partial** audit of the linked Supabase project
+This is a **read-only-on-production, partial** audit of the linked Supabase project
 `sxdqcvnjtayfxinyospb` and the deployed app. It does not approve a migration
 or a drinking-window publication. The [living release plan](drinking-window-release-plan.md)
 remains the source of status and acceptance gates.
@@ -50,6 +50,46 @@ remains the source of status and acceptance gates.
   not prove the full migrations will succeed on existing data. No household
   rows were retrieved and no database write was made.
 
+## Private-clone rehearsal (23 October)
+
+With the owner's explicit approval, a protected temporary snapshot of the
+linked `public`, `private`, `auth`, `storage`, and `capture_guard` schemas and
+their data was restored into an isolated local database. The helper schema
+and local `pgcrypto`, `unaccent`, and `pg_trgm` extensions were required for
+the restore. The source and restored counts matched for wines, households,
+auth users, and reference versions; no private rows or identifiers are
+included in this record.
+
+- All **13 pending migrations** applied in order to the restored database
+  without error. The seed left one **draft**, no active reference version,
+  the global switch off, and no opted-in households.
+- Before the batch, maturity responses were captured for every
+  member-accessible wine-card and household-overview read in the snapshot.
+  After the batch, with references off, there were **zero changes** to their
+  existing advice fields and **zero visible reference windows**. The new
+  source label was excluded from the core-payload equality check because it
+  is an additive field. Checked read-RPC execute privileges were unchanged
+  for anonymous and authenticated roles, and for the wine-card service role.
+  Anonymous and ordinary authenticated roles cannot execute the publication RPC; the service role
+  can. Anonymous cannot read drafts; authenticated can reach the draft RPC,
+  which performs its own curator check.
+- A second clean local restore from the same snapshot reproduced the source
+  counts and pre-migration function shape, proving the recovery route for
+  this snapshot. Both scratch databases and the temporary snapshot were then
+  removed. The snapshot is **not** in Git and is not recoverable from this
+  workspace. No migration or publication was applied to the linked project;
+  no application advice or access policy was changed there.
+- The proposed pilot has **one plausible household wine** by producer,
+  cuvée, and vintage, but **no canonical release link**. It would not match
+  the release-scoped membership yet. This is a private identity-review task,
+  not permission to infer or auto-link it from a similar name.
+
+**Gate 0 decision: no-go for a live migration today.** The private replay and
+recovery checks passed, but the deployed Worker commit is still unverified,
+the pilot identity needs owner confirmation, and Gate 1 remains open. A
+fresh preflight and separate operator authorization are required before any
+live migration.
+
 ## Migration-time risks to test, not assumptions to waive
 
 1. The shared-producer and Barraud migrations create canonical identities;
@@ -63,18 +103,17 @@ remains the source of status and acceptance gates.
 2. The active-reader migration renames and replaces the existing maturity
    reader functions. Its new reference path checks the global runtime switch,
    which is inserted as **disabled**; the subsequent staged-rollout migration
-   adds household opt-in. Rehearse the *whole ordered batch* and compare
-   existing advice before/after. Do not stop at the intermediate global-reader
-   migration in a live deployment.
+   adds household opt-in. The *whole ordered batch* passed the private-clone
+   comparison. A live deployment must still not stop at the intermediate
+   global-reader migration.
 3. The deployed web client contains curator and comparison calls whose RPCs
    are among the pending migrations. The current app/build check does not
    demonstrate that those screens work against the older database. Verify
    compatibility explicitly during rehearsal and the post-deployment smoke.
-4. A backup/restore route and a representative private rehearsal have not
-   been demonstrated. A test on a fresh synthetic database is useful but is
-   not a substitute. Do not apply the 13 migrations to the live project until
-   the private rehearsal, backup verification, and owner authorization are
-   recorded in the release plan.
+4. A representative private replay and a second clean restore succeeded.
+   This is not a substitute for a fresh backup, preflight, and explicit owner
+   authorization at the time of live migration. The temporary snapshot has
+   been deleted, so a new protected backup is needed for that operation.
 
 ## Remaining Gate 0 actions
 
@@ -84,11 +123,10 @@ remains the source of status and acceptance gates.
 2. Recheck the aggregate preflight immediately before seeding and resolve any
    new duplicate/conflicting identity or nonempty reference library. Do not
    change live data merely to make the preflight green.
-3. With explicit permission for private data handling, take a protected,
-   temporary snapshot of the linked project, rehearse the 13 migrations on a
-   separate local database, compare representative maturity responses and
-   permissions before/after, and verify restore. Keep the snapshot out of Git
-   and remove it after recording only aggregate evidence.
-4. Update the [release plan](drinking-window-release-plan.md) with exact
-   observations and a go/no-go decision. Gate 0 remains **In progress** until
-   this evidence exists.
+3. Ask the owner to confirm the one plausible pilot wine's exact identity;
+   link it to the canonical release only through an authorized local-review
+   workflow. No automatic name-based link is accepted.
+4. At deployment time, take a **new** protected backup, rerun the preflight,
+   and obtain separate authorization for the named live migration batch.
+   The prior snapshot was deliberately deleted. Gate 0 remains **In progress**
+   until the active build and pilot identity are verified.
