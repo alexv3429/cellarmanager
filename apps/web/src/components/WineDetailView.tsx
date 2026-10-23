@@ -38,6 +38,7 @@ import type { RegisteredDevicesState } from "../devices/useRegisteredDevices"
 import type { AppView } from "../navigation/appNavigation"
 import { Notice } from "./Notice"
 import { WineAcquisitionsPanel } from "./WineAcquisitionsPanel"
+import { WineAgeingGroupReviewPanel } from "./WineAgeingGroupReviewPanel"
 import { WineFactsPanel } from "./WineFactsPanel"
 import { WineIdentityReviewPanel } from "./WineIdentityReviewPanel"
 import { WineReferenceMatchReview } from "./WineReferenceMatchReview"
@@ -1032,6 +1033,13 @@ export function WineDetailView({
             key={wine.id}
             onChanged={() => setIdentityRevision((current) => current + 1)}
             wines={[wine]}
+          />
+          <WineAgeingGroupReviewPanel
+            isOnline={isOnline}
+            key={wine.id}
+            onChanged={() => setIdentityRevision((current) => current + 1)}
+            revision={identityRevision}
+            wineId={wine.id}
           /></>
         ) : null}
       </section>

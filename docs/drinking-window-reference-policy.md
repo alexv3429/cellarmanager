@@ -87,6 +87,18 @@ representative class. The existing schema's group key, definition, and
 membership records are the place to express this reviewed distinction; the
 research-only batch does not create or assign such groups.
 
+An explicit owner choice is bound to one household wine, immutable reference
+version, hierarchy scope, and confirmed identity fingerprint. It can select an
+applicable group or explicitly leave that scope unclassified. At that scope it
+replaces the shared membership for that wine only; clearing it restores the
+reviewed shared membership. A changed wine identity invalidates the choice,
+and a new reference version requires a fresh choice. An unclassified choice
+blocks group-specific rows at that scope, but does not block a reviewed
+`all-at-this-scope` row or a safely applicable broader scope. A choice on a
+draft never activates the draft, and a household without opt-in never receives
+shared-reference advice. The choice and its history remain private to the
+household and cannot edit or publish the shared library.
+
 Each broader profile records its group (or an explicitly reviewed
 `all-at-this-scope` applicability). Group membership must be established for
 the wine before that row can match. Overlapping groups at the same lookup
