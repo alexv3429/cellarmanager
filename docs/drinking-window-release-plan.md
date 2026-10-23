@@ -16,7 +16,7 @@ if that model cannot assess them. The owner-authorized pilot comes before
 broader use. No percentage of catalogue coverage is silently implied by this
 release target.
 
-## Status at 22 October 2026
+## Status at 23 October 2026
 
 **Not released.** The merged work through PR #200 provides the database
 foundation, candidate staging, draft diagnostics, review decisions, shadow
@@ -35,7 +35,7 @@ here, not when its PR merges. Dates are not delivery promises.
 
 | Gate | Status | Immediate outcome |
 | --- | --- | --- |
-| 0. Reconcile deployment state | Not started | Know exactly what is live and rehearse the pending migrations safely. |
+| 0. Reconcile deployment state | In progress | All 13 migrations and recovery replayed on a private clone with unchanged existing advice; owner confirmed the pilot wine, but the active commit and canonical release link still need verification. |
 | 1. Close owner-facing behavior | Not started | Three-date editing, personal choices, and an honest comparison are usable. |
 | 2. Deploy database capabilities | Blocked by gates 0–1 and operator approval | New machinery is present but no advice changes by default. |
 | 3. Publish one real pilot | Blocked by gate 2 and human reviews | One approved cellar can see a verified real window. |
@@ -44,6 +44,18 @@ here, not when its PR merges. Dates are not delivery promises.
 | 6. Release and operate | Blocked by gates 3–5 | The supported feature has repeatable checks, monitoring, and rollback. |
 
 ## Gate 0 — reconcile the actual deployment (technical owner)
+
+The [Gate 0 audit, updated 23 October](drinking-window-gate0-audit.md)
+confirmed 13 pending migrations and checked linked identity counts. With the
+owner's approval, all 13 were replayed on a protected private clone;
+member-visible maturity advice remained unchanged while the feature was off,
+and a second clean restore succeeded. The temporary private snapshot and
+both scratch databases were removed. Cloudflare supplied an active deployment
+version ID, but not its source commit. The owner confirmed the plausible pilot
+wine's identity, but it lacks the canonical release link, so the draft would
+not match it. **No-go for live migration today; Gate 0 is not accepted.**
+No live application advice or
+access policy changed, and no migration was applied.
 
 1. Compare the deployed Worker build and linked database migration history with
    the merged repository. Record exact hashes and pending migrations here.
@@ -203,7 +215,15 @@ meaningful. At minimum, each update must:
 | Date / change | Gate and decision | Evidence / remaining risk |
 | --- | --- | --- |
 | 2026-10-22 · PR #201 | Establish this tracked release plan and CI update guard. All delivery gates remain open. No live advice or database state changes. | Existing merged implementation and draft are described above; CI proves a plan update accompanies future relevant PRs, but cannot judge its quality. |
+| 2026-10-22 · PR #202 | Gate 0 moved to In progress after read-only linked migration/status checks and static review. No live advice, permission, or database change. | [Audit](drinking-window-gate0-audit.md) records 13 pending migrations, seed conflicts to preflight, and reader compatibility risk. Private rehearsal, backup/restore, active deployment hash, and owner authorization remain open. |
+| 2026-10-23 · PR #202 update | Gate 0 aggregate linked preflight completed read-only; no live advice, permission, or database change. | Reference-version count 0; checked Beaujolais/Morgon/Burgaud/Barraud identity counts 1 each; six other producer names 0 exact normalized matches. Cloudflare version 420 deployed at 20:53:20Z on 22 October, but its commit remains unverified. Private rehearsal and restore evidence remain open. |
+| 2026-10-23 · PR #202 private replay | Gate 0 remains In progress; no-go for live migration. No live application advice or access policy changed, and no migration was applied. | Owner-approved protected snapshot restored locally; all 13 migrations passed; every checked wine-card and household-overview core payload stayed unchanged with feature off; a second clean restore passed. Temporary data deleted. One plausible pilot wine has no canonical release link; active Worker commit remains unverified. See [audit](drinking-window-gate0-audit.md). |
+| 2026-10-23 · PR #202 owner confirmation | Gate 0 remains In progress; no live wine identity, advice, permission, or deployment state changed. | Owner confirmed the proposed Burgaud Côte du Py 2022 pilot wine's identity. Its canonical release link is still absent, so no real match is established. Active Worker commit remains unverified; Gate 1 and live-migration authorization remain open. See [audit](drinking-window-gate0-audit.md). |
 
-**Next action:** complete gate 0's read-only live-state and migration audit,
-then update this record with exact evidence. Do not ask the owner to merge a
-chain of infrastructure PRs as a substitute for a demonstrated outcome.
+**Next action:** establish the active deployment's source commit and provide
+the owner-reviewed local workflow for linking the confirmed pilot wine to its
+canonical release. Gate 1 can proceed in
+parallel, but no live migration is authorized. At deployment time a **new**
+protected backup, fresh preflight, and separate owner authorization are
+required. Do not ask the owner to merge a chain of infrastructure PRs as a
+substitute for a demonstrated outcome.
