@@ -39,6 +39,7 @@ import type { AppView } from "../navigation/appNavigation"
 import { Notice } from "./Notice"
 import { WineAcquisitionsPanel } from "./WineAcquisitionsPanel"
 import { WineFactsPanel } from "./WineFactsPanel"
+import { WineIdentityReviewPanel } from "./WineIdentityReviewPanel"
 import { WineReferenceMatchReview } from "./WineReferenceMatchReview"
 import { WineMaturityPanel } from "./WineMaturityPanel"
 import { WinePersonalGuidancePanel } from "./WinePersonalGuidancePanel"
@@ -273,6 +274,7 @@ export function WineDetailView({
     deviceRegistration.deviceIdByHousehold[householdId]
 
   const [isEditing, setIsEditing] = useState(false)
+  const [identityRevision, setIdentityRevision] = useState(0)
   const [editProducer, setEditProducer] = useState("")
   const [editCuvee, setEditCuvee] = useState("")
   const [editVintage, setEditVintage] = useState("")
@@ -1018,10 +1020,19 @@ export function WineDetailView({
         )}
 
         {canManageCellar && !isEditing ? (
-          <WineReferenceMatchReview
+          <><WineReferenceMatchReview
             isOnline={isOnline}
+            key={`${wine.id}:${identityRevision}`}
             wine={wine}
           />
+          <WineIdentityReviewPanel
+            compact
+            initialWineId={wine.id}
+            isOnline={isOnline}
+            key={wine.id}
+            onChanged={() => setIdentityRevision((current) => current + 1)}
+            wines={[wine]}
+          /></>
         ) : null}
       </section>
 
@@ -1033,6 +1044,7 @@ export function WineDetailView({
         canManageCellar={canManageCellar}
         householdId={householdId}
         isOnline={isOnline}
+        key={`${wine.id}:${identityRevision}`}
         wineId={wine.id}
       />
 

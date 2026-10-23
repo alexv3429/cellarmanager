@@ -76,6 +76,25 @@ async function enterQuery(value: string) {
 }
 
 describe("household wine identity panel", () => {
+  it("reviews one wine directly from its card and reports a private link change", async () => {
+    const onChanged = vi.fn()
+    await act(async () => root.render(<WineIdentityReviewPanel
+      compact initialWineId="wine" isOnline onChanged={onChanged} wines={[wine]} />))
+    const details = container.querySelector("details")
+    await act(async () => {
+      if (details) details.open = true
+      details?.dispatchEvent(new Event("toggle"))
+    })
+    expect(container.textContent).toContain("Review this wine’s shared identity")
+    expect(container.querySelector(".wine-identity-review__wines")).toBeNull()
+    expect(getHouseholdWineIdentityStatus).toHaveBeenCalledWith("wine")
+    await enterQuery("Barraud")
+    await click("Search shared wines")
+    await click("Daniel Barraud · Pouilly-Fuissé Premier Cru Sur La Roche")
+    await click("Confirm this shared wine")
+    expect(onChanged).toHaveBeenCalledTimes(1)
+  })
+
   it("requires a selected shared release before confirming a household link", async () => {
     await openAndSelect()
     expect(manageHouseholdWineIdentity).not.toHaveBeenCalled()

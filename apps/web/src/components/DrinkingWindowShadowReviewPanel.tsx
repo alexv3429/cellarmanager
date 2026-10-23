@@ -221,6 +221,8 @@ export function DrinkingWindowShadowReviewPanel({
           <span>{t(comparisonLabel(row.comparisonStatus))}</span>
           <span>{t("Current")}: {windowText(row.currentFirstTrialYear, row.currentBestStartYear, row.currentBestEndYear)} ({t(sourceLabel(row.currentSource))})</span>
           <span>{t("Proposed")}: {windowText(row.proposedFirstTrialYear, row.proposedBestStartYear, row.proposedBestEndYear)}{row.matchedScope ? ` · ${t(scopeLabel(row.matchedScope))}` : ""}</span>
+          {row.proposedGroupDefinition ? <span>{t("Reviewed ageing group")}: {row.proposedGroupDefinition}</span> : null}
+          {row.proposedReferenceRationale ? <span>{t("Why these dates")}: {row.proposedReferenceRationale}</span> : null}
         </li>)}
       </ol>
       {shown < orderedRows.length ? <button onClick={() => setShown(shown + 30)} type="button">
