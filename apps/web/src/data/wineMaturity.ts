@@ -118,7 +118,7 @@ export interface WineMaturityProjection {
 export interface WineMaturityOverride {
   bestEndYear: number
   bestStartYear: number
-  drinkByYear: number
+  drinkByYear: number | null
   firstTrialYear: number
   note: string | null
   storagePurpose: LocationStoragePurpose | null
@@ -525,7 +525,7 @@ export function parseWineMaturity(value: unknown): WineMaturity {
     override = {
       bestEndYear: integer(parsed.best_end_year, "override best end year"),
       bestStartYear: integer(parsed.best_start_year, "override best start year"),
-      drinkByYear: integer(parsed.drink_by_year, "override drink-by year"),
+      drinkByYear: optionalInteger(parsed.drink_by_year, "override drink-by year"),
       firstTrialYear: integer(parsed.first_trial_year, "override first trial year"),
       note: optionalText(parsed.note, "override note"),
       storagePurpose: parseStoragePurpose(parsed.storage_purpose),
@@ -708,7 +708,7 @@ export async function setWineMaturityOverride(
   years: {
     bestEndYear: number
     bestStartYear: number
-    drinkByYear: number
+    drinkByYear: number | null
     firstTrialYear: number
   },
   storagePurpose: LocationStoragePurpose | null,
@@ -718,7 +718,7 @@ export async function setWineMaturityOverride(
   if (
     years.firstTrialYear > years.bestStartYear ||
     years.bestStartYear > years.bestEndYear ||
-    years.bestEndYear > years.drinkByYear
+    (years.drinkByYear !== null && years.bestEndYear > years.drinkByYear)
   ) {
     throw new Error("Maturity years must stay in chronological order")
   }
@@ -738,6 +738,19 @@ export async function setWineMaturityOverride(
       rpcClient,
     ),
   )
+}
+
+/** Keep the legacy editor when the database has not yet gained three-date saves. */
+export async function supportsThreeMilestoneManualOverrides(
+  rpcClient?: RpcClient,
+): Promise<boolean> {
+  try {
+    const client = rpcClient ?? await defaultClient()
+    const { data, error } = await client.rpc("supports_three_milestone_manual_overrides", {})
+    return error === null && data === true
+  } catch {
+    return false
+  }
 }
 
 export async function clearWineMaturityOverride(
