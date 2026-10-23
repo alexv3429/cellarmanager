@@ -76,7 +76,7 @@ separate, explicitly approved action.
 
 ## Gate 1 — close owner-facing behavior (product and technical owners)
 
-The `codex/drinking-window-three-date-owner-edit` branch implements action 1
+PR #203 implements action 1
 without changing the existing model's four-year calculation: new personal
 manual windows require three dates, while an older personal `drink by` year
 remains visible and is retained unless the owner explicitly clears it. A
@@ -229,7 +229,7 @@ meaningful. At minimum, each update must:
 | 2026-10-23 · PR #202 update | Gate 0 aggregate linked preflight completed read-only; no live advice, permission, or database change. | Reference-version count 0; checked Beaujolais/Morgon/Burgaud/Barraud identity counts 1 each; six other producer names 0 exact normalized matches. Cloudflare version 420 deployed at 20:53:20Z on 22 October, but its commit remains unverified. Private rehearsal and restore evidence remain open. |
 | 2026-10-23 · PR #202 private replay | Gate 0 remains In progress; no-go for live migration. No live application advice or access policy changed, and no migration was applied. | Owner-approved protected snapshot restored locally; all 13 migrations passed; every checked wine-card and household-overview core payload stayed unchanged with feature off; a second clean restore passed. Temporary data deleted. One plausible pilot wine has no canonical release link; active Worker commit remains unverified. See [audit](drinking-window-gate0-audit.md). |
 | 2026-10-23 · PR #202 owner confirmation | Gate 0 remains In progress; no live wine identity, advice, permission, or deployment state changed. | Owner confirmed the proposed Burgaud Côte du Py 2022 pilot wine's identity. Its canonical release link is still absent, so no real match is established. Active Worker commit remains unverified; Gate 1 and live-migration authorization remain open. See [audit](drinking-window-gate0-audit.md). |
-| 2026-10-23 · `codex/drinking-window-three-date-owner-edit` | Gate 1 action 1 implemented locally; Gate 1 remains In progress and Gate 0 gains one migration to rehearse. No live advice, access, identity, or deployment changed. | New manual windows have three required years; existing personal fourth dates remain visible and explicitly clearable; manual advice is visible even without a model projection. Web lint, 827 tests, and build passed; 72 maturity database assertions passed with the new migration inside a rolled-back local transaction. Gate 1 identity, comparison, and owner walkthrough remain open; Gate 0 needs a fresh private-clone rehearsal of all 14 migrations. |
+| 2026-10-23 · PR #203 | Gate 1 action 1 implemented locally; Gate 1 remains In progress and Gate 0 gains one migration to rehearse. No live advice, access, identity, or deployment changed. | New manual windows have three required years; existing personal fourth dates remain visible and explicitly clearable; manual advice is visible even without a model projection. Web lint, 827 tests, and build passed; 72 maturity database assertions passed with the new migration inside a rolled-back local transaction. Gate 1 identity, comparison, and owner walkthrough remain open; Gate 0 needs a fresh private-clone rehearsal of all 14 migrations. |
 
 **Next action:** establish the active deployment's source commit and provide
 the owner-reviewed local workflow for linking the confirmed pilot wine to its
