@@ -16,19 +16,19 @@ if that model cannot assess them. The owner-authorized pilot comes before
 broader use. No percentage of catalogue coverage is silently implied by this
 release target.
 
-## Status at 23 October 2026
+## Status at 24 October 2026
 
-**Not released.** The merged work through PR #205 provides the database
+**Not released.** The merged work through PR #206 provides the database
 foundation, candidate staging, draft diagnostics, review decisions, shadow
-comparison, publication/opt-in mechanisms, and a curator review screen. The
-Burgaud 2022 Côte du Py / James row is a **draft**, not approved or active.
-The linked `cellarmanager-v02-dev` project was observed with 13 pending
-drinking-window/identity migrations in a read-only dry run. The workbook audit
-has 226 two-date pairs but no complete three-date shared rows. PRs #203 and
-#204 (three-date manual editing and owner-visible comparison) and #205
-(identity review and ageing-group rationale) are merged, but their migrations
-are not deployed. This branch adds a private, version-specific owner choice
-for an applicable ageing group. These are
+comparison, publication/opt-in mechanisms, a curator review screen, and the
+owner's private ageing-group choice. The Burgaud 2022 Côte du Py / James row
+is a **draft**, not approved or active.
+The linked `cellarmanager-v02-dev` project was observed with **19 pending
+migrations** in a fresh read-only listing. All 19 replayed successfully on a
+protected private clone; no existing advice changed while the feature was
+off. The deployed Worker version was mapped to merged commit
+`7ed4afa4763cdb382f605bdf4bd49d083ad6e873`. The workbook audit has
+226 two-date pairs but no complete three-date shared rows. These are
 point-in-time observations, not a claim that the live project remains
 unchanged; recheck them before a deployment decision. The existing model and
 personal timing controls remain in use.
@@ -39,27 +39,26 @@ here, not when its PR merges. Dates are not delivery promises.
 
 | Gate | Status | Immediate outcome |
 | --- | --- | --- |
-| 0. Reconcile deployment state | In progress | The earlier 13 migrations and recovery replayed on a private clone with unchanged existing advice. PRs #203–#205 and this branch add six more migrations, tested locally but not yet replayed on that clone; active commit and pilot link remain open. |
-| 1. Close owner-facing behavior | In progress | Three-date manual editing, owner-specific comparison, wine-card identity review, and group rationale are merged. This branch adds the local ageing-group preference; mobile/edge-case testing and owner walkthrough remain open. |
-| 2. Deploy database capabilities | Blocked by gates 0–1 and operator approval | New machinery is present but no advice changes by default. |
-| 3. Publish one real pilot | Blocked by gate 2 and human reviews | One approved cellar can see a verified real window. |
+| 0. Reconcile deployment state | Accepted for this batch, subject to just-in-time rechecks | All 19 migrations replayed on a fresh private clone; unchanged advice, second restore, deployed-commit mapping, and a rolled-back pilot match are recorded in the audit. No live write was made. |
+| 1. Close owner-facing behavior | In progress | Three-date editing, comparison, identity review, and private group choice are merged. Actual owner/mobile walkthrough needs the inert RPC deployment in gate 2. |
+| 2. Deploy database capabilities | Blocked by explicit owner authorization | The 19-migration batch can be applied only after a fresh backup/preflight and named approval. Feature switch and household opt-in stay off. This inert deployment enables the gate 1 UI walkthrough; gate 1 acceptance is not a prerequisite for starting gate 2. |
+| 3. Publish one real pilot | Blocked by gates 1–2 and human reviews | One approved cellar can see a verified real window. |
 | 4. Make reference maintenance routine | Not started | Authorized curators can add/correct evidence-backed versions in the app. |
 | 5. Establish and measure initial coverage | Blocked by gate 4 | One additional high-impact reference is reviewed; gaps remain visible. |
 | 6. Release and operate | Blocked by gates 3–5 | The supported feature has repeatable checks, monitoring, and rollback. |
 
 ## Gate 0 — reconcile the actual deployment (technical owner)
 
-The [Gate 0 audit, updated 23 October](drinking-window-gate0-audit.md)
-confirmed 13 pending migrations and checked linked identity counts. With the
-owner's approval, all 13 were replayed on a protected private clone;
-member-visible maturity advice remained unchanged while the feature was off,
-and a second clean restore succeeded. The temporary private snapshot and
-both scratch databases were removed. Cloudflare supplied an active deployment
-version ID, but not its source commit. The owner confirmed the plausible pilot
-wine's identity, but it lacks the canonical release link, so the draft would
-not match it. **No-go for live migration today; Gate 0 is not accepted.**
-No live application advice or
-access policy changed, and no migration was applied.
+The [Gate 0 audit, updated 24 October](drinking-window-gate0-audit.md)
+records a fresh read-only linked inventory of **19 pending migrations**,
+the exact merged-commit-to-deployed-version mapping, a successful full-batch
+private-clone replay, zero changed core advice responses across 782 wines
+and 4 overviews, and a second clean restore. In a rolled-back transaction,
+the owner-confirmed pilot wine linked to its unique canonical release and
+produced one draft match. The live wine remains unlinked. The temporary export
+and both scratch databases were removed. **Gate 0 technical evidence is
+accepted for this batch; no live migration is authorized.** Recheck the
+deployment, backup, preflight, and pending list immediately before any write.
 
 1. Compare the deployed Worker build and linked database migration history with
    the merged repository. Record exact hashes and pending migrations here.
@@ -69,11 +68,16 @@ access policy changed, and no migration was applied.
    unchanged while the reference feature is off.
 3. Inventory the proposed pilot wine's **real** household identity links,
    vintage, colour, existing dates, and whether the draft would actually
-   match. Resolve uncertainty with the owner, not a fuzzy-name guess.
+   match after an explicit owner link. Resolve uncertainty with the owner,
+   not a fuzzy-name guess. A private-clone simulation is sufficient for this
+   predeployment gate; the **live** owner link and fresh report belong to
+   gates 2–3 after the review RPC exists on the target.
 
 **Accept only with:** migration inventory, rehearsal result, backup/restore
-evidence, live/merged hash comparison, and a pilot match report linked in this
-record. **Stop if:** an existing household's advice changes before opt-in, a
+evidence, live/merged hash comparison, and a rolled-back private-clone pilot
+match report linked in this record.
+
+**Stop if:** an existing household's advice changes before opt-in, a
 migration cannot be replayed safely, or the pilot identity is uncertain.
 Read-only inspection needs no production write; applying migrations is a
 separate, explicitly approved action.
@@ -88,9 +92,8 @@ manual window also remains visible without a model projection. Until the
 database advertises three-date support, the new client retains the existing
 four-date editor and sends no null fourth year. A rollback-only run of the new
 migration plus 74 maturity database assertions passed on the local database;
-web lint, 829 tests, and build passed. This is
-**not deployed** and does not accept Gate 1. The new migration must join the
-fresh private-clone rehearsal before Gate 0 can pass.
+web lint, 829 tests, and build passed. This is **not deployed** and does not
+accept Gate 1. Its migration joined the successful full-batch rehearsal.
 
 PR #204 addressed action 3: a new owner-bound shadow report compares the
 proposed three dates with the current manual window, currently selected shared
@@ -114,7 +117,7 @@ assertions and 84 existing shadow/comparison/publication assertions passed in
 rollback-only local transactions; focused web tests and build passed. This
 does **not** add a local ageing-group override or activate any shared date.
 
-This branch adds an owner-only, version- and scope-specific local choice of an
+Merged PR #206 adds an owner-only, version- and scope-specific local choice of an
 applicable ageing group, an explicit unclassified option, and a way to clear
 the choice. The choice is fingerprinted to the confirmed wine identity,
 private to its household, and has no effect on shared membership. A draft
@@ -123,9 +126,8 @@ use it only for an opted-in reference. The comparison hash includes the
 choice revision so a reviewed report cannot be silently reused after a change.
 Twenty-six new database assertions and the 84 existing
 shadow/comparison/publication assertions passed in local transaction tests;
-web lint, 836 tests, and build passed. This is **not deployed or accepted**.
-Gate 0 must now rehearse **19 pending migrations** on a fresh private clone;
-the prior 13-migration rehearsal is not sufficient evidence for this batch.
+web lint, 837 tests, and build passed. This is **not deployed or accepted**.
+The fresh 19-migration private-clone rehearsal has now passed Gate 0.
 
 1. Make the private manual override use the agreed **three** milestones. Keep
    legacy four-year records readable without inventing or silently dropping a
@@ -135,7 +137,7 @@ the prior 13-migration rehearsal is not sufficient evidence for this batch.
    identity and local ageing-group eligibility or preference where needed;
    never let that private choice silently alter the shared group definition.
    Identity review is now reachable from the wine card, a matched group's
-   definition appears in the comparison, and this branch adds a private group
+   definition appears in the comparison, and PR #206 adds a private group
    preference. Owner review of that behavior remains required.
 3. Make the whole-cellar comparison show the **dates the owner actually sees**,
    including any private model timing adjustment, as well as proposed three
@@ -146,16 +148,24 @@ the prior 13-migration rehearsal is not sufficient evidence for this batch.
 
 **Accept only with:** automated precedence/compatibility tests and a recorded
 owner walkthrough on a representative cellar, including a before/after report
-for one manual, one matched, and one unmatched wine. **Stop if:** a date changes
-without an intelligible source or a private choice leaks into shared data.
+for one manual, one matched, and one unmatched wine. That walkthrough may
+follow gate 2's *inert* schema deployment because the required RPCs are not
+on the linked project yet.
+
+**Stop if:** a date changes without an intelligible source or a private choice
+leaks into shared data.
 
 ## Gate 2 — deploy the inert capabilities (operator + cellar owner)
 
 1. Obtain explicit authorization for the **named** migration batch and target
-   project after gate 0 rehearsal. Apply migrations in order, then deploy the
-   compatible Worker/client build.
+   project after gate 0 rehearsal and automated gate 1 checks. Take a new
+   protected backup and rerun preflight. Apply migrations in order, then
+   deploy or verify the compatible Worker/client build. Gate 1's *live* owner
+   walkthrough is completed after this inert deployment, not before it.
 2. Run database and UI smoke checks against the target: current wine card,
-   draft review, shadow report, access boundaries, and global emergency-off.
+   owner-confirmed canonical pilot link, draft review, fresh shadow report,
+   access boundaries, and global emergency-off. Have the owner inspect the
+   real UI before accepting gate 1; this still does not publish a window.
    Keep publication and household opt-in disabled during this check.
 3. Record migration IDs, deployment hashes, smoke results, and recovery action.
 
@@ -276,13 +286,13 @@ meaningful. At minimum, each update must:
 | 2026-10-23 · PR #204 | Gate 1 action 3 implemented in the merged owner-bound comparison; Gate 1 remains In progress. No live advice, permission, or deployment changed. | The current baseline includes personal timing; report hashes bind the owner and invalidate stale reviews. The 26 comparison, 24 review, and 34 publication SQL assertions passed locally. The pilot cellar walkthrough and a fresh private-clone rehearsal remain open. |
 | 2026-10-23 · PR #205 | Gate 1 action 2 partly implemented in the merged wine-card identity review and ageing-group rationale; Gate 1 remains In progress. No live advice, permission, or deployment changed. | Six new SQL assertions plus 84 prior regression assertions passed locally. The private group preference and owner walkthrough were still missing after this PR; the migration batch grew to 16. |
 | 2026-10-23 · PR #206 | Gate 1 action 2 local choice implemented, but not accepted or deployed. No live advice, linked database, or shared membership changed. The owner-only RPC adds a private access path, not a public permission expansion. | A confirmed wine can select an applicable group, remain unclassified at one scope, or restore reviewed membership for a particular reference version. The choice changes only opted-in matching; changing identity makes it stale, and a superseded version pinned by the cellar remains editable. Twenty-six new SQL and 84 regression assertions passed locally; web lint, 837 tests, and build passed. Gate 0 now needs fresh private-clone rehearsal of 19 migrations. Mobile, real-cellar walkthrough, and deployment authorization remain open. |
+| 2026-10-24 · `codex/drinking-window-gate0-reconciliation` | Gate 0 technical evidence accepted for the current 19-migration batch. Gate 1 remains In progress; Gate 2 requires explicit authorization. No live schema, identity, advice, permission, stock, or deployment change was made by this audit. | [Fresh audit](drinking-window-gate0-audit.md): merged commit mapped to the 100%-deployed Worker version; all 19 migrations applied to a protected private clone; 782 wine and 4 overview core responses unchanged; second restore matched source counts; rolled-back owner-confirmed pilot link yielded one draft match. Temporary export and both clones deleted. Just-in-time backup/preflight, live link, owner walkthrough, and publication review remain open. |
 
-**Next action:** establish the active deployment's source commit, then replay
-all 19 pending migrations on a fresh protected private clone. Use the wine-card
-identity workflow to link the confirmed pilot wine to its canonical release in
-an owner-authorized environment, and walk through manual, matched, unmatched,
-local-choice, and mobile cases with the actual owner before accepting Gate 1.
-No live migration is authorized. At deployment time a **new**
-protected backup, fresh preflight, and separate owner authorization are
-required. Do not ask the owner to merge a chain of infrastructure PRs as a
-substitute for a demonstrated outcome.
+**Next action:** after review of this audit, obtain separate owner
+authorization for the **19 named migrations** on
+`cellarmanager-v02-dev`. Immediately before applying them, verify the current
+Worker commit, take a new protected backup, and rerun preflight. Deploy only
+the inert capabilities with publication and household opt-in off. Then have
+the owner link the confirmed pilot through the UI and walk through manual,
+matched, unmatched, local-choice, and mobile cases before accepting Gate 1 or
+publishing anything. No live migration is authorized by this audit or a merge.

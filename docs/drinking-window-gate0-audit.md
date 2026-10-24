@@ -1,9 +1,67 @@
-# Gate 0: linked deployment audit (22–23 October 2026)
+# Gate 0: linked deployment audit (22–24 October 2026)
 
-This is a **read-only-on-production, partial** audit of the linked Supabase project
+This is a **read-only-on-production** audit of the linked Supabase project
 `sxdqcvnjtayfxinyospb` and the deployed app. It does not approve a migration
 or a drinking-window publication. The [living release plan](drinking-window-release-plan.md)
 remains the source of status and acceptance gates.
+
+## Fresh full-batch reconciliation (24 October)
+
+This supersedes the **technical evidence** from the earlier 13-migration
+rehearsal below; it does not authorize a live migration or a publication.
+
+- GitHub confirms PR #206 merged on `main` as commit
+  `7ed4afa4763cdb382f605bdf4bd49d083ad6e873`. Its successful
+  [Cloudflare build check](https://github.com/alexv3429/cellarmanager/commit/7ed4afa/checks)
+  names build `8802dc14-38e8-4bb6-b7d4-e27ea8b16bf7` and Worker version
+  `2ea7a27c-a96f-46eb-95b7-35bf26722690`. A fresh read-only Wrangler
+  deployment listing showed that exact version at **100%** from
+  `2026-10-23T19:51:56Z`. This is an actual commit-to-version mapping, not an
+  inference from timestamps. Recheck after another deployment.
+- A fresh read-only linked migration listing for project
+  `sxdqcvnjtayfxinyospb` showed **19 local-only migrations**, from
+  `20261016120000` through `20261023200000`, with no new remote migration in
+  that interval. The five original catalogue counts and the six expected
+  producer-name counts in the [aggregate preflight](../scripts/drinking_window/gate0_preflight.sql)
+  remained as recorded below. The batch includes PRs #203–#206.
+- A new protected temporary export of `public`, `private`, `auth`, `storage`,
+  and `capture_guard` was restored into an isolated local database. The dump
+  and restored database agreed on **788 wines, 4 households, 6 users, and 0
+  shared reference versions**. No row or user identifier is retained here.
+  The data-only dump's circular foreign keys required disabling triggers
+  **only within the clone's restore transaction**. The repeatable
+  [clone capture helper](../scripts/drinking_window/gate0_clone_capture.sql)
+  refuses to run outside a disposable `cm_gate0_` database.
+- Before the batch, the clone captured owner-accessible maturity responses
+  for **782 unmerged wines and all 4 household overviews**. All 19 migrations
+  applied in order without error. The same 786 responses were captured after
+  the batch. After removing only additive reference/source metadata, **zero
+  core advice responses differed or disappeared**. Every unmerged wine's
+  active-reference matcher returned `unpublished`; the global switch remained
+  off, there were **0 enabled household rollouts**, **0 publications**, and
+  **1 draft**. Anonymous cannot execute the new identity or ageing-choice
+  write RPCs; authenticated users can reach them, where the owner check is
+  enforced. The existing maturity reader remained available to authenticated
+  users and unavailable to anonymous callers.
+- A **second independent restore** from the same temporary export again
+  produced 788 wines, 4 households, 6 users, and 0 reference versions. In a
+  rolled-back transaction on the migrated first clone, the already
+  owner-confirmed Burgaud Côte du Py 2022 wine was linked through the
+  owner-only identity RPC to its unique canonical release. The draft shadow
+  comparison then reported **one `draft_match` / `changed` wine**. This proves
+  the proposed pilot can match after an explicit owner link; it does **not**
+  mean the live wine is linked or that the draft is approved.
+- Both disposable databases and the protected temporary export were deleted
+  after verification. The linked project was only read; **no live schema,
+  identity, window, permission, or stock data was changed**.
+
+The technical Gate 0 rehearsal and provenance checks now pass for this
+point-in-time batch. Before any live application, take a **new** protected
+backup, rerun the linked preflight and migration inventory, recheck the
+deployed commit, and obtain separate authorization for the named 19-migration
+batch. The live pilot wine still lacks its canonical link; only the owner may
+make that link after the inert RPC deployment. Gate 1's UI walkthrough and
+mobile/edge-case acceptance also remain open.
 
 ## Observed state
 
@@ -86,12 +144,12 @@ included in this record.
   This confirms the wine's identity only: it does not authorize a live link,
   publication, opt-in, or migration. No private row identifier is recorded here.
 
-**Gate 0 decision: no-go for a live migration today.** The private replay and
-recovery checks passed, but the deployed Worker commit is still unverified,
-the confirmed pilot wine still lacks its canonical release link, and Gate 1
-remains open. A
-fresh preflight and separate operator authorization are required before any
-live migration.
+**Historical 23 October decision: no-go for a live migration that day.** The
+13-migration replay and recovery checks had passed, but the deployed Worker
+commit was not yet verified and the confirmed pilot wine lacked its canonical
+release link. The 24 October full-batch evidence above supersedes that
+technical finding; it does not authorize a live migration. Gate 1, a fresh
+preflight, and separate owner authorization remain open.
 
 ## Migration-time risks to test, not assumptions to waive
 
@@ -118,19 +176,20 @@ live migration.
    authorization at the time of live migration. The temporary snapshot has
    been deleted, so a new protected backup is needed for that operation.
 
-## Remaining Gate 0 actions
+## Remaining deployment-time checks and owner actions
 
-1. Record the active Cloudflare deployment **commit** via an operator build
-   record or a verifiable commit annotation. The version ID and deployment
-   time are known, but neither proves the source commit.
+1. Recheck the active Cloudflare version-to-commit mapping after any new
+   deployment, especially after merging this audit PR.
 2. Recheck the aggregate preflight immediately before seeding and resolve any
    new duplicate/conflicting identity or nonempty reference library. Do not
    change live data merely to make the preflight green.
-3. The owner confirmed the plausible pilot wine's exact identity. Link it to
-   the canonical release only through an authorized local-review workflow,
-   then produce a fresh pilot match report. No automatic name-based link is
-   accepted; the confirmation alone did not change live data.
+3. The owner confirmed the plausible pilot wine's exact identity. A rolled-back
+   clone simulation produced a draft match; the **live** wine is still
+   unlinked. After an authorized inert deployment, let the owner use the
+   identity-review UI and inspect a fresh real-cellar comparison. No automatic
+   name-based link is accepted.
 4. At deployment time, take a **new** protected backup, rerun the preflight,
    and obtain separate authorization for the named live migration batch.
-   The prior snapshot was deliberately deleted. Gate 0 remains **In progress**
-   until the active build and actual pilot release link are verified.
+   Both temporary snapshots were deliberately deleted. The technical rehearsal
+   is accepted for the current batch, but that does not accept Gate 1, authorize
+   Gate 2, or approve the pilot reference.
