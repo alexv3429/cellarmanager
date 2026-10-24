@@ -10,6 +10,7 @@ import {
   type ShadowReport,
   type ShadowReportListing,
 } from "../data/drinkingWindowShadowReview"
+import { orderShadowComparisonRows } from "../data/shadowComparisonOrdering"
 import { useLanguage } from "../i18n/useLanguage"
 import { Notice } from "./Notice"
 
@@ -112,9 +113,7 @@ export function DrinkingWindowShadowReviewPanel({
     `${wine.producer} · ${wine.cuvee} · ${wine.vintage ?? "NV"}`,
   ])), [wines])
   const orderedRows = useMemo(() => report
-    ? [...report.rows].sort((a, b) =>
-      Number(a.comparisonStatus === "unchanged") - Number(b.comparisonStatus === "unchanged")
-      || (names.get(a.wineId) ?? a.wineId).localeCompare(names.get(b.wineId) ?? b.wineId))
+    ? orderShadowComparisonRows(report.rows, names)
     : [], [report, names])
   const changedCount = report?.rows.filter((row) => row.comparisonStatus === "changed").length ?? 0
   const canApprove = (report?.versionStatus === "draft" || report?.versionStatus === "active")

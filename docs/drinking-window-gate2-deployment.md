@@ -1,9 +1,10 @@
 # Gate 2: authorized inert database deployment (24 October 2026)
 
-This records the **live** database operation separately from the earlier
-[private-clone rehearsal](drinking-window-gate0-audit.md). It does not approve
-the draft reference, link a household wine, opt in a household, or release
-shared drinking-window advice.
+This records the **live** database operation and 24 October signed-in checks
+separately from the earlier
+[private-clone rehearsal](drinking-window-gate0-audit.md). The later check
+linked one owner-confirmed pilot identity; it did not approve the draft
+reference, opt in a household, or release shared drinking-window advice.
 
 ## Authorization and target
 
@@ -64,11 +65,51 @@ shared drinking-window advice.
   remained reachable by `authenticated`, not `anon`. Shadow comparison and
   publication functions were not executable by either ordinary role.
 
-No owner-confirmed **live** canonical pilot link was made. The draft remains
-unpublished and no household opted in, so the new shared window is not yet
-visible. These checks show an inert deployment, **not** a verified unchanged
-advice sample or completed owner UI walkthrough. Gate 2 remains **In
-progress** until that acceptance evidence is recorded.
+## Signed-in pilot check and private comparison (24 October)
+
+- The owner account for the `v0.1 import validation` household was signed in;
+  sync showed up to date. The catalogue then held **802 wines** and 1,277
+  bottles (the protected pre-migration export held 788 wines). No stock action
+  was performed by this check.
+- Three existing advice responses were compared, including their full core
+  payloads, between the protected pre-migration restore and the live database.
+  Mas de la Seranne *Antonin et Louis* 2018 (manual), Burgaud *James* 2008
+  (manual), and Alvina Pernot *Les Caillerets* 2021 (model) were identical
+  after excluding only additive source/reference metadata. This verifies the
+  unchanged-advice sample for those wines, not every cellar wine.
+- The signed-in owner UI confirmed **only** the previously owner-approved
+  Burgaud *Morgon Côte du Py* 2022 canonical identity, release
+  `d1738cd6-f055-2a55-ba83-3f770c3f39cb`. *Les Charmes* and *James* were
+  deliberately left unlinked. No wine description, shared membership, stock,
+  manual window, approval, publication, switch, or household rollout was edited.
+- Linking triggered a fresh **existing-model** calculation for Côte du Py.
+  The superseded projection on the card had been `2026 / 2029 / 2036`; after
+  reloading the card, the current model is `2026 / 2031 / 2039`. The proposed
+  **draft** reference is separately `2025 / 2028 / 2035`; it is **not** live
+  advice. The app briefly displayed the old model dates immediately after the
+  link; a client refresh-order fix is pending review. This is an identifiable
+  recalculation on the deliberately linked wine, not evidence that the draft
+  was activated. Because advice changed, Gate 2 is not accepted without owner
+  review of this explanation and the live card.
+- An owner-bound, private whole-cellar report was recorded against draft
+  version `42ea0688-9f14-540b-d346-37decd458d1f`: report
+  `cf06fe82-2530-422c-a252-ce52d2f37aed`, hash
+  `99f6b975ea565f82ec8410c50c91781f4f8c20b1728f95196ee0e764254d9890`.
+  Of 802 wines, **one** has changed proposed dates (Côte du Py 2022), two
+  retain manual dates, five have identity conflicts, 84 lack a matching key,
+  and 710 have no draft match. The report flags **four unresolved publication
+  issues**: one row, one ageing group, and two memberships lack current
+  approval. Neither the owner nor this check approved them.
+- The signed-in owner screen rendered the private report and its counts, but
+  the one changed wine was buried among unmatched rows. A review-screen
+  sorting fix is pending so actionable proposals appear first. Mobile layout,
+  edit/clear, local ageing choice, and emergency-off walkthroughs remain open.
+
+The draft remains unpublished; no household has opted in. Gate 2 remains **In
+progress**, and Gate 1 remains **In progress**. The private report is evidence
+for review, not permission to publish. The exact disposable local restore
+database used for the before/after comparison was deleted after verification;
+the separate protected recovery export remains available outside Git.
 
 ## Recovery and remaining work
 
@@ -79,8 +120,9 @@ database could erase later user changes; it is **not** an automatic rollback.
 Diagnose a failed future migration against the ledger before retrying, and
 never repair a conflict by silently relinking a household wine.
 
-Next: have the cellar owner inspect the signed-in wine card and three-date
-editor, explicitly link the confirmed pilot through identity review, compare
-one manual, one matched, and one unmatched wine, and check mobile/ageing-choice
-behavior. Record an unchanged existing-advice sample and the actual comparison
-before accepting Gates 1–2 or considering any Gate 3 publication.
+Next: deploy and verify the small card-refresh and report-ordering fix; have
+the owner inspect the Côte du Py before/after explanation and the now-visible
+private comparison, plus the three-date editor, mobile layout, local ageing
+choice, manual edit/clear, and emergency-off behavior. Review the four draft
+issues on their merits before any Gate 3 approval or publication. Keep the
+global switch and household opt-in off while Gates 1–2 are open.
