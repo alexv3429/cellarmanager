@@ -8789,6 +8789,24 @@
   width: 100%;
   min-width: 0;
 }
+
+.drinking-window-review-milestones {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.drinking-window-review-milestones > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  justify-content: space-between;
+}
+
+.drinking-window-review-milestones dd {
+  font-weight: 700;
+  margin: 0;
+}
 .drinking-window-shadow-review {
   border: 1px solid var(--border, #5c4a50);
   border-radius: 0.75rem;

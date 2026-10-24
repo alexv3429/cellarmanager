@@ -120,8 +120,27 @@ database could erase later user changes; it is **not** an automatic rollback.
 Diagnose a failed future migration against the ledger before retrying, and
 never repair a conflict by silently relinking a household wine.
 
-Next: deploy and verify the small card-refresh and report-ordering fix; have
-the owner inspect the Côte du Py before/after explanation and the now-visible
+PR #209 merged; its preview comparison was inspected by the owner, who found
+the proposed rationale clear and asked about the provenance of the current
+model dates. The signed-in owner account does not display the separate,
+curator-only drinking-window review workspace. This is not an authorization
+failure of the cellar comparison, nor permission to self-approve the four
+draft subjects. PR #210 makes model provenance and the
+curator decision form more explicit; it does not record a decision.
+
+The main-branch Workers build for merge commit `1183a872e65227b6d083c8d22b96239fc50b1116`
+completed successfully. The official app initially showed the old PWA shell:
+its report said “awaiting your review” and sorted unmatched wines first. A
+visible “Update now” PWA prompt was accepted in a read-only signed-in check;
+the official app then showed Côte du Py first, separate current and unpublished
+dates, four pending reference checks, and no owner decision. Its card still
+showed model dates `2026/2031/2039`, using Morgon red place baseline,
+Beaujolais 2022 vintage, and Jean-Marc Burgaud producer style. It explicitly
+reported no reviewed cuvée profile. The three-date manual editor and private
+group selector rendered; neither was saved. No live reference, cellar,
+approval, opt-in, switch, or stock data was changed by this check.
+
+Next: have the owner inspect the Côte du Py before/after explanation and the now-visible
 private comparison, plus the three-date editor, mobile layout, local ageing
 choice, manual edit/clear, and emergency-off behavior. Review the four draft
 issues on their merits before any Gate 3 approval or publication. Keep the

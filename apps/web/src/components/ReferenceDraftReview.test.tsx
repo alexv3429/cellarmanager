@@ -4,6 +4,8 @@ import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { getReferenceDrafts, recordReferenceReview } from "../data/drinkingWindowReferenceDrafts"
+import { LanguageContext } from "../i18n/LanguageContext"
+import { translate } from "../i18n/messages"
 import { ReferenceDraftReview } from "./ReferenceDraftReview"
 
 vi.mock("../data/drinkingWindowReferenceDrafts", () => ({
@@ -52,10 +54,19 @@ describe("reference draft curator review", () => {
   it("shows dates and provenance before accepting a reasoned curator decision", async () => {
     await act(async () => root.render(<ReferenceDraftReview isOnline />))
     expect(container.textContent).toContain("Unpublished draft")
+    expect(container.textContent).toContain("1 draft item still needs curator review")
     const summary = container.querySelector("summary")
     await act(async () => summary?.dispatchEvent(new MouseEvent("click", { bubbles: true })))
-    expect(container.textContent).toContain("2025 → 2028–2035")
+    const milestones = container.querySelectorAll(".drinking-window-review-milestones div")
+    expect([...milestones].map((item) => item.textContent)).toEqual([
+      "Start tasting2025", "Optimum starts2028", "Optimum ends2035",
+    ])
+    expect(container.textContent).toContain("a producer's ageing description alone does not establish these years")
     expect(container.querySelector("a")?.getAttribute("href")).toBe("https://example.test/review")
+    const select = container.querySelector("select")
+    const submit = container.querySelector('button[type="submit"]')
+    expect(select?.value).toBe("")
+    expect(submit?.disabled).toBe(true)
     const textarea = container.querySelector("textarea")
     await act(async () => {
       if (textarea) {
@@ -63,6 +74,46 @@ describe("reference draft curator review", () => {
         textarea.dispatchEvent(new Event("input", { bubbles: true }))
       }
     })
+    expect(submit?.disabled).toBe(true)
+    await act(async () => {
+      if (select) {
+        Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")?.set?.call(select, "approve")
+        select.dispatchEvent(new Event("change", { bubbles: true }))
+      }
+    })
+    expect(submit?.disabled).toBe(false)
     expect(recordReferenceReview).not.toHaveBeenCalled()
+    await act(async () => submit?.click())
+    expect(recordReferenceReview).toHaveBeenCalledWith(expect.objectContaining({
+      versionId: "version", kind: "row", subjectId: "row", expectedHash: "a".repeat(64),
+      verdict: "approve", rationale: "I checked the dates and the evidence.",
+    }))
+    expect(select?.value).toBe("")
+  })
+
+  it("puts unresolved items first and explains the three milestones in French", async () => {
+    const pending = workspace.drafts[0].subjects[0]
+    vi.mocked(getReferenceDrafts).mockResolvedValue({
+      eligible: true,
+      drafts: [{ ...workspace.drafts[0], subjects: [
+        { ...pending, id: "approved", title: "Earlier approved row", issues: [] },
+        pending,
+      ] }],
+    })
+    await act(async () => root.render(<LanguageContext.Provider value={{
+      language: "fr", preference: "fr", setSavedPreference: () => undefined,
+      t: (key, values) => translate("fr", key, values),
+    }}><ReferenceDraftReview isOnline /></LanguageContext.Provider>))
+
+    const summaries = [...container.querySelectorAll("summary strong")].map((item) => item.textContent)
+    expect(summaries[0]).toContain("Beaujolais · 2022 · red")
+    expect(summaries[1]).toContain("Earlier approved row")
+    expect(container.textContent).toContain("1 élément du brouillon reste à vérifier")
+    const firstSummary = container.querySelector("summary")
+    await act(async () => firstSummary?.dispatchEvent(new MouseEvent("click", { bubbles: true })))
+    expect(container.textContent).toContain("Commencer à tester2025")
+    expect(container.textContent).toContain("Début probable de l’optimum2028")
+    expect(container.textContent).toContain("Fin probable de l’optimum2035")
+    expect(container.textContent).toContain("Choisir une décision")
   })
 })
