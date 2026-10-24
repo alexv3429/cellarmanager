@@ -245,6 +245,9 @@ export function DrinkingWindowShadowReviewPanel({
               <WindowMilestones first={row.currentFirstTrialYear}
                 start={row.currentBestStartYear} end={row.currentBestEndYear} t={t} />
               <small>{t(sourceLabel(row.currentSource))}</small>
+              {row.currentSource === "model" || row.currentSource === "personalized_model"
+                ? <p>{t("These current dates come from the existing model, not this draft. Open the wine above, then ‘When to drink’ → ‘Why this estimate?’ to see the contributing profiles.")}</p>
+                : null}
             </section>
             <section>
               <h4>{t(report.versionStatus === "draft"

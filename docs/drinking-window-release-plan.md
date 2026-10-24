@@ -18,7 +18,7 @@ release target.
 
 ## Status at 24 October 2026
 
-**Not released.** The merged work through PR #208 provides the database
+**Not released.** The merged work through PR #209 provides the database
 foundation, candidate staging, draft diagnostics, review decisions, shadow
 comparison, publication/opt-in mechanisms, a curator review screen, and the
 owner's private ageing-group choice. The Burgaud 2022 Côte du Py / James row
@@ -33,7 +33,15 @@ identity and generated a private 802-wine comparison: one changed draft
 proposal, four unapproved draft items. Three unrelated existing advice
 payloads matched the pre-migration snapshot. The linked pilot's existing
 model dates recalculated after identity confirmation; this and the remaining
-owner walkthrough keep Gates 1–2 open. The workbook audit has 226 two-date pairs but
+owner walkthrough keep Gates 1–2 open. The owner inspected the clarified
+preview comparison and understood the draft rationale. On the official app,
+an available PWA update was applied and the merged comparison, model card,
+three-date editor, and draft-only local group selector were inspected without
+saving changes. Mobile, manual edit/clear, stale-report, emergency-off, and
+owner acceptance are not yet complete. The signed-in
+owner account does not show the curator-only reference workspace, so the four
+draft decisions cannot be recorded from that account. The workbook audit has
+226 two-date pairs but
 no complete three-date shared rows. The existing model and personal timing
 controls remain in use. See the [Gate 2 deployment record](drinking-window-gate2-deployment.md).
 
@@ -44,8 +52,8 @@ here, not when its PR merges. Dates are not delivery promises.
 | Gate | Status | Immediate outcome |
 | --- | --- | --- |
 | 0. Reconcile deployment state | Accepted | All 19 migrations replayed on a private clone; the fresh backup, restore, live preflight, and deployment record complete the just-in-time checks. |
-| 1. Close owner-facing behavior | In progress | Three-date editing, comparison, identity review, and private group choice are merged. Signed-in card, pilot identity, and report rendered; mobile/edit/choice/edge-case walkthrough and owner acceptance remain. |
-| 2. Deploy database capabilities | In progress | The authorized 19-migration batch is live, with 0 pending. Three existing advice payloads matched the snapshot; one owner-confirmed pilot link recalculated its old-model advice. Switch, publication, and household opt-in remain off. Owner review is required. |
+| 1. Close owner-facing behavior | In progress | Three-date editing, comparison, identity review, and private group choice are merged. The official card, editor, and draft selector were inspected read-only; mobile, actual edit/clear, stale-report, emergency-off, and owner acceptance remain. |
+| 2. Deploy database capabilities | In progress | The authorized 19-migration batch is live, with 0 pending. Three existing advice payloads matched the snapshot; one owner-confirmed pilot link recalculated its old-model advice. The official app displays PR #209 after its PWA update, while switch, publication, and household opt-in remain off. Owner acceptance is still required. |
 | 3. Publish one real pilot | Blocked by gates 1–2 and human reviews | One approved cellar can see a verified real window. |
 | 4. Make reference maintenance routine | Not started | Authorized curators can add/correct evidence-backed versions in the app. |
 | 5. Establish and measure initial coverage | Blocked by gate 4 | One additional high-impact reference is reviewed; gaps remain visible. |
@@ -305,13 +313,17 @@ meaningful. At minimum, each update must:
 | 2026-10-24 · PR #208 | Gate 2 inert database batch deployed with explicit owner authorization; Gate 2 remains In progress pending signed-in owner checks. Live schema, canonical seed identities, and owner-only RPC permissions changed, but the operator made no pilot link, publication, opt-in, stock operation, or manual-window edit. | [Deployment record](drinking-window-gate2-deployment.md): fresh protected backup restored successfully, live preflight matched rehearsal, all 19 files applied and 0 pending, compatible Worker hash verified, 788 wines/4 households/6 users unchanged, one draft and zero active/publications/enabled switches/rollouts. Ordinary-role privilege and public-app smoke checks passed. Existing-advice sample and owner UI walkthrough remain open; sensitive temporary backup retained for recovery. |
 | 2026-10-24 · PR #209 | A signed-in owner check linked only the previously approved Burgaud Côte du Py 2022 identity and generated a private 802-wine comparison; no shared draft was approved or published, no household opted in, and the emergency switch remains off. Gate 1 and Gate 2 remain In progress. | [Follow-up record](drinking-window-gate2-deployment.md): three other pre-migration advice payloads unchanged; one changed draft proposal, four items requiring human approval. Linking triggered a fresh old-model calculation for the pilot (`2026/2029/2036` → `2026/2031/2039`), distinct from the unpublished draft (`2025/2028/2035`). This PR moves the actionable row to the top of the report and refreshes the wine card promptly; web lint (pre-existing warnings), all 840 tests, and build pass. Owner mobile/edit/choice checks and approval review remain. |
 | 2026-10-24 · PR #209 review clarity update | Gate 1 remains In progress; no reference, cellar data, approval, publication, or rollout changed. | The comparison now shows current and unpublished draft as separate three-milestone panels, explains the regional rule's limited wine eligibility in French, and requests no owner decision while the four reference checks remain open. Added a French owner-report regression test; web lint (pre-existing warnings), 841 tests, and build pass. Owner mobile walkthrough and reference approvals remain open. |
+| 2026-10-24 · official app check after #209 | Gates 1–2 remain In progress; no wine, reference, approval, publication, or rollout was edited. | The main-branch Cloudflare build succeeded. The browser initially held the previous PWA shell and showed misleading “awaiting your review” wording; accepting its visible update prompt loaded the merged screen. Official Catalogue now shows the unpublished 2025/2028–2035 draft apart from current model 2026/2031–2039, with four pending reference checks and no owner decision. The wine card traces current model dates to Morgon red place baseline, Beaujolais 2022 vintage, and Jean-Marc Burgaud producer style; it explicitly lacks a reviewed cuvée profile. The three-date manual editor and draft-only private group selector were opened but not saved. |
+| 2026-10-24 · next review-preparation PR | Gates 1–2 remain In progress; Gate 3 still requires curator and owner decisions. No reference, cellar data, approval, publication, switch, or rollout is changed. | The current model's provenance is explained beside the comparison with a path to its profile trace. The curator draft screen surfaces pending items first, displays all three years separately, and requires an explicit decision instead of preselecting approval. The signed-in pilot owner account has no curator review workspace; an authorized curator must review the one row, one ageing group, and two exact-release memberships. |
 
-**Next action:** deploy the small review-screen/card-refresh fix and have the
-owner inspect the signed-in Côte du Py card, the model recalculation, and the
-private report's one changed proposal. Walk through three-date editing,
-manual, matched, unmatched, local-choice, mobile, stale-report, and
+**Next action:** have the owner inspect the signed-in Côte du Py card and
+the private report's one changed proposal on the updated official app. Walk
+through actual manual edit/clear, matched/unmatched, local-choice, mobile, stale-report, and
 emergency-off cases. Record owner acceptance before accepting Gates 1–2.
-Then obtain curator decisions on the four missing approvals before any Gate 3
-publication. Keep the reference switch and household opt-in off; no draft
+Then have an already authorized drinking-window curator review the four
+pending subjects on their merits, or explicitly arrange that authorization;
+do not grant it merely because the pilot owner can see the comparison. Obtain
+curator decisions before any Gate 3 publication. Keep the reference switch and
+household opt-in off; no draft
 publication is authorized by the migration approval. Decide when to remove
 the protected temporary backup after the owner walkthrough.

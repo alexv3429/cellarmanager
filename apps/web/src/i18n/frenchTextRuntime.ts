@@ -911,6 +911,7 @@ export const frenchTextRuntime: Readonly<Record<string, string>> = {
   "Regional profile; check eligibility below": "Profil régional ; voir ci-dessous les vins concernés",
   "Reference profile": "Profil de référence",
   "Reference level": "Niveau de la référence",
+  "These current dates come from the existing model, not this draft. Open the wine above, then ‘When to drink’ → ‘Why this estimate?’ to see the contributing profiles.": "Ces dates actuelles viennent du modèle existant, pas de ce brouillon. Ouvrez le vin ci-dessus, puis « Quand le boire » → « Pourquoi cette estimation ? » pour voir les profils utilisés.",
   "Which wines qualify?": "Quels vins sont concernés ?",
   "Where do these dates come from?": "D’où viennent ces dates ?",
   // Exact app-seeded reference copy only. Curator/user-authored text is not translated.

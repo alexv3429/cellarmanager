@@ -82,6 +82,8 @@ describe("shared drinking-window draft comparison", () => {
     expect(panels[0].textContent).toContain("2026")
     expect(panels[0].textContent).toContain("2031")
     expect(panels[0].textContent).toContain("2039")
+    expect(panels[0].textContent).toContain("Ces dates actuelles viennent du modèle existant, pas de ce brouillon")
+    expect(panels[0].textContent).toContain("Pourquoi cette estimation ?")
     expect(panels[1].textContent).toContain("Dates du brouillon — non utilisées")
     expect(panels[1].textContent).toContain("2025")
     expect(panels[1].textContent).toContain("2028")
