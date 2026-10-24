@@ -125,7 +125,7 @@ the proposed rationale clear and asked about the provenance of the current
 model dates. The signed-in owner account does not display the separate,
 curator-only drinking-window review workspace. This is not an authorization
 failure of the cellar comparison, nor permission to self-approve the four
-draft subjects. The next review-preparation PR makes model provenance and the
+draft subjects. PR #210 makes model provenance and the
 curator decision form more explicit; it does not record a decision.
 
 The main-branch Workers build for merge commit `1183a872e65227b6d083c8d22b96239fc50b1116`
