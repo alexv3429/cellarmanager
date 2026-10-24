@@ -5,6 +5,11 @@ This is a **read-only-on-production** audit of the linked Supabase project
 or a drinking-window publication. The [living release plan](drinking-window-release-plan.md)
 remains the source of status and acceptance gates.
 
+**Later outcome:** after separate owner authorization, the 19-migration batch
+was applied on 24 October. See the [Gate 2 deployment record](drinking-window-gate2-deployment.md)
+for live results. The checks and no-go decisions below describe the state
+*before* that application.
+
 ## Fresh full-batch reconciliation (24 October)
 
 This supersedes the **technical evidence** from the earlier 13-migration
