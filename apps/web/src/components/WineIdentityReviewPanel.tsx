@@ -109,9 +109,11 @@ export function WineIdentityReviewPanel({ compact = false, initialWineId = "", i
         status.matchedReference?.referenceId ?? null,
       )
       setLocalLinks((current) => ({ ...current, [selected.id]: nextId }))
+      // A confirmed identity can immediately change the model projection.
+      // Refresh the wine card without waiting for the secondary status lookup.
+      onChanged?.()
       setStatus(await getHouseholdWineIdentityStatus(selected.id))
       setChoice(null)
-      onChanged?.()
       setMessage(action === "link"
         ? t("Shared wine linked for this household. Your wine description was not changed.")
         : t("Shared wine link removed. Your wine description was not changed."))

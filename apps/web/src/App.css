@@ -8826,6 +8826,53 @@
   overflow-wrap: anywhere;
 }
 
+.drinking-window-shadow-review__comparison {
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+}
+
+.drinking-window-shadow-review__comparison section {
+  background: var(--surface, #251d20);
+  border: 1px solid var(--border, #5c4a50);
+  border-radius: 0.5rem;
+  min-width: 0;
+  padding: 0.65rem;
+}
+
+.drinking-window-shadow-review__comparison h4 {
+  margin: 0 0 0.5rem;
+  overflow-wrap: anywhere;
+}
+
+.drinking-window-shadow-review__milestones {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.5rem 0;
+}
+
+.drinking-window-shadow-review__milestones div {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: space-between;
+}
+
+.drinking-window-shadow-review__milestones dt {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.drinking-window-shadow-review__milestones dd {
+  flex: none;
+  font-weight: 700;
+  margin: 0;
+}
+
+.drinking-window-shadow-review__rows p {
+  margin: 0.25rem 0;
+  overflow-wrap: anywhere;
+}
+
 .drinking-window-shadow-review__decision {
   display: grid;
   gap: 0.75rem;

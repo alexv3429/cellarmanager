@@ -95,6 +95,33 @@ describe("household wine identity panel", () => {
     expect(onChanged).toHaveBeenCalledTimes(1)
   })
 
+  it("refreshes the card as soon as the link saves, before status reload finishes", async () => {
+    const onChanged = vi.fn()
+    let finishStatus: ((value: Awaited<ReturnType<typeof getHouseholdWineIdentityStatus>>) => void) | undefined
+    vi.mocked(getHouseholdWineIdentityStatus).mockResolvedValueOnce({
+      wineId: wine.id, sourceFingerprint: "fingerprint", matchedReference: null, requestStatus: null,
+    }).mockImplementationOnce(() => new Promise((resolve) => { finishStatus = resolve }))
+    await act(async () => root.render(<WineIdentityReviewPanel
+      compact initialWineId="wine" isOnline onChanged={onChanged} wines={[wine]} />))
+    const details = container.querySelector("details")
+    await act(async () => {
+      if (details) details.open = true
+      details?.dispatchEvent(new Event("toggle"))
+    })
+    await enterQuery("Barraud")
+    await click("Search shared wines")
+    await click("Daniel Barraud · Pouilly-Fuissé Premier Cru Sur La Roche")
+    await click("Confirm this shared wine")
+
+    expect(onChanged).toHaveBeenCalledTimes(1)
+    expect(finishStatus).toBeTypeOf("function")
+    await act(async () => finishStatus?.({
+      wineId: wine.id, sourceFingerprint: "fingerprint",
+      matchedReference: { referenceId: "release", producerName: identity.producerName, productName: identity.productName },
+      requestStatus: null,
+    }))
+  })
+
   it("requires a selected shared release before confirming a household link", async () => {
     await openAndSelect()
     expect(manageHouseholdWineIdentity).not.toHaveBeenCalled()

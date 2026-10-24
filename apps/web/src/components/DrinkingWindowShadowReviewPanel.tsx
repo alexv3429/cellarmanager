@@ -10,6 +10,7 @@ import {
   type ShadowReport,
   type ShadowReportListing,
 } from "../data/drinkingWindowShadowReview"
+import { orderShadowComparisonRows } from "../data/shadowComparisonOrdering"
 import { useLanguage } from "../i18n/useLanguage"
 import { Notice } from "./Notice"
 
@@ -25,12 +26,6 @@ interface Props {
   isOnline: boolean
   onOpenWine: (wineId: string) => void
   wines: WineLabel[]
-}
-
-function windowText(first: number | null, start: number | null, end: number | null) {
-  return first === null || start === null || end === null
-    ? "—"
-    : `${first} / ${start}–${end}`
 }
 
 function comparisonLabel(status: string): string {
@@ -66,8 +61,27 @@ function scopeLabel(scope: string): string {
     case "producer_appellation": return "Producer and appellation"
     case "producer_region": return "Producer and region"
     case "appellation": return "Appellation"
-    default: return "Region"
+    case "region": return "Regional profile; check eligibility below"
+    default: return "Reference profile"
   }
+}
+
+function WindowMilestones({
+  first, start, end, t,
+}: {
+  first: number | null
+  start: number | null
+  end: number | null
+  t: (key: string) => string
+}) {
+  if (first === null || start === null || end === null) {
+    return <p>{t("No three-date window available")}</p>
+  }
+  return <dl className="drinking-window-shadow-review__milestones">
+    <div><dt>{t("Start tasting")}</dt><dd>{first}</dd></div>
+    <div><dt>{t("Probable optimal period starts")}</dt><dd>{start}</dd></div>
+    <div><dt>{t("Probable optimal period ends")}</dt><dd>{end}</dd></div>
+  </dl>
 }
 
 export function DrinkingWindowShadowReviewPanel({
@@ -112,9 +126,7 @@ export function DrinkingWindowShadowReviewPanel({
     `${wine.producer} · ${wine.cuvee} · ${wine.vintage ?? "NV"}`,
   ])), [wines])
   const orderedRows = useMemo(() => report
-    ? [...report.rows].sort((a, b) =>
-      Number(a.comparisonStatus === "unchanged") - Number(b.comparisonStatus === "unchanged")
-      || (names.get(a.wineId) ?? a.wineId).localeCompare(names.get(b.wineId) ?? b.wineId))
+    ? orderShadowComparisonRows(report.rows, names)
     : [], [report, names])
   const changedCount = report?.rows.filter((row) => row.comparisonStatus === "changed").length ?? 0
   const canApprove = (report?.versionStatus === "draft" || report?.versionStatus === "active")
@@ -205,30 +217,52 @@ export function DrinkingWindowShadowReviewPanel({
         ? "Approved"
         : entry.latestVerdict === "reject"
           ? "Rejected"
-          : "Awaiting your review")}`}
+          : entry.versionStatus === "draft" && entry.draftIssueCount > 0
+            ? "Draft under review — no action needed"
+            : "Awaiting your review")}`}
     </button>)}
 
     {report ? <section aria-label={t("Detailed drinking-window comparison")}>
-      <h3>{t("Reference version")} {report.versionNumber}</h3>
-      <p>{report.wineCount} {t("wines")} · {changedCount} {t("changed windows")} · {report.draftIssueCount} {t("reference issues")}</p>
-      <p>{t("The current dates are the ones you see in your cellar, including your personal timing choice.")}</p>
-      {report.draftIssueCount > 0 ? <Notice tone="warning">{t("This draft still has reference issues and cannot be approved.")}</Notice> : null}
+      <h3>{t("Reference version")} {report.versionNumber}
+        {report.versionStatus === "draft" ? ` · ${t("Unpublished draft")}` : ""}</h3>
+      <p>{report.wineCount} {t("wines")} · {changedCount} {t(changedCount === 1
+        ? "proposal with different dates"
+        : "proposals with different dates")} · {report.draftIssueCount} {t("pending reference checks")}</p>
+      {report.versionStatus === "draft" ? <p>{t("This draft is not in use. Your cellar still shows its current dates.")}</p>
+        : <p>{t("The current dates are the ones you see in your cellar, including your personal timing choice.")}</p>}
+      {report.draftIssueCount > 0 ? <Notice tone="warning">
+        {t("{count} reference checks are still pending. No decision is needed from you yet.", { count: String(report.draftIssueCount) })}
+      </Notice> : null}
       <ol className="drinking-window-shadow-review__rows">
         {orderedRows.slice(0, shown).map((row) => <li key={row.wineId}>
           <button className="wine-detail-link" onClick={() => onOpenWine(row.wineId)} type="button">
             {names.get(row.wineId) ?? row.wineId}
           </button>
           <span>{t(comparisonLabel(row.comparisonStatus))}</span>
-          <span>{t("Current")}: {windowText(row.currentFirstTrialYear, row.currentBestStartYear, row.currentBestEndYear)} ({t(sourceLabel(row.currentSource))})</span>
-          <span>{t("Proposed")}: {windowText(row.proposedFirstTrialYear, row.proposedBestStartYear, row.proposedBestEndYear)}{row.matchedScope ? ` · ${t(scopeLabel(row.matchedScope))}` : ""}</span>
-          {row.proposedGroupDefinition ? <span>{t("Reviewed ageing group")}: {row.proposedGroupDefinition}</span> : null}
-          {row.proposedReferenceRationale ? <span>{t("Why these dates")}: {row.proposedReferenceRationale}</span> : null}
+          <div className="drinking-window-shadow-review__comparison">
+            <section>
+              <h4>{t("Dates currently used in your cellar")}</h4>
+              <WindowMilestones first={row.currentFirstTrialYear}
+                start={row.currentBestStartYear} end={row.currentBestEndYear} t={t} />
+              <small>{t(sourceLabel(row.currentSource))}</small>
+            </section>
+            <section>
+              <h4>{t(report.versionStatus === "draft"
+                ? "Draft dates — not in use"
+                : "Compared shared-reference dates")}</h4>
+              <WindowMilestones first={row.proposedFirstTrialYear}
+                start={row.proposedBestStartYear} end={row.proposedBestEndYear} t={t} />
+            </section>
+          </div>
+          {row.matchedScope ? <p><strong>{t("Reference level")}:</strong> {t(scopeLabel(row.matchedScope))}</p> : null}
+          {row.proposedGroupDefinition ? <p><strong>{t("Which wines qualify?")}</strong> {t(row.proposedGroupDefinition)}</p> : null}
+          {row.proposedReferenceRationale ? <p><strong>{t("Where do these dates come from?")}</strong> {t(row.proposedReferenceRationale)}</p> : null}
         </li>)}
       </ol>
       {shown < orderedRows.length ? <button onClick={() => setShown(shown + 30)} type="button">
         {t("Show more wines")}
       </button> : null}
-      {report.versionStatus === "draft" || report.versionStatus === "active" ? <div className="drinking-window-shadow-review__decision">
+      {(report.versionStatus === "active" || (report.versionStatus === "draft" && report.draftIssueCount === 0)) ? <div className="drinking-window-shadow-review__decision">
         <label>{t("Reason for your decision")}
           <textarea minLength={10} onChange={(event) => setRationale(event.target.value)}
             rows={3} value={rationale} />
