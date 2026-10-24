@@ -900,6 +900,7 @@ export const frenchTextRuntime: Readonly<Record<string, string>> = {
   "Detailed drinking-window comparison": "Comparaison détaillée des périodes de dégustation",
   "Draft under review — no action needed": "Brouillon en cours de vérification — aucune action nécessaire",
   "proposals with different dates": "propositions avec des dates différentes",
+  "proposal with different dates": "proposition avec des dates différentes",
   "pending reference checks": "vérifications de référence en attente",
   "This draft is not in use. Your cellar still shows its current dates.": "Ce brouillon n’est pas utilisé. Votre cave conserve les dates actuelles.",
   "{count} reference checks are still pending. No decision is needed from you yet.": "{count} vérifications de référence restent en attente. Vous n’avez rien à décider pour le moment.",

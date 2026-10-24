@@ -225,7 +225,9 @@ export function DrinkingWindowShadowReviewPanel({
     {report ? <section aria-label={t("Detailed drinking-window comparison")}>
       <h3>{t("Reference version")} {report.versionNumber}
         {report.versionStatus === "draft" ? ` · ${t("Unpublished draft")}` : ""}</h3>
-      <p>{report.wineCount} {t("wines")} · {changedCount} {t("proposals with different dates")} · {report.draftIssueCount} {t("pending reference checks")}</p>
+      <p>{report.wineCount} {t("wines")} · {changedCount} {t(changedCount === 1
+        ? "proposal with different dates"
+        : "proposals with different dates")} · {report.draftIssueCount} {t("pending reference checks")}</p>
       {report.versionStatus === "draft" ? <p>{t("This draft is not in use. Your cellar still shows its current dates.")}</p>
         : <p>{t("The current dates are the ones you see in your cellar, including your personal timing choice.")}</p>}
       {report.draftIssueCount > 0 ? <Notice tone="warning">
@@ -253,8 +255,8 @@ export function DrinkingWindowShadowReviewPanel({
             </section>
           </div>
           {row.matchedScope ? <p><strong>{t("Reference level")}:</strong> {t(scopeLabel(row.matchedScope))}</p> : null}
-          {row.proposedGroupDefinition ? <p><strong>{t("Which wines qualify?")}:</strong> {t(row.proposedGroupDefinition)}</p> : null}
-          {row.proposedReferenceRationale ? <p><strong>{t("Where do these dates come from?")}:</strong> {t(row.proposedReferenceRationale)}</p> : null}
+          {row.proposedGroupDefinition ? <p><strong>{t("Which wines qualify?")}</strong> {t(row.proposedGroupDefinition)}</p> : null}
+          {row.proposedReferenceRationale ? <p><strong>{t("Where do these dates come from?")}</strong> {t(row.proposedReferenceRationale)}</p> : null}
         </li>)}
       </ol>
       {shown < orderedRows.length ? <button onClick={() => setShown(shown + 30)} type="button">

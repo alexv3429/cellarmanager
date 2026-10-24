@@ -75,6 +75,7 @@ describe("shared drinking-window draft comparison", () => {
     await act(async () => reportButton?.click())
 
     expect(container.textContent).toContain("Ce brouillon n’est pas utilisé")
+    expect(container.textContent).toContain("1 proposition avec des dates différentes")
     const panels = container.querySelectorAll(".drinking-window-shadow-review__comparison section")
     expect(panels).toHaveLength(2)
     expect(panels[0].textContent).toContain("Dates utilisées actuellement dans votre cave")
@@ -86,6 +87,7 @@ describe("shared drinking-window draft comparison", () => {
     expect(panels[1].textContent).toContain("2028")
     expect(panels[1].textContent).toContain("2035")
     expect(container.textContent).toContain("Quels vins sont concernés ?")
+    expect(container.textContent).not.toContain("?:")
     expect(container.textContent).toContain("pas aux Charmes")
     expect(container.textContent).not.toContain(group)
     expect(container.textContent).not.toContain(rationale)
