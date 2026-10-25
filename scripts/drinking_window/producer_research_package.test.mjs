@@ -1,93 +1,52 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { producerReleaseReview, validateProducerResearchPackage } from './producer_research_package.mjs';
-
-const fixture = {
-  schema: 'cellarmanager.research.domaine.v1',
-  schema_version: '1.0.0',
-  status: 'DRAFT_NOT_VALIDATED_FOR_PUBLICATION',
-  producer: { id: 'example-estate', name: 'Example Estate', sources: ['estate'] },
-  sources: [{
-    id: 'estate', url: 'https://example.org/wines',
-    rights: 'pointer_only_unreviewed_for_publication',
-  }],
-  cuvees: [{
-    id: 'example-long', display_name: 'Long Ageing', appellation: 'Morgon',
-    region: 'Beaujolais', color: 'red', vintage_existence_not_implied: true,
-    base_ages_years: { first_trial: 4, best_start: 8, best_end: 16 },
-    structure_estimate_0_to_5: {
-      body: 4, acidity: 4, tannin: 4, sweetness: 0,
-      alcohol: 3, freshness: 4, savoury: 3, concentration: 4,
-    },
-    food_pairings: [], sources: ['estate'], ageing_group_key: 'long',
-  }, {
-    id: 'special-magnum', display_name: 'Special Magnum', appellation: 'Morgon',
-    region: 'Beaujolais', color: 'red', vintage_existence_not_implied: true,
-    base_ages_years: null, structure_estimate_0_to_5: null,
-    food_pairings: [], sources: ['estate'],
-  }],
-  vintage_effects: [{
-    vintage: 2022, relative_year_adjustments: { first_trial: 0, best_start: 1, best_end: 2 },
-    source_ids: ['estate'],
-  }],
-  exact_release_calibrations: [{
-    cuvee_id: 'example-long', vintage: 2022,
-    first_trial_year: 2026, best_start_year: 2032, best_end_year: 2042,
-    rationale: 'Owner-authored research estimate', confidence: 'medium', source_ids: ['estate'],
-  }],
-  rename_events: [],
-  external_drinking_observations: [],
-  methodology: { windows: 'Three distinct years' },
+import { validateProducerResearchPackage, producerReleaseReview } from './producer_research_package.mjs';
+const source={id:'estate',title:'Estate',url:'https://example.org/wines',type:'producer',checked_on:'2026-10-25',
+  reuse:{status:'rights_not_reviewed',store_raw_content:false,normalized_claim_publication:'requires_review',pointer_candidate_only:true}};
+const sample={
+ format:'cellarmanager.producer_research',schema_version:'1.1.0',dataset_version:'1.0.0',generated_on:'2026-10-25',
+ language:'en',status:'draft_for_curator_review',scope:'producer_independent_of_any_household',
+ producer:{id:'estate',name:'Example Estate',aliases:[],country:'France',region:'Beaujolais',source_ids:['estate']},
+ sources:[source],
+ cuvees:[{id:'wine',name:'Example Wine',aliases:[],appellation:'Morgon',region:'Beaujolais',color:'red',
+   identity_status:'source_supported',name_history:[],source_ids:['estate'],
+   vintage_existence_policy:'never_infer_from_vintage_effect_or_name_history'}],
+ vintage_effects:[{vintage:2022,color:'red',applies_to_cuvee_ids:['wine'],tag:'balanced',
+   producer_specific_observation:'Example',maturity_direction:'longer_possible',confidence:'low',source_ids:['estate']}],
+ exact_release_calibrations:[{cuvee_id:'wine',vintage:2022,format_ml:750,
+   release_existence:{status:'confirmed_by_named_vintage_source',source_ids:['estate'],source_urls:[source.url]},
+   proposal:{first_trial_year:2026,best_start_year:2030,best_end_year:2038,date_origin:'curator_model_estimate_not_source_fact',
+     confidence:'low',rationale:'Hypothesis',supporting_source_ids:['estate'],supporting_source_urls:[source.url],
+     milestone_support:{first_trial_year:'modeled',best_start_year:'modeled',best_end_year:'modeled'},review_status:'candidate_not_approved'}}],
+ pairing_profiles:[{cuvee_id:'wine',scope:'general_cuvee_not_release',
+   pairings:[{dish_key:'grilled_meat',strength:'medium',rationale:'structural inference',source_ids:['estate'],
+     evidence_basis:'structural_inference_not_directly_tasted'}],
+   cautions:[],service:{},confidence:'low',status:'structural_hypothesis_not_tasted_pairing',
+   source_ids:['estate'],hypothesis_basis:'structural_inference_not_directly_tasted'}],
+ import_policy:{canonical_source_of_truth:'this_JSON_only',review_required:true,no_direct_household_inventory_write:true,
+   no_direct_production_publication:true,release_existence:'never_generate_releases_by_cartesian_product_of_cuvees_and_vintages',
+   unknown_dates:'omit_dates_entirely_rather_than_synthesize_when_uncorroborated'}
 };
-
-const copy = () => structuredClone(fixture);
-
-test('a research package validates without becoming publishable', () => {
-  const result = validateProducerResearchPackage(fixture);
-  assert.equal(result.cuvee_count, 2);
-  assert.equal(result.exact_calibration_count, 1);
-  assert.equal(result.publishable_rows, 0);
+const cp=()=>structuredClone(sample);
+test('v1.1 research accepted but publishable rows remain zero',()=>{
+ const result=validateProducerResearchPackage(sample);assert.equal(result.publishable_rows,0);assert.equal(result.exact_calibration_count,1);
 });
-
-test('a cuvée-specific release proposal preserves a material conflict', () => {
-  const result = producerReleaseReview(fixture, 'example-long', 2022, {
-    first_trial_year: 2025, best_start_year: 2028, best_end_year: 2035,
-  });
-  assert.deepEqual(result.proposed_years, [2026, 2032, 2042]);
-  assert.deepEqual(result.current_draft_years, [2025, 2028, 2035]);
-  assert.equal(result.date_conflict, true);
-  assert.equal(result.publication_allowed, false);
-  assert.equal(result.evidence_pointers[0].url, 'https://example.org/wines');
+test('exact release review respects bottle size and conflicts',()=>{
+ const v=producerReleaseReview(sample,'wine',2022,{first_trial_year:2025,best_start_year:2028,best_end_year:2035},750);
+ assert.equal(v.date_conflict,true);assert.equal(v.publication_allowed,false);assert.equal(v.format_ml,750);
+ assert.throws(()=>producerReleaseReview(sample,'wine',2022,null,1500),/no exact cuvee\/vintage\/format/);
 });
-
-test('missing release-specific calibration cannot borrow a generic age or vintage modifier', () => {
-  assert.throws(() => producerReleaseReview(fixture, 'special-magnum', 2022), /no cuvée-specific vintage calibration/);
-  assert.throws(() => producerReleaseReview(fixture, 'example-long', 2023), /no cuvée-specific vintage calibration/);
+test('reject missing format, pairing provenance and inverted dates',()=>{
+ let x=cp();delete x.exact_release_calibrations[0].format_ml;assert.throws(()=>validateProducerResearchPackage(x),/format_ml/);
+ x=cp();delete x.pairing_profiles[0].pairings[0].source_ids;assert.throws(()=>validateProducerResearchPackage(x),/source_ids/);
+ x=cp();x.exact_release_calibrations[0].proposal.best_start_year=2045;assert.throws(()=>validateProducerResearchPackage(x),/milestones must be ordered/);
 });
-
-test('duplicate and invalid calibrations fail', () => {
-  const duplicate = copy();
-  duplicate.exact_release_calibrations.push(structuredClone(duplicate.exact_release_calibrations[0]));
-  assert.throws(() => validateProducerResearchPackage(duplicate), /duplicate cuvée\/vintage calibration/);
-  const inverted = copy();
-  inverted.exact_release_calibrations[0].best_start_year = 2043;
-  assert.throws(() => validateProducerResearchPackage(inverted), /milestones must be ordered/);
+test('reject invented release and source claims',()=>{
+ let x=cp();x.exact_release_calibrations[0].cuvee_id='invented';assert.throws(()=>validateProducerResearchPackage(x),/unknown cuvee_id/);
+ x=cp();x.exact_release_calibrations[0].proposal.supporting_source_ids=['made_up'];assert.throws(()=>validateProducerResearchPackage(x),/unknown source pointer/);
+ x=cp();x.status='published';assert.throws(()=>validateProducerResearchPackage(x),/non-draft/);
 });
-
-test('source pointers and publication rights cannot be invented by the research pack', () => {
-  const missing = copy();
-  missing.exact_release_calibrations[0].source_ids = ['not-in-sources'];
-  assert.throws(() => validateProducerResearchPackage(missing), /unknown source pointer/);
-  const rights = copy();
-  rights.sources[0].rights = 'approved';
-  assert.throws(() => validateProducerResearchPackage(rights), /cannot grant publication rights/);
-  const status = copy();
-  status.status = 'PUBLISHED';
-  assert.throws(() => validateProducerResearchPackage(status), /non-draft status/);
-});
-
-test('a modeled range never asserts that a release exists', () => {
-  const exists = copy();
-  exists.cuvees[0].vintage_existence_not_implied = false;
-  assert.throws(() => validateProducerResearchPackage(exists), /must not imply that a release exists/);
+test('vintage effects cannot create release calibrations',()=>{
+ const x=cp();x.exact_release_calibrations=[];assert.equal(validateProducerResearchPackage(x).exact_calibration_count,0);
+ assert.throws(()=>producerReleaseReview(x,'wine',2022),/no exact cuvee\/vintage\/format/);
 });
