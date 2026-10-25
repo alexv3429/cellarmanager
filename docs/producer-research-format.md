@@ -1,74 +1,52 @@
-# Producer research package: exchange format v1
+# Producer research exchange — JSON contract 1.1.0 (draft)
 
-The owner-supplied Burgaud package is the first test of a reusable **research
-exchange format**, not a published CellarManager reference or an inventory
-import. Its `burgaud_research.json` envelope uses
-`cellarmanager.research.domaine.v1` and version `1.0.0`. The accompanying CSVs
-are review views; the JSON is authoritative within the package. The included
-JSON Schema only checks the envelope and is not a publication validator.
+CellarManager accepts **one independent, versioned JSON file per producer** for **research review only**. It is neither a cellar import nor a source of automatic shared drinking-window publication.
 
-Run the repository's read-only validation and inspect one calibrated release:
+The normative machine-readable specification is [producer_exchange_v1.schema.json](schemas/producer_exchange_v1.schema.json) (JSON Schema Draft 2020-12). The previous Burgaud ZIP format (`cellarmanager.research.domaine.v1`) and its inlined relative cuvée ages are **retired**. Any earlier Burgaud file using `schema_version: 1.0.0` needs explicit migration to `1.1.0`; renaming the envelope alone is insufficient.
 
-```bash
-node scripts/drinking_window/producer_research_package.mjs /path/to/burgaud_research.json
-node scripts/drinking_window/producer_research_package.mjs /path/to/burgaud_research.json morgon_james 2022 2025,2028,2035
+Start another producer from the [copyable JSON template](examples/producer-research-template.json).
+Replace every `REPLACE` value and the `example.invalid` URL with verified
+producer-specific information, update `generated_on`, and add sources to the
+registry before referring to their IDs. The template deliberately has no
+vintage effects or exact-release dates: add a release only when a source
+actually identifies that cuvée, vintage, and bottle size. Record its proposed
+three dates, rationale, confidence, and separate source support under
+`exact_release_calibrations`; do not generate every cuvée/vintage combination.
+Keep `status: draft_for_curator_review` and each proposal
+`review_status: candidate_not_approved`. A technical validation pass is not
+evidence or permission to publish.
+
+## Data layers
+
+- `producer` and `cuvees`: names, aliases, canonicalization *hints*, appellation, region, colour, and sourced name history with optional vintage bounds. Names and vintage effects **never imply production**.
+- `vintage_effects`: source-linked producer-specific, colour-scoped context without mass-generated release years.
+- `exact_release_calibrations`: named cuvée, vintage, mandatory **`format_ml`**, named-vintage release-existence evidence, and three independently **proposed** calendar years under `proposal`. Each proposal includes rationale, confidence, supporting sources, milestone support and `candidate_not_approved`. The year order is first trial <= optimum start <= optimum end. Existence evidence and precise dates are distinct claims.
+- `external_drinking_observations`: original published advice and **mandatory `format_ml`**, without relabeling a critic's general window as three optimum milestones. Magnum 1500 ml cannot automatically substantiate a 750 ml calibration.
+- `structure_profiles`: source-linked structural estimates, separate from dates.
+- `pairing_profiles`: source IDs on **both the whole profile and each dish hypothesis**; required `hypothesis_basis`/`evidence_basis` distinguish inferred structural matches from documented (still unreviewed) source pairings. A producer style description is not an actual tasted food pairing.
+- `sources`: HTTPS pointers with source-rights status; rights unknown until independently reviewed.
+- `source_discrepancies` and `research_gaps`: unresolved conflicts, without invented dates.
+
+Unknown data remain absent. Local IDs are not CellarManager UUIDs. The JSON is the source of truth; CSV files are optional generated human review views.
+
+## Validation and review are separate
+
+The Node validator is part of the repository's existing `npm run drinking-window:test` suite; no Python `jsonschema` package is required:
+
+```sh
+node scripts/drinking_window/producer_research_package.mjs /private/research/producer.json
+node scripts/drinking_window/producer_research_package.mjs /private/research/producer.json morgon_james 2022 2025,2028,2035 750
+npm run drinking-window:test
 ```
 
-The output is a **review dossier**, not SQL. It cannot change `public.wines`,
-`enrichment_profiles`, drinking-window rows, or the advice shown in the app.
-The validator requires unique source and cuvée IDs, valid source pointers,
-three ordered years for exact calibrations, 0–5 structure estimates where
-modeled, and an explicit warning that a modeled vintage range does not prove
-production. Special products may have no ages or structure; they cannot borrow
-nearby cuvée dates. A research source can provide an HTTPS pointer but never
-grant itself publication rights.
+The companion JSON Schema is the normative document contract; the Node validator checks critical semantic conditions and cross-references (including volumes, source IDs and URLs, draft status and ordered dates). Passing these checks is **not** evidence that an individual source supports its stated claim. Curators must still verify actual source content, identity, package size, source rights and competing calendar advice. Do not import any `candidate_not_approved` proposal into effective advice.
 
-## What each layer means
+### James 2022
 
-| Research-package layer | CellarManager destination after review | Never infer from it |
-| --- | --- | --- |
-| Producer, cuvée, appellation, colour, historical name | Confirmed `wine_reference_*` identities and reviewed aliases/supersessions | A household wine link or release merely from a similar name |
-| Base relative ages, producer era, vintage effect | Evidence/context for a proposed three-year row or existing additive maturity profile | A published date for every vintage in the modeled range |
-| Exact cuvée × vintage calibration | Candidate for one `release`-scope drinking-window row with **all three years together** | That its sources published those exact years |
-| Structure 0–5 and pairing hypotheses | Separate enrichment/pairing review, after canonical dish mapping | A tasting observation or a producer-endorsed food match |
-| External drinking observations | Pointer-only contextual evidence with its original “drink” semantics | Equality between a critic's drinking span and our probable optimum |
-| Rename event | Curated, vintage-bounded identity relationship | Automatic pre/post-2024 product merger |
+The Burgaud research prototype has an unapproved 750 ml James 2022 proposal of **2026 / 2030–2038**. Earlier research proposed **2026 / 2032–2042**, and a regional pilot **2025 / 2028–2035**. These are conflicting estimates, **not** three source-attested milestones. A Vinatis 750 ml page reports its own horizon, while a separate 1500 ml merchant listing reports another range. Distinguish these by package size and preserve source scope. No date becomes active from this exchange.
 
-The canonical producer, product, release, appellation, region and colour IDs
-remain to be confirmed in CellarManager. A proposed `ageing_group_key` is only
-a hint. The shared drinking-window policy still decides applicability and
-precedence. For a release-level candidate, neither a regional group nor a
-vintage modifier replaces the cuvée-specific three-year decision. A private
-manual window continues to outrank shared advice.
+## Safe integration boundary
 
-## Burgaud pilot conflict to resolve
+This PR adds documentation, a schema, a read-only validator and tests. It must not add Supabase migrations, alter household inventory, stage draft candidates automatically, or publish any shared maturity advice. Review workflow, canonical identity matching, source-policy approval, shadow comparison, curator approval and publication remain separate existing CellarManager processes.
 
-The package proposes **James 2022: 2026 / 2032–2042** and **Côte du Py 2022:
-2025 / 2029–2040**. The existing unpublished pilot puts **both** in one
-long-ageing regional group at **2025 / 2028–2035**. These are materially
-different candidates, not interchangeable descriptions of one reference.
-Do not approve or publish the regional row unchanged merely because the
-producer calls both wines suitable for ageing. The producer's own [wine
-descriptions](https://jean-marc-burgaud.com/nos-vins) support relative ageing
-potential but do not supply any of those exact calendar years. The Burgaud
-package identifies its years as research estimates, and its James 2022
-calibration cites a producer-level importer page and a page about a different
-cuvée/vintage. Those links are context, not proof of James 2022's three years.
-
-For the next review, resolve the two conflicting date sets with the owner;
-verify each release and its source fit separately; then stage separate
-release-scoped proposals if accepted. Do not allow the James candidate to
-cover Les Charmes, a different vintage, a magnum, or an unlinked cellar wine.
-All package rights and curator checks remain open. No source text is copied
-into the shared database by this format.
-
-The owner considers the package's cuvée-specific research more polished than
-the earlier regional estimate. That is a **preference for the candidate to
-review**, not a curator decision or adoption of the exact years. The older
-2025 / 2028–2035 pilot dates came from the owner's earlier Beaujolais Cru 2022
-category estimate; they were never a Burgaud or James-specific source claim.
-
-This validation step does not settle the estimates or activate a reference.
-Publication still requires the existing curator decisions, whole-cellar owner
-comparison, publication preflight and household opt-in described in the
-[release plan](drinking-window-release-plan.md).
+Schema version `1.1.0` is intentionally incompatible with `1.0.0` because it requires bottle size and food-pairing provenance. Dataset versions evolve independently (the current local Burgaud revision is `1.0.2`).

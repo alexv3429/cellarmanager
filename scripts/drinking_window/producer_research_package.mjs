@@ -1,219 +1,127 @@
 import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 
-const RESEARCH_SCHEMA = 'cellarmanager.research.domaine.v1';
-const RESEARCH_STATUS = 'DRAFT_NOT_VALIDATED_FOR_PUBLICATION';
-const YEAR_MIN = 1800;
-const YEAR_MAX = 2300;
-const COLORS = new Set(['red', 'white', 'rose', 'sparkling', 'sweet', 'fortified', 'other']);
-const STRUCTURE_KEYS = [
-  'body', 'acidity', 'tannin', 'sweetness', 'alcohol', 'freshness', 'savoury', 'concentration',
-];
-
-function fail(path, message) {
-  throw new Error(`${path}: ${message}`);
-}
-
-function object(value, path) {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) fail(path, 'expected an object');
-  return value;
-}
-
-function array(value, path) {
-  if (!Array.isArray(value)) fail(path, 'expected an array');
-  return value;
-}
-
-function text(value, path) {
-  if (typeof value !== 'string' || !value.trim()) fail(path, 'expected non-empty text');
-  return value;
-}
-
-function year(value, path) {
-  if (!Number.isInteger(value) || value < YEAR_MIN || value > YEAR_MAX) {
-    fail(path, 'expected a calendar year');
+const fail = (path, issue) => { throw new Error(`${path}: ${issue}`); };
+const obj = (value, path) => value && typeof value === 'object' && !Array.isArray(value) ? value : fail(path, 'expected object');
+const arr = (value, path) => Array.isArray(value) ? value : fail(path, 'expected array');
+const str = (value, path) => typeof value === 'string' && value.trim() ? value : fail(path, 'expected nonempty text');
+const yr = (value, path) => Number.isInteger(value) && value >= 1800 && value <= 2200 ? value : fail(path, 'invalid calendar year');
+const volume = (value, path) => Number.isInteger(value) && value >= 50 && value <= 30000 ? value : fail(path, 'explicit format_ml 50..30000 required');
+const unique = (rows, label, fn) => {
+  const seen = new Set();
+  for (const [i, row] of rows.entries()) {
+    const key = fn(row);
+    if (seen.has(key)) fail(`${label}[${i}]`, 'duplicate identity');
+    seen.add(key);
   }
-  return value;
-}
-
-function yearsInOrder(value, path, vintage = null) {
-  const dates = object(value, path);
-  const first = year(dates.first_trial_year, `${path}.first_trial_year`);
-  const start = year(dates.best_start_year, `${path}.best_start_year`);
-  const end = year(dates.best_end_year, `${path}.best_end_year`);
-  if ((vintage !== null && first < vintage) || first > start || start > end) {
-    fail(path, 'the three milestones must be ordered and not precede the vintage');
-  }
+};
+const ordered = (proposal, vintage, path) => {
+  const first = yr(proposal.first_trial_year, path + '.first_trial_year');
+  const start = yr(proposal.best_start_year, path + '.best_start_year');
+  const end = yr(proposal.best_end_year, path + '.best_end_year');
+  if (first < vintage || first > start || start > end) fail(path, 'three milestones must be ordered');
   return [first, start, end];
-}
-
-function sourcePointers(ids, known, path) {
-  for (const id of array(ids, path)) {
-    if (!known.has(id)) fail(path, `unknown source pointer ${String(id)}`);
-  }
-}
-
-function uniqueId(value, seen, path) {
-  const id = text(value, path);
-  if (seen.has(id)) fail(path, `duplicate ID ${id}`);
-  seen.add(id);
-  return id;
-}
-
+};
 export function validateProducerResearchPackage(input) {
-  const pack = object(input, 'package');
-  if (pack.schema !== RESEARCH_SCHEMA || pack.schema_version !== '1.0.0'
-      || pack.status !== RESEARCH_STATUS) {
-    fail('package', 'unsupported schema/version or a non-draft status');
-  }
-  const producer = object(pack.producer, 'producer');
-  text(producer.id, 'producer.id');
-  text(producer.name, 'producer.name');
-  const knownSources = new Set();
-  for (const [index, item] of array(pack.sources, 'sources').entries()) {
-    const source = object(item, `sources[${index}]`);
-    uniqueId(source.id, knownSources, `sources[${index}].id`);
-    const url = text(source.url, `sources[${index}].url`);
-    if (!/^https:\/\//.test(url)) fail(`sources[${index}].url`, 'expected an HTTPS pointer');
-    if (source.rights !== 'pointer_only_unreviewed_for_publication') {
-      fail(`sources[${index}].rights`, 'this research format cannot grant publication rights');
-    }
-  }
-  sourcePointers(producer.sources, knownSources, 'producer.sources');
-
-  const cuveeIds = new Set();
-  const cuvees = array(pack.cuvees, 'cuvees');
-  for (const [index, item] of cuvees.entries()) {
-    const cuvee = object(item, `cuvees[${index}]`);
-    uniqueId(cuvee.id, cuveeIds, `cuvees[${index}].id`);
-    text(cuvee.display_name, `cuvees[${index}].display_name`);
-    text(cuvee.appellation, `cuvees[${index}].appellation`);
-    text(cuvee.region, `cuvees[${index}].region`);
-    if (!COLORS.has(cuvee.color)) fail(`cuvees[${index}].color`, 'unsupported wine colour');
-    if (cuvee.vintage_existence_not_implied !== true) {
-      fail(`cuvees[${index}]`, 'a modeled range must not imply that a release exists');
-    }
-    if ((cuvee.base_ages_years === null) !== (cuvee.structure_estimate_0_to_5 === null)) {
-      fail(`cuvees[${index}]`, 'unmodeled products must omit both ages and structure');
-    }
-    if (cuvee.base_ages_years !== null) {
-      const ages = object(cuvee.base_ages_years, `cuvees[${index}].base_ages_years`);
-      const ageValues = ['first_trial', 'best_start', 'best_end'].map((key) => ages[key]);
-      if (ageValues.some((value) => !Number.isInteger(value) || value < 0 || value > 100)
-          || ageValues[0] > ageValues[1] || ageValues[1] > ageValues[2]) {
-        fail(`cuvees[${index}].base_ages_years`, 'invalid relative three-milestone ages');
-      }
-      const structure = object(cuvee.structure_estimate_0_to_5, `cuvees[${index}].structure_estimate_0_to_5`);
-      for (const key of STRUCTURE_KEYS) {
-        if (typeof structure[key] !== 'number' || structure[key] < 0 || structure[key] > 5) {
-          fail(`cuvees[${index}].structure_estimate_0_to_5.${key}`, 'expected a 0–5 estimate');
-        }
-      }
-    }
-    array(cuvee.food_pairings, `cuvees[${index}].food_pairings`);
-    sourcePointers(cuvee.sources, knownSources, `cuvees[${index}].sources`);
-  }
-  for (const [index, item] of array(pack.vintage_effects, 'vintage_effects').entries()) {
-    const effect = object(item, `vintage_effects[${index}]`);
-    year(effect.vintage, `vintage_effects[${index}].vintage`);
-    object(effect.relative_year_adjustments, `vintage_effects[${index}].relative_year_adjustments`);
-    sourcePointers(effect.source_ids, knownSources, `vintage_effects[${index}].source_ids`);
-  }
-  const calibrationKeys = new Set();
-  for (const [index, item] of array(pack.exact_release_calibrations, 'exact_release_calibrations').entries()) {
-    const row = object(item, `exact_release_calibrations[${index}]`);
-    if (!cuveeIds.has(row.cuvee_id)) fail(`exact_release_calibrations[${index}]`, 'unknown cuvée');
-    const vintage = year(row.vintage, `exact_release_calibrations[${index}].vintage`);
-    const key = `${row.cuvee_id}|${vintage}`;
-    if (calibrationKeys.has(key)) fail(`exact_release_calibrations[${index}]`, 'duplicate cuvée/vintage calibration');
-    calibrationKeys.add(key);
-    yearsInOrder(row, `exact_release_calibrations[${index}]`, vintage);
-    sourcePointers(row.source_ids, knownSources, `exact_release_calibrations[${index}].source_ids`);
-  }
-  for (const [index, item] of array(pack.rename_events, 'rename_events').entries()) {
-    const event = object(item, `rename_events[${index}]`);
-    if (!cuveeIds.has(event.from_id) || !cuveeIds.has(event.to_id) || event.from_id === event.to_id) {
-      fail(`rename_events[${index}]`, 'renames need two different known cuvées');
-    }
-    year(event.effective_from_vintage, `rename_events[${index}].effective_from_vintage`);
-    sourcePointers(event.validated_by, knownSources, `rename_events[${index}].validated_by`);
-  }
-  array(pack.external_drinking_observations, 'external_drinking_observations');
-  object(pack.methodology, 'methodology');
-  return {
-    schema: pack.schema,
-    status: 'research-only',
-    producer: { id: producer.id, name: producer.name },
-    source_count: knownSources.size,
-    cuvee_count: cuvees.length,
-    exact_calibration_count: calibrationKeys.size,
-    publishable_rows: 0,
+  const d = obj(input, '$');
+  if (d.format !== 'cellarmanager.producer_research' || d.schema_version !== '1.1.0'
+      || d.status !== 'draft_for_curator_review' || d.scope !== 'producer_independent_of_any_household')
+    fail('$', 'unsupported exchange version or non-draft research');
+  obj(d.producer, 'producer');
+  if (!d.import_policy?.review_required || !d.import_policy?.no_direct_production_publication
+      || !d.import_policy?.no_direct_household_inventory_write) fail('import_policy', 'unsafe publication policy');
+  const sources = new Map(arr(d.sources, 'sources').map(s => [s.id, s]));
+  if (sources.size !== d.sources.length) fail('sources', 'duplicate source ID');
+  const checkSources = (ids, path, urls = null) => {
+    const list = arr(ids, path);
+    if (!list.length || new Set(list).size !== list.length) fail(path, 'empty or duplicate source pointers');
+    for (const id of list) if (!sources.has(id)) fail(path, `unknown source pointer ${id}`);
+    if (urls && (urls.length !== list.length || list.some(id => !urls.includes(sources.get(id).url))))
+      fail(path, 'source URL mismatch');
   };
+  for (const s of sources.values()) {
+    if (typeof s.url !== 'string' || !s.url.startsWith('https://')) fail('sources', 'HTTPS URLs required');
+    if (s.reuse?.store_raw_content !== false || s.reuse?.pointer_candidate_only !== true)
+      fail('sources', 'research cannot grant raw-storage or publication rights');
+  }
+  checkSources(d.producer.source_ids, 'producer.source_ids');
+  const cuvees = new Map(arr(d.cuvees, 'cuvees').map(c => [c.id, c]));
+  if (cuvees.size !== d.cuvees.length) fail('cuvees', 'duplicate cuvee ID');
+  for (const c of cuvees.values()) {
+    str(c.name, 'cuvee.name');str(c.appellation,'cuvee.appellation');str(c.region,'cuvee.region');
+    checkSources(c.source_ids,'cuvee.source_ids');
+    if (c.format_constraint_ml != null) volume(c.format_constraint_ml,'cuvee.format_constraint_ml');
+    if (c.vintage_existence_policy !== 'never_infer_from_vintage_effect_or_name_history')
+      fail('cuvee', 'name history may not imply production');
+    for (const h of c.name_history || []) checkSources(h.source_ids, 'name_history.source_ids');
+  }
+  const hasCuvee = (id, path) => { if (!cuvees.has(id)) fail(path, 'unknown cuvee_id'); };
+  for (const v of arr(d.vintage_effects,'vintage_effects')) {
+    yr(v.vintage,'vintage_effect.vintage'); checkSources(v.source_ids,'vintage_effect.source_ids');
+    for (const id of v.applies_to_cuvee_ids) {hasCuvee(id,'vintage_effect');if (cuvees.get(id).color !== v.color) fail('vintage_effect','colour mismatch');}
+  }
+  const nonproduced = new Set((d.known_nonproduced_releases || []).map(x => `${x.cuvee_id}|${x.vintage}`));
+  for (const r of d.known_nonproduced_releases || []) {hasCuvee(r.cuvee_id,'nonproduced');checkSources(r.source_ids,'nonproduced.source_ids');}
+  const releases=arr(d.exact_release_calibrations,'exact_release_calibrations');
+  unique(releases,'exact_release_calibrations',r=>`${r.cuvee_id}|${r.vintage}|${r.format_ml}`);
+  for (const r of releases) {
+    hasCuvee(r.cuvee_id,'release');yr(r.vintage,'release.vintage');volume(r.format_ml,'release.format_ml');
+    if (cuvees.get(r.cuvee_id).format_constraint_ml && cuvees.get(r.cuvee_id).format_constraint_ml !== r.format_ml)
+      fail('release','violates cuvee format constraint');
+    if (nonproduced.has(`${r.cuvee_id}|${r.vintage}`)) fail('release','known not produced');
+    if (r.release_existence?.status !== 'confirmed_by_named_vintage_source') fail('release','missing asserted release existence');
+    checkSources(r.release_existence.source_ids,'release.existence',r.release_existence.source_urls);
+    checkSources(r.proposal?.supporting_source_ids,'release.proposal',r.proposal?.supporting_source_urls);
+    ordered(r.proposal,r.vintage,'release.proposal');
+    if (r.proposal.review_status !== 'candidate_not_approved') fail('release.proposal','must remain unapproved');
+  }
+  for (const x of d.external_drinking_observations || []) {
+    hasCuvee(x.cuvee_id,'observation');volume(x.format_ml,'observation.format_ml');
+    checkSources([x.source_id],'observation.source_id',[x.source_url]);
+  }
+  for (const p of d.structure_profiles || []) {hasCuvee(p.cuvee_id,'structure');checkSources(p.source_ids,'structure.source_ids');}
+  for (const p of d.pairing_profiles || []) {
+    hasCuvee(p.cuvee_id,'pairing');checkSources(p.source_ids,'pairing.source_ids');
+    if (!['structural_inference_not_directly_tasted','documented_pairing_source_pending_review'].includes(p.hypothesis_basis))
+      fail('pairing','hypothesis_basis required');
+    for (const dish of p.pairings) {
+      checkSources(dish.source_ids,'pairing.dish.source_ids');
+      if (!['structural_inference_not_directly_tasted','documented_pairing_source_pending_review'].includes(dish.evidence_basis))
+        fail('pairing.dish','evidence_basis required');
+    }
+  }
+  for (const x of d.source_discrepancies || []) checkSources(x.source_ids,'discrepancy');
+  return {schema_version:d.schema_version,status:'research-only',producer:d.producer.name,
+    cuvee_count:cuvees.size,exact_calibration_count:releases.length,publishable_rows:0};
 }
 
-export function producerReleaseReview(pack, cuveeId, vintage, currentYears = null) {
+export function producerReleaseReview(pack, cuveeId, vintage, currentYears = null, formatMl = 750) {
   validateProducerResearchPackage(pack);
-  year(vintage, 'vintage');
-  const cuvee = pack.cuvees.find((row) => row.id === cuveeId);
-  if (!cuvee) fail('cuveeId', 'unknown cuvée');
-  const calibration = pack.exact_release_calibrations.find(
-    (row) => row.cuvee_id === cuveeId && row.vintage === vintage,
-  );
-  if (!calibration) fail('release', 'no cuvée-specific vintage calibration');
-  const sourceById = new Map(pack.sources.map((source) => [source.id, source]));
-  const proposedYears = yearsInOrder(calibration, 'calibration', vintage);
-  const existingYears = currentYears === null ? null : yearsInOrder(currentYears, 'currentYears', vintage);
-  return {
-    status: 'research-only',
-    scope: 'release',
-    producer: pack.producer.name,
-    cuvee: cuvee.display_name,
-    cuvee_id_hint: cuvee.id,
-    appellation: cuvee.appellation,
-    region: cuvee.region,
-    color: cuvee.color,
-    vintage,
-    ageing_group_hint: cuvee.ageing_group_key ?? null,
-    proposed_years: proposedYears,
-    current_draft_years: existingYears,
-    date_conflict: existingYears !== null && proposedYears.some((value, index) => value !== existingYears[index]),
-    rationale: calibration.rationale,
-    confidence: calibration.confidence,
-    evidence_status: 'pointers_only_fit_and_rights_unreviewed',
-    evidence_pointers: calibration.source_ids.map((id) => ({ id, url: sourceById.get(id).url })),
-    required_reviews: [
-      'confirm_canonical_producer_product_release_and_vintage',
-      'confirm_release_existence',
-      'review_three_dates_as_one_set',
-      'review_evidence_fit_and_reuse_rights',
-      'resolve_conflicting_draft',
-    ],
-    publication_allowed: false,
-  };
+  const matching = pack.exact_release_calibrations.filter(r=>r.cuvee_id===cuveeId && r.vintage===vintage && r.format_ml===formatMl);
+  if (matching.length !== 1) fail('release','no exact cuvee/vintage/format calibration');
+  const row=matching[0], cuvee=pack.cuvees.find(c=>c.id===cuveeId);
+  const sources=new Map(pack.sources.map(s=>[s.id,s]));
+  const proposed=ordered(row.proposal,vintage,'proposal');
+  const existing=currentYears===null?null:ordered(currentYears,vintage,'currentYears');
+  return {status:'research-only',scope:'release',producer:pack.producer.name,cuvee:cuvee.name,cuvee_id_hint:cuveeId,
+    vintage,format_ml:formatMl,proposed_years:proposed,current_draft_years:existing,
+    date_conflict:existing!==null && proposed.some((x,i)=>x!==existing[i]),
+    rationale:row.proposal.rationale,confidence:row.proposal.confidence,
+    evidence_status:'unreviewed_pointer_evidence',
+    evidence_pointers:row.proposal.supporting_source_ids.map(id=>({id,url:sources.get(id).url})),
+    required_reviews:['confirm_identity_and_format','confirm_named_release_existence','review_all_three_dates',
+      'verify_evidence_fit_and_rights','resolve_conflicting_draft'],publication_allowed:false};
 }
-
-async function main(argv) {
-  if (argv.length < 1 || argv.length > 4 || (argv.length > 1 && argv.length < 3)) {
-    throw new Error('Usage: node scripts/drinking_window/producer_research_package.mjs PACKAGE.json [CUVEE_ID VINTAGE [CURRENT_FIRST,CURRENT_START,CURRENT_END]]');
+async function main(args) {
+  if (![1,3,4,5].includes(args.length)) throw new Error('Usage: node producer_research_package.mjs FILE [CUVEE_ID VINTAGE [CURRENT_FIRST,CURRENT_START,CURRENT_END] [FORMAT_ML]]');
+  const pack=JSON.parse(await readFile(args[0],'utf8'));
+  let output=validateProducerResearchPackage(pack);
+  if(args.length>=3) {
+    const now=args[3] ? Object.fromEntries(['first_trial_year','best_start_year','best_end_year'].map((k,i)=>[k,Number(args[3].split(',')[i])])) : null;
+    output=producerReleaseReview(pack,args[1],Number(args[2]),now,args[4] ? Number(args[4]) : 750);
   }
-  const pack = JSON.parse(await readFile(argv[0], 'utf8'));
-  let result = validateProducerResearchPackage(pack);
-  if (argv.length >= 3) {
-    const vintage = Number(argv[2]);
-    const current = argv[3] === undefined ? null : (() => {
-      const values = argv[3].split(',').map(Number);
-      if (values.length !== 3) fail('currentYears', 'expected three comma-separated years');
-      return { first_trial_year: values[0], best_start_year: values[1], best_end_year: values[2] };
-    })();
-    result = producerReleaseReview(pack, argv[1], vintage, current);
-  }
-  process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+  process.stdout.write(JSON.stringify(output,null,2)+'\n');
 }
-
-if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
-  main(process.argv.slice(2)).catch((error) => {
-    process.stderr.write(`${error.message}\n`);
-    process.exitCode = 1;
-  });
-}
+if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1]))
+  main(process.argv.slice(2)).catch(e=>{process.stderr.write(e.message+'\n');process.exitCode=1;});

@@ -1,0 +1,1017 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/alexv3429/cellarmanager/blob/main/docs/schemas/producer_exchange_v1.schema.json",
+  "title": "CellarManager producer research exchange — 1.1.0",
+  "description": "One producer per file, research-only. No automatic production/publication rights. format_ml mandatory on releases and observations, pairing hypotheses carry source IDs.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "schema_version",
+    "dataset_version",
+    "generated_on",
+    "language",
+    "status",
+    "scope",
+    "producer",
+    "cuvees",
+    "vintage_effects",
+    "exact_release_calibrations",
+    "sources",
+    "import_policy"
+  ],
+  "properties": {
+    "format": {
+      "const": "cellarmanager.producer_research"
+    },
+    "schema_version": {
+      "const": "1.1.0"
+    },
+    "dataset_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "generated_on": {
+      "type": "string",
+      "format": "date"
+    },
+    "language": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "const": "draft_for_curator_review"
+    },
+    "scope": {
+      "const": "producer_independent_of_any_household"
+    },
+    "producer": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "aliases",
+        "country",
+        "region",
+        "source_ids"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "aliases": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "country": {
+          "type": "string",
+          "minLength": 1
+        },
+        "region": {
+          "type": "string",
+          "minLength": 1
+        },
+        "commune": {
+          "type": "string",
+          "minLength": 1
+        },
+        "general_style": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_ids": {
+          "$ref": "#/$defs/source_ids"
+        }
+      },
+      "additionalProperties": false
+    },
+    "cuvees": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/cuvee"
+      },
+      "minItems": 0
+    },
+    "vintage_effects": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/vintage_effect"
+      },
+      "minItems": 0
+    },
+    "known_nonproduced_releases": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/nonproduced"
+      },
+      "minItems": 0
+    },
+    "exact_release_calibrations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/release"
+      },
+      "minItems": 0
+    },
+    "external_drinking_observations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/observation"
+      },
+      "minItems": 0
+    },
+    "structure_profiles": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/structure"
+      },
+      "minItems": 0
+    },
+    "pairing_profiles": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/pairing"
+      },
+      "minItems": 0
+    },
+    "source_discrepancies": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/discrepancy"
+      },
+      "minItems": 0
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/source"
+      },
+      "minItems": 1
+    },
+    "import_policy": {
+      "type": "object",
+      "required": [
+        "canonical_source_of_truth",
+        "review_required",
+        "no_direct_household_inventory_write",
+        "no_direct_production_publication",
+        "release_existence",
+        "unknown_dates"
+      ],
+      "properties": {
+        "canonical_source_of_truth": {
+          "const": "this_JSON_only"
+        },
+        "review_required": {
+          "const": true
+        },
+        "no_direct_household_inventory_write": {
+          "const": true
+        },
+        "no_direct_production_publication": {
+          "const": true
+        },
+        "identity_links": {
+          "type": "string",
+          "minLength": 1
+        },
+        "release_existence": {
+          "const": "never_generate_releases_by_cartesian_product_of_cuvees_and_vintages"
+        },
+        "unknown_dates": {
+          "const": "omit_dates_entirely_rather_than_synthesize_when_uncorroborated"
+        },
+        "name_history_does_not_prove_production": {
+          "const": true
+        },
+        "maturity_date_semantics": {
+          "const": [
+            "start_tasting",
+            "probable_optimum_start",
+            "probable_optimum_end"
+          ]
+        },
+        "date_proposals": {
+          "type": "string",
+          "minLength": 1
+        },
+        "separate_inference_layers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "source_rights": {
+          "type": "string",
+          "minLength": 1
+        },
+        "standard_volume_ml": {
+          "type": "integer",
+          "minimum": 50,
+          "maximum": 30000
+        },
+        "storage_assumption": {
+          "type": "string",
+          "minLength": 1
+        },
+        "policy_source": {
+          "$ref": "#/$defs/url"
+        }
+      },
+      "additionalProperties": false
+    },
+    "research_gaps": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/gap"
+      },
+      "minItems": 0
+    }
+  },
+  "$defs": {
+    "text": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1
+    },
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://"
+    },
+    "vintage": {
+      "type": "integer",
+      "minimum": 1800,
+      "maximum": 2200
+    },
+    "year": {
+      "type": "integer",
+      "minimum": 1900,
+      "maximum": 2200
+    },
+    "confidence": {
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "name_history": {
+      "type": "object",
+      "required": [
+        "name",
+        "source_ids"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "from_vintage": {
+          "type": "integer",
+          "minimum": 1800,
+          "maximum": 2200
+        },
+        "through_vintage": {
+          "type": "integer",
+          "minimum": 1800,
+          "maximum": 2200
+        },
+        "source_ids": {
+          "$ref": "#/$defs/source_ids"
+        }
+      },
+      "additionalProperties": false
+    },
+    "cuvee": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "aliases",
+        "appellation",
+        "region",
+        "color",
+        "identity_status",
+        "name_history",
+        "source_ids",
+        "vintage_existence_policy"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "aliases": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "appellation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "region": {
+          "type": "string",
+          "minLength": 1
+        },
+        "color": {
+          "enum": [
+            "red",
+            "white",
+            "rose",
+            "sparkling",
+            "sweet",
+            "fortified",
+            "other"
+          ]
+        },
+        "grape": {
+          "type": "string",
+          "minLength": 1
+        },
+        "identity_status": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name_history": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/name_history"
+          },
+          "minItems": 0
+        },
+        "site_description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "style_summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_ids": {
+          "$ref": "#/$defs/source_ids"
+        },
+        "vintage_existence_policy": {
+          "const": "never_infer_from_vintage_effect_or_name_history"
+        },
+        "format_constraint_ml": {
+          "type": "integer",
+          "minimum": 50,
+          "maximum": 30000
+        },
+        "identity_note": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "vintage_effect": {
+      "type": "object",
+      "required": [
+        "vintage",
+        "color",
+        "applies_to_cuvee_ids",
+        "tag",
+        "producer_specific_observation",
+        "maturity_direction",
+        "confidence",
+        "source_ids"
+      ],
+      "properties": {
+        "vintage": {
+          "type": "integer",
+          "minimum": 1800,
+          "maximum": 2200
+        },
+        "color": {
+          "$ref": "#/$defs/cuvee/properties/color"
+        },
+        "applies_to_cuvee_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "tag": {
+          "type": "string",
+          "minLength": 1
+        },
+        "producer_specific_observation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "maturity_direction": {
+          "type": "string",
+          "minLength": 1
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        },
+        "source_ids": {
+          "$ref": "#/$defs/source_ids"
+        },
+        "numeric_age_adjustment": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": -5,
+          "maximum": 10
+        },
+        "note": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "release_existence": {
+      "type": "object",
+      "required": [
+        "status",
+        "source_ids",
+        "source_urls"
+      ],
+      "properties": {
+        "status": {
+          "const": "confirmed_by_named_vintage_source"
+        },
+        "source_ids": {
+          "$ref": "#/$defs/source_ids"
+        },
+        "source_urls": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/url"
+          },
+          "minItems": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "proposal": {
+      "type": "object",
+      "required": [
+        "first_trial_year",
+        "best_start_year",
+        "best_end_year",
+        "date_origin",
+        "confidence",
+        "rationale",
+        "supporting_source_ids",
+        "review_status",
+        "supporting_source_urls",
+        "milestone_support"
+      ],
+      "properties": {
+        "first_trial_year": {
+          "type": "integer",
+          "minimum": 1900,
+          "maximum": 2200
+        },
+        "best_start_year": {
+          "type": "integer",
+          "minimum": 1900,
+          "maximum": 2200
+        },
+        "best_end_year": {
+          "type": "integer",
+          "minimum": 1900,
+          "maximum": 2200
+        },
+        "date_origin": {
+          "enum": [
+            "curator_model_estimate_not_source_fact",
+            "explicit_source_three_milestones_research_not_approved"
+          ]
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "supporting_source_ids": {
+          "$ref": "#/$defs/source_ids"
+        },
+        "review_status": {
+          "const": "candidate_not_approved"
+        },
+        "supporting_source_urls": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/url"
+          },
+          "minItems": 1
+        },
+        "milestone_support": {
+          "type": "object",
+          "required": [
+            "first_trial_year",
+            "best_start_year",
+            "best_end_year"
+          ],
+          "properties": {
+            "first_trial_year": {
+              "type": "string",
+              "minLength": 1
+            },
+            "best_start_year": {
+              "type": "string",
+              "minLength": 1
+            },
+            "best_end_year": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "release": {
+      "type": "object",
+      "required": [
+        "cuvee_id",
+        "vintage",
+        "format_ml",
+        "release_existence",
+        "proposal"
+      ],
+      "properties": {
+        "cuvee_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "vintage": {
+          "type": "integer",
+          "minimum": 1800,
+          "maximum": 2200
+        },
+        "format_ml": {
+          "type": "integer",
+          "minimum": 50,
+          "maximum": 30000
+        },
+        "release_existence": {
+          "$ref": "#/$defs/release_existence"
+        },
+        "proposal": {
+          "$ref": "#/$defs/proposal"
+        }
+      },
+      "additionalProperties": false
+    },
+    "nonproduced": {
+      "type": "object",
+      "required": [
+        "cuvee_id",
+        "vintage",
+        "status",
+        "source_ids"
+      ],
+      "properties": {
+        "cuvee_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "vintage": {
+          "type": "integer",
+          "minimum": 1800,
+          "maximum": 2200
+        },
+        "status": {
+          "const": "confirmed_not_produced"
+        },
+        "source_ids": {
+          "$ref": "#/$defs/source_ids"
+        }
+      },
+      "additionalProperties": false
+    },
+    "observation": {
+      "type": "object",
+      "required": [
+        "cuvee_id",
+        "vintage",
+        "format_ml",
+        "source_id",
+        "original_claim_type",
+        "source_url"
+      ],
+      "properties": {
+        "cuvee_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "vintage": {
+          "type": "integer",
+          "minimum": 1800,
+          "maximum": 2200
+        },
+        "format_ml": {
+          "type": "integer",
+          "minimum": 50,
+          "maximum": 30000
+        },
+        "source_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "original_claim_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_url": {
+          "$ref": "#/$defs/url"
+        },
+        "start_year": {
+          "type": "integer",
+          "minimum": 1900,
+          "maximum": 2200
+        },
+        "end_year": {
+          "type": "integer",
+          "minimum": 1900,
+          "maximum": 2200
+        },
+        "best_start_year": {
+          "type": "integer",
+          "minimum": 1900,
+          "maximum": 2200
+        },
+        "best_end_year": {
+          "type": "integer",
+          "minimum": 1900,
+          "maximum": 2200
+        },
+        "first_drink_advice_year": {
+          "type": "integer",
+          "minimum": 1900,
+          "maximum": 2200
+        },
+        "note": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "structure": {
+      "type": "object",
+      "required": [
+        "cuvee_id",
+        "scope",
+        "color",
+        "traits_0_to_5",
+        "aroma_families",
+        "source_ids",
+        "values_are",
+        "confidence"
+      ],
+      "properties": {
+        "cuvee_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "color": {
+          "$ref": "#/$defs/cuvee/properties/color"
+        },
+        "traits_0_to_5": {
+          "type": "object",
+          "required": [
+            "body",
+            "acidity",
+            "tannin",
+            "sweetness",
+            "alcohol",
+            "freshness",
+            "savoury",
+            "concentration"
+          ],
+          "properties": {
+            "body": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 5
+            },
+            "acidity": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 5
+            },
+            "tannin": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 5
+            },
+            "sweetness": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 5
+            },
+            "alcohol": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 5
+            },
+            "freshness": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 5
+            },
+            "savoury": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 5
+            },
+            "concentration": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 5
+            }
+          },
+          "additionalProperties": false
+        },
+        "aroma_families": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "source_ids": {
+          "$ref": "#/$defs/source_ids"
+        },
+        "values_are": {
+          "type": "string",
+          "minLength": 1
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        }
+      },
+      "additionalProperties": false
+    },
+    "dish_pairing": {
+      "type": "object",
+      "required": [
+        "dish_key",
+        "strength",
+        "rationale",
+        "source_ids",
+        "evidence_basis"
+      ],
+      "properties": {
+        "dish_key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "strength": {
+          "enum": [
+            "medium",
+            "strong",
+            "possible",
+            "avoid"
+          ]
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_ids": {
+          "$ref": "#/$defs/source_ids"
+        },
+        "evidence_basis": {
+          "enum": [
+            "structural_inference_not_directly_tasted",
+            "documented_pairing_source_pending_review"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "pairing": {
+      "type": "object",
+      "required": [
+        "cuvee_id",
+        "scope",
+        "pairings",
+        "cautions",
+        "service",
+        "confidence",
+        "status",
+        "source_ids",
+        "hypothesis_basis"
+      ],
+      "properties": {
+        "cuvee_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "pairings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dish_pairing"
+          },
+          "minItems": 0
+        },
+        "cautions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "service": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "temperature_c": {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "young_aeration_minutes": {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "minItems": 2,
+              "maxItems": 2
+            }
+          },
+          "additionalProperties": false
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        },
+        "status": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_ids": {
+          "$ref": "#/$defs/source_ids"
+        },
+        "hypothesis_basis": {
+          "enum": [
+            "structural_inference_not_directly_tasted",
+            "documented_pairing_source_pending_review"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "url",
+        "type",
+        "checked_on",
+        "reuse"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "url": {
+          "$ref": "#/$defs/url"
+        },
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "checked_on": {
+          "type": "string",
+          "format": "date"
+        },
+        "reuse": {
+          "type": "object",
+          "required": [
+            "status",
+            "store_raw_content",
+            "normalized_claim_publication",
+            "pointer_candidate_only"
+          ],
+          "properties": {
+            "status": {
+              "type": "string",
+              "minLength": 1
+            },
+            "store_raw_content": {
+              "const": false
+            },
+            "normalized_claim_publication": {
+              "type": "string",
+              "minLength": 1
+            },
+            "pointer_candidate_only": {
+              "const": true
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "discrepancy": {
+      "type": "object",
+      "required": [
+        "topic",
+        "description",
+        "source_ids"
+      ],
+      "properties": {
+        "topic": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_ids": {
+          "$ref": "#/$defs/source_ids"
+        }
+      },
+      "additionalProperties": false
+    },
+    "gap": {
+      "type": "object",
+      "required": [
+        "name",
+        "reason"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

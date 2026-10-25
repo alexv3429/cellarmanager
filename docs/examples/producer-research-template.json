@@ -1,0 +1,69 @@
+{
+  "format": "cellarmanager.producer_research",
+  "schema_version": "1.1.0",
+  "dataset_version": "1.0.0",
+  "generated_on": "2026-10-25",
+  "language": "fr",
+  "status": "draft_for_curator_review",
+  "scope": "producer_independent_of_any_household",
+  "producer": {
+    "id": "replace_producer_id",
+    "name": "REPLACE: producer name",
+    "aliases": [],
+    "country": "REPLACE: country",
+    "region": "REPLACE: region",
+    "source_ids": ["replace_source_id"]
+  },
+  "cuvees": [
+    {
+      "id": "replace_cuvee_id",
+      "name": "REPLACE: cuvee name",
+      "aliases": [],
+      "appellation": "REPLACE: appellation",
+      "region": "REPLACE: region",
+      "color": "red",
+      "identity_status": "research_candidate_not_reviewed",
+      "name_history": [],
+      "source_ids": ["replace_source_id"],
+      "vintage_existence_policy": "never_infer_from_vintage_effect_or_name_history"
+    }
+  ],
+  "vintage_effects": [],
+  "known_nonproduced_releases": [],
+  "exact_release_calibrations": [],
+  "external_drinking_observations": [],
+  "structure_profiles": [],
+  "pairing_profiles": [],
+  "source_discrepancies": [],
+  "sources": [
+    {
+      "id": "replace_source_id",
+      "title": "REPLACE: source title",
+      "url": "https://example.invalid/replace-with-real-source",
+      "type": "producer",
+      "checked_on": "2026-10-25",
+      "reuse": {
+        "status": "rights_not_reviewed",
+        "store_raw_content": false,
+        "normalized_claim_publication": "requires_curator_and_rights_review",
+        "pointer_candidate_only": true
+      }
+    }
+  ],
+  "import_policy": {
+    "canonical_source_of_truth": "this_JSON_only",
+    "review_required": true,
+    "no_direct_household_inventory_write": true,
+    "no_direct_production_publication": true,
+    "release_existence": "never_generate_releases_by_cartesian_product_of_cuvees_and_vintages",
+    "unknown_dates": "omit_dates_entirely_rather_than_synthesize_when_uncorroborated",
+    "name_history_does_not_prove_production": true,
+    "maturity_date_semantics": [
+      "start_tasting",
+      "probable_optimum_start",
+      "probable_optimum_end"
+    ],
+    "standard_volume_ml": 750
+  },
+  "research_gaps": []
+}
