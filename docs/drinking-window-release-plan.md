@@ -66,6 +66,18 @@ still needs separate James and Côte du Py identity, date, evidence-fit, rights,
 and curator decisions. Gates 1–2 remain In progress; no release gate is
 accepted by this schema change.
 
+The next local tooling change makes validation enforce that full exchange
+schema and emits a read-only review packet for **each explicitly evidenced
+release and bottle size**. It separates release-existence sources from
+date-proposal sources and does not silently reuse 1500 ml observations for
+750 ml proposals. This closes a format-validation gap for incoming producer
+files; it does **not** stage Burgaud data, grant curator access, approve dates,
+publish a version, or complete any gate. The next actual-data action is to
+validate the owner's revised 1.1 Burgaud file when supplied, then review its
+James and Côte du Py 2022 proposals against the active draft and record human
+decisions. Other producer files can follow the same validation path without
+becoming effective advice automatically.
+
 Statuses below mean **Not started**, **In progress**, **Blocked**, or
 **Accepted**. A step becomes Accepted only when its named evidence is recorded
 here, not when its PR merges. Dates are not delivery promises.

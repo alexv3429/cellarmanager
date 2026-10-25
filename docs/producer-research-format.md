@@ -31,15 +31,18 @@ Unknown data remain absent. Local IDs are not CellarManager UUIDs. The JSON is t
 
 ## Validation and review are separate
 
-The Node validator is part of the repository's existing `npm run drinking-window:test` suite; no Python `jsonschema` package is required:
+The Node validator is part of the repository's existing `npm run drinking-window:test` suite. It checks the complete JSON Schema as well as cross-references and ordered dates; no Python `jsonschema` package is required:
 
 ```sh
 node scripts/drinking_window/producer_research_package.mjs /private/research/producer.json
+node scripts/drinking_window/producer_research_package.mjs /private/research/producer.json --review-all
 node scripts/drinking_window/producer_research_package.mjs /private/research/producer.json morgon_james 2022 2025,2028,2035 750
 npm run drinking-window:test
 ```
 
-The companion JSON Schema is the normative document contract; the Node validator checks critical semantic conditions and cross-references (including volumes, source IDs and URLs, draft status and ordered dates). Passing these checks is **not** evidence that an individual source supports its stated claim. Curators must still verify actual source content, identity, package size, source rights and competing calendar advice. Do not import any `candidate_not_approved` proposal into effective advice.
+`--review-all` produces a read-only review packet for every explicitly named cuvée/vintage/size calibration. It shows the proposal, separate release-existence and date-source pointers, same-size external observations, and a count of observations for other sizes. It does **not** submit or stage anything in Supabase. Keep producer files and review packets private until their source rights have been checked.
+
+Passing validation is **not** evidence that an individual source supports its stated claim. Curators must still verify actual source content, identity, package size, source rights and competing calendar advice. Do not import any `candidate_not_approved` proposal into effective advice.
 
 ### James 2022
 
