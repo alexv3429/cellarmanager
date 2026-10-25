@@ -1,6 +1,28 @@
 import { readFile } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
+import Ajv2020 from 'ajv/dist/2020.js';
+
+const schema = JSON.parse(readFileSync(new URL('../../docs/schemas/producer_exchange_v1.schema.json', import.meta.url), 'utf8'));
+const ajv = new Ajv2020({ allErrors: true });
+ajv.addFormat('date', {
+  type: 'string',
+  validate(value) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    if (!match) return false;
+    const [, year, month, day] = match.map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day));
+    return date.getUTCFullYear() === year && date.getUTCMonth() + 1 === month && date.getUTCDate() === day;
+  },
+});
+ajv.addFormat('uri', {
+  type: 'string',
+  validate(value) {
+    try { return Boolean(new URL(value).protocol); } catch { return false; }
+  },
+});
+const validateSchema = ajv.compile(schema);
 
 const fail = (path, issue) => { throw new Error(`${path}: ${issue}`); };
 const obj = (value, path) => value && typeof value === 'object' && !Array.isArray(value) ? value : fail(path, 'expected object');
@@ -25,6 +47,13 @@ const ordered = (proposal, vintage, path) => {
 };
 export function validateProducerResearchPackage(input) {
   const d = obj(input, '$');
+  if (!validateSchema(d)) {
+    const details = validateSchema.errors.slice(0, 20).map(error => {
+      const field = error.params?.missingProperty || error.params?.additionalProperty;
+      return `${error.instancePath || '$'}${field ? `/${field}` : ''}: ${error.message}`;
+    }).join('; ');
+    fail('schema', details);
+  }
   if (d.format !== 'cellarmanager.producer_research' || d.schema_version !== '1.1.0'
       || d.status !== 'draft_for_curator_review' || d.scope !== 'producer_independent_of_any_household')
     fail('$', 'unsupported exchange version or non-draft research');
@@ -35,8 +64,13 @@ export function validateProducerResearchPackage(input) {
   if (sources.size !== d.sources.length) fail('sources', 'duplicate source ID');
   const checkSources = (ids, path, urls = null) => {
     const list = arr(ids, path);
-    if (!list.length || new Set(list).size !== list.length) fail(path, 'empty or duplicate source pointers');
-    for (const id of list) if (!sources.has(id)) fail(path, `unknown source pointer ${id}`);
+    if (!list.length) fail(path, 'at least one source pointer required');
+    const seen = new Set();
+    for (const id of list) {
+      if (seen.has(id)) fail(path, `duplicate source pointer ${id}`);
+      seen.add(id);
+      if (!sources.has(id)) fail(path, `unknown source pointer ${id}`);
+    }
     if (urls && (urls.length !== list.length || list.some(id => !urls.includes(sources.get(id).url))))
       fail(path, 'source URL mismatch');
   };
@@ -80,15 +114,15 @@ export function validateProducerResearchPackage(input) {
     hasCuvee(x.cuvee_id,'observation');volume(x.format_ml,'observation.format_ml');
     checkSources([x.source_id],'observation.source_id',[x.source_url]);
   }
-  for (const p of d.structure_profiles || []) {hasCuvee(p.cuvee_id,'structure');checkSources(p.source_ids,'structure.source_ids');}
-  for (const p of d.pairing_profiles || []) {
-    hasCuvee(p.cuvee_id,'pairing');checkSources(p.source_ids,'pairing.source_ids');
+  for (const [i,p] of (d.structure_profiles || []).entries()) {hasCuvee(p.cuvee_id,`structure_profiles[${i}]`);checkSources(p.source_ids,`structure_profiles[${i}].source_ids`);}
+  for (const [i,p] of (d.pairing_profiles || []).entries()) {
+    hasCuvee(p.cuvee_id,`pairing_profiles[${i}]`);checkSources(p.source_ids,`pairing_profiles[${i}].source_ids`);
     if (!['structural_inference_not_directly_tasted','documented_pairing_source_pending_review'].includes(p.hypothesis_basis))
-      fail('pairing','hypothesis_basis required');
-    for (const dish of p.pairings) {
-      checkSources(dish.source_ids,'pairing.dish.source_ids');
+      fail(`pairing_profiles[${i}]`,'hypothesis_basis required');
+    for (const [j,dish] of p.pairings.entries()) {
+      checkSources(dish.source_ids,`pairing_profiles[${i}].pairings[${j}].source_ids`);
       if (!['structural_inference_not_directly_tasted','documented_pairing_source_pending_review'].includes(dish.evidence_basis))
-        fail('pairing.dish','evidence_basis required');
+        fail(`pairing_profiles[${i}].pairings[${j}]`,'evidence_basis required');
     }
   }
   for (const x of d.source_discrepancies || []) checkSources(x.source_ids,'discrepancy');
@@ -96,28 +130,48 @@ export function validateProducerResearchPackage(input) {
     cuvee_count:cuvees.size,exact_calibration_count:releases.length,publishable_rows:0};
 }
 
-export function producerReleaseReview(pack, cuveeId, vintage, currentYears = null, formatMl = 750) {
-  validateProducerResearchPackage(pack);
+function releaseReviewFromValidatedPack(pack, cuveeId, vintage, currentYears, formatMl) {
   const matching = pack.exact_release_calibrations.filter(r=>r.cuvee_id===cuveeId && r.vintage===vintage && r.format_ml===formatMl);
   if (matching.length !== 1) fail('release','no exact cuvee/vintage/format calibration');
   const row=matching[0], cuvee=pack.cuvees.find(c=>c.id===cuveeId);
   const sources=new Map(pack.sources.map(s=>[s.id,s]));
   const proposed=ordered(row.proposal,vintage,'proposal');
   const existing=currentYears===null?null:ordered(currentYears,vintage,'currentYears');
+  const observations=(pack.external_drinking_observations || []).filter(x => x.cuvee_id===cuveeId && x.vintage===vintage);
   return {status:'research-only',scope:'release',producer:pack.producer.name,cuvee:cuvee.name,cuvee_id_hint:cuveeId,
     vintage,format_ml:formatMl,proposed_years:proposed,current_draft_years:existing,
     date_conflict:existing!==null && proposed.some((x,i)=>x!==existing[i]),
     rationale:row.proposal.rationale,confidence:row.proposal.confidence,
     evidence_status:'unreviewed_pointer_evidence',
+    release_existence_pointers:row.release_existence.source_ids.map(id=>({id,url:sources.get(id).url})),
     evidence_pointers:row.proposal.supporting_source_ids.map(id=>({id,url:sources.get(id).url})),
+    same_format_observations:observations.filter(x=>x.format_ml===formatMl),
+    other_format_observation_count:observations.filter(x=>x.format_ml!==formatMl).length,
     required_reviews:['confirm_identity_and_format','confirm_named_release_existence','review_all_three_dates',
       'verify_evidence_fit_and_rights','resolve_conflicting_draft'],publication_allowed:false};
 }
+export function producerReleaseReview(pack, cuveeId, vintage, currentYears = null, formatMl = 750) {
+  validateProducerResearchPackage(pack);
+  return releaseReviewFromValidatedPack(pack,cuveeId,vintage,currentYears,formatMl);
+}
+export function producerResearchReviewManifest(pack) {
+  validateProducerResearchPackage(pack);
+  return {
+    status:'research-only',
+    producer:pack.producer.name,
+    dataset_version:pack.dataset_version,
+    publishable_rows:0,
+    release_reviews:pack.exact_release_calibrations.map(row =>
+      releaseReviewFromValidatedPack(pack,row.cuvee_id,row.vintage,null,row.format_ml)),
+  };
+}
 async function main(args) {
-  if (![1,3,4,5].includes(args.length)) throw new Error('Usage: node producer_research_package.mjs FILE [CUVEE_ID VINTAGE [CURRENT_FIRST,CURRENT_START,CURRENT_END] [FORMAT_ML]]');
+  if (![1,2,3,4,5].includes(args.length) || (args.length===2 && args[1]!=='--review-all'))
+    throw new Error('Usage: node producer_research_package.mjs FILE [--review-all | CUVEE_ID VINTAGE [CURRENT_FIRST,CURRENT_START,CURRENT_END] [FORMAT_ML]]');
   const pack=JSON.parse(await readFile(args[0],'utf8'));
   let output=validateProducerResearchPackage(pack);
-  if(args.length>=3) {
+  if(args[1]==='--review-all') output=producerResearchReviewManifest(pack);
+  else if(args.length>=3) {
     const now=args[3] ? Object.fromEntries(['first_trial_year','best_start_year','best_end_year'].map((k,i)=>[k,Number(args[3].split(',')[i])])) : null;
     output=producerReleaseReview(pack,args[1],Number(args[2]),now,args[4] ? Number(args[4]) : 750);
   }

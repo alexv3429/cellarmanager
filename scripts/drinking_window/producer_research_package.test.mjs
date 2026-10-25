@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
-import { validateProducerResearchPackage, producerReleaseReview } from './producer_research_package.mjs';
+import { validateProducerResearchPackage, producerReleaseReview, producerResearchReviewManifest } from './producer_research_package.mjs';
 const source={id:'estate',title:'Estate',url:'https://example.org/wines',type:'producer',checked_on:'2026-10-25',
   reuse:{status:'rights_not_reviewed',store_raw_content:false,normalized_claim_publication:'requires_review',pointer_candidate_only:true}};
 const sample={
@@ -37,6 +37,22 @@ test('exact release review respects bottle size and conflicts',()=>{
  assert.equal(v.date_conflict,true);assert.equal(v.publication_allowed,false);assert.equal(v.format_ml,750);
  assert.throws(()=>producerReleaseReview(sample,'wine',2022,null,1500),/no exact cuvee\/vintage\/format/);
 });
+test('batch review keeps same-size observations separate and never approves proposals',()=>{
+ const x=cp();
+ x.external_drinking_observations=[
+   {cuvee_id:'wine',vintage:2022,format_ml:750,source_id:'estate',source_url:source.url,original_claim_type:'drink_by',end_year:2036},
+   {cuvee_id:'wine',vintage:2022,format_ml:1500,source_id:'estate',source_url:source.url,original_claim_type:'optimum',best_start_year:2027,best_end_year:2042},
+ ];
+ const manifest=producerResearchReviewManifest(x);
+ assert.equal(manifest.publishable_rows,0);
+ assert.equal(manifest.release_reviews.length,1);
+ assert.equal(manifest.release_reviews[0].publication_allowed,false);
+ assert.deepEqual(manifest.release_reviews[0].proposed_years,[2026,2030,2038]);
+ assert.equal(manifest.release_reviews[0].same_format_observations.length,1);
+ assert.equal(manifest.release_reviews[0].same_format_observations[0].format_ml,750);
+ assert.equal(manifest.release_reviews[0].other_format_observation_count,1);
+ assert.deepEqual(manifest.release_reviews[0].release_existence_pointers,[{id:'estate',url:source.url}]);
+});
 test('reject missing format, pairing provenance and inverted dates',()=>{
  let x=cp();delete x.exact_release_calibrations[0].format_ml;assert.throws(()=>validateProducerResearchPackage(x),/format_ml/);
  x=cp();delete x.pairing_profiles[0].pairings[0].source_ids;assert.throws(()=>validateProducerResearchPackage(x),/source_ids/);
@@ -45,7 +61,19 @@ test('reject missing format, pairing provenance and inverted dates',()=>{
 test('reject invented release and source claims',()=>{
  let x=cp();x.exact_release_calibrations[0].cuvee_id='invented';assert.throws(()=>validateProducerResearchPackage(x),/unknown cuvee_id/);
  x=cp();x.exact_release_calibrations[0].proposal.supporting_source_ids=['made_up'];assert.throws(()=>validateProducerResearchPackage(x),/unknown source pointer/);
- x=cp();x.status='published';assert.throws(()=>validateProducerResearchPackage(x),/non-draft/);
+ x=cp();x.status='published';assert.throws(()=>validateProducerResearchPackage(x),/\/status: must be equal to constant/);
+});
+test('validator enforces the full exchange schema, not just release semantics',()=>{
+ let x=cp();delete x.producer.name;assert.throws(()=>validateProducerResearchPackage(x),/\/producer\/name: must have required property/);
+ x=cp();x.producer.household_id='private';assert.throws(()=>validateProducerResearchPackage(x),/\/producer\/household_id: must NOT have additional properties/);
+ x=cp();x.sources[0].checked_on='2026-02-30';assert.throws(()=>validateProducerResearchPackage(x),/\/sources\/0\/checked_on: must match format/);
+ x=cp();delete x.exact_release_calibrations[0].proposal.rationale;
+ assert.throws(()=>validateProducerResearchPackage(x),/\/exact_release_calibrations\/0\/proposal\/rationale: must have required property/);
+});
+test('duplicate evidence pointers identify the exact profile entry',()=>{
+ const x=cp();
+ x.pairing_profiles[0].pairings[0].source_ids=['estate','estate'];
+ assert.throws(()=>validateProducerResearchPackage(x),/pairing_profiles\[0\]\.pairings\[0\]\.source_ids: duplicate source pointer estate/);
 });
 test('vintage effects cannot create release calibrations',()=>{
  const x=cp();x.exact_release_calibrations=[];assert.equal(validateProducerResearchPackage(x).exact_calibration_count,0);
