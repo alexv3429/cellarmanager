@@ -43,20 +43,21 @@ select is((public.get_drinking_window_reference_drafts()->>'eligible')::boolean,
 select is(jsonb_array_length(public.get_drinking_window_reference_drafts()->'drafts'),
     1, 'The first unpublished reference version is visible to the curator');
 select is(jsonb_array_length(public.get_drinking_window_reference_drafts()
-    ->'drafts'->0->'subjects'), 4,
-    'Curator must review the row, group, and two exact memberships');
+    ->'drafts'->0->'subjects'), 1,
+    'The replacement draft asks the curator to review one exact-release row');
 select is((select count(*) from jsonb_array_elements(
     public.get_drinking_window_reference_drafts()->'drafts'->0->'subjects') subject
     where subject->>'kind' = 'row'
       and (subject->'details'->>'first_trial_year')::integer = 2025
       and (subject->'details'->>'best_start_year')::integer = 2028
-      and (subject->'details'->>'best_end_year')::integer = 2035),
+      and (subject->'details'->>'best_end_year')::integer = 2040
+      and (subject->'details'->>'format_ml')::integer = 750),
     1::bigint, 'The three proposed dates are shown together');
 select is((select count(*) from jsonb_array_elements(
     public.get_drinking_window_reference_drafts()->'drafts'->0->'subjects') subject
-    where subject->>'kind' = 'membership'
-      and jsonb_array_length(subject->'evidence') = 1),
-    2::bigint, 'Both release memberships include their own evidence');
+    where subject->>'kind' = 'row'
+      and jsonb_array_length(subject->'evidence') = 2),
+    1::bigint, 'The exact-release row shows both owner evidence links');
 
 do $$
 declare
@@ -108,7 +109,7 @@ $$;
 reset role;
 select is((select count(*) from public.drinking_window_review_issues(
     current_setting('test.reference_version')::uuid)), 0::bigint,
-    'All four genuine current approvals clear review issues');
+    'A genuine current approval clears the exact-release review issue');
 select is((select status from public.drinking_window_reference_versions
     where id = current_setting('test.reference_version')::uuid),
     'draft', 'Curator review does not publish the reference');

@@ -41,7 +41,7 @@ begin
         null;
     else
         raise exception using errcode = '23514',
-            message = 'Drinking-window reference lifecycle requires a trusted operator';
+            message = 'Drinking-window reference publication requires the trusted publisher';
     end if;
     return new;
 end;
