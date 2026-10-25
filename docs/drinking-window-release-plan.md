@@ -76,17 +76,24 @@ publish a version, or complete any gate. Incoming producer files can follow
 the same validation path without becoming effective advice automatically.
 
 The owner has now supplied four private v1.1 producer files. Clavelier (18
-exact release proposals), Barthod (17), and Burgaud (14) pass the new local
+exact release proposals), Barthod (17), and revised Burgaud dataset 1.0.3 (15) pass the new local
 validator. Boillot has 22 proposals but fails on five repeated uses of one
 source ID in its Épenotes structure/pairing entries; de-duplicating those
 pointers **in memory only** passes validation. Preserve the submitted file and
 record any mechanical correction in a separate private review copy before
-staging; do not silently edit the evidence. All 71 proposed release windows are
-still marked unapproved and all 137 source records have rights unreviewed.
+staging; do not silently edit the evidence. All 72 proposed release windows are
+still marked unapproved and all 144 source records have rights unreviewed.
 Burgaud proposes James 2022 at 2026 / 2030–2038, versus the unpublished
-regional draft's 2025 / 2028–2035; the producer file has **no exact Côte du Py
-2022 calibration**. Do not fill that gap from James or publish the draft as-is.
-The next review must resolve these release-specific dates and identities;
+regional draft's 2025 / 2028–2035. The revised file adds an exact Côte du Py
+2022 / 750 ml proposal of 2025 / 2028–2040, leaving the former 14 Burgaud
+proposals unchanged. This closes the *research-file coverage* gap, not the
+evidence or approval gap: the 2040 probable optimum end is inferred from a
+general Vinous drinking range and conflicts with another retailer's
+“drink before 2031” guidance; the reproduced Decanter description may be
+misattributed. The proposal itself marks confidence low and is not approved.
+Do not publish the regional draft as-is or activate the replacement merely
+because it validates. The next review must resolve these release-specific
+dates, source fit, rights, and identities;
 none of the four files is active shared advice.
 
 Statuses below mean **Not started**, **In progress**, **Blocked**, or
@@ -361,6 +368,7 @@ meaningful. At minimum, each update must:
 | 2026-10-24 · PR #210 | Gates 1–2 remain In progress; Gate 3 still requires curator and owner decisions. No reference, cellar data, approval, publication, switch, or rollout is changed. | The current model's provenance is explained beside the comparison with a path to its profile trace. The curator draft screen surfaces pending items first, displays all three years separately, and requires an explicit decision instead of preselecting approval. The signed-in pilot owner account has no curator review workspace; an authorized curator must review the one row, one ageing group, and two exact-release memberships. |
 | 2026-10-25 · PR #211 | Gate 3 remains blocked. The owner-supplied producer package is validated as a research-only exchange format; neither the shared draft nor live advice, access, database, switch, or rollout changed. | A read-only validator emits a James-specific dossier with the date conflict and no publication permission. Six new tests and the 41-test drinking-window suite pass. James 2022 and Côte du Py 2022 each need a separate three-year decision; canonical release, source fit, rights and curator review remain open. |
 | 2026-10-25 · PR #212 | Gate 3 research intake is made safer with a producer-independent 1.1 exchange schema, format-aware read-only validator, and placeholder template. Gate 3 remains Blocked; Gates 1–2 remain In progress. No live advice, permission, database, deployment, switch, or rollout changes. | The revised contract requires explicit bottle size and pairing provenance; the template passes local schema validation and the 41-test drinking-window suite. Earlier Burgaud 1.0 research needs migration before validation under 1.1, and the revised private Burgaud file is not published or committed. Source fit, rights, canonical identity, competing James/Côte du Py dates, curator decisions, and owner comparison remain open. |
+| 2026-10-25 · Burgaud dataset 1.0.3 intake in PR #213 | Gate 3 remains Blocked. The new private research file validates against the 1.1 contract and adds one exact Côte du Py 2022 / 750 ml candidate; no reference, draft, cellar advice, access, database, deployment, switch, or rollout changed. | The 14 prior Burgaud candidates, including James 2022, are unchanged. Côte du Py proposes 2025 / 2028–2040 versus the unpublished regional draft's 2025 / 2028–2035, with low confidence and no approval. Its 2040 endpoint is inferred from a general drinking range, disputes “drink before 2031” guidance, and a reproduced Decanter review needs attribution checking. Source fit, rights, canonical identity, curator decision, and fresh owner comparison remain open. |
 
 **Next action:** resolve the material date conflict between the existing
 regional draft and the producer package for James and Côte du Py 2022. Verify
