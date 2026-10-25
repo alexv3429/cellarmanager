@@ -1,46 +1,43 @@
 # First shared drinking-window draft: Burgaud 2022
 
-This is the first **real but unpublished** three-milestone reference candidate.
-The cellar owner supplied the 2022 Beaujolais Cru estimate and explicitly
-allowed it to be shared **only with reviewed membership**. It is an owner
-estimate, not an exact drinking window published by the producer or retailer.
+Version 1, the regional 2022 long-ageing draft, is **withdrawn, not deleted**.
+It assigned the same dates to Côte du Py and James. Its evidence, review
+history, and any local ageing choices are preserved for audit, but it can no
+longer be reviewed or published. Version 2 is a new, **unpublished and
+unapproved** exact-release candidate:
 
 | Scope | Start tasting | Probable optimum starts | Probable optimum ends |
 | --- | ---: | ---: | ---: |
-| Red Beaujolais 2022, reviewed long-ageing group only | 2025 | 2028 | 2035 |
+| Jean-Marc Burgaud, Morgon Côte du Py 2022, 750 ml | 2025 | 2028 | 2040 |
 
-The group's first two members are the **2022** releases of Jean-Marc Burgaud's
-Morgon **Côte du Py** and **James**. This decision rests on the owner's chosen
-long-ageing category and on the [producer's descriptions of the two distinct
-cuvées](https://jean-marc-burgaud.com/nos-vins): Côte du Py is described as a
-wine for ageing; James as having substantial ageing potential. [SAQ identifies
-the Côte du Py 2022 release](https://www.saq.com/fr/15467631), and [James
-Suckling identifies the James 2022 release](https://www.jamessuckling.com/tasting-notes/251774/jean-marc-burgaud-morgon-james-2022).
-Those sources support identity and *relative* ageing potential, **not** the
-three calendar years above.
+The new row requires the canonical Côte du Py 2022 release, Morgon, red
+colour, and 750 ml format. **James has no staged replacement dates.** The
+[producer describes the two cuvées separately](https://jean-marc-burgaud.com/nos-vins).
+The dates are the owner's provisional estimate, **not** three milestones
+published by the producer or a retailer.
 
 **Research conflict (25 October):** the owner's latest private
 [Burgaud producer package](producer-research-format.md), dataset 1.0.3,
 contains separate, unapproved 750 ml release proposals. The original 14
 proposals were not changed by this revision; Côte du Py 2022 was added.
 
-| 2022 release | Unpublished regional draft | Latest cuvée-specific proposal |
+| 2022 release | Withdrawn regional draft | Current cuvée-specific status |
 | --- | --- | --- |
-| Côte du Py, 750 ml | 2025 / 2028–2035 | 2025 / 2028–2040, low confidence |
-| James, 750 ml | 2025 / 2028–2035 | 2026 / 2030–2038, low confidence |
+| Côte du Py, 750 ml | 2025 / 2028–2035 | Draft 2025 / 2028–2040, provisional |
+| James, 750 ml | 2025 / 2028–2035 | Research proposal 2026 / 2030–2038, not staged |
 
 The owner's cellar currently shows a separate **legacy-model** estimate of
 2026 / 2031–2039 for the linked Côte du Py wine. That is neither an approved
 shared date nor a third source of release-specific evidence. The producer
-file does not activate either proposal; this regional draft must **not be
-approved or published as-is**.
+file does not activate either proposal. The regional draft has now been
+withdrawn; the new exact-release draft still requires review.
 
-**Owner decision:** for a future *Côte du Py 2022-specific draft*, the owner
+**Owner decision:** for the *Côte du Py 2022-specific draft*, the owner
 chose **2025 / 2028–2040** after seeing the competing horizons. This is an
 owner-authored estimate, not an assertion that a critic published three
-milestones or that 2040 is certain. The decision has **not** yet changed the
-database draft or the cellar's advice. James's three dates remain a separate
-unapproved proposal.
+milestones or that 2040 is certain. The choice is now recorded in the
+replacement draft, but has **not** changed the cellar's advice. James's dates
+remain a separate, unapproved research proposal.
 
 The exact 2022 Côte du Py release and 75 cl format are corroborated by [The
 Wine Society](https://www.thewinesociety.com/product/domaine-jean-marc-burgaud-morgon-cote-du-py-2022/).
@@ -59,9 +56,9 @@ retailers describes a 1933 granite site near Régnié, inconsistent with the
 producer's schist-based Côte du Py description; its applicability needs
 verification against the original review before using it as corroboration.
 Do not average these numbers or silently convert a drinking horizon into an
-optimum year. Record the owner's explicit choice and its uncertainty when
-creating the release-scoped draft; source fit and curator approval still need
-separate decisions. Source links remain pointers; rights to
+optimum year. The release-scoped draft records the owner's choice and its
+uncertainty; curator approval still needs a separate decision. Source links
+remain pointers; rights to
 reuse third-party text or data in a shared reference remain unreviewed.
 
 James needs its **own** decision: the [producer](https://jean-marc-burgaud.com/nos-vins)
@@ -72,31 +69,29 @@ milestones are explicitly modelled, low-confidence estimates, not three
 years published by the producer. Neither Côte du Py's dates nor its sources
 should be copied to James.
 
-The membership is release-specific and anchored to Morgon. In particular,
-**Les Charmes is excluded**, as are all other Morgon and Beaujolais wines
-without an individually reviewed membership. Another vintage does not inherit
-these dates. A household wine must be explicitly linked to the correct shared
-release before it can match; names alone are never a sufficient link. The
-cellar's existing conflicting “James / Beaujolais” entry needs owner identity
-review, not an automatic relabel or private-data migration.
+The replacement has no broad group. **James, Les Charmes, other vintages, and
+other formats are excluded.** A household wine must be explicitly linked to
+the correct shared release before it can match; names alone are never enough.
+The cellar's existing conflicting “James / Beaujolais” entry needs owner
+identity review, not an automatic relabel or private-data migration.
 
 The evidence source is this owner-authored decision record. It permits
-cross-household reuse of the owner's normalized estimate and membership
-decision, but not copying third-party tasting notes or raw workbook content.
-The migration records these as pointer-only evidence. No curator approval,
+cross-household reuse of the owner's normalized estimate, but not copying
+third-party tasting notes or raw workbook content. The new migration records
+the owner's choice as pointer-only evidence. No curator approval,
 shadow-comparison approval, publication, or household opt-in is manufactured.
 
 Before anyone sees these dates as advice:
 
-1. The 19-migration foundation and this **unpublished** draft are already on
-   the linked project. Do not reapply them. Replace or supersede this draft
-   with release-specific candidates only after resolving their dates and
-   evidence; keep the global switch and household rollouts off.
+1. The 19-migration foundation and old regional draft are already on the
+   linked project. Do not reapply them. The replacement migration in PR #215
+   is **not** on the linked project until separately authorized and applied.
+   Keep the global switch and household rollouts off.
 2. Have an authorized curator with the explicit `drinking-window` scope. In
    Catalogue → Shared drinking-window review → Actual reference drafts, check
-   the exact three years, group boundary, both release identities, and every
+   the exact Côte du Py release, 750 ml format, all three years, and the owner
    evidence pointer. Record an approval or disagreement with a rationale for
-   each revised subject. The signed-in pilot owner currently lacks this
+   the new row. Review James separately later. The signed-in pilot owner lacks this
    curator scope; do not grant it merely to clear the pilot. This is separate
    from reviewing historical workbook candidates. A reference edit
    invalidates its earlier decision. Recheck draft diagnostics and publication
