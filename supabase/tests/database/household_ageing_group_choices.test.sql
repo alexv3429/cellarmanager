@@ -3,6 +3,15 @@ begin;
 create extension if not exists pgtap with schema extensions;
 select plan(26);
 
+-- Hide the real replacement draft inside this rollback-only fixture so the
+-- synthetic version is the sole current draft for this legacy group test.
+select set_config('app.drinking_window_withdrawal', 'on', true);
+update public.drinking_window_reference_versions
+set status = 'withdrawn'
+where id = private.enrichment_seed_uuid(
+    'drinking-window:burgaud-cote-du-py-2022-750:v2');
+select set_config('app.drinking_window_withdrawal', 'off', true);
+
 create function pg_temp.ageing_rejects(command text, expected_state text)
 returns boolean language plpgsql as $$
 begin
@@ -14,11 +23,44 @@ end;
 $$;
 
 select set_config('test.ageing_version',
-    private.enrichment_seed_uuid('drinking-window:first-shared:burgaud-2022:version')::text,
+    'f7000000-0000-4000-8000-000000000010',
     true);
 select set_config('test.ageing_long_group',
-    private.enrichment_seed_uuid('drinking-window:first-shared:burgaud-2022:group')::text,
+    'f7000000-0000-4000-8000-000000000011',
     true);
+-- The real regional pilot is withdrawn. Keep this group-choice test isolated
+-- on a synthetic rollback-only draft instead of reviving that old advice.
+insert into public.drinking_window_reference_versions (id, version_number)
+values (current_setting('test.ageing_version')::uuid, 99);
+insert into public.drinking_window_ageing_groups
+    (id, version_id, scope, region_id, wine_color, group_key, definition)
+select current_setting('test.ageing_long_group')::uuid,
+    current_setting('test.ageing_version')::uuid,
+    'region', old.region_id, 'red', 'test-long-ageing',
+    'Synthetic long-ageing test group'
+from public.drinking_window_ageing_groups old
+where old.id = private.enrichment_seed_uuid(
+    'drinking-window:first-shared:burgaud-2022:group');
+insert into public.drinking_window_reference_rows
+    (id, version_id, scope, region_id, wine_color, vintage_year,
+     ageing_group_id, first_trial_year, best_start_year, best_end_year, rationale)
+select 'f7000000-0000-4000-8000-000000000012',
+    current_setting('test.ageing_version')::uuid,
+    'region', group_row.region_id, 'red', 2022, group_row.id,
+    2025, 2028, 2035, 'Synthetic long-ageing dates for private-choice tests'
+from public.drinking_window_ageing_groups group_row
+where group_row.id = current_setting('test.ageing_long_group')::uuid;
+insert into public.drinking_window_ageing_group_memberships
+    (id, version_id, group_id, member_kind, member_place_id,
+     member_release_id, first_vintage_year, last_vintage_year, rationale)
+select 'f7000000-0000-4000-8000-000000000013',
+    current_setting('test.ageing_version')::uuid,
+    current_setting('test.ageing_long_group')::uuid,
+    'release', old.member_place_id, old.member_release_id,
+    2022, 2022, 'Synthetic exact-release membership'
+from public.drinking_window_ageing_group_memberships old
+where old.id = private.enrichment_seed_uuid(
+    'drinking-window:first-shared:burgaud-2022:cote-member');
 insert into public.wines
     (id, household_id, producer, cuvee, vintage, color, appellation, area,
      wine_reference_id, wine_reference_type)
@@ -74,7 +116,7 @@ returns uuid language sql stable as $$
     ) match;
 $$;
 select is(pg_temp.ageing_match(),
-    private.enrichment_seed_uuid('drinking-window:first-shared:burgaud-2022:row'),
+    'f7000000-0000-4000-8000-000000000012'::uuid,
     'Without a local choice, reviewed shared membership wins');
 
 select ok(not has_table_privilege('authenticated',
@@ -159,7 +201,7 @@ select is(public.manage_household_wine_ageing_choice(
     null, 'Owner can restore reviewed shared membership');
 reset role;
 select is(pg_temp.ageing_match(),
-    private.enrichment_seed_uuid('drinking-window:first-shared:burgaud-2022:row'),
+    'f7000000-0000-4000-8000-000000000012'::uuid,
     'Clearing the local choice restores reviewed membership');
 
 select set_config('test.choice_hash_before',
@@ -218,7 +260,7 @@ select public.manage_household_wine_ageing_choice(
 reset role;
 select is(private.drinking_window_active_match(
     'f7000000-0000-4000-8000-000000000001') ->> 'reference_row_id',
-    private.enrichment_seed_uuid('drinking-window:first-shared:burgaud-2022:row')::text,
+    'f7000000-0000-4000-8000-000000000012',
     'Active advice returns to reviewed membership when local choice is cleared');
 
 update public.drinking_window_reference_versions
