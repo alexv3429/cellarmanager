@@ -79,8 +79,9 @@ The owner has now supplied four private v1.1 producer files. Clavelier (18
 exact release proposals), Barthod (17), and Burgaud (14) pass the new local
 validator. Boillot has 22 proposals but fails on five repeated uses of one
 source ID in its Épenotes structure/pairing entries; de-duplicating those
-pointers **in memory only** passes validation, so the submitted file remains
-unchanged and needs a corrected revision. All 71 proposed release windows are
+pointers **in memory only** passes validation. Preserve the submitted file and
+record any mechanical correction in a separate private review copy before
+staging; do not silently edit the evidence. All 71 proposed release windows are
 still marked unapproved and all 137 source records have rights unreviewed.
 Burgaud proposes James 2022 at 2026 / 2030–2038, versus the unpublished
 regional draft's 2025 / 2028–2035; the producer file has **no exact Côte du Py
