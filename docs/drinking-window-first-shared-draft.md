@@ -19,6 +19,16 @@ Suckling identifies the James 2022 release](https://www.jamessuckling.com/tastin
 Those sources support identity and *relative* ageing potential, **not** the
 three calendar years above.
 
+**New research conflict (25 October):** the owner supplied a more detailed
+[Burgaud producer package](producer-research-format.md). Its cuvée-specific
+research estimates propose 2026 / 2032–2042 for James 2022 and 2025 /
+2029–2040 for Côte du Py 2022. Both differ from this regional draft. The
+owner wants James retained as a reference but the producer-profile format
+settled first. This draft must therefore **not be approved or published as-is**.
+Review the three years for each cuvée and the evidence fit before recording
+new decisions. The owner prefers the package's cuvée-specific estimates as
+review candidates; no alternative dates have been adopted yet.
+
 The membership is release-specific and anchored to Morgon. In particular,
 **Les Charmes is excluded**, as are all other Morgon and Beaujolais wines
 without an individually reviewed membership. Another vintage does not inherit
