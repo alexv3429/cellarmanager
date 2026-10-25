@@ -70,6 +70,11 @@ test('validator enforces the full exchange schema, not just release semantics',(
  x=cp();delete x.exact_release_calibrations[0].proposal.rationale;
  assert.throws(()=>validateProducerResearchPackage(x),/\/exact_release_calibrations\/0\/proposal\/rationale: must have required property/);
 });
+test('duplicate evidence pointers identify the exact profile entry',()=>{
+ const x=cp();
+ x.pairing_profiles[0].pairings[0].source_ids=['estate','estate'];
+ assert.throws(()=>validateProducerResearchPackage(x),/pairing_profiles\[0\]\.pairings\[0\]\.source_ids: duplicate source pointer estate/);
+});
 test('vintage effects cannot create release calibrations',()=>{
  const x=cp();x.exact_release_calibrations=[];assert.equal(validateProducerResearchPackage(x).exact_calibration_count,0);
  assert.throws(()=>producerReleaseReview(x,'wine',2022),/no exact cuvee\/vintage\/format/);

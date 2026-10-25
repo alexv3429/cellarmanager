@@ -64,8 +64,13 @@ export function validateProducerResearchPackage(input) {
   if (sources.size !== d.sources.length) fail('sources', 'duplicate source ID');
   const checkSources = (ids, path, urls = null) => {
     const list = arr(ids, path);
-    if (!list.length || new Set(list).size !== list.length) fail(path, 'empty or duplicate source pointers');
-    for (const id of list) if (!sources.has(id)) fail(path, `unknown source pointer ${id}`);
+    if (!list.length) fail(path, 'at least one source pointer required');
+    const seen = new Set();
+    for (const id of list) {
+      if (seen.has(id)) fail(path, `duplicate source pointer ${id}`);
+      seen.add(id);
+      if (!sources.has(id)) fail(path, `unknown source pointer ${id}`);
+    }
     if (urls && (urls.length !== list.length || list.some(id => !urls.includes(sources.get(id).url))))
       fail(path, 'source URL mismatch');
   };
@@ -109,15 +114,15 @@ export function validateProducerResearchPackage(input) {
     hasCuvee(x.cuvee_id,'observation');volume(x.format_ml,'observation.format_ml');
     checkSources([x.source_id],'observation.source_id',[x.source_url]);
   }
-  for (const p of d.structure_profiles || []) {hasCuvee(p.cuvee_id,'structure');checkSources(p.source_ids,'structure.source_ids');}
-  for (const p of d.pairing_profiles || []) {
-    hasCuvee(p.cuvee_id,'pairing');checkSources(p.source_ids,'pairing.source_ids');
+  for (const [i,p] of (d.structure_profiles || []).entries()) {hasCuvee(p.cuvee_id,`structure_profiles[${i}]`);checkSources(p.source_ids,`structure_profiles[${i}].source_ids`);}
+  for (const [i,p] of (d.pairing_profiles || []).entries()) {
+    hasCuvee(p.cuvee_id,`pairing_profiles[${i}]`);checkSources(p.source_ids,`pairing_profiles[${i}].source_ids`);
     if (!['structural_inference_not_directly_tasted','documented_pairing_source_pending_review'].includes(p.hypothesis_basis))
-      fail('pairing','hypothesis_basis required');
-    for (const dish of p.pairings) {
-      checkSources(dish.source_ids,'pairing.dish.source_ids');
+      fail(`pairing_profiles[${i}]`,'hypothesis_basis required');
+    for (const [j,dish] of p.pairings.entries()) {
+      checkSources(dish.source_ids,`pairing_profiles[${i}].pairings[${j}].source_ids`);
       if (!['structural_inference_not_directly_tasted','documented_pairing_source_pending_review'].includes(dish.evidence_basis))
-        fail('pairing.dish','evidence_basis required');
+        fail(`pairing_profiles[${i}].pairings[${j}]`,'evidence_basis required');
     }
   }
   for (const x of d.source_discrepancies || []) checkSources(x.source_ids,'discrepancy');

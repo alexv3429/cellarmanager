@@ -72,11 +72,21 @@ release and bottle size**. It separates release-existence sources from
 date-proposal sources and does not silently reuse 1500 ml observations for
 750 ml proposals. This closes a format-validation gap for incoming producer
 files; it does **not** stage Burgaud data, grant curator access, approve dates,
-publish a version, or complete any gate. The next actual-data action is to
-validate the owner's revised 1.1 Burgaud file when supplied, then review its
-James and Côte du Py 2022 proposals against the active draft and record human
-decisions. Other producer files can follow the same validation path without
-becoming effective advice automatically.
+publish a version, or complete any gate. Incoming producer files can follow
+the same validation path without becoming effective advice automatically.
+
+The owner has now supplied four private v1.1 producer files. Clavelier (18
+exact release proposals), Barthod (17), and Burgaud (14) pass the new local
+validator. Boillot has 22 proposals but fails on five repeated uses of one
+source ID in its Épenotes structure/pairing entries; de-duplicating those
+pointers **in memory only** passes validation, so the submitted file remains
+unchanged and needs a corrected revision. All 71 proposed release windows are
+still marked unapproved and all 137 source records have rights unreviewed.
+Burgaud proposes James 2022 at 2026 / 2030–2038, versus the unpublished
+regional draft's 2025 / 2028–2035; the producer file has **no exact Côte du Py
+2022 calibration**. Do not fill that gap from James or publish the draft as-is.
+The next review must resolve these release-specific dates and identities;
+none of the four files is active shared advice.
 
 Statuses below mean **Not started**, **In progress**, **Blocked**, or
 **Accepted**. A step becomes Accepted only when its named evidence is recorded
