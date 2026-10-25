@@ -16,7 +16,7 @@ if that model cannot assess them. The owner-authorized pilot comes before
 broader use. No percentage of catalogue coverage is silently implied by this
 release target.
 
-## Status at 24 October 2026
+## Status at 25 October 2026
 
 **Not released.** The merged work through PR #209 provides the database
 foundation, candidate staging, draft diagnostics, review decisions, shadow
@@ -44,6 +44,16 @@ draft decisions cannot be recorded from that account. The workbook audit has
 226 two-date pairs but
 no complete three-date shared rows. The existing model and personal timing
 controls remain in use. See the [Gate 2 deployment record](drinking-window-gate2-deployment.md).
+
+On 25 October, the owner supplied a [Burgaud producer research
+package](producer-research-format.md). It has 14 cuvée profiles, 26 vintage
+effects, 53 exact cuvée/vintage calibrations, and 150 proposed windows. It is
+research-only: every proposal says `DO_NOT_PUBLISH`, and the 64 release-review
+candidates still have no canonical identity, curator, rights, or publication
+approval. Its James and Côte du Py 2022 estimates conflict with the single
+regional pilot row. **Gate 3 remains blocked; do not approve the existing row
+unchanged.** Validate and review the producer format and then decide the two
+release-specific alternatives before any publication.
 
 Statuses below mean **Not started**, **In progress**, **Blocked**, or
 **Accepted**. A step becomes Accepted only when its named evidence is recorded
@@ -315,15 +325,20 @@ meaningful. At minimum, each update must:
 | 2026-10-24 · PR #209 review clarity update | Gate 1 remains In progress; no reference, cellar data, approval, publication, or rollout changed. | The comparison now shows current and unpublished draft as separate three-milestone panels, explains the regional rule's limited wine eligibility in French, and requests no owner decision while the four reference checks remain open. Added a French owner-report regression test; web lint (pre-existing warnings), 841 tests, and build pass. Owner mobile walkthrough and reference approvals remain open. |
 | 2026-10-24 · official app check after #209 | Gates 1–2 remain In progress; no wine, reference, approval, publication, or rollout was edited. | The main-branch Cloudflare build succeeded. The browser initially held the previous PWA shell and showed misleading “awaiting your review” wording; accepting its visible update prompt loaded the merged screen. Official Catalogue now shows the unpublished 2025/2028–2035 draft apart from current model 2026/2031–2039, with four pending reference checks and no owner decision. The wine card traces current model dates to Morgon red place baseline, Beaujolais 2022 vintage, and Jean-Marc Burgaud producer style; it explicitly lacks a reviewed cuvée profile. The three-date manual editor and draft-only private group selector were opened but not saved. |
 | 2026-10-24 · PR #210 | Gates 1–2 remain In progress; Gate 3 still requires curator and owner decisions. No reference, cellar data, approval, publication, switch, or rollout is changed. | The current model's provenance is explained beside the comparison with a path to its profile trace. The curator draft screen surfaces pending items first, displays all three years separately, and requires an explicit decision instead of preselecting approval. The signed-in pilot owner account has no curator review workspace; an authorized curator must review the one row, one ageing group, and two exact-release memberships. |
+| 2026-10-25 · `codex/burgaud-profile-format` | Gate 3 remains blocked. The owner-supplied producer package is validated as a research-only exchange format; neither the shared draft nor live advice, access, database, switch, or rollout changed. | A read-only validator emits a James-specific dossier with the date conflict and no publication permission. Six new tests and the 41-test drinking-window suite pass. James 2022 and Côte du Py 2022 each need a separate three-year decision; canonical release, source fit, rights and curator review remain open. |
 
-**Next action:** have the owner inspect the signed-in Côte du Py card and
-the private report's one changed proposal on the updated official app. Walk
-through actual manual edit/clear, matched/unmatched, local-choice, mobile, stale-report, and
-emergency-off cases. Record owner acceptance before accepting Gates 1–2.
-Then have an already authorized drinking-window curator review the four
-pending subjects on their merits, or explicitly arrange that authorization;
-do not grant it merely because the pilot owner can see the comparison. Obtain
-curator decisions before any Gate 3 publication. Keep the reference switch and
+**Next action:** resolve the material date conflict between the existing
+regional draft and the producer package for James and Côte du Py 2022. Verify
+their release-specific sources and identities, revise the unpublished draft
+through the curated version workflow, then obtain fresh curator decisions and
+a fresh whole-cellar owner comparison. Do **not** approve the old four-item
+draft unchanged. Walk through actual manual edit/clear, matched/unmatched,
+local-choice, mobile, stale-report, and emergency-off cases against the
+revised pilot. Record owner acceptance before accepting Gates 1–2.
+Then have an already authorized drinking-window curator review the revised
+subjects on their merits, or explicitly arrange that authorization; do not
+grant it merely because the pilot owner can see the comparison. Obtain curator
+decisions before any Gate 3 publication. Keep the reference switch and
 household opt-in off; no draft
 publication is authorized by the migration approval. Decide when to remove
 the protected temporary backup after the owner walkthrough.
