@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { validateProducerResearchPackage, producerReleaseReview } from './producer_research_package.mjs';
 const source={id:'estate',title:'Estate',url:'https://example.org/wines',type:'producer',checked_on:'2026-10-25',
@@ -49,4 +50,10 @@ test('reject invented release and source claims',()=>{
 test('vintage effects cannot create release calibrations',()=>{
  const x=cp();x.exact_release_calibrations=[];assert.equal(validateProducerResearchPackage(x).exact_calibration_count,0);
  assert.throws(()=>producerReleaseReview(x,'wine',2022),/no exact cuvee\/vintage\/format/);
+});
+test('copyable producer template is a valid, non-publishable empty draft',()=>{
+ const template=JSON.parse(readFileSync(new URL('../../docs/examples/producer-research-template.json',import.meta.url),'utf8'));
+ const result=validateProducerResearchPackage(template);
+ assert.equal(result.exact_calibration_count,0);
+ assert.equal(result.publishable_rows,0);
 });

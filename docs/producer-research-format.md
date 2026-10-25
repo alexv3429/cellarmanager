@@ -4,6 +4,18 @@ CellarManager accepts **one independent, versioned JSON file per producer** for 
 
 The normative machine-readable specification is [producer_exchange_v1.schema.json](schemas/producer_exchange_v1.schema.json) (JSON Schema Draft 2020-12). The previous Burgaud ZIP format (`cellarmanager.research.domaine.v1`) and its inlined relative cuvée ages are **retired**. Any earlier Burgaud file using `schema_version: 1.0.0` needs explicit migration to `1.1.0`; renaming the envelope alone is insufficient.
 
+Start another producer from the [copyable JSON template](examples/producer-research-template.json).
+Replace every `REPLACE` value and the `example.invalid` URL with verified
+producer-specific information, update `generated_on`, and add sources to the
+registry before referring to their IDs. The template deliberately has no
+vintage effects or exact-release dates: add a release only when a source
+actually identifies that cuvée, vintage, and bottle size. Record its proposed
+three dates, rationale, confidence, and separate source support under
+`exact_release_calibrations`; do not generate every cuvée/vintage combination.
+Keep `status: draft_for_curator_review` and each proposal
+`review_status: candidate_not_approved`. A technical validation pass is not
+evidence or permission to publish.
+
 ## Data layers
 
 - `producer` and `cuvees`: names, aliases, canonicalization *hints*, appellation, region, colour, and sourced name history with optional vintage bounds. Names and vintage effects **never imply production**.

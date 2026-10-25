@@ -55,6 +55,17 @@ regional pilot row. **Gate 3 remains blocked; do not approve the existing row
 unchanged.** Validate and review the producer format and then decide the two
 release-specific alternatives before any publication.
 
+PR #212 supersedes only the first package's **exchange contract and local
+validator**, not a shared reference or curator decision. The proposed 1.1
+contract requires an explicit bottle size for each exact release and external
+observation, and source/basis labels for pairing hypotheses. Its copyable
+template contains placeholders, not Burgaud or other producer evidence. The
+revised Burgaud research remains outside the repository and unapproved; even
+a valid file cannot create a release, approve dates, or change advice. Gate 3
+still needs separate James and Côte du Py identity, date, evidence-fit, rights,
+and curator decisions. Gates 1–2 remain In progress; no release gate is
+accepted by this schema change.
+
 Statuses below mean **Not started**, **In progress**, **Blocked**, or
 **Accepted**. A step becomes Accepted only when its named evidence is recorded
 here, not when its PR merges. Dates are not delivery promises.
@@ -326,6 +337,7 @@ meaningful. At minimum, each update must:
 | 2026-10-24 · official app check after #209 | Gates 1–2 remain In progress; no wine, reference, approval, publication, or rollout was edited. | The main-branch Cloudflare build succeeded. The browser initially held the previous PWA shell and showed misleading “awaiting your review” wording; accepting its visible update prompt loaded the merged screen. Official Catalogue now shows the unpublished 2025/2028–2035 draft apart from current model 2026/2031–2039, with four pending reference checks and no owner decision. The wine card traces current model dates to Morgon red place baseline, Beaujolais 2022 vintage, and Jean-Marc Burgaud producer style; it explicitly lacks a reviewed cuvée profile. The three-date manual editor and draft-only private group selector were opened but not saved. |
 | 2026-10-24 · PR #210 | Gates 1–2 remain In progress; Gate 3 still requires curator and owner decisions. No reference, cellar data, approval, publication, switch, or rollout is changed. | The current model's provenance is explained beside the comparison with a path to its profile trace. The curator draft screen surfaces pending items first, displays all three years separately, and requires an explicit decision instead of preselecting approval. The signed-in pilot owner account has no curator review workspace; an authorized curator must review the one row, one ageing group, and two exact-release memberships. |
 | 2026-10-25 · PR #211 | Gate 3 remains blocked. The owner-supplied producer package is validated as a research-only exchange format; neither the shared draft nor live advice, access, database, switch, or rollout changed. | A read-only validator emits a James-specific dossier with the date conflict and no publication permission. Six new tests and the 41-test drinking-window suite pass. James 2022 and Côte du Py 2022 each need a separate three-year decision; canonical release, source fit, rights and curator review remain open. |
+| 2026-10-25 · PR #212 | Gate 3 research intake is made safer with a producer-independent 1.1 exchange schema, format-aware read-only validator, and placeholder template. Gate 3 remains Blocked; Gates 1–2 remain In progress. No live advice, permission, database, deployment, switch, or rollout changes. | The revised contract requires explicit bottle size and pairing provenance; the template passes local schema validation and the 41-test drinking-window suite. Earlier Burgaud 1.0 research needs migration before validation under 1.1, and the revised private Burgaud file is not published or committed. Source fit, rights, canonical identity, competing James/Côte du Py dates, curator decisions, and owner comparison remain open. |
 
 **Next action:** resolve the material date conflict between the existing
 regional draft and the producer package for James and Côte du Py 2022. Verify
