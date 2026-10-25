@@ -35,6 +35,13 @@ shared date nor a third source of release-specific evidence. The producer
 file does not activate either proposal; this regional draft must **not be
 approved or published as-is**.
 
+**Owner decision:** for a future *Côte du Py 2022-specific draft*, the owner
+chose **2025 / 2028–2040** after seeing the competing horizons. This is an
+owner-authored estimate, not an assertion that a critic published three
+milestones or that 2040 is certain. The decision has **not** yet changed the
+database draft or the cellar's advice. James's three dates remain a separate
+unapproved proposal.
+
 The exact 2022 Côte du Py release and 75 cl format are corroborated by [The
 Wine Society](https://www.thewinesociety.com/product/domaine-jean-marc-burgaud-morgon-cote-du-py-2022/).
 [K&L's reproduction of a critic's advice](https://www.klwines.com/products/details/1746496)
@@ -52,8 +59,9 @@ retailers describes a 1933 granite site near Régnié, inconsistent with the
 producer's schist-based Côte du Py description; its applicability needs
 verification against the original review before using it as corroboration.
 Do not average these numbers or silently convert a drinking horizon into an
-optimum year. The three dates and source fit need an explicit editorial and
-curator decision for each release. Source links remain pointers; rights to
+optimum year. Record the owner's explicit choice and its uncertainty when
+creating the release-scoped draft; source fit and curator approval still need
+separate decisions. Source links remain pointers; rights to
 reuse third-party text or data in a shared reference remain unreviewed.
 
 James needs its **own** decision: the [producer](https://jean-marc-burgaud.com/nos-vins)
