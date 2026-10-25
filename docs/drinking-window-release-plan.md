@@ -66,7 +66,7 @@ still needs separate James and Côte du Py identity, date, evidence-fit, rights,
 and curator decisions. Gates 1–2 remain In progress; no release gate is
 accepted by this schema change.
 
-The next local tooling change makes validation enforce that full exchange
+PR #213 makes validation enforce that full exchange
 schema and emits a read-only review packet for **each explicitly evidenced
 release and bottle size**. It separates release-existence sources from
 date-proposal sources and does not silently reuse 1500 ml observations for
