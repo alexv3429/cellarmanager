@@ -83,16 +83,18 @@ shadow-comparison approval, publication, or household opt-in is manufactured.
 
 Before anyone sees these dates as advice:
 
-1. The 19-migration foundation and old regional draft are already on the
-   linked project. Do not reapply them. The replacement migration in PR #215
-   is **not** on the linked project until separately authorized and applied.
-   Keep the global switch and household rollouts off.
-2. Have an authorized curator with the explicit `drinking-window` scope. In
+1. The 19-migration foundation and PR #215 replacement migration are on the
+   linked project. Do not reapply them. The regional draft is withdrawn and
+   the exact-release row is still unpublished. Keep the global switch and
+   household rollouts off.
+2. The owner explicitly authorized adding the `drinking-window` review scope
+   to their confirmed signed-in pilot-owner account; it has been granted. In
    Catalogue → Shared drinking-window review → Actual reference drafts, check
    the exact Côte du Py release, 750 ml format, all three years, and the owner
    evidence pointer. Record an approval or disagreement with a rationale for
-   the new row. Review James separately later. The signed-in pilot owner lacks this
-   curator scope; do not grant it merely to clear the pilot. This is separate
+   the new row. Review James separately later. The scope was granted only
+   after the owner's explicit account confirmation, not automatically because
+   they could see the pilot comparison. This is separate
    from reviewing historical workbook candidates. A reference edit
    invalidates its earlier decision. Recheck draft diagnostics and publication
    preflight; they must have no issues.
