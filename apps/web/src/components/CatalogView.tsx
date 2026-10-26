@@ -1215,6 +1215,7 @@ export function CatalogView({
         <ProfileGovernanceInbox isOnline={isOnline} />
         <DrinkingWindowReviewWorkspace isOnline={isOnline} />
         <DrinkingWindowShadowReviewPanel
+          key={householdId}
           householdId={householdId}
           isOnline={isOnline}
           onOpenWine={onOpenWine}

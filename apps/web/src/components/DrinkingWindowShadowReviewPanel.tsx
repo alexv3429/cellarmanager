@@ -66,6 +66,20 @@ function scopeLabel(scope: string): string {
   }
 }
 
+function reviewOpenKey(householdId: string): string {
+  return `cellarmanager:drinking-window-review-open:${householdId}`
+}
+
+function wasReviewOpen(householdId: string): boolean {
+  try { return sessionStorage.getItem(reviewOpenKey(householdId)) === "true" }
+  catch { return false }
+}
+
+function rememberReviewOpen(householdId: string, open: boolean): void {
+  try { sessionStorage.setItem(reviewOpenKey(householdId), String(open)) }
+  catch { /* Storage may be unavailable in private browsing. */ }
+}
+
 function WindowMilestones({
   first, start, end, t,
 }: {
@@ -96,6 +110,9 @@ export function DrinkingWindowShadowReviewPanel({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
+  const [expanded, setExpanded] = useState(() => wasReviewOpen(householdId))
+  const currentListing = list?.find((entry) => entry.versionStatus !== "withdrawn")
+  const history = list?.filter((entry) => entry.reportId !== currentListing?.reportId) ?? []
 
   useEffect(() => {
     setList(null)
@@ -108,8 +125,15 @@ export function DrinkingWindowShadowReviewPanel({
       listShadowReports(householdId),
       getDrinkingWindowRolloutStatus(householdId),
     ])
-      .then(([next, status]) => {
-        if (!cancelled) { setList(next); setRollout(status) }
+      .then(async ([next, status]) => {
+        if (cancelled) return
+        setList(next)
+        setRollout(status)
+        const latest = next.find((entry) => entry.versionStatus !== "withdrawn")
+        if (latest && wasReviewOpen(householdId)) {
+          const loaded = await getShadowReport(latest)
+          if (!cancelled) setReport(loaded)
+        }
       })
       .catch((caught: unknown) => {
         if (cancelled) return
@@ -129,9 +153,12 @@ export function DrinkingWindowShadowReviewPanel({
     ? orderShadowComparisonRows(report.rows, names)
     : [], [report, names])
   const changedCount = report?.rows.filter((row) => row.comparisonStatus === "changed").length ?? 0
+  const conflictingIdentityCount = report?.rows.filter((row) =>
+    row.draftStatus === "ambiguous" || row.draftStatus === "identity_conflict").length ?? 0
   const canApprove = (report?.versionStatus === "draft" || report?.versionStatus === "active")
+    && report.reportId === currentListing?.reportId
     && report.draftIssueCount === 0
-    && !report.rows.some((row) => row.draftStatus === "ambiguous" || row.draftStatus === "identity_conflict")
+    && conflictingIdentityCount === 0
 
   async function prepareComparison() {
     setBusy(true)
@@ -191,7 +218,13 @@ export function DrinkingWindowShadowReviewPanel({
 
   if (!isOnline || (list?.length === 0 && rollout?.activeVersionNumber === null)) return null
 
-  return <details className="drinking-window-shadow-review">
+  return <details className="drinking-window-shadow-review"
+    open={expanded}
+    onToggle={(event) => {
+      const open = event.currentTarget.open
+      setExpanded(open)
+      rememberReviewOpen(householdId, open)
+    }}>
     <summary>{t("Review shared drinking-window dates")}</summary>
     <p>{t("Compare shared reference dates with your current cellar before using them.")}</p>
     {rollout?.activeVersionNumber ? <div>
@@ -207,20 +240,28 @@ export function DrinkingWindowShadowReviewPanel({
     {error ? <Notice role="alert" tone="error">{error}</Notice> : null}
     {message ? <Notice role="status" tone="success">{message}</Notice> : null}
     {list === null ? <p>{t("Loading review reports…")}</p> : null}
-    {list?.map((entry) => <button
+    {currentListing ? <button
       disabled={busy}
-      key={entry.reportId}
-      onClick={() => void openReport(entry)}
+      onClick={() => void openReport(currentListing)}
       type="button"
-    >{t("Reference version")} {entry.versionNumber} · {entry.wineCount} {t("wines")}
-      {` · ${t(entry.latestVerdict === "approve"
+    >{t("Latest comparison")} · {t("Reference version")} {currentListing.versionNumber}
+      {` · ${t(currentListing.latestVerdict === "approve"
         ? "Approved"
-        : entry.latestVerdict === "reject"
+        : currentListing.latestVerdict === "reject"
           ? "Rejected"
-          : entry.versionStatus === "draft" && entry.draftIssueCount > 0
+          : currentListing.versionStatus === "draft" && currentListing.draftIssueCount > 0
             ? "Draft under review — no action needed"
-            : "Awaiting your review")}`}
-    </button>)}
+            : "Unpublished proposal")}`}
+    </button> : null}
+    {history.length > 0 ? <details className="drinking-window-shadow-review__history">
+      <summary>{t("Earlier comparisons and withdrawn versions")}</summary>
+      <p>{t("These are saved snapshots, not wines to approve. Their counts do not update after you edit a wine.")}</p>
+      {history.map((entry) => <button disabled={busy} key={entry.reportId}
+        onClick={() => void openReport(entry)} type="button">
+        {t("Reference version")} {entry.versionNumber} · {t("Comparison from")} {new Date(entry.recordedAt).toLocaleDateString()}
+        {` · ${t(entry.versionStatus === "withdrawn" ? "Withdrawn — no review needed" : "Older snapshot")}`}
+      </button>)}
+    </details> : null}
 
     {report ? <section aria-label={t("Detailed drinking-window comparison")}>
       <h3>{t("Reference version")} {report.versionNumber}
@@ -228,17 +269,33 @@ export function DrinkingWindowShadowReviewPanel({
       <p>{report.wineCount} {t("wines")} · {changedCount} {t(changedCount === 1
         ? "proposal with different dates"
         : "proposals with different dates")} · {report.draftIssueCount} {t("pending reference checks")}</p>
+      <p>{conflictingIdentityCount} {t("wine cards with conflicting details in this comparison")}. {t("The wine total is how many cards were compared, not how many dates need approval.")}</p>
+      <p>{t("Comparison from")} {new Date(report.recordedAt).toLocaleDateString()}. {t("This is a saved snapshot. Edits to wine cards appear only in a newer comparison.")}</p>
+      {report.versionStatus === "withdrawn" ? <Notice tone="warning">
+        {t("This reference version has been withdrawn. Keep it only as history; there is nothing to approve.")}
+      </Notice> : null}
       {report.versionStatus === "draft" ? <p>{t("This draft is not in use. Your cellar still shows its current dates.")}</p>
         : <p>{t("The current dates are the ones you see in your cellar, including your personal timing choice.")}</p>}
       {report.draftIssueCount > 0 ? <Notice tone="warning">
         {t("{count} reference checks are still pending. No decision is needed from you yet.", { count: String(report.draftIssueCount) })}
       </Notice> : null}
+      {conflictingIdentityCount > 0 ? <Notice tone="warning">
+        {t("{count} wine cards have conflicting details in this comparison. These are not date proposals to approve. Check them against the bottles; after editing, use a newer comparison.", { count: String(conflictingIdentityCount) })}
+      </Notice> : null}
       <ol className="drinking-window-shadow-review__rows">
         {orderedRows.slice(0, shown).map((row) => <li key={row.wineId}>
-          <button className="wine-detail-link" onClick={() => onOpenWine(row.wineId)} type="button">
+          <button className="wine-detail-link" onClick={() => {
+            setExpanded(true)
+            rememberReviewOpen(householdId, true)
+            onOpenWine(row.wineId)
+          }} type="button">
             {names.get(row.wineId) ?? row.wineId}
           </button>
           <span>{t(comparisonLabel(row.comparisonStatus))}</span>
+          {row.draftStatus === "identity_conflict" ? <p>{t(row.reason === "appellation_outside_region"
+            ? "The appellation and region disagree. Check both against the bottle before editing this wine."
+            : "This wine has conflicting details. Check its identity against the bottle before editing.")}</p> : null}
+          {row.draftStatus === "ambiguous" ? <p>{t("Several wine identities match. Review this wine before approving the comparison.")}</p> : null}
           <div className="drinking-window-shadow-review__comparison">
             <section>
               <h4>{t("Dates currently used in your cellar")}</h4>
@@ -265,7 +322,8 @@ export function DrinkingWindowShadowReviewPanel({
       {shown < orderedRows.length ? <button onClick={() => setShown(shown + 30)} type="button">
         {t("Show more wines")}
       </button> : null}
-      {(report.versionStatus === "active" || (report.versionStatus === "draft" && report.draftIssueCount === 0)) ? <div className="drinking-window-shadow-review__decision">
+      {report.reportId === currentListing?.reportId
+        && (report.versionStatus === "active" || (report.versionStatus === "draft" && report.draftIssueCount === 0)) ? <div className="drinking-window-shadow-review__decision">
         <label>{t("Reason for your decision")}
           <textarea minLength={10} onChange={(event) => setRationale(event.target.value)}
             rows={3} value={rationale} />

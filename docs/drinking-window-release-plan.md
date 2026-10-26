@@ -16,7 +16,7 @@ if that model cannot assess them. The owner-authorized pilot comes before
 broader use. No percentage of catalogue coverage is silently implied by this
 release target.
 
-## Status at 26 October 2026
+## Status at 27 October 2026
 
 **Not released.** The merged work through PR #215 provides the database
 foundation, candidate staging, draft diagnostics, review decisions, shadow
@@ -46,6 +46,18 @@ opened but not saved. Mobile, manual edit/clear, stale-report, emergency-off,
 and owner acceptance are not complete. The confirmed pilot-owner account now
 has the explicitly approved curator review scope and has recorded an approval
 with a reason. The official review workspace shows zero pending items. The
+first 27 October private comparison of version 2 covered 802 active pilot wines:
+one proposed date change, two preserved manual windows, five conflicting
+local identities, 84 missing keys, and 710 unmatched wines. A zero-issue
+preflight was recorded against the same draft hash. After the owner corrected
+those five wine cards, a fresh owner-visible comparison found **zero**
+identity conflicts: one proposed date change, two preserved manual windows,
+84 missing keys, and 715 unmatched wines. The older reports remain immutable
+history, not current work or five wines to approve. Nothing has been published
+or enabled.
+The newly supplied 23-profile research bundle passes technical validation
+but its 670 proposed windows remain unapproved; see the
+[intake record](drinking-window-producer-bundle-intake-2026-10-27.md). The
 workbook audit has 226 two-date pairs but no complete three-date
 shared rows. The existing model and personal timing controls remain in use.
 See the [Gate 2 deployment record](drinking-window-gate2-deployment.md).
@@ -422,9 +434,16 @@ meaningful. At minimum, each update must:
 | 2026-10-26 · PR #216 decision-note presentation follow-up | Gate 3 remains Blocked and Gate 4 remains Not started; no draft, approval, or publication changes. | The owner found the extra ownership disclaimer heavy and wanted the linked Markdown note readable in the app. The proposed client removes that redundant note and opens the bundled, current-branch decision record in an in-app panel with rendered headings, tables, and links. GitHub remains an optional original-document link; other external evidence links are unchanged. This improves review usability only, without treating the owner estimate as producer evidence. |
 | 2026-10-26 · PR #216 one-tap review disclosure | Gate 3 remains Blocked and Gate 4 remains Not started; no draft, approval, or publication changes. | The owner reported that the draft review card needed two taps to open. The browser's native `<details>` toggle and React's controlled `open` state could cancel each other on the first tap. The proposed client prevents the native toggle and lets the controlled state handle opening and closing; a click regression test covers both directions. No review decision is made by opening the card. |
 | 2026-10-26 · post-merge curator approval and review-status follow-up | The owner recorded an approval and reason for the exact Côte du Py 2022 / 750 ml draft in the official app. The live review workspace now shows zero pending items, but version 2 is still an unpublished draft. Gate 3 remains Blocked, and no publication, household opt-in, or switch-on is implied. | The official UI displayed the current approval and reason, while incorrectly leaving the empty decision form open. This follow-up makes completion explicit, closes the item after saving, and keeps the completed item readable with an intentional re-review action. A fresh owner-bound whole-cellar comparison and owner acceptance are still required before any publication decision. |
+| 2026-10-27 · private version 2 comparison and preflight | Gate 3 remains Blocked. A private report (`6d75d186-8ed4-41b7-b28c-be5d91aa52c7`) and matching zero-issue preflight (`0ba42f41-71ae-4e54-816f-ecac8f98856a`) were recorded on linked `cellarmanager-v02-dev`. No stock, cellar metadata, shared draft, approval, publication, switch, or opt-in was changed. | The report hash is `6be044ea01ea5bab2f5d009b43735f7f390b7ae05343bd6aa18f7c00990f4a01`; it covers 802 active wines. Exactly one changed row is Burgaud Côte du Py 2022, current model 2026 / 2031–2039 versus draft 2025 / 2028–2040. Two manual windows are preserved; five local appellation/region identity conflicts block owner approval, with 84 missing keys and 710 unmatched wines. The owner must inspect and correct the five wine cards; a fresh report is then required. |
+| 2026-10-27 · owner-visible version 2 comparison | Gate 3 remains Blocked. The preceding service-recorded report had no owner binding and therefore was correctly hidden from the owner's Catalogue. After verifying the pilot household owner and draft status, a fresh report (`268ea38e-64d5-44ce-8588-e6b7bfd49194`) was generated with that owner as the request actor. No reference was published, no household opted in, and no stock or wine record changed. | The new 802-wine report has the same content hash `6be044ea01ea5bab2f5d009b43735f7f390b7ae05343bd6aa18f7c00990f4a01` and zero draft issues. The signed-in owner Catalogue was refreshed and shows version 2 above withdrawn version 1 under “Examiner les dates de dégustation partagées.” The five local identity conflicts still block approval. Future pilot reports must be generated in the verified owner's context; an unbound service diagnostic is not an owner-review report. |
+| 2026-10-27 · corrected identities and comparison presentation | Gate 3 remains Blocked. The owner corrected the five previously flagged wine cards. A rollback-only preview showed those five now return `no_match` rather than `identity_conflict`; a new owner-linked report (`686ceb2d-3a70-4189-b162-7f5371c2c13f`) was recorded. No dates, reference, publication, rollout, or stock were changed by this follow-up. | The new 802-wine report hash is `9daff2f374cfa9558d707e4a69aece2bcae70e943a8913eaa7951f970405007e`: one changed Côte du Py row, two manual windows, zero conflicts, 84 missing keys, 715 unmatched. The UI now foregrounds only the latest non-withdrawn comparison, puts old snapshots and withdrawn version 1 behind a history disclosure, labels conflict counts as local wine-card checks rather than date approvals, and reopens the review when returning from a wine card. Version 1's James/Py regional row remains withdrawn; version 2 contains only the exact Côte du Py draft. The owner has not accepted the report or enabled the reference. |
+| 2026-10-27 · 23-profile research bundle intake | Gate 4 remains Not started and Gate 5 remains Blocked; the ZIP was validated privately, not imported into the shared reference or cellar. | [Intake record](drinking-window-producer-bundle-intake-2026-10-27.md): all 23 JSON files pass schema 1.1.0 and cross-reference checks; 670 750 ml proposals are all `candidate_not_approved` and zero are publishable. The supplied B/C/D grades are metadata triage only, not verified date evidence. This PR also explains conflicting identities in the owner comparison before its disabled approval action. |
 
-**Next action:** prepare a fresh owner-bound whole-cellar comparison against
-the newly approved version 2 draft and inspect it with the cellar owner. The
+**Next action:** ask the pilot owner to inspect the fresh conflict-free
+comparison and decide whether the exact Côte du Py 2022 dates are acceptable;
+there is no James proposal to approve. Do not silently rewrite personal wine
+data. Any further corrections require another owner-bound comparison, because
+saved report counts do not change. The
 2040 Côte du Py endpoint remains an owner estimate, not independently
 established as an optimum end. Do **not** revive the old four-item draft;
 James remains research-only. Walk through actual manual edit/clear,
