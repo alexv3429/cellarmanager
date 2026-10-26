@@ -13,8 +13,9 @@ unapproved** exact-release candidate:
 The new row requires the canonical Côte du Py 2022 release, Morgon, red
 colour, and 750 ml format. **James has no staged replacement dates.** The
 [producer describes the two cuvées separately](https://jean-marc-burgaud.com/nos-vins).
-The dates are the owner's provisional estimate, **not** three milestones
-published by the producer or a retailer.
+The dates are the provisional estimate of the **CellarManager cellar owner who
+proposed them**, not the vineyard owner or producer. They are **not** three
+milestones published by the producer or a retailer.
 
 **Research conflict (25 October):** the owner's latest private
 [Burgaud producer package](producer-research-format.md), dataset 1.0.3,

@@ -54,7 +54,7 @@ describe("reference draft curator review", () => {
   it("shows dates and provenance before accepting a reasoned curator decision", async () => {
     await act(async () => root.render(<ReferenceDraftReview isOnline />))
     expect(container.textContent).toContain("Unpublished draft")
-    expect(container.textContent).toContain("1 draft item still needs curator review")
+    expect(container.textContent).toContain("1 draft item still needs review")
     const summary = container.querySelector("summary")
     await act(async () => summary?.dispatchEvent(new MouseEvent("click", { bubbles: true })))
     const milestones = container.querySelectorAll(".drinking-window-review-milestones div")
@@ -63,6 +63,7 @@ describe("reference draft curator review", () => {
     ])
     expect(container.textContent).toContain("A general ageing claim or an owner's estimate is not a producer-published optimum window")
     expect(container.querySelector("a")?.getAttribute("href")).toBe("https://example.test/review")
+    expect(container.querySelector("a")?.getAttribute("target")).toBe("_self")
     const select = container.querySelector("select")
     const submit = container.querySelector('button[type="submit"]')
     expect(select?.value).toBe("")
@@ -108,7 +109,7 @@ describe("reference draft curator review", () => {
     const summaries = [...container.querySelectorAll("summary strong")].map((item) => item.textContent)
     expect(summaries[0]).toContain("Beaujolais · 2022 · red")
     expect(summaries[1]).toContain("Earlier approved row")
-    expect(container.textContent).toContain("1 élément du brouillon reste à vérifier")
+    expect(container.textContent).toContain("1 élément du brouillon reste à examiner")
     const firstSummary = container.querySelector("summary")
     await act(async () => firstSummary?.dispatchEvent(new MouseEvent("click", { bubbles: true })))
     expect(container.textContent).toContain("Commencer à tester2025")
@@ -138,11 +139,34 @@ describe("reference draft curator review", () => {
     await act(async () => container.querySelector("summary")?.dispatchEvent(new MouseEvent("click", { bubbles: true })))
 
     expect(container.textContent).toContain("Vin et millésime exacts · Format : 750 ml")
-    expect(container.textContent).toContain("La fin 2040 est le choix du propriétaire")
+    expect(container.textContent).toContain("La fin 2040 est le choix de la personne ayant proposé ces dates")
     expect(container.textContent).toContain("pas une fin d’optimum publiée")
-    expect(container.textContent).toContain("note de décision, pas une validation externe")
+    expect(container.textContent).toContain("pas une validation externe")
+    expect(container.textContent).toContain("non le domaine viticole")
     expect(container.querySelectorAll('a[href="https://example.test/owner-note"]')).toHaveLength(1)
+    expect(container.querySelector("a")?.getAttribute("target")).toBe("_self")
+    expect(container.textContent).toContain("utilisez Retour pour revenir")
     expect(container.textContent).toContain("début de dégustation, période optimale")
     expect(container.textContent).not.toContain("Owner-authored provisional")
+  })
+
+  it("explains that disagreement blocks publication but cannot edit the draft", async () => {
+    await act(async () => root.render(<LanguageContext.Provider value={{
+      language: "fr", preference: "fr", setSavedPreference: () => undefined,
+      t: (key, values) => translate("fr", key, values),
+    }}><ReferenceDraftReview isOnline /></LanguageContext.Provider>))
+    await act(async () => container.querySelector("summary")?.dispatchEvent(new MouseEvent("click", { bubbles: true })))
+    const select = container.querySelector("select")
+    await act(async () => {
+      if (select) {
+        Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")?.set?.call(select, "disagree")
+        select.dispatchEvent(new Event("change", { bubbles: true }))
+      }
+    })
+    expect(container.textContent).toContain("Un désaccord bloque la publication, mais ne change pas ces dates")
+    expect(container.textContent).toContain("Il faudra ensuite préparer et réviser un nouveau brouillon")
+    expect(container.textContent).toContain("Que faut-il corriger ?")
+    expect(container.textContent).toContain("Enregistrer le désaccord")
+    expect(recordReferenceReview).not.toHaveBeenCalled()
   })
 })

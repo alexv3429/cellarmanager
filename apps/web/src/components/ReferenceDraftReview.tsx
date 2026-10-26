@@ -118,7 +118,7 @@ export function ReferenceDraftReview({ isOnline }: Props) {
     <div className="research-inbox__heading">
       <div>
         <h3>{t("Actual reference drafts")}</h3>
-        <p>{t("Check each date, ageing-group boundary, exact wine membership and source before deciding. Approval records a curator decision; it does not publish advice or change any cellar.")}</p>
+        <p>{t("You have permission to review proposals for the shared wine reference. Check the dates, the exact wine and the evidence. Your decision does not publish advice or change any cellar.")}</p>
       </div>
       <button type="button" disabled={!isOnline || loading} onClick={() => void refresh()}>
         {loading ? t("Refreshing…") : t("Refresh drafts")}
@@ -132,8 +132,8 @@ export function ReferenceDraftReview({ isOnline }: Props) {
       return <div key={draft.versionId}>
         <h4>{t("Reference version")} {draft.versionNumber} · {t("Unpublished draft")}</h4>
         <p>{pendingCount} {t(pendingCount === 1
-          ? "draft item still needs curator review"
-          : "draft items still need curator review")}</p>
+          ? "draft item still needs review"
+          : "draft items still need review")}</p>
         {[...draft.subjects].sort((a, b) => Number(b.issues.length > 0) - Number(a.issues.length > 0)).map((subject) => {
         const key = `${draft.versionId}:${subject.kind}:${subject.id}`
         return <details key={key} className="research-inbox" open={selected === key}>
@@ -148,6 +148,8 @@ export function ReferenceDraftReview({ isOnline }: Props) {
           </summary>
           <div className="drinking-window-review-form">
             {subjectDetails(subject, t)}
+            {subject.evidence.some((evidence) => evidence.sourceName === "Owner-reviewed first shared drinking-window estimate") ?
+              <p>{t("Here, owner means the CellarManager cellar owner who proposed the dates, not the wine producer.")}</p> : null}
             <h5>{t(subject.kind === "row" ? "Why these dates?" : "Why this draft?")}</h5>
             <p>{t(subject.rationale)}</p>
             {subject.kind === "row" ? <p>{t("Before approving, check that the evidence supports each proposed year. A general ageing claim or an owner's estimate is not a producer-published optimum window.")}</p> : null}
@@ -155,26 +157,28 @@ export function ReferenceDraftReview({ isOnline }: Props) {
             {subject.evidence.length === 0 ? <p>{t("No source linked; do not approve before checking.")}</p> :
               <ul>{groupedEvidence(subject.evidence).map(({ source, claimParts }, index) => <li key={index}>
                 {source.sourceUrl?.startsWith("https://") ?
-                  <a href={source.sourceUrl} target="_blank" rel="noreferrer">{t(source.sourceName)}</a> : t(source.sourceName)}
+                  <a href={source.sourceUrl} target="_self">{t(source.sourceName)}</a> : t(source.sourceName)}
                 <span> · {claimParts.map((claimPart) => t(claimPart)).join(", ")}</span>
                 <small className="drinking-window-review-source-status">{source.reviewStatus === "reviewed" ? t("Source record reviewed") : `${t("Source record")}: ${t(source.reviewStatus)}`} · {t(source.reuseRight)}</small>
+                {source.sourceUrl?.startsWith("https://") ? <small className="drinking-window-review-source-status">{t("Opens the source in this tab; use Back to return to the review.")}</small> : null}
               </li>)}</ul>}
-            {subject.reviews.length ? <p>{t("Current curator decisions")}: {subject.reviews.map((review) =>
+            {subject.reviews.length ? <p>{t("Current reviewer decisions")}: {subject.reviews.map((review) =>
               `${t(review.verdict === "approve" ? "Approved" : "Disputed")} — ${review.rationale}`).join("; ")}</p> : null}
             <form onSubmit={(event) => void save(event, draft.versionId, subject)}>
               <label>{t("Decision")}
                 <select required value={verdict} onChange={(event) => setVerdict(event.target.value as ReferenceVerdict | "")}>
                   <option disabled value="">{t("Choose a decision")}</option>
                   <option value="approve">{t("Approve this exact draft")}</option>
-                  <option value="disagree">{t("Disagree; needs correction")}</option>
+                  <option value="disagree">{t("Flag a disagreement; block publication")}</option>
                 </select>
               </label>
-              <label>{t("Why this decision?")}
+              {verdict === "disagree" ? <p role="status">{t("A disagreement blocks publication but does not change these dates. Explain what should change, including your proposed dates if you have them. A revised draft must then be prepared and reviewed.")}</p> : null}
+              <label>{t(verdict === "disagree" ? "What should be corrected?" : "Why this decision?")}
                 <textarea required minLength={10} maxLength={2000} value={rationale}
                   onChange={(event) => setRationale(event.target.value)} />
               </label>
               <button type="submit" disabled={!isOnline || saving || !verdict || rationale.trim().length < 10}>
-                {saving ? t("Saving…") : t("Record curator decision")}
+                {saving ? t("Saving…") : t(verdict === "disagree" ? "Record disagreement" : "Record review decision")}
               </button>
             </form>
           </div>
