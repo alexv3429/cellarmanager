@@ -129,9 +129,11 @@ export function DrinkingWindowShadowReviewPanel({
     ? orderShadowComparisonRows(report.rows, names)
     : [], [report, names])
   const changedCount = report?.rows.filter((row) => row.comparisonStatus === "changed").length ?? 0
+  const conflictingIdentityCount = report?.rows.filter((row) =>
+    row.draftStatus === "ambiguous" || row.draftStatus === "identity_conflict").length ?? 0
   const canApprove = (report?.versionStatus === "draft" || report?.versionStatus === "active")
     && report.draftIssueCount === 0
-    && !report.rows.some((row) => row.draftStatus === "ambiguous" || row.draftStatus === "identity_conflict")
+    && conflictingIdentityCount === 0
 
   async function prepareComparison() {
     setBusy(true)
@@ -233,12 +235,19 @@ export function DrinkingWindowShadowReviewPanel({
       {report.draftIssueCount > 0 ? <Notice tone="warning">
         {t("{count} reference checks are still pending. No decision is needed from you yet.", { count: String(report.draftIssueCount) })}
       </Notice> : null}
+      {conflictingIdentityCount > 0 ? <Notice tone="warning">
+        {t("Wine identities to resolve before approval: {count}. Open the flagged wine cards below and verify their details against the bottles. After a correction, a new comparison is required.", { count: String(conflictingIdentityCount) })}
+      </Notice> : null}
       <ol className="drinking-window-shadow-review__rows">
         {orderedRows.slice(0, shown).map((row) => <li key={row.wineId}>
           <button className="wine-detail-link" onClick={() => onOpenWine(row.wineId)} type="button">
             {names.get(row.wineId) ?? row.wineId}
           </button>
           <span>{t(comparisonLabel(row.comparisonStatus))}</span>
+          {row.draftStatus === "identity_conflict" ? <p>{t(row.reason === "appellation_outside_region"
+            ? "The appellation and region disagree. Check both against the bottle before editing this wine."
+            : "This wine has conflicting details. Check its identity against the bottle before editing.")}</p> : null}
+          {row.draftStatus === "ambiguous" ? <p>{t("Several wine identities match. Review this wine before approving the comparison.")}</p> : null}
           <div className="drinking-window-shadow-review__comparison">
             <section>
               <h4>{t("Dates currently used in your cellar")}</h4>

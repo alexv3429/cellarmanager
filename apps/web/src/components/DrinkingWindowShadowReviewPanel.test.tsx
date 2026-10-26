@@ -96,4 +96,41 @@ describe("shared drinking-window draft comparison", () => {
     expect(container.textContent).not.toContain("Approuver cette comparaison")
     expect(reviewShadowReport).not.toHaveBeenCalled()
   })
+
+  it("explains why an identity conflict blocks owner approval and links to the wine", async () => {
+    const ready = { ...listing, versionNumber: 2, draftIssueCount: 0 }
+    vi.mocked(listShadowReports).mockResolvedValue([ready])
+    vi.mocked(getShadowReport).mockResolvedValue({
+      ...ready, contentSha256: "sha", rows: [{
+        wineId: "conflict", comparisonStatus: "identity_conflict", currentSource: "model",
+        draftStatus: "identity_conflict", matchedScope: null,
+        currentFirstTrialYear: 2026, currentBestStartYear: 2031, currentBestEndYear: 2039,
+        proposedFirstTrialYear: null, proposedBestStartYear: null, proposedBestEndYear: null,
+        proposedGroupKey: null, proposedGroupDefinition: null, proposedReferenceRationale: null,
+        reason: "appellation_outside_region",
+      }],
+    })
+    const onOpenWine = vi.fn()
+    await act(async () => root.render(<LanguageContext.Provider value={{
+      language: "fr", preference: "fr", setSavedPreference: () => undefined,
+      t: (key, values) => translate("fr", key, values),
+    }}><DrinkingWindowShadowReviewPanel householdId="household" isOnline
+      onOpenWine={onOpenWine}
+      wines={[{ id: "conflict", producer: "Boillot", cuvee: "Aux Caves", vintage: 2022 }]}
+    /></LanguageContext.Provider>))
+
+    const reportButton = [...container.querySelectorAll("button")]
+      .find((button) => button.textContent?.includes("Version de référence 2"))
+    await act(async () => reportButton?.click())
+    expect(container.textContent).toContain("Identités de vin à vérifier avant approbation : 1")
+    expect(container.textContent).toContain("L’appellation et la région ne concordent pas")
+    expect(container.textContent).toContain("une nouvelle comparaison sera nécessaire")
+    const approve = [...container.querySelectorAll("button")]
+      .find((button) => button.textContent === "Approuver cette comparaison")
+    expect(approve?.disabled).toBe(true)
+    const wine = [...container.querySelectorAll("button.wine-detail-link")]
+      .find((button) => button.textContent?.includes("Boillot · Aux Caves"))
+    await act(async () => wine?.click())
+    expect(onOpenWine).toHaveBeenCalledWith("conflict")
+  })
 })
