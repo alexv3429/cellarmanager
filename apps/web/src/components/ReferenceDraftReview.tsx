@@ -67,6 +67,7 @@ export function ReferenceDraftReview({ isOnline }: Props) {
   const { t } = useLanguage()
   const [workspace, setWorkspace] = useState<ReferenceDraftWorkspace | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
+  const [reconsidered, setReconsidered] = useState<string | null>(null)
   const [verdict, setVerdict] = useState<ReferenceVerdict | "">("")
   const [rationale, setRationale] = useState("")
   const [loading, setLoading] = useState(false)
@@ -114,6 +115,8 @@ export function ReferenceDraftReview({ isOnline }: Props) {
       setRationale("")
       setVerdict("")
       await refresh()
+      setSelected(null)
+      setReconsidered(null)
     } catch (caught: unknown) {
       setError(caught instanceof Error ? caught.message : "Unable to record reference review")
     } finally {
@@ -140,9 +143,11 @@ export function ReferenceDraftReview({ isOnline }: Props) {
       const pendingCount = draft.subjects.filter((subject) => subject.issues.length > 0).length
       return <div key={draft.versionId}>
         <h4>{t("Reference version")} {draft.versionNumber} · {t("Unpublished draft")}</h4>
-        <p>{pendingCount} {t(pendingCount === 1
-          ? "draft item still needs review"
-          : "draft items still need review")}</p>
+        <p>{pendingCount === 0 && draft.subjects.length > 0
+          ? t("All proposals in this version have been reviewed. It remains an unpublished draft.")
+          : <>{pendingCount} {t(pendingCount === 1
+            ? "draft item still needs review"
+            : "draft items still need review")}</>}</p>
         {[...draft.subjects].sort((a, b) => Number(b.issues.length > 0) - Number(a.issues.length > 0)).map((subject) => {
         const key = `${draft.versionId}:${subject.kind}:${subject.id}`
         return <details key={key} className="research-inbox" open={selected === key}>
@@ -150,6 +155,7 @@ export function ReferenceDraftReview({ isOnline }: Props) {
             event.preventDefault()
             setSelected((current) => current === key ? null : key)
             setOpenSource(null)
+            setReconsidered(null)
             setRationale("")
             setVerdict("")
           }}>
@@ -182,6 +188,8 @@ export function ReferenceDraftReview({ isOnline }: Props) {
               </li>)}</ul>}
             {subject.reviews.length ? <p>{t("Current reviewer decisions")}: {subject.reviews.map((review) =>
               `${t(review.verdict === "approve" ? "Approved" : "Disputed")} — ${review.rationale}`).join("; ")}</p> : null}
+            {subject.issues.length === 0 && reconsidered !== key ? <button type="button"
+              onClick={() => setReconsidered(key)}>{t("Review this decision again")}</button> :
             <form onSubmit={(event) => void save(event, draft.versionId, subject)}>
               <label>{t("Decision")}
                 <select required value={verdict} onChange={(event) => setVerdict(event.target.value as ReferenceVerdict | "")}>
@@ -198,7 +206,7 @@ export function ReferenceDraftReview({ isOnline }: Props) {
               <button type="submit" disabled={!isOnline || saving || !verdict || rationale.trim().length < 10}>
                 {saving ? t("Saving…") : t(verdict === "disagree" ? "Record disagreement" : "Record review decision")}
               </button>
-            </form>
+            </form>}
           </div>
         </details>
         })}

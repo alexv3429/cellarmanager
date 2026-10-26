@@ -47,6 +47,8 @@ export const frenchText: Readonly<Record<string, string>> = {
   "Record curator decision": "Enregistrer la décision",
   "Review recorded. The reference remains unpublished.": "Décision enregistrée. La référence reste non publiée.",
   "Current approval recorded": "Approbation en vigueur enregistrée",
+  "All proposals in this version have been reviewed. It remains an unpublished draft.": "Toutes les propositions de cette version ont été examinées. Elle reste un brouillon non publié.",
+  "Review this decision again": "Réexaminer cette décision",
   "draft item still needs curator review": "élément du brouillon reste à vérifier par un curateur",
   "draft items still need curator review": "éléments du brouillon restent à vérifier par un curateur",
   "draft item still needs review": "élément du brouillon reste à examiner",

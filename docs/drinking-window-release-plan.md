@@ -24,7 +24,8 @@ comparison, publication/opt-in mechanisms, a curator review screen, and the
 owner's private ageing-group choice. On the **linked project**, the old Burgaud
 2022 Côte du Py / James regional row is now **withdrawn** and cannot be
 approved or published. PR #215's migration has staged one exact Côte du Py
-2022 / 750 ml **draft** at 2025 / 2028–2040; it is not approved or active.
+2022 / 750 ml **draft** at 2025 / 2028–2040; its curator review is now
+approved, but it is not published or active.
 With the owner's explicit authorization, the initial **19 migrations** were
 applied to the linked `cellarmanager-v02-dev` project after a fresh backup,
 restore, and live
@@ -43,8 +44,9 @@ The owner inspected the clarified comparison and model-card provenance. The
 official app's three-date editor and draft-only local group selector were
 opened but not saved. Mobile, manual edit/clear, stale-report, emergency-off,
 and owner acceptance are not complete. The confirmed pilot-owner account now
-has the explicitly approved curator review scope, but no decision has been
-recorded. The workbook audit has 226 two-date pairs but no complete three-date
+has the explicitly approved curator review scope and has recorded an approval
+with a reason. The official review workspace shows zero pending items. The
+workbook audit has 226 two-date pairs but no complete three-date
 shared rows. The existing model and personal timing controls remain in use.
 See the [Gate 2 deployment record](drinking-window-gate2-deployment.md).
 
@@ -128,8 +130,10 @@ live application. Live checks found 810 wines, 4 households, 6 auth users,
 evidence-fit issues, and 1 missing curator approval. After the owner identified
 their signed-in pilot-owner account, an operator used the audited eligibility
 function to add only its `drinking-window` review scope. No review decision
-was recorded. Gates 1–2 remain In progress and Gate 3 remains Blocked by
-the substantive curator and owner reviews.
+had been recorded at the time of that deployment check. The owner has since
+approved the exact draft in the curator role, but a fresh whole-cellar report
+and separate cellar-owner review remain outstanding. Gates 1–2 remain In
+progress and Gate 3 remains Blocked.
 
 Statuses below mean **Not started**, **In progress**, **Blocked**, or
 **Accepted**. A step becomes Accepted only when its named evidence is recorded
@@ -140,7 +144,7 @@ here, not when its PR merges. Dates are not delivery promises.
 | 0. Reconcile deployment state | Accepted | All 19 migrations replayed on a private clone; the fresh backup, restore, live preflight, and deployment record complete the just-in-time checks. |
 | 1. Close owner-facing behavior | In progress | Three-date editing, comparison, identity review, and private group choice are merged. The official card, editor, and draft selector were inspected read-only; mobile, actual edit/clear, stale-report, emergency-off, and owner acceptance remain. |
 | 2. Deploy database capabilities | In progress | The authorized 19-migration batch and separately authorized PR #215 replacement migration are live. A fresh protected backup restored and the replacement rehearsed on it. Three existing advice payloads matched the prior batch snapshot; one owner-confirmed pilot link recalculated its old-model advice. Switch, publication, and household opt-in remain off. Owner acceptance is still required. |
-| 3. Publish one real pilot | Blocked by gates 1–2 and human reviews | One approved cellar can see a verified real window. |
+| 3. Publish one real pilot | Blocked by gates 1–2 and owner comparison review | One approved cellar can see a verified real window. |
 | 4. Make reference maintenance routine | Not started | Authorized curators can add/correct evidence-backed versions in the app. |
 | 5. Establish and measure initial coverage | Blocked by gate 4 | One additional high-impact reference is reviewed; gaps remain visible. |
 | 6. Release and operate | Blocked by gates 3–5 | The supported feature has repeatable checks, monitoring, and rollback. |
@@ -417,14 +421,13 @@ meaningful. At minimum, each update must:
 | 2026-10-26 · PR #216 owner walkthrough follow-up | Gate 3 remains Blocked and Gate 4 remains Not started; no draft, approval, or publication changes. | The owner found “owner” ambiguous, the authorized-reviewer role unexplained, an external GitHub source opening a blank new tab, and “correction needed” misleading because the form records only a disagreement. The proposed client now names the CellarManager cellar owner as the date proposer, explains shared-reference review permission, opens source links in the same tab with a Back instruction, and states that disagreement blocks publication but cannot edit dates. A revised draft still needs separate preparation and review. Gate 4 must provide a real in-app draft correction path; a reason field is not that path. |
 | 2026-10-26 · PR #216 decision-note presentation follow-up | Gate 3 remains Blocked and Gate 4 remains Not started; no draft, approval, or publication changes. | The owner found the extra ownership disclaimer heavy and wanted the linked Markdown note readable in the app. The proposed client removes that redundant note and opens the bundled, current-branch decision record in an in-app panel with rendered headings, tables, and links. GitHub remains an optional original-document link; other external evidence links are unchanged. This improves review usability only, without treating the owner estimate as producer evidence. |
 | 2026-10-26 · PR #216 one-tap review disclosure | Gate 3 remains Blocked and Gate 4 remains Not started; no draft, approval, or publication changes. | The owner reported that the draft review card needed two taps to open. The browser's native `<details>` toggle and React's controlled `open` state could cancel each other on the first tap. The proposed client prevents the native toggle and lets the controlled state handle opening and closing; a click regression test covers both directions. No review decision is made by opening the card. |
+| 2026-10-26 · post-merge curator approval and review-status follow-up | The owner recorded an approval and reason for the exact Côte du Py 2022 / 750 ml draft in the official app. The live review workspace now shows zero pending items, but version 2 is still an unpublished draft. Gate 3 remains Blocked, and no publication, household opt-in, or switch-on is implied. | The official UI displayed the current approval and reason, while incorrectly leaving the empty decision form open. This follow-up makes completion explicit, closes the item after saving, and keeps the completed item readable with an intentional re-review action. A fresh owner-bound whole-cellar comparison and owner acceptance are still required before any publication decision. |
 
-**Next action:** have the newly scoped curator inspect the sole reviewable
-version 2 row in Catalogue → Shared drinking-window review → Actual reference
-drafts and record an explicit approve/disagree decision with reasoning. The
+**Next action:** prepare a fresh owner-bound whole-cellar comparison against
+the newly approved version 2 draft and inspect it with the cellar owner. The
 2040 Côte du Py endpoint remains an owner estimate, not independently
-established as an optimum end. Do **not** approve the old four-item draft;
-James remains research-only. Run a fresh whole-cellar
-comparison after the curator decision. Walk through actual manual edit/clear,
+established as an optimum end. Do **not** revive the old four-item draft;
+James remains research-only. Walk through actual manual edit/clear,
 matched/unmatched, local-choice, mobile, stale-report, and emergency-off cases against the
 revised pilot. Record owner acceptance before accepting Gates 1–2. The curator
 grant is explicit, but the dates still need a merit review. Keep the reference
