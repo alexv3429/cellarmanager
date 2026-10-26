@@ -417,14 +417,13 @@ meaningful. At minimum, each update must:
 | 2026-10-26 · PR #216 owner walkthrough follow-up | Gate 3 remains Blocked and Gate 4 remains Not started; no draft, approval, or publication changes. | The owner found “owner” ambiguous, the authorized-reviewer role unexplained, an external GitHub source opening a blank new tab, and “correction needed” misleading because the form records only a disagreement. The proposed client now names the CellarManager cellar owner as the date proposer, explains shared-reference review permission, opens source links in the same tab with a Back instruction, and states that disagreement blocks publication but cannot edit dates. A revised draft still needs separate preparation and review. Gate 4 must provide a real in-app draft correction path; a reason field is not that path. |
 | 2026-10-26 · PR #216 decision-note presentation follow-up | Gate 3 remains Blocked and Gate 4 remains Not started; no draft, approval, or publication changes. | The owner found the extra ownership disclaimer heavy and wanted the linked Markdown note readable in the app. The proposed client removes that redundant note and opens the bundled, current-branch decision record in an in-app panel with rendered headings, tables, and links. GitHub remains an optional original-document link; other external evidence links are unchanged. This improves review usability only, without treating the owner estimate as producer evidence. |
 | 2026-10-26 · PR #216 one-tap review disclosure | Gate 3 remains Blocked and Gate 4 remains Not started; no draft, approval, or publication changes. | The owner reported that the draft review card needed two taps to open. The browser's native `<details>` toggle and React's controlled `open` state could cancel each other on the first tap. The proposed client prevents the native toggle and lets the controlled state handle opening and closing; a click regression test covers both directions. No review decision is made by opening the card. |
+| 2026-10-26 · post-merge curator approval and review-status follow-up | The owner recorded an approval and reason for the exact Côte du Py 2022 / 750 ml draft in the official app. The live review workspace now shows zero pending items, but version 2 is still an unpublished draft. Gate 3 remains Blocked, and no publication, household opt-in, or switch-on is implied. | The official UI displayed the current approval and reason, while incorrectly leaving the empty decision form open. This follow-up makes completion explicit, closes the item after saving, and keeps the completed item readable with an intentional re-review action. A fresh owner-bound whole-cellar comparison and owner acceptance are still required before any publication decision. |
 
-**Next action:** have the newly scoped curator inspect the sole reviewable
-version 2 row in Catalogue → Shared drinking-window review → Actual reference
-drafts and record an explicit approve/disagree decision with reasoning. The
+**Next action:** prepare a fresh owner-bound whole-cellar comparison against
+the newly approved version 2 draft and inspect it with the cellar owner. The
 2040 Côte du Py endpoint remains an owner estimate, not independently
-established as an optimum end. Do **not** approve the old four-item draft;
-James remains research-only. Run a fresh whole-cellar
-comparison after the curator decision. Walk through actual manual edit/clear,
+established as an optimum end. Do **not** revive the old four-item draft;
+James remains research-only. Walk through actual manual edit/clear,
 matched/unmatched, local-choice, mobile, stale-report, and emergency-off cases against the
 revised pilot. Record owner acceptance before accepting Gates 1–2. The curator
 grant is explicit, but the dates still need a merit review. Keep the reference

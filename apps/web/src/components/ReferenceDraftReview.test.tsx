@@ -105,6 +105,33 @@ describe("reference draft curator review", () => {
       verdict: "approve", rationale: "I checked the dates and the evidence.",
     }))
     expect(select?.value).toBe("")
+    expect(container.querySelector("details")?.open).toBe(false)
+  })
+
+  it("keeps an approved unpublished draft visible without asking for the same decision again", async () => {
+    const approved = {
+      ...workspace.drafts[0].subjects[0],
+      issues: [],
+      reviews: [{ verdict: "approve" as const, rationale: "I verified these three years.",
+        decidedAt: "2026-10-26T10:00:00Z", curatorId: "owner" }],
+    }
+    vi.mocked(getReferenceDrafts).mockResolvedValue({
+      eligible: true, drafts: [{ ...workspace.drafts[0], subjects: [approved] }],
+    })
+    await act(async () => root.render(<LanguageContext.Provider value={{
+      language: "fr", preference: "fr", setSavedPreference: () => undefined,
+      t: (key, values) => translate("fr", key, values),
+    }}><ReferenceDraftReview isOnline /></LanguageContext.Provider>))
+
+    expect(container.textContent).toContain("Toutes les propositions de cette version ont été examinées")
+    expect(container.textContent).toContain("brouillon non publié")
+    await act(async () => container.querySelector("summary")?.dispatchEvent(new MouseEvent("click", { bubbles: true })))
+    expect(container.textContent).toContain("I verified these three years.")
+    expect(container.querySelector("form")).toBeNull()
+    const reconsider = [...container.querySelectorAll("button")].find((button) => button.textContent === "Réexaminer cette décision")
+    expect(reconsider).toBeDefined()
+    await act(async () => reconsider?.click())
+    expect(container.querySelector("form select")).not.toBeNull()
   })
 
   it("puts unresolved items first and explains the three milestones in French", async () => {
