@@ -8875,6 +8875,20 @@
   max-width: 100%;
 }
 
+.drinking-window-shadow-review__history {
+  margin-top: 0.75rem;
+}
+
+.drinking-window-shadow-review__history > summary {
+  cursor: pointer;
+}
+
+.drinking-window-shadow-review__history button {
+  display: block;
+  margin-top: 0.5rem;
+  text-align: left;
+}
+
 .drinking-window-shadow-review__rows {
   display: grid;
   gap: 0.5rem;

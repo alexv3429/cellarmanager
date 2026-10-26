@@ -31,6 +31,7 @@ let container: HTMLDivElement
 
 beforeEach(() => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true)
+  sessionStorage.clear()
   vi.mocked(listShadowReports).mockReset().mockResolvedValue([listing])
   vi.mocked(getDrinkingWindowRolloutStatus).mockReset().mockResolvedValue({
     activeVersionNumber: null, selectedVersionNumber: null,
@@ -74,6 +75,7 @@ describe("shared drinking-window draft comparison", () => {
     const reportButton = [...container.querySelectorAll("button")]
       .find((button) => button.textContent?.includes("Version de référence 1"))
     expect(reportButton?.textContent).toContain("Retirée — aucun avis nécessaire")
+    expect(container.querySelector(".drinking-window-shadow-review__history")?.hasAttribute("open")).toBe(false)
     await act(async () => reportButton?.click())
     expect(container.textContent).toContain("Cette version de référence a été retirée")
     expect(container.textContent).not.toContain("Approuver cette comparaison")
@@ -142,7 +144,8 @@ describe("shared drinking-window draft comparison", () => {
     const reportButton = [...container.querySelectorAll("button")]
       .find((button) => button.textContent?.includes("Version de référence 2"))
     await act(async () => reportButton?.click())
-    expect(container.textContent).toContain("Identités de vin à vérifier avant approbation : 1")
+    expect(container.textContent).toContain("1 fiches présentent des informations contradictoires")
+    expect(container.textContent).toContain("Ce ne sont pas des dates à approuver")
     expect(container.textContent).toContain("L’appellation et la région ne concordent pas")
     expect(container.textContent).toContain("une nouvelle comparaison sera nécessaire")
     const approve = [...container.querySelectorAll("button")]
@@ -152,5 +155,54 @@ describe("shared drinking-window draft comparison", () => {
       .find((button) => button.textContent?.includes("Boillot · Aux Caves"))
     await act(async () => wine?.click())
     expect(onOpenWine).toHaveBeenCalledWith("conflict")
+  })
+
+  it("keeps the review open on return and selects the fresh comparison instead of the old five-conflict snapshot", async () => {
+    const latest = { ...listing, reportId: "latest", versionNumber: 2,
+      draftIssueCount: 0, recordedAt: "2026-10-27T12:00:00Z" }
+    const older = { ...latest, reportId: "older", recordedAt: "2026-10-26T12:00:00Z" }
+    const withdrawn = { ...older, reportId: "withdrawn", versionNumber: 1,
+      versionStatus: "withdrawn" }
+    vi.mocked(listShadowReports).mockResolvedValue([latest, older, withdrawn])
+    vi.mocked(getShadowReport).mockImplementation(async (entry) => ({
+      ...entry, contentSha256: "sha", rows: entry.reportId === "latest" ? [{
+        wineId: "wine", comparisonStatus: "changed", currentSource: "model",
+        draftStatus: "draft_match", matchedScope: "release",
+        currentFirstTrialYear: 2026, currentBestStartYear: 2031, currentBestEndYear: 2039,
+        proposedFirstTrialYear: 2025, proposedBestStartYear: 2028, proposedBestEndYear: 2040,
+        proposedGroupKey: null, proposedGroupDefinition: null,
+        proposedReferenceRationale: null, reason: null,
+      }] : [] ,
+    }))
+    const onOpenWine = vi.fn()
+    const panel = <LanguageContext.Provider value={{
+      language: "fr", preference: "fr", setSavedPreference: () => undefined,
+      t: (key, values) => translate("fr", key, values),
+    }}><DrinkingWindowShadowReviewPanel householdId="household" isOnline
+      onOpenWine={onOpenWine}
+      wines={[{ id: "wine", producer: "Burgaud", cuvee: "Côte du Py", vintage: 2022 }]}
+    /></LanguageContext.Provider>
+    await act(async () => root.render(panel))
+    expect(container.textContent).toContain("Comparaison actuelle · Version de référence 2")
+    const history = container.querySelector(".drinking-window-shadow-review__history")
+    expect(history?.hasAttribute("open")).toBe(false)
+    expect(history?.textContent).toContain("Version de référence 1")
+    await act(async () => container.querySelector<HTMLDetailsElement>(".drinking-window-shadow-review")?.querySelector("summary")?.click())
+    await act(async () => {
+      const current = [...container.querySelectorAll("button")]
+        .find((button) => button.textContent?.includes("Comparaison actuelle"))
+      current?.click()
+    })
+    await act(async () => container.querySelector<HTMLButtonElement>("button.wine-detail-link")?.click())
+    expect(onOpenWine).toHaveBeenCalledWith("wine")
+    expect(sessionStorage.getItem("cellarmanager:drinking-window-review-open:household")).toBe("true")
+    await act(async () => root.unmount())
+    expect(sessionStorage.getItem("cellarmanager:drinking-window-review-open:household")).toBe("true")
+    root = createRoot(container)
+    await act(async () => root.render(panel))
+    expect(container.querySelector(".drinking-window-shadow-review")?.hasAttribute("open")).toBe(true)
+    expect(container.textContent).toContain("2025")
+    expect(container.textContent).not.toContain("fiches présentent des informations contradictoires")
+    expect(getShadowReport).toHaveBeenLastCalledWith(latest)
   })
 })
