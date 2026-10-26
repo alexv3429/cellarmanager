@@ -8807,6 +8807,16 @@
   font-weight: 700;
   margin: 0;
 }
+
+.drinking-window-review-form li {
+  overflow-wrap: anywhere;
+}
+
+.drinking-window-review-source-status {
+  display: block;
+  color: var(--muted-color, #a99aa0);
+  margin-top: 0.2rem;
+}
 .drinking-window-shadow-review {
   border: 1px solid var(--border, #5c4a50);
   border-radius: 0.75rem;

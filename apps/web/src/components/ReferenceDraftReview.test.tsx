@@ -61,7 +61,7 @@ describe("reference draft curator review", () => {
     expect([...milestones].map((item) => item.textContent)).toEqual([
       "Start tasting2025", "Optimum starts2028", "Optimum ends2035",
     ])
-    expect(container.textContent).toContain("a producer's ageing description alone does not establish these years")
+    expect(container.textContent).toContain("A general ageing claim or an owner's estimate is not a producer-published optimum window")
     expect(container.querySelector("a")?.getAttribute("href")).toBe("https://example.test/review")
     const select = container.querySelector("select")
     const submit = container.querySelector('button[type="submit"]')
@@ -115,5 +115,34 @@ describe("reference draft curator review", () => {
     expect(container.textContent).toContain("Début probable de l’optimum2028")
     expect(container.textContent).toContain("Fin probable de l’optimum2035")
     expect(container.textContent).toContain("Choisir une décision")
+  })
+
+  it("presents the owner-authored pilot in French without duplicating one source", async () => {
+    const pilot = workspace.drafts[0].subjects[0]
+    vi.mocked(getReferenceDrafts).mockResolvedValue({
+      eligible: true,
+      drafts: [{ ...workspace.drafts[0], subjects: [{
+        ...pilot,
+        details: { ...pilot.details, scope: "release", format_ml: 750, best_end_year: 2040 },
+        rationale: "Owner-authored provisional Côte du Py 2022 / 750 ml estimate: start tasting 2025, probable optimum 2028–2040. Exact-release retailer drinking horizons conflict; 2040 is the owner-selected estimate, not a producer- or critic-published optimum end. Requires curator and cellar-owner review before publication.",
+        evidence: ["first_trial", "optimal_period"].map((claimPart) => ({
+          claimPart, evidenceRole: "supports", sourceName: "Owner-reviewed first shared drinking-window estimate",
+          sourceUrl: "https://example.test/owner-note", reviewStatus: "reviewed", reuseRight: "allowed",
+        })),
+      }] }],
+    })
+    await act(async () => root.render(<LanguageContext.Provider value={{
+      language: "fr", preference: "fr", setSavedPreference: () => undefined,
+      t: (key, values) => translate("fr", key, values),
+    }}><ReferenceDraftReview isOnline /></LanguageContext.Provider>))
+    await act(async () => container.querySelector("summary")?.dispatchEvent(new MouseEvent("click", { bubbles: true })))
+
+    expect(container.textContent).toContain("Vin et millésime exacts · Format : 750 ml")
+    expect(container.textContent).toContain("La fin 2040 est le choix du propriétaire")
+    expect(container.textContent).toContain("pas une fin d’optimum publiée")
+    expect(container.textContent).toContain("note de décision, pas une validation externe")
+    expect(container.querySelectorAll('a[href="https://example.test/owner-note"]')).toHaveLength(1)
+    expect(container.textContent).toContain("début de dégustation, période optimale")
+    expect(container.textContent).not.toContain("Owner-authored provisional")
   })
 })

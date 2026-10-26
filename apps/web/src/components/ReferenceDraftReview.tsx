@@ -4,6 +4,7 @@ import {
   getReferenceDrafts,
   recordReferenceReview,
   type ReferenceDraftWorkspace,
+  type ReferenceEvidence,
   type ReferenceSubject,
   type ReferenceVerdict,
 } from "../data/drinkingWindowReferenceDrafts"
@@ -12,12 +13,22 @@ import { Notice } from "./Notice"
 
 interface Props { isOnline: boolean }
 
-function subjectDetails(subject: ReferenceSubject, t: (key: string) => string) {
-  if (subject.kind === "row") return <dl className="drinking-window-review-milestones">
-    <div><dt>{t("Start tasting")}</dt><dd>{String(subject.details.first_trial_year)}</dd></div>
-    <div><dt>{t("Optimum starts")}</dt><dd>{String(subject.details.best_start_year)}</dd></div>
-    <div><dt>{t("Optimum ends")}</dt><dd>{String(subject.details.best_end_year)}</dd></div>
-  </dl>
+function subjectDetails(subject: ReferenceSubject, t: (key: string, values?: Record<string, string>) => string) {
+  if (subject.kind === "row") {
+    const scope = String(subject.details.scope ?? "")
+    const format = subject.details.format_ml
+    return <>
+      <p>{t("Reference level")}: {t(scope === "release" ? "Exact wine and vintage" : {
+        producer_appellation: "Producer and appellation", producer_region: "Producer and region",
+        appellation: "Appellation", region: "Region",
+      }[scope] ?? scope)}{typeof format === "number" ? <> · {t("Bottle size: {size} ml", { size: String(format) })}</> : null}</p>
+      <dl className="drinking-window-review-milestones">
+        <div><dt>{t("Start tasting")}</dt><dd>{String(subject.details.first_trial_year)}</dd></div>
+        <div><dt>{t("Optimum starts")}</dt><dd>{String(subject.details.best_start_year)}</dd></div>
+        <div><dt>{t("Optimum ends")}</dt><dd>{String(subject.details.best_end_year)}</dd></div>
+      </dl>
+    </>
+  }
   if (subject.kind === "membership") return <p>{t("Eligible wine and vintage")}: {subject.title}
     {subject.details.first_vintage_year === subject.details.last_vintage_year
       ? ""
@@ -28,6 +39,20 @@ function subjectDetails(subject: ReferenceSubject, t: (key: string) => string) {
     producer_region: "Producer and region", appellation: "Appellation", region: "Region",
   }[scope] ?? scope
   return <p>{t("Reference level")}: {t(scopeLabel)} · {t("Color")}: {t(String(subject.details.wine_color ?? ""))}</p>
+}
+
+function groupedEvidence(evidence: ReferenceEvidence[]) {
+  const groups = new Map<string, { source: ReferenceEvidence; claimParts: string[] }>()
+  for (const source of evidence) {
+    const key = [source.sourceUrl, source.sourceName, source.evidenceRole, source.reviewStatus, source.reuseRight].join("\u0000")
+    const group = groups.get(key)
+    if (group) {
+      if (!group.claimParts.includes(source.claimPart)) group.claimParts.push(source.claimPart)
+    } else {
+      groups.set(key, { source, claimParts: [source.claimPart] })
+    }
+  }
+  return [...groups.values()]
 }
 
 export function ReferenceDraftReview({ isOnline }: Props) {
@@ -123,14 +148,16 @@ export function ReferenceDraftReview({ isOnline }: Props) {
           </summary>
           <div className="drinking-window-review-form">
             {subjectDetails(subject, t)}
+            <h5>{t(subject.kind === "row" ? "Why these dates?" : "Why this draft?")}</h5>
             <p>{t(subject.rationale)}</p>
-            {subject.kind === "row" ? <p>{t("The linked sources must support the dates themselves; a producer's ageing description alone does not establish these years.")}</p> : null}
+            {subject.kind === "row" ? <p>{t("Before approving, check that the evidence supports each proposed year. A general ageing claim or an owner's estimate is not a producer-published optimum window.")}</p> : null}
             <h5>{t("Linked sources")}</h5>
             {subject.evidence.length === 0 ? <p>{t("No source linked; do not approve before checking.")}</p> :
-              <ul>{subject.evidence.map((evidence, index) => <li key={index}>
-                {evidence.sourceUrl?.startsWith("https://") ?
-                  <a href={evidence.sourceUrl} target="_blank" rel="noreferrer">{evidence.sourceName}</a> : evidence.sourceName}
-                {` · ${t(evidence.claimPart)} · ${t(evidence.reviewStatus)} · ${t(evidence.reuseRight)}`}
+              <ul>{groupedEvidence(subject.evidence).map(({ source, claimParts }, index) => <li key={index}>
+                {source.sourceUrl?.startsWith("https://") ?
+                  <a href={source.sourceUrl} target="_blank" rel="noreferrer">{t(source.sourceName)}</a> : t(source.sourceName)}
+                <span> · {claimParts.map((claimPart) => t(claimPart)).join(", ")}</span>
+                <small className="drinking-window-review-source-status">{source.reviewStatus === "reviewed" ? t("Source record reviewed") : `${t("Source record")}: ${t(source.reviewStatus)}`} · {t(source.reuseRight)}</small>
               </li>)}</ul>}
             {subject.reviews.length ? <p>{t("Current curator decisions")}: {subject.reviews.map((review) =>
               `${t(review.verdict === "approve" ? "Approved" : "Disputed")} — ${review.rationale}`).join("; ")}</p> : null}
