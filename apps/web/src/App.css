@@ -8817,6 +8817,49 @@
   color: var(--muted-color, #a99aa0);
   margin-top: 0.2rem;
 }
+
+.app-shell .drinking-window-source-note__toggle {
+  display: inline;
+  width: auto;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--link-color, #8fc4a0);
+  text-decoration: underline;
+  text-align: left;
+  cursor: pointer;
+}
+
+.drinking-window-source-note {
+  min-width: 0;
+  margin-top: 0.75rem;
+}
+
+.drinking-window-source-note__document {
+  max-height: min(65vh, 38rem);
+  overflow: auto;
+  margin-bottom: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border, #5c4a50);
+  border-radius: 0.5rem;
+}
+
+.drinking-window-source-note__document :first-child {
+  margin-top: 0;
+}
+
+.drinking-window-source-note__document table {
+  min-width: 34rem;
+  border-collapse: collapse;
+}
+
+.drinking-window-source-note__document th,
+.drinking-window-source-note__document td {
+  padding: 0.4rem;
+  border: 1px solid var(--border, #5c4a50);
+}
 .drinking-window-shadow-review {
   border: 1px solid var(--border, #5c4a50);
   border-radius: 0.75rem;

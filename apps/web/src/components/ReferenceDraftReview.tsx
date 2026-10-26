@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useState } from "react"
+import { lazy, Suspense, type FormEvent, useEffect, useState } from "react"
 
 import {
   getReferenceDrafts,
@@ -10,6 +10,14 @@ import {
 } from "../data/drinkingWindowReferenceDrafts"
 import { useLanguage } from "../i18n/useLanguage"
 import { Notice } from "./Notice"
+
+const PilotDecisionNote = lazy(() => import("./PilotDecisionNote"))
+const pilotDecisionNotePath = "/docs/drinking-window-first-shared-draft.md"
+
+function isPilotDecisionNote(source: ReferenceEvidence) {
+  return source.sourceName === "Owner-reviewed first shared drinking-window estimate"
+    && source.sourceUrl?.endsWith(pilotDecisionNotePath)
+}
 
 interface Props { isOnline: boolean }
 
@@ -65,6 +73,7 @@ export function ReferenceDraftReview({ isOnline }: Props) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
+  const [openSource, setOpenSource] = useState<string | null>(null)
 
   async function refresh() {
     if (!isOnline) return
@@ -139,6 +148,7 @@ export function ReferenceDraftReview({ isOnline }: Props) {
         return <details key={key} className="research-inbox" open={selected === key}>
           <summary onClick={() => {
             setSelected(selected === key ? null : key)
+            setOpenSource(null)
             setRationale("")
             setVerdict("")
           }}>
@@ -148,19 +158,26 @@ export function ReferenceDraftReview({ isOnline }: Props) {
           </summary>
           <div className="drinking-window-review-form">
             {subjectDetails(subject, t)}
-            {subject.evidence.some((evidence) => evidence.sourceName === "Owner-reviewed first shared drinking-window estimate") ?
-              <p>{t("Here, owner means the CellarManager cellar owner who proposed the dates, not the wine producer.")}</p> : null}
             <h5>{t(subject.kind === "row" ? "Why these dates?" : "Why this draft?")}</h5>
             <p>{t(subject.rationale)}</p>
             {subject.kind === "row" ? <p>{t("Before approving, check that the evidence supports each proposed year. A general ageing claim or an owner's estimate is not a producer-published optimum window.")}</p> : null}
             <h5>{t("Linked sources")}</h5>
             {subject.evidence.length === 0 ? <p>{t("No source linked; do not approve before checking.")}</p> :
               <ul>{groupedEvidence(subject.evidence).map(({ source, claimParts }, index) => <li key={index}>
-                {source.sourceUrl?.startsWith("https://") ?
+                {isPilotDecisionNote(source) ? <button type="button" className="drinking-window-source-note__toggle"
+                  aria-expanded={openSource === `${key}:${index}`}
+                  aria-controls={`${key}:${index}:source`}
+                  onClick={() => setOpenSource(openSource === `${key}:${index}` ? null : `${key}:${index}`)}>
+                  {t("Read the decision note")}
+                </button> : source.sourceUrl?.startsWith("https://") ?
                   <a href={source.sourceUrl} target="_self">{t(source.sourceName)}</a> : t(source.sourceName)}
                 <span> · {claimParts.map((claimPart) => t(claimPart)).join(", ")}</span>
                 <small className="drinking-window-review-source-status">{source.reviewStatus === "reviewed" ? t("Source record reviewed") : `${t("Source record")}: ${t(source.reviewStatus)}`} · {t(source.reuseRight)}</small>
-                {source.sourceUrl?.startsWith("https://") ? <small className="drinking-window-review-source-status">{t("Opens the source in this tab; use Back to return to the review.")}</small> : null}
+                {isPilotDecisionNote(source) && openSource === `${key}:${index}` ? <div id={`${key}:${index}:source`} className="drinking-window-source-note">
+                  <Suspense fallback={<p>{t("Loading decision note…")}</p>}><PilotDecisionNote /></Suspense>
+                  <a href={source.sourceUrl ?? undefined} target="_self">{t("Open the original on GitHub")}</a>
+                </div> : source.sourceUrl?.startsWith("https://") && !isPilotDecisionNote(source) ?
+                  <small className="drinking-window-review-source-status">{t("Opens the source in this tab; use Back to return to the review.")}</small> : null}
               </li>)}</ul>}
             {subject.reviews.length ? <p>{t("Current reviewer decisions")}: {subject.reviews.map((review) =>
               `${t(review.verdict === "approve" ? "Approved" : "Disputed")} — ${review.rationale}`).join("; ")}</p> : null}

@@ -128,7 +128,7 @@ describe("reference draft curator review", () => {
         rationale: "Owner-authored provisional Côte du Py 2022 / 750 ml estimate: start tasting 2025, probable optimum 2028–2040. Exact-release retailer drinking horizons conflict; 2040 is the owner-selected estimate, not a producer- or critic-published optimum end. Requires curator and cellar-owner review before publication.",
         evidence: ["first_trial", "optimal_period"].map((claimPart) => ({
           claimPart, evidenceRole: "supports", sourceName: "Owner-reviewed first shared drinking-window estimate",
-          sourceUrl: "https://example.test/owner-note", reviewStatus: "reviewed", reuseRight: "allowed",
+          sourceUrl: "https://github.com/alexv3429/cellarmanager/blob/main/docs/drinking-window-first-shared-draft.md", reviewStatus: "reviewed", reuseRight: "allowed",
         })),
       }] }],
     })
@@ -141,11 +141,18 @@ describe("reference draft curator review", () => {
     expect(container.textContent).toContain("Vin et millésime exacts · Format : 750 ml")
     expect(container.textContent).toContain("La fin 2040 est le choix de la personne ayant proposé ces dates")
     expect(container.textContent).toContain("pas une fin d’optimum publiée")
-    expect(container.textContent).toContain("pas une validation externe")
-    expect(container.textContent).toContain("non le domaine viticole")
-    expect(container.querySelectorAll('a[href="https://example.test/owner-note"]')).toHaveLength(1)
-    expect(container.querySelector("a")?.getAttribute("target")).toBe("_self")
-    expect(container.textContent).toContain("utilisez Retour pour revenir")
+    expect(container.textContent).not.toContain("non le domaine viticole")
+    expect(container.querySelectorAll('a[href$="drinking-window-first-shared-draft.md"]')).toHaveLength(0)
+    const readNote = [...container.querySelectorAll("button")].find((button) => button.textContent === "Lire la note de décision")
+    expect(readNote?.getAttribute("aria-expanded")).toBe("false")
+    await act(async () => readNote?.click())
+    expect(readNote?.getAttribute("aria-expanded")).toBe("true")
+    await vi.waitFor(() => expect(container.querySelector(".drinking-window-source-note__document h5")).not.toBeNull())
+    expect(container.querySelector(".drinking-window-source-note__document h5")?.textContent).toContain("Burgaud 2022")
+    expect(container.querySelectorAll(".drinking-window-source-note__document table")).toHaveLength(2)
+    expect(container.querySelector('.drinking-window-source-note__document a[href="https://github.com/alexv3429/cellarmanager/blob/main/docs/producer-research-format.md"]')).not.toBeNull()
+    expect(container.textContent).toContain("Ouvrir le document d’origine sur GitHub")
+    expect(container.querySelector('a[href$="drinking-window-first-shared-draft.md"]')?.getAttribute("target")).toBe("_self")
     expect(container.textContent).toContain("début de dégustation, période optimale")
     expect(container.textContent).not.toContain("Owner-authored provisional")
   })
