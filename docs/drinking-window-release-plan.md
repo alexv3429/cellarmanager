@@ -24,7 +24,8 @@ comparison, publication/opt-in mechanisms, a curator review screen, and the
 owner's private ageing-group choice. On the **linked project**, the old Burgaud
 2022 Côte du Py / James regional row is now **withdrawn** and cannot be
 approved or published. PR #215's migration has staged one exact Côte du Py
-2022 / 750 ml **draft** at 2025 / 2028–2040; it is not approved or active.
+2022 / 750 ml **draft** at 2025 / 2028–2040; its curator review is now
+approved, but it is not published or active.
 With the owner's explicit authorization, the initial **19 migrations** were
 applied to the linked `cellarmanager-v02-dev` project after a fresh backup,
 restore, and live
@@ -43,8 +44,9 @@ The owner inspected the clarified comparison and model-card provenance. The
 official app's three-date editor and draft-only local group selector were
 opened but not saved. Mobile, manual edit/clear, stale-report, emergency-off,
 and owner acceptance are not complete. The confirmed pilot-owner account now
-has the explicitly approved curator review scope, but no decision has been
-recorded. The workbook audit has 226 two-date pairs but no complete three-date
+has the explicitly approved curator review scope and has recorded an approval
+with a reason. The official review workspace shows zero pending items. The
+workbook audit has 226 two-date pairs but no complete three-date
 shared rows. The existing model and personal timing controls remain in use.
 See the [Gate 2 deployment record](drinking-window-gate2-deployment.md).
 
@@ -128,8 +130,10 @@ live application. Live checks found 810 wines, 4 households, 6 auth users,
 evidence-fit issues, and 1 missing curator approval. After the owner identified
 their signed-in pilot-owner account, an operator used the audited eligibility
 function to add only its `drinking-window` review scope. No review decision
-was recorded. Gates 1–2 remain In progress and Gate 3 remains Blocked by
-the substantive curator and owner reviews.
+had been recorded at the time of that deployment check. The owner has since
+approved the exact draft in the curator role, but a fresh whole-cellar report
+and separate cellar-owner review remain outstanding. Gates 1–2 remain In
+progress and Gate 3 remains Blocked.
 
 Statuses below mean **Not started**, **In progress**, **Blocked**, or
 **Accepted**. A step becomes Accepted only when its named evidence is recorded
@@ -140,7 +144,7 @@ here, not when its PR merges. Dates are not delivery promises.
 | 0. Reconcile deployment state | Accepted | All 19 migrations replayed on a private clone; the fresh backup, restore, live preflight, and deployment record complete the just-in-time checks. |
 | 1. Close owner-facing behavior | In progress | Three-date editing, comparison, identity review, and private group choice are merged. The official card, editor, and draft selector were inspected read-only; mobile, actual edit/clear, stale-report, emergency-off, and owner acceptance remain. |
 | 2. Deploy database capabilities | In progress | The authorized 19-migration batch and separately authorized PR #215 replacement migration are live. A fresh protected backup restored and the replacement rehearsed on it. Three existing advice payloads matched the prior batch snapshot; one owner-confirmed pilot link recalculated its old-model advice. Switch, publication, and household opt-in remain off. Owner acceptance is still required. |
-| 3. Publish one real pilot | Blocked by gates 1–2 and human reviews | One approved cellar can see a verified real window. |
+| 3. Publish one real pilot | Blocked by gates 1–2 and owner comparison review | One approved cellar can see a verified real window. |
 | 4. Make reference maintenance routine | Not started | Authorized curators can add/correct evidence-backed versions in the app. |
 | 5. Establish and measure initial coverage | Blocked by gate 4 | One additional high-impact reference is reviewed; gaps remain visible. |
 | 6. Release and operate | Blocked by gates 3–5 | The supported feature has repeatable checks, monitoring, and rollback. |
