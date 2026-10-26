@@ -16,6 +16,8 @@ export const frenchText: Readonly<Record<string, string>> = {
   "Refresh drafts": "Actualiser les brouillons",
   "No reference version awaiting review.": "Aucune version de référence en attente de révision.",
   "Reference version": "Version de référence",
+  "Withdrawn — no review needed": "Retirée — aucun avis nécessaire",
+  "This reference version has been withdrawn. Keep it only as history; there is nothing to approve.": "Cette version de référence a été retirée. Elle reste visible pour l’historique ; il n’y a rien à approuver.",
   "Unpublished draft": "Brouillon non publié",
   "Window": "Fenêtre de consommation",
   "Ageing group": "Catégorie de garde",

@@ -59,6 +59,26 @@ afterEach(async () => {
 })
 
 describe("shared drinking-window draft comparison", () => {
+  it("marks a withdrawn reference as history rather than a pending review", async () => {
+    const withdrawn = { ...listing, versionStatus: "withdrawn", draftIssueCount: 0 }
+    vi.mocked(listShadowReports).mockResolvedValue([withdrawn])
+    vi.mocked(getShadowReport).mockResolvedValue({
+      ...withdrawn, contentSha256: "sha", rows: [],
+    })
+    await act(async () => root.render(<LanguageContext.Provider value={{
+      language: "fr", preference: "fr", setSavedPreference: () => undefined,
+      t: (key, values) => translate("fr", key, values),
+    }}><DrinkingWindowShadowReviewPanel householdId="household" isOnline
+      onOpenWine={() => undefined} wines={[]} /></LanguageContext.Provider>))
+
+    const reportButton = [...container.querySelectorAll("button")]
+      .find((button) => button.textContent?.includes("Version de référence 1"))
+    expect(reportButton?.textContent).toContain("Retirée — aucun avis nécessaire")
+    await act(async () => reportButton?.click())
+    expect(container.textContent).toContain("Cette version de référence a été retirée")
+    expect(container.textContent).not.toContain("Approuver cette comparaison")
+  })
+
   it("separates current and unpublished dates, explains eligibility in French, and requests no decision", async () => {
     await act(async () => root.render(<LanguageContext.Provider value={{
       language: "fr", preference: "fr", setSavedPreference: () => undefined,

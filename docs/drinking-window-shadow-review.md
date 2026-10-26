@@ -16,6 +16,15 @@ cannot be approved. Only the household owner can read it through
 `get_drinking_window_shadow_report(report_id)`; no raw report table is
 available to browser or service roles.
 
+For an owner-facing draft comparison, verify the household owner and generate
+the report in that owner's authenticated context. The snapshot's
+`requested_by` must be that owner: the Catalogue intentionally lists only
+their reports, and the owner-specific timing is part of the comparison hash.
+A service-created report with no request actor is a diagnostic, **not** an
+owner-review report. Confirm the new report appears under “Review shared
+drinking-window dates” before asking the owner to inspect it. A withdrawn
+reference may remain in history but needs no new decision.
+
 The owner calls `review_drinking_window_shadow_report(report_id,
 expected_content_sha256, verdict, rationale)` to approve or reject. The
 decision is append-only and tied to the exact report hash. Approval requires:

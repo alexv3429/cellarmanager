@@ -897,6 +897,8 @@ export const frenchTextRuntime: Readonly<Record<string, string>> = {
   "Compare the proposed shared reference with your current cellar. Nothing changes until a separate publication step.": "Comparez la référence partagée proposée avec votre cave actuelle. Rien ne change avant une publication distincte.",
   "Loading review reports…": "Chargement des rapports de comparaison…",
   "Reference version": "Version de référence",
+  "Withdrawn — no review needed": "Retirée — aucun avis nécessaire",
+  "This reference version has been withdrawn. Keep it only as history; there is nothing to approve.": "Cette version de référence a été retirée. Elle reste visible pour l’historique ; il n’y a rien à approuver.",
   "Detailed drinking-window comparison": "Comparaison détaillée des périodes de dégustation",
   "Draft under review — no action needed": "Brouillon en cours de vérification — aucune action nécessaire",
   "proposals with different dates": "propositions avec des dates différentes",

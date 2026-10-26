@@ -215,7 +215,9 @@ export function DrinkingWindowShadowReviewPanel({
       onClick={() => void openReport(entry)}
       type="button"
     >{t("Reference version")} {entry.versionNumber} · {entry.wineCount} {t("wines")}
-      {` · ${t(entry.latestVerdict === "approve"
+      {` · ${t(entry.versionStatus === "withdrawn"
+        ? "Withdrawn — no review needed"
+        : entry.latestVerdict === "approve"
         ? "Approved"
         : entry.latestVerdict === "reject"
           ? "Rejected"
@@ -230,6 +232,9 @@ export function DrinkingWindowShadowReviewPanel({
       <p>{report.wineCount} {t("wines")} · {changedCount} {t(changedCount === 1
         ? "proposal with different dates"
         : "proposals with different dates")} · {report.draftIssueCount} {t("pending reference checks")}</p>
+      {report.versionStatus === "withdrawn" ? <Notice tone="warning">
+        {t("This reference version has been withdrawn. Keep it only as history; there is nothing to approve.")}
+      </Notice> : null}
       {report.versionStatus === "draft" ? <p>{t("This draft is not in use. Your cellar still shows its current dates.")}</p>
         : <p>{t("The current dates are the ones you see in your cellar, including your personal timing choice.")}</p>}
       {report.draftIssueCount > 0 ? <Notice tone="warning">
