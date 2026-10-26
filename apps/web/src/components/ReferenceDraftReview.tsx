@@ -146,8 +146,9 @@ export function ReferenceDraftReview({ isOnline }: Props) {
         {[...draft.subjects].sort((a, b) => Number(b.issues.length > 0) - Number(a.issues.length > 0)).map((subject) => {
         const key = `${draft.versionId}:${subject.kind}:${subject.id}`
         return <details key={key} className="research-inbox" open={selected === key}>
-          <summary onClick={() => {
-            setSelected(selected === key ? null : key)
+          <summary onClick={(event) => {
+            event.preventDefault()
+            setSelected((current) => current === key ? null : key)
             setOpenSource(null)
             setRationale("")
             setVerdict("")

@@ -45,6 +45,21 @@ afterEach(async () => {
 })
 
 describe("reference draft curator review", () => {
+  it("opens and closes a draft with one click each", async () => {
+    await act(async () => root.render(<ReferenceDraftReview isOnline />))
+    const details = container.querySelector("details")
+    const summary = details?.querySelector("summary")
+    expect(details?.open).toBe(false)
+    const openClick = new MouseEvent("click", { bubbles: true, cancelable: true })
+    await act(async () => summary?.dispatchEvent(openClick))
+    expect(openClick.defaultPrevented).toBe(true)
+    expect(details?.open).toBe(true)
+    const closeClick = new MouseEvent("click", { bubbles: true, cancelable: true })
+    await act(async () => summary?.dispatchEvent(closeClick))
+    expect(closeClick.defaultPrevented).toBe(true)
+    expect(details?.open).toBe(false)
+  })
+
   it("hides draft information from users without the explicit grant", async () => {
     vi.mocked(getReferenceDrafts).mockResolvedValue({ eligible: false, drafts: [] })
     await act(async () => root.render(<ReferenceDraftReview isOnline />))
