@@ -18,44 +18,44 @@ release target.
 
 ## Status at 26 October 2026
 
-**Not released.** The merged work through PR #209 provides the database
+**Not released.** The merged work through PR #215 provides the database
 foundation, candidate staging, draft diagnostics, review decisions, shadow
 comparison, publication/opt-in mechanisms, a curator review screen, and the
 owner's private ageing-group choice. On the **linked project**, the old Burgaud
-2022 Côte du Py / James row is still a **draft**, not approved or active.
-PR #215 proposes to withdraw it and stage a 750 ml exact-release replacement;
-that new migration has **not** been applied to the linked project. With the owner's explicit
-authorization, all **19 migrations** were applied to the linked
-`cellarmanager-v02-dev` project after a fresh backup, restore, and live
-preflight. The linked ledger had **0 pending migrations** at that deployment;
-PR #215 adds a new, unapplied migration. The deployed
-Worker version maps to merged commit
-`c2900d0ca845a60ebcb47c8937d206b6b702d517`. The global switch and all
-household rollouts remain off. The signed-in owner check confirmed one pilot
-identity and generated a private 802-wine comparison: one changed draft
-proposal, four unapproved draft items. Three unrelated existing advice
-payloads matched the pre-migration snapshot. The linked pilot's existing
-model dates recalculated after identity confirmation; this and the remaining
-owner walkthrough keep Gates 1–2 open. The owner inspected the clarified
-preview comparison and understood the draft rationale. On the official app,
-an available PWA update was applied and the merged comparison, model card,
-three-date editor, and draft-only local group selector were inspected without
-saving changes. Mobile, manual edit/clear, stale-report, emergency-off, and
-owner acceptance are not yet complete. The signed-in
-owner account does not show the curator-only reference workspace, so the old
-four draft decisions cannot be recorded from that account. The workbook audit has
-226 two-date pairs but
-no complete three-date shared rows. The existing model and personal timing
-controls remain in use. See the [Gate 2 deployment record](drinking-window-gate2-deployment.md).
+2022 Côte du Py / James regional row is now **withdrawn** and cannot be
+approved or published. PR #215's migration has staged one exact Côte du Py
+2022 / 750 ml **draft** at 2025 / 2028–2040; it is not approved or active.
+With the owner's explicit authorization, the initial **19 migrations** were
+applied to the linked `cellarmanager-v02-dev` project after a fresh backup,
+restore, and live
+preflight. PR #215's separately authorized migration was then applied on
+26 October after another protected backup and successful restored-snapshot
+rehearsal. The linked ledger now has **0 pending migrations**. The last recorded
+deployed Worker version mapped to merged commit
+`c2900d0ca845a60ebcb47c8937d206b6b702d517`; a fresh build-hash check
+has not been recorded for PR #215, whose SQL is backward-compatible with the
+deployed client. The global switch and all household rollouts remain off. The
+signed-in owner confirmed one pilot identity, which recalculated that wine's
+existing-model dates. An earlier private 802-wine comparison against the now
+withdrawn regional draft is **stale**; it cannot approve version 2. Three
+unrelated existing advice payloads matched the prior pre-migration snapshot.
+The owner inspected the clarified comparison and model-card provenance. The
+official app's three-date editor and draft-only local group selector were
+opened but not saved. Mobile, manual edit/clear, stale-report, emergency-off,
+and owner acceptance are not complete. The confirmed pilot-owner account now
+has the explicitly approved curator review scope, but no decision has been
+recorded. The workbook audit has 226 two-date pairs but no complete three-date
+shared rows. The existing model and personal timing controls remain in use.
+See the [Gate 2 deployment record](drinking-window-gate2-deployment.md).
 
 On 25 October, the owner supplied a [Burgaud producer research
 package](producer-research-format.md). It has 14 cuvée profiles, 26 vintage
 effects, 53 exact cuvée/vintage calibrations, and 150 proposed windows. It is
 research-only: every proposal says `DO_NOT_PUBLISH`, and the 64 release-review
 candidates still have no canonical identity, curator, rights, or publication
-approval. Its James and Côte du Py 2022 estimates conflict with the single
-regional pilot row. **Gate 3 remains blocked; do not approve the existing row
-unchanged.** Validate and review the producer format and then decide the two
+approval. Its James and Côte du Py 2022 estimates conflicted with the original
+regional pilot row, which is now withdrawn. **Gate 3 remains blocked; do not
+reuse that broad row.** Validate and review the producer format, then decide the two
 release-specific alternatives before any publication.
 
 PR #212 supersedes only the first package's **exchange contract and local
@@ -86,7 +86,7 @@ pointers **in memory only** passes validation. Preserve the submitted file and
 record any mechanical correction in a separate private review copy before
 staging; do not silently edit the evidence. All 72 proposed release windows are
 still marked unapproved and all 144 source records have rights unreviewed.
-Burgaud proposes James 2022 at 2026 / 2030–2038, versus the unpublished
+Burgaud proposes James 2022 at 2026 / 2030–2038, versus the withdrawn
 regional draft's 2025 / 2028–2035. The revised file adds an exact Côte du Py
 2022 / 750 ml proposal of 2025 / 2028–2040, leaving the former 14 Burgaud
 proposals unchanged. This closes the *research-file coverage* gap, not the
@@ -94,7 +94,7 @@ evidence or approval gap: the 2040 probable optimum end is inferred from a
 general Vinous drinking range and conflicts with another retailer's
 “drink before 2031” guidance; the reproduced Decanter description may be
 misattributed. The proposal itself marks confidence low and is not approved.
-Do not publish the regional draft as-is or activate the replacement merely
+Do not reactivate the regional draft or activate the replacement merely
 because it validates. The next review must resolve these release-specific
 dates, source fit, rights, and identities;
 none of the four files is active shared advice.
@@ -112,17 +112,24 @@ approval. The packages remain private and outside the repository, and none
 has been imported into the linked database or made effective advice. The
 previous Boillot pointer error is still separate and unresolved.
 
-PR #215 now contains a **new inert migration**: version 1 becomes
-`withdrawn` without deleting its evidence, reviews, or private-choice
+Merged PR #215 added an **inert migration**, now applied to the linked project:
+version 1 became `withdrawn` without deleting its evidence, reviews, or private-choice
 references; version 2 has one exact Côte du Py 2022 / 750 ml draft row with
 the owner's provisional **2025 / 2028–2040** dates. James is not staged.
 Draft and active matchers enforce format, while the older unqualified preview
 cannot match a format-specific row. A rollback-only local test found zero
 shape, eligibility, or evidence-fit issues for version 2 and **one missing
 curator approval**. This is a staged candidate, not published advice. The
-linked database, Worker, and cellar remain unchanged until a separately
-authorized migration and rollout. Gates 1–2 remain In progress and Gate 3
-remains Blocked.
+linked database now has version 2 as a draft, but no wine advice, publication,
+runtime switch, or household rollout was activated. A protected backup
+restored to a disposable local database; the migration succeeded there before
+live application. Live checks found 810 wines, 4 households, 6 auth users,
+0 publications, 0 enabled switches, 0 enabled rollouts, 0 draft/eligibility/
+evidence-fit issues, and 1 missing curator approval. After the owner identified
+their signed-in pilot-owner account, an operator used the audited eligibility
+function to add only its `drinking-window` review scope. No review decision
+was recorded. Gates 1–2 remain In progress and Gate 3 remains Blocked by
+the substantive curator and owner reviews.
 
 Statuses below mean **Not started**, **In progress**, **Blocked**, or
 **Accepted**. A step becomes Accepted only when its named evidence is recorded
@@ -132,7 +139,7 @@ here, not when its PR merges. Dates are not delivery promises.
 | --- | --- | --- |
 | 0. Reconcile deployment state | Accepted | All 19 migrations replayed on a private clone; the fresh backup, restore, live preflight, and deployment record complete the just-in-time checks. |
 | 1. Close owner-facing behavior | In progress | Three-date editing, comparison, identity review, and private group choice are merged. The official card, editor, and draft selector were inspected read-only; mobile, actual edit/clear, stale-report, emergency-off, and owner acceptance remain. |
-| 2. Deploy database capabilities | In progress | The authorized 19-migration batch is live; PR #215's replacement migration is pending and not authorized for live application. Three existing advice payloads matched the prior snapshot; one owner-confirmed pilot link recalculated its old-model advice. Switch, publication, and household opt-in remain off. Owner acceptance is still required. |
+| 2. Deploy database capabilities | In progress | The authorized 19-migration batch and separately authorized PR #215 replacement migration are live. A fresh protected backup restored and the replacement rehearsed on it. Three existing advice payloads matched the prior batch snapshot; one owner-confirmed pilot link recalculated its old-model advice. Switch, publication, and household opt-in remain off. Owner acceptance is still required. |
 | 3. Publish one real pilot | Blocked by gates 1–2 and human reviews | One approved cellar can see a verified real window. |
 | 4. Make reference maintenance routine | Not started | Authorized curators can add/correct evidence-backed versions in the app. |
 | 5. Establish and measure initial coverage | Blocked by gate 4 | One additional high-impact reference is reviewed; gaps remain visible. |
@@ -146,7 +153,8 @@ the exact merged-commit-to-deployed-version mapping, a successful full-batch
 private-clone replay, zero changed core advice responses across 782 wines
 and 4 overviews, and a second clean restore. In a rolled-back transaction,
 the owner-confirmed pilot wine linked to its unique canonical release and
-produced one draft match. The live wine remains unlinked. The temporary export
+produced one draft match. At that audit the live wine was still unlinked; the
+owner later confirmed its identity in the app. The temporary export
 and both scratch databases were removed. **Gate 0 technical evidence was
 accepted for this batch.** The separately authorized live application and its
 just-in-time checks are recorded in the
@@ -279,9 +287,9 @@ it.
 
 ## Gate 3 — one real, consented pilot (curator + cellar owner + operator)
 
-1. After separately authorizing and applying PR #215's inert migration,
-   review the exact Burgaud Côte du Py 2022 / 750 ml draft's three dates,
-   identity, owner evidence, and uncertainty. The dates are the owner's
+1. PR #215's inert migration is applied. Review the exact Burgaud Côte du Py
+   2022 / 750 ml draft's three dates, identity, owner evidence, and
+   uncertainty. The dates are the owner's
    estimate; third-party descriptions establish identity/relative ageing,
    **not** those exact years. Record explicit approval or disagreement for
    its single row. James remains research-only and needs separate decisions.
@@ -304,7 +312,9 @@ the control cellar changes. Publishing the draft is **not** this PR's action.
 1. Provide authorized curator workflows to propose/edit a draft, attach and
    assess evidence/rights, define scoped groups/memberships, review all three
    dates together, and create a superseding immutable version **without a
-   code PR per wine**. Show provenance and disagreement history.
+   code PR per wine**. A disagreement must lead to an in-app correction action
+   with a fresh review, not merely a text reason; until then it blocks
+   publication. Show provenance and disagreement history.
 2. Provide a safe owner suggestion/correction path; proposals do not publish
    themselves. Let owners review identity matches and keep local preferences
    private. Show when a new published version is available, with fresh
@@ -402,22 +412,22 @@ meaningful. At minimum, each update must:
 | 2026-10-25 · Côte du Py owner choice | Gate 3 remains Blocked; no database draft, shared advice, switch, or cellar record changed. | After review of the conflicting evidence, the owner chose **2025 / 2028–2040** for an exact Côte du Py 2022 draft. It remains an owner-authored, low-confidence estimate, not three published critic milestones. James remains a separate unapproved proposal; rights, curator decisions, and owner comparison remain open. |
 | 2026-10-25 · eight-profile research intake | Gate 3 remains Blocked; no producer file, candidate, reference, cellar advice, permission, database, switch, or rollout changed. | Cazeneuve, Clos Marie, Chagnoleau, Jacques Carillon, Castagnier, Jobard-Morey, Mas Jullien, and Michel Bouzereau pass the same local v1.1 validator: 267 exact proposals and zero publishable rows. Their 80 declared discrepancies and 82 research gaps require evidence and identity review before any selective staging. |
 | 2026-10-26 · PR #215 release-specific replacement | Gate 3 remains Blocked. A new, inert migration withdraws the old regional draft without deleting its history or local-choice references, and stages one exact Côte du Py 2022 / 750 ml draft at **2025 / 2028–2040**. James is not staged. No linked database, Worker, cellar advice, publication, switch, or rollout has changed. | Rollback-only local migration and 24 focused SQL assertions passed: 750 ml matches, 1500 ml and James do not; draft/eligibility/evidence-fit diagnostics return zero issues and one curator approval is still missing. A prior local group-choice regression test was also found failing at assertions 17 and 20 on the unchanged local schema, so its remaining behavior requires a clean CI run. Applying the new migration is a separate, explicit live authorization. |
+| 2026-10-26 · post-merge #215 deployment | Gate 2 remains In progress; Gate 3 remains Blocked. The owner separately approved only migration `20261026100000`, which was applied to linked `cellarmanager-v02-dev` after a protected backup, successful restore, and rehearsal. The owner explicitly identified the pilot-owner account for a narrow `drinking-window` curator-scope grant. No curator verdict, owner report approval, publication, switch, rollout, inventory edit, or advice activation occurred. | Dry run named exactly one migration; the restored snapshot had 810 wines, 4 households, 6 users, one regional draft and zero publications. Rehearsal yielded v1 withdrawn and v2 exact 750 ml draft. Live ledger has 0 pending; live counts remain 810/4/6, zero publications/switches/rollouts, and v2 has zero draft/eligibility/evidence-fit issues but one `missing_current_approval`. The signed-in account now has the review scope. Protected backup is retained temporarily; see [deployment record](drinking-window-gate2-deployment.md). |
+| 2026-10-26 · PR #216 curator-copy follow-up | Gate 3 remains Blocked; no date, evidence, approval, publication, switch, rollout, or cellar record changes. | After the owner found the live review confusing, the proposed client now identifies the row's exact-release scope and bottle size, renders the seeded owner estimate and its 2040 caveat in French, groups repeated links to the same source, and labels evidence-review/reuse metadata as source-record status rather than date verification. The underlying draft and the requirement to check all three dates are unchanged. Curator and cellar-owner decisions remain open. |
+| 2026-10-26 · PR #216 owner walkthrough follow-up | Gate 3 remains Blocked and Gate 4 remains Not started; no draft, approval, or publication changes. | The owner found “owner” ambiguous, the authorized-reviewer role unexplained, an external GitHub source opening a blank new tab, and “correction needed” misleading because the form records only a disagreement. The proposed client now names the CellarManager cellar owner as the date proposer, explains shared-reference review permission, opens source links in the same tab with a Back instruction, and states that disagreement blocks publication but cannot edit dates. A revised draft still needs separate preparation and review. Gate 4 must provide a real in-app draft correction path; a reason field is not that path. |
+| 2026-10-26 · PR #216 decision-note presentation follow-up | Gate 3 remains Blocked and Gate 4 remains Not started; no draft, approval, or publication changes. | The owner found the extra ownership disclaimer heavy and wanted the linked Markdown note readable in the app. The proposed client removes that redundant note and opens the bundled, current-branch decision record in an in-app panel with rendered headings, tables, and links. GitHub remains an optional original-document link; other external evidence links are unchanged. This improves review usability only, without treating the owner estimate as producer evidence. |
+| 2026-10-26 · PR #216 one-tap review disclosure | Gate 3 remains Blocked and Gate 4 remains Not started; no draft, approval, or publication changes. | The owner reported that the draft review card needed two taps to open. The browser's native `<details>` toggle and React's controlled `open` state could cancel each other on the first tap. The proposed client prevents the native toggle and lets the controlled state handle opening and closing; a click regression test covers both directions. No review decision is made by opening the card. |
 
-**Next action:** review and merge PR #215 only after CI and code review. Its
-migration is inert and requires a separate live authorization, backup, and
-preflight before application. After application, verify the old draft is
-withdrawn and the replacement is the sole reviewable draft; run a fresh
-whole-cellar comparison. The 2040 Côte du Py endpoint remains an owner
-estimate, not independently established as an optimum end. Obtain an
-authorized curator's explicit decision on the new row, and decide James's
-three milestones separately. Do **not** approve the old four-item draft.
-Walk through actual manual edit/clear, matched/unmatched,
-local-choice, mobile, stale-report, and emergency-off cases against the
-revised pilot. Record owner acceptance before accepting Gates 1–2.
-Then have an already authorized drinking-window curator review the revised
-subjects on their merits, or explicitly arrange that authorization; do not
-grant it merely because the pilot owner can see the comparison. Obtain curator
-decisions before any Gate 3 publication. Keep the reference switch and
-household opt-in off; no draft
-publication is authorized by the migration approval. Decide when to remove
+**Next action:** have the newly scoped curator inspect the sole reviewable
+version 2 row in Catalogue → Shared drinking-window review → Actual reference
+drafts and record an explicit approve/disagree decision with reasoning. The
+2040 Côte du Py endpoint remains an owner estimate, not independently
+established as an optimum end. Do **not** approve the old four-item draft;
+James remains research-only. Run a fresh whole-cellar
+comparison after the curator decision. Walk through actual manual edit/clear,
+matched/unmatched, local-choice, mobile, stale-report, and emergency-off cases against the
+revised pilot. Record owner acceptance before accepting Gates 1–2. The curator
+grant is explicit, but the dates still need a merit review. Keep the reference
+switch and household opt-in off; the migration and grant do not authorize
+publication. Decide when to remove
 the protected temporary backup after the owner walkthrough.

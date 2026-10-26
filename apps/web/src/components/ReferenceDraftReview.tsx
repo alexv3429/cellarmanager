@@ -1,23 +1,42 @@
-import { type FormEvent, useEffect, useState } from "react"
+import { lazy, Suspense, type FormEvent, useEffect, useState } from "react"
 
 import {
   getReferenceDrafts,
   recordReferenceReview,
   type ReferenceDraftWorkspace,
+  type ReferenceEvidence,
   type ReferenceSubject,
   type ReferenceVerdict,
 } from "../data/drinkingWindowReferenceDrafts"
 import { useLanguage } from "../i18n/useLanguage"
 import { Notice } from "./Notice"
 
+const PilotDecisionNote = lazy(() => import("./PilotDecisionNote"))
+const pilotDecisionNotePath = "/docs/drinking-window-first-shared-draft.md"
+
+function isPilotDecisionNote(source: ReferenceEvidence) {
+  return source.sourceName === "Owner-reviewed first shared drinking-window estimate"
+    && source.sourceUrl?.endsWith(pilotDecisionNotePath)
+}
+
 interface Props { isOnline: boolean }
 
-function subjectDetails(subject: ReferenceSubject, t: (key: string) => string) {
-  if (subject.kind === "row") return <dl className="drinking-window-review-milestones">
-    <div><dt>{t("Start tasting")}</dt><dd>{String(subject.details.first_trial_year)}</dd></div>
-    <div><dt>{t("Optimum starts")}</dt><dd>{String(subject.details.best_start_year)}</dd></div>
-    <div><dt>{t("Optimum ends")}</dt><dd>{String(subject.details.best_end_year)}</dd></div>
-  </dl>
+function subjectDetails(subject: ReferenceSubject, t: (key: string, values?: Record<string, string>) => string) {
+  if (subject.kind === "row") {
+    const scope = String(subject.details.scope ?? "")
+    const format = subject.details.format_ml
+    return <>
+      <p>{t("Reference level")}: {t(scope === "release" ? "Exact wine and vintage" : {
+        producer_appellation: "Producer and appellation", producer_region: "Producer and region",
+        appellation: "Appellation", region: "Region",
+      }[scope] ?? scope)}{typeof format === "number" ? <> · {t("Bottle size: {size} ml", { size: String(format) })}</> : null}</p>
+      <dl className="drinking-window-review-milestones">
+        <div><dt>{t("Start tasting")}</dt><dd>{String(subject.details.first_trial_year)}</dd></div>
+        <div><dt>{t("Optimum starts")}</dt><dd>{String(subject.details.best_start_year)}</dd></div>
+        <div><dt>{t("Optimum ends")}</dt><dd>{String(subject.details.best_end_year)}</dd></div>
+      </dl>
+    </>
+  }
   if (subject.kind === "membership") return <p>{t("Eligible wine and vintage")}: {subject.title}
     {subject.details.first_vintage_year === subject.details.last_vintage_year
       ? ""
@@ -30,6 +49,20 @@ function subjectDetails(subject: ReferenceSubject, t: (key: string) => string) {
   return <p>{t("Reference level")}: {t(scopeLabel)} · {t("Color")}: {t(String(subject.details.wine_color ?? ""))}</p>
 }
 
+function groupedEvidence(evidence: ReferenceEvidence[]) {
+  const groups = new Map<string, { source: ReferenceEvidence; claimParts: string[] }>()
+  for (const source of evidence) {
+    const key = [source.sourceUrl, source.sourceName, source.evidenceRole, source.reviewStatus, source.reuseRight].join("\u0000")
+    const group = groups.get(key)
+    if (group) {
+      if (!group.claimParts.includes(source.claimPart)) group.claimParts.push(source.claimPart)
+    } else {
+      groups.set(key, { source, claimParts: [source.claimPart] })
+    }
+  }
+  return [...groups.values()]
+}
+
 export function ReferenceDraftReview({ isOnline }: Props) {
   const { t } = useLanguage()
   const [workspace, setWorkspace] = useState<ReferenceDraftWorkspace | null>(null)
@@ -40,6 +73,7 @@ export function ReferenceDraftReview({ isOnline }: Props) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
+  const [openSource, setOpenSource] = useState<string | null>(null)
 
   async function refresh() {
     if (!isOnline) return
@@ -93,7 +127,7 @@ export function ReferenceDraftReview({ isOnline }: Props) {
     <div className="research-inbox__heading">
       <div>
         <h3>{t("Actual reference drafts")}</h3>
-        <p>{t("Check each date, ageing-group boundary, exact wine membership and source before deciding. Approval records a curator decision; it does not publish advice or change any cellar.")}</p>
+        <p>{t("You have permission to review proposals for the shared wine reference. Check the dates, the exact wine and the evidence. Your decision does not publish advice or change any cellar.")}</p>
       </div>
       <button type="button" disabled={!isOnline || loading} onClick={() => void refresh()}>
         {loading ? t("Refreshing…") : t("Refresh drafts")}
@@ -107,13 +141,15 @@ export function ReferenceDraftReview({ isOnline }: Props) {
       return <div key={draft.versionId}>
         <h4>{t("Reference version")} {draft.versionNumber} · {t("Unpublished draft")}</h4>
         <p>{pendingCount} {t(pendingCount === 1
-          ? "draft item still needs curator review"
-          : "draft items still need curator review")}</p>
+          ? "draft item still needs review"
+          : "draft items still need review")}</p>
         {[...draft.subjects].sort((a, b) => Number(b.issues.length > 0) - Number(a.issues.length > 0)).map((subject) => {
         const key = `${draft.versionId}:${subject.kind}:${subject.id}`
         return <details key={key} className="research-inbox" open={selected === key}>
-          <summary onClick={() => {
-            setSelected(selected === key ? null : key)
+          <summary onClick={(event) => {
+            event.preventDefault()
+            setSelected((current) => current === key ? null : key)
+            setOpenSource(null)
             setRationale("")
             setVerdict("")
           }}>
@@ -123,31 +159,44 @@ export function ReferenceDraftReview({ isOnline }: Props) {
           </summary>
           <div className="drinking-window-review-form">
             {subjectDetails(subject, t)}
+            <h5>{t(subject.kind === "row" ? "Why these dates?" : "Why this draft?")}</h5>
             <p>{t(subject.rationale)}</p>
-            {subject.kind === "row" ? <p>{t("The linked sources must support the dates themselves; a producer's ageing description alone does not establish these years.")}</p> : null}
+            {subject.kind === "row" ? <p>{t("Before approving, check that the evidence supports each proposed year. A general ageing claim or an owner's estimate is not a producer-published optimum window.")}</p> : null}
             <h5>{t("Linked sources")}</h5>
             {subject.evidence.length === 0 ? <p>{t("No source linked; do not approve before checking.")}</p> :
-              <ul>{subject.evidence.map((evidence, index) => <li key={index}>
-                {evidence.sourceUrl?.startsWith("https://") ?
-                  <a href={evidence.sourceUrl} target="_blank" rel="noreferrer">{evidence.sourceName}</a> : evidence.sourceName}
-                {` · ${t(evidence.claimPart)} · ${t(evidence.reviewStatus)} · ${t(evidence.reuseRight)}`}
+              <ul>{groupedEvidence(subject.evidence).map(({ source, claimParts }, index) => <li key={index}>
+                {isPilotDecisionNote(source) ? <button type="button" className="drinking-window-source-note__toggle"
+                  aria-expanded={openSource === `${key}:${index}`}
+                  aria-controls={`${key}:${index}:source`}
+                  onClick={() => setOpenSource(openSource === `${key}:${index}` ? null : `${key}:${index}`)}>
+                  {t("Read the decision note")}
+                </button> : source.sourceUrl?.startsWith("https://") ?
+                  <a href={source.sourceUrl} target="_self">{t(source.sourceName)}</a> : t(source.sourceName)}
+                <span> · {claimParts.map((claimPart) => t(claimPart)).join(", ")}</span>
+                <small className="drinking-window-review-source-status">{source.reviewStatus === "reviewed" ? t("Source record reviewed") : `${t("Source record")}: ${t(source.reviewStatus)}`} · {t(source.reuseRight)}</small>
+                {isPilotDecisionNote(source) && openSource === `${key}:${index}` ? <div id={`${key}:${index}:source`} className="drinking-window-source-note">
+                  <Suspense fallback={<p>{t("Loading decision note…")}</p>}><PilotDecisionNote /></Suspense>
+                  <a href={source.sourceUrl ?? undefined} target="_self">{t("Open the original on GitHub")}</a>
+                </div> : source.sourceUrl?.startsWith("https://") && !isPilotDecisionNote(source) ?
+                  <small className="drinking-window-review-source-status">{t("Opens the source in this tab; use Back to return to the review.")}</small> : null}
               </li>)}</ul>}
-            {subject.reviews.length ? <p>{t("Current curator decisions")}: {subject.reviews.map((review) =>
+            {subject.reviews.length ? <p>{t("Current reviewer decisions")}: {subject.reviews.map((review) =>
               `${t(review.verdict === "approve" ? "Approved" : "Disputed")} — ${review.rationale}`).join("; ")}</p> : null}
             <form onSubmit={(event) => void save(event, draft.versionId, subject)}>
               <label>{t("Decision")}
                 <select required value={verdict} onChange={(event) => setVerdict(event.target.value as ReferenceVerdict | "")}>
                   <option disabled value="">{t("Choose a decision")}</option>
                   <option value="approve">{t("Approve this exact draft")}</option>
-                  <option value="disagree">{t("Disagree; needs correction")}</option>
+                  <option value="disagree">{t("Flag a disagreement; block publication")}</option>
                 </select>
               </label>
-              <label>{t("Why this decision?")}
+              {verdict === "disagree" ? <p role="status">{t("A disagreement blocks publication but does not change these dates. Explain what should change, including your proposed dates if you have them. A revised draft must then be prepared and reviewed.")}</p> : null}
+              <label>{t(verdict === "disagree" ? "What should be corrected?" : "Why this decision?")}
                 <textarea required minLength={10} maxLength={2000} value={rationale}
                   onChange={(event) => setRationale(event.target.value)} />
               </label>
               <button type="submit" disabled={!isOnline || saving || !verdict || rationale.trim().length < 10}>
-                {saving ? t("Saving…") : t("Record curator decision")}
+                {saving ? t("Saving…") : t(verdict === "disagree" ? "Record disagreement" : "Record review decision")}
               </button>
             </form>
           </div>

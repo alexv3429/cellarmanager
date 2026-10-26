@@ -145,3 +145,66 @@ private comparison, plus the three-date editor, mobile layout, local ageing
 choice, manual edit/clear, and emergency-off behavior. Review the four draft
 issues on their merits before any Gate 3 approval or publication. Keep the
 global switch and household opt-in off while Gates 1–2 are open.
+
+## 26 October follow-up: release-specific replacement and review scope
+
+The owner separately authorized **only** merged PR #215's migration
+`20261026100000_burgaud_release_specific_draft.sql` on linked
+`cellarmanager-v02-dev` (`sxdqcvnjtayfxinyospb`). This did not authorize a
+curator verdict, publication, runtime switch, household opt-in, or inventory
+change. A fresh CLI dry run named exactly this one migration and no seeds,
+roles, or Vault operations.
+
+Before applying it, a fresh schema and data export of `public`, `private`,
+`auth`, `storage`, and `capture_guard` was stored outside Git on the local host
+in `/private/tmp/cellarmanager-pr215-backup.bfJgld` (directory mode `0700`,
+files `0600`). Its SHA-256 values are
+`e23565cf174ea5187e5ac2767e0a20a67a1fa82a4994f980c1d034d7556c9609`
+for `schema.sql` and
+`733d1a27a2e995b6ae247eda21c31e02323dfc3aeb02a12df603d6e536210358`
+for `data.sql`. The data dump repeated the circular-FK warning from the
+earlier backup. A disposable local Supabase Postgres database was prepared
+with the required extension schema; the schema and data restored with
+`ON_ERROR_STOP=1`, and triggers were disabled **only in that restore session**.
+The restored pre-migration snapshot had 810 wines, 4 households, 6 auth users,
+one regional draft, and zero publications. Running #215's SQL as the trusted
+`postgres` deployment role on this clone succeeded. It left version 1
+`withdrawn` and version 2 `draft`, exact release / 750 ml / 2025–2028–2040;
+wine and household counts, publication count, and enabled rollout count were
+unchanged. The disposable database was then dropped. Initial attempts with
+the wrong restore/deployment roles failed transactionally; no live migration
+was attempted until the correctly configured clone succeeded.
+
+The authorized `supabase db push --skip-vault --yes` then applied exactly
+`20261026100000` with exit code 0. The linked ledger shows it applied and
+zero migrations pending. Aggregate-only live queries confirmed version 1
+`withdrawn`, version 2 `draft` with `scope=release`, `vintage_year=2022`,
+`format_ml=750`, and 2025 / 2028–2040. The live counts remained 810 wines,
+4 households, and 6 auth users, with **zero publications, enabled runtime
+switches, and enabled household rollouts**. Version 2 has zero draft,
+eligibility, and evidence-fit issues; its one review/publication issue is
+`missing_current_approval` on the row. The public app returned HTTP 200.
+No owner comparison of this new version has yet been approved.
+
+The owner then explicitly selected their existing signed-in pilot-household
+**owner** account for drinking-window curation, distinguishing it from the
+household's member account. Before the grant, this account already had the
+seven ordinary shared-profile curator scopes but no `drinking-window` scope;
+no account had that scope. The audited
+`set_enrichment_curator_eligibility` function added only `drinking-window` to
+its existing scopes and retained the earlier rationale as part of the new
+grant rationale. A live check found exactly one active account with the new
+scope and still one unresolved row review, zero publications, and zero
+rollouts. **No approve/disagree decision was recorded on the owner's behalf.**
+The account should now see Catalogue → Shared drinking-window review →
+Actual reference drafts; the owner must judge the three dates and their
+evidence before any next step. The old four-item regional review is withdrawn
+and cannot be approved. A fresh whole-cellar comparison is required after
+the row decision because the earlier report targeted the withdrawn version.
+
+The protected export is temporary and sensitive, not a managed backup.
+Retain it until the owner walkthrough and a deliberate recovery decision;
+restoring it over the live database would erase subsequent user changes and
+must never be an automatic rollback. Gate 2 remains In progress and Gate 3
+remains Blocked pending the curator decision, fresh owner comparison, and
+remaining owner acceptance checks.
