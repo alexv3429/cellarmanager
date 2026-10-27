@@ -225,7 +225,9 @@ export function DrinkingWindowShadowReviewPanel({
         ? verdict === "approve"
           ? "These reference dates are now enabled for this cellar."
           : "This version will not be used in this cellar."
-        : "Your review was recorded. Publication is a separate, controlled step."))
+        : verdict === "approve"
+          ? "Your acceptance was recorded. Your dates stay unchanged until this draft is published."
+          : "Your refusal was recorded. Your cellar stays unchanged."))
     } catch (caught: unknown) {
       setError(caught instanceof Error ? caught.message : String(caught))
     } finally {
@@ -355,10 +357,10 @@ export function DrinkingWindowShadowReviewPanel({
         <Notice tone={report.latestDecision.verdict === "approve" ? "success" : "warning"}>
           <p>{t(report.latestDecision.verdict === "approve"
             ? report.versionStatus === "draft"
-              ? "You approved this comparison. The shared dates are not published or in use yet."
+              ? "You accepted the proposed dates for your cellar. Nothing has changed yet; if this draft is published, your cellar will use it."
               : "You chose to use this reference version in your cellar."
             : report.versionStatus === "draft"
-              ? "You rejected this comparison. The shared dates are not published or in use."
+              ? "You declined the proposed dates for your cellar. Nothing has changed."
               : "You chose not to use this reference version in your cellar.")}</p>
           <p><strong>{t("Your reason")}:</strong> {report.latestDecision.rationale}</p>
         </Notice>
@@ -369,7 +371,7 @@ export function DrinkingWindowShadowReviewPanel({
       {canDecide && (!report.latestDecision || changingDecision) ? <div className="drinking-window-shadow-review__decision">
         <h4>{t("Your decision on the whole comparison")}</h4>
         <p>{t(report.versionStatus === "draft"
-          ? "This decision covers every wine in the saved comparison. Approving the draft does not publish its dates or change your cellar."
+          ? "This decision covers every wine in this saved comparison. Accepting changes nothing now. If the draft is published later, your cellar will automatically use its dates for eligible wines."
           : "This decision covers every wine in the saved comparison. Using an active reference may change dates in your cellar.")}</p>
         <label>{t("Reason for your decision")}
           <textarea minLength={10} onChange={(event) => setRationale(event.target.value)}
@@ -386,11 +388,11 @@ export function DrinkingWindowShadowReviewPanel({
           <button disabled={busy || !canApprove || rationale.trim().length < 10}
             onClick={() => void decide("approve")} type="button">{t(report.versionStatus === "active"
               ? "Use these reference dates in my cellar"
-              : "Approve this comparison")}</button>
+              : "Accept the proposed dates for my cellar")}</button>
           <button disabled={busy || rationale.trim().length < 10}
             onClick={() => void decide("reject")} type="button">{t(report.versionStatus === "active"
               ? "Do not use this version"
-              : "Reject this comparison")}</button>
+              : "Do not adopt these dates for my cellar")}</button>
         </div>
         <small>{t("A changed cellar or reference invalidates this review; a new comparison will be needed.")}</small>
       </div> : null}

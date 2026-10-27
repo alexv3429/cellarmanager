@@ -80,7 +80,7 @@ describe("shared drinking-window draft comparison", () => {
     expect(container.querySelector(".drinking-window-shadow-review__history")?.hasAttribute("open")).toBe(false)
     await act(async () => reportButton?.click())
     expect(container.textContent).toContain("Cette version de référence a été retirée")
-    expect(container.textContent).not.toContain("Approuver cette comparaison")
+    expect(container.textContent).not.toContain("Accepter les dates proposées pour ma cave")
   })
 
   it("separates current and unpublished dates, explains eligibility in French, and requests no decision", async () => {
@@ -117,7 +117,7 @@ describe("shared drinking-window draft comparison", () => {
     expect(container.textContent).toContain("pas aux Charmes")
     expect(container.textContent).not.toContain(group)
     expect(container.textContent).not.toContain(rationale)
-    expect(container.textContent).not.toContain("Approuver cette comparaison")
+    expect(container.textContent).not.toContain("Accepter les dates proposées pour ma cave")
     expect(reviewShadowReport).not.toHaveBeenCalled()
   })
 
@@ -151,7 +151,7 @@ describe("shared drinking-window draft comparison", () => {
     expect(container.textContent).toContain("L’appellation et la région ne concordent pas")
     expect(container.textContent).toContain("une nouvelle comparaison sera nécessaire")
     const approve = [...container.querySelectorAll("button")]
-      .find((button) => button.textContent === "Approuver cette comparaison")
+      .find((button) => button.textContent === "Accepter les dates proposées pour ma cave")
     expect(approve?.disabled).toBe(true)
     const wine = [...container.querySelectorAll("button.wine-detail-link")]
       .find((button) => button.textContent?.includes("Boillot · Aux Caves"))
@@ -275,7 +275,9 @@ describe("shared drinking-window draft comparison", () => {
     expect(focus?.textContent).toContain("Burgaud · Côte du Py · 2022")
     expect(focus?.nextElementSibling).toBe(decision)
     expect(decision?.textContent).toContain("Votre décision sur toute la comparaison")
-    expect(decision?.textContent).toContain("Approuver cette comparaison")
+    expect(decision?.textContent).toContain("Accepter les dates proposées pour ma cave")
+    expect(decision?.textContent).toContain("Accepter ne change rien maintenant")
+    expect(decision?.textContent).toContain("votre cave utilisera automatiquement ses dates")
     expect(decision?.nextElementSibling).toBe(other)
     expect(other?.hasAttribute("open")).toBe(false)
     expect(other?.textContent).toContain("Autres résultats de la comparaison (801)")
@@ -284,8 +286,8 @@ describe("shared drinking-window draft comparison", () => {
   })
 
   it.each([
-    ["approve", "Vous avez approuvé cette comparaison"],
-    ["reject", "Vous avez rejeté cette comparaison"],
+    ["approve", "Vous avez accepté les dates proposées pour votre cave"],
+    ["reject", "Vous avez refusé les dates proposées pour votre cave"],
   ] as const)("shows a saved %s decision and opens the form only to change it", async (verdict, status) => {
     const reviewed = { ...listing, versionNumber: 2, draftIssueCount: 0,
       latestVerdict: verdict }
@@ -309,7 +311,7 @@ describe("shared drinking-window draft comparison", () => {
     expect(container.textContent).toContain(status)
     expect(container.textContent).toContain("Dates vérifiées pour cette bouteille")
     expect(container.querySelector("textarea")).toBeNull()
-    expect(container.textContent).not.toContain("Approuver cette comparaison")
+    expect(container.textContent).not.toContain("Accepter les dates proposées pour ma cave")
     const change = [...container.querySelectorAll("button")]
       .find((button) => button.textContent === "Modifier cette décision")
     await act(async () => change?.click())
