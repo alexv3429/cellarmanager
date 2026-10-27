@@ -184,6 +184,11 @@ export function DrinkingWindowShadowReviewPanel({
       setList(next)
       const current = next.find((entry) => entry.reportId === id)
       if (current) await openReport(current)
+      if (draft) setMessage(t(id === currentListing?.reportId
+        ? "Nothing changed. This comparison and your saved decision remain valid."
+        : currentListing?.latestVerdict
+          ? "The comparison changed. Your earlier decision remains in history; review this new comparison before deciding again."
+          : "A new comparison is ready to review."))
     } catch (caught: unknown) {
       setError(caught instanceof Error ? caught.message : String(caught))
     } finally {
@@ -310,9 +315,13 @@ export function DrinkingWindowShadowReviewPanel({
       type="button"
     >{t("Latest comparison")} · {t("Reference version")} {currentListing.versionNumber}
       {` · ${t(currentListing.latestVerdict === "approve"
-        ? "Approved"
+        ? currentListing.versionStatus === "draft"
+          ? "Accepted for this cellar — unpublished"
+          : "Approved"
         : currentListing.latestVerdict === "reject"
-          ? "Rejected"
+          ? currentListing.versionStatus === "draft"
+            ? "Declined for this cellar — unpublished"
+            : "Rejected"
           : currentListing.versionStatus === "draft" && currentListing.draftIssueCount > 0
             ? "Draft under review — no action needed"
             : "Unpublished proposal")}`}
@@ -323,7 +332,13 @@ export function DrinkingWindowShadowReviewPanel({
       {history.map((entry) => <button disabled={busy} key={entry.reportId}
         onClick={() => void openReport(entry)} type="button">
         {t("Reference version")} {entry.versionNumber} · {t("Comparison from")} {new Date(entry.recordedAt).toLocaleDateString()}
-        {` · ${t(entry.versionStatus === "withdrawn" ? "Withdrawn — no review needed" : "Older snapshot")}`}
+        {` · ${t(entry.versionStatus === "withdrawn"
+          ? "Withdrawn — no review needed"
+          : entry.latestVerdict === "approve"
+            ? "Earlier acceptance — no longer current"
+            : entry.latestVerdict === "reject"
+              ? "Earlier refusal — no longer current"
+              : "Older snapshot")}`}
       </button>)}
     </details> : null}
 
@@ -340,14 +355,19 @@ export function DrinkingWindowShadowReviewPanel({
       </Notice> : null}
       {report.versionStatus === "draft" ? <p>{t("This draft is not in use. Your cellar still shows its current dates.")}</p>
         : <p>{t("The current dates are the ones you see in your cellar, including your personal timing choice.")}</p>}
+      {canDecide && report.versionStatus === "draft" && report.latestDecision?.verdict === "approve"
+        ? <Notice tone="success">{t("Your acceptance is saved. Wines with different dates remain visible because this is a comparison, not a task list. Proposed dates will be used only if the draft is published.")}</Notice>
+        : null}
       {report.draftIssueCount > 0 ? <Notice tone="warning">
         {t("{count} reference checks are still pending. No decision is needed from you yet.", { count: String(report.draftIssueCount) })}
       </Notice> : null}
       {conflictingIdentityCount > 0 ? <Notice tone="warning">
         {t("{count} wine cards have conflicting details in this comparison. These are not date proposals to approve. Check them against the bottles; after editing, use a newer comparison.", { count: String(conflictingIdentityCount) })}
       </Notice> : null}
-      <h4>{t("Results to check before deciding")}</h4>
-      {canDecide ? <p>{t("A wine name opens its card. Your decision below covers the whole comparison, not just that wine.")}</p> : null}
+      <h4>{t(canDecide && report.latestDecision
+        ? "Results covered by your saved decision"
+        : "Results to check before deciding")}</h4>
+      {canDecide && !report.latestDecision ? <p>{t("A wine name opens its card. Your decision below covers the whole comparison, not just that wine.")}</p> : null}
       {focusRows.length > 0 ? <ol className={`drinking-window-shadow-review__rows${focusRows.length <= 5
         ? " drinking-window-shadow-review__rows--short" : ""}`}>
         {focusRows.map(renderComparisonRow)}

@@ -234,6 +234,70 @@ describe("shared drinking-window draft comparison", () => {
     expect(reviewShadowReport).not.toHaveBeenCalled()
   })
 
+  it("keeps an accepted decision when refreshing an unchanged comparison", async () => {
+    const accepted = { ...listing, reportId: "accepted", versionNumber: 2,
+      draftIssueCount: 0, latestVerdict: "approve" }
+    vi.mocked(listShadowReports).mockResolvedValue([accepted])
+    vi.mocked(getShadowReport).mockResolvedValue({
+      ...accepted, contentSha256: "sha", rows: [],
+      latestDecision: {
+        verdict: "approve", rationale: "I accept these proposed dates",
+        decidedAt: "2026-10-27T14:00:00Z",
+      },
+    })
+    vi.mocked(refreshDrinkingWindowDraftShadowReport).mockResolvedValue("accepted")
+    await act(async () => root.render(<LanguageContext.Provider value={{
+      language: "fr", preference: "fr", setSavedPreference: () => undefined,
+      t: (key, values) => translate("fr", key, values),
+    }}><DrinkingWindowShadowReviewPanel householdId="household" isOnline
+      onOpenWine={() => undefined} wines={[]} /></LanguageContext.Provider>))
+
+    const current = [...container.querySelectorAll("button")]
+      .find((button) => button.textContent?.includes("Comparaison actuelle"))
+    expect(current?.textContent).toContain("Acceptée pour cette cave — non publiée")
+    await act(async () => current?.click())
+    expect(container.textContent).toContain("Votre accord est enregistré")
+    expect(container.textContent).toContain("Résultats couverts par votre décision enregistrée")
+
+    const refresh = [...container.querySelectorAll("button")]
+      .find((button) => button.textContent === "Actualiser cette comparaison du brouillon")
+    await act(async () => refresh?.click())
+    expect(refreshDrinkingWindowDraftShadowReport).toHaveBeenCalledWith("household")
+    expect(container.textContent).toContain("Rien n’a changé. Cette comparaison et votre décision enregistrée restent valides")
+    expect(container.textContent).toContain("Vous avez accepté les dates proposées pour votre cave")
+    expect(container.querySelector("textarea")).toBeNull()
+    expect(reviewShadowReport).not.toHaveBeenCalled()
+  })
+
+  it("explains that a changed comparison needs a new decision without copying consent", async () => {
+    const accepted = { ...listing, reportId: "accepted", versionNumber: 2,
+      draftIssueCount: 0, latestVerdict: "approve" }
+    const changed = { ...accepted, reportId: "changed", latestVerdict: null }
+    vi.mocked(listShadowReports).mockResolvedValueOnce([accepted])
+      .mockResolvedValue([changed, accepted])
+    vi.mocked(getShadowReport).mockImplementation(async (entry) => ({
+      ...entry, contentSha256: "sha", rows: [],
+      latestDecision: entry.reportId === "accepted" ? {
+        verdict: "approve", rationale: "I accept these proposed dates",
+        decidedAt: "2026-10-27T14:00:00Z",
+      } : null,
+    }))
+    vi.mocked(refreshDrinkingWindowDraftShadowReport).mockResolvedValue("changed")
+    await act(async () => root.render(<LanguageContext.Provider value={{
+      language: "fr", preference: "fr", setSavedPreference: () => undefined,
+      t: (key, values) => translate("fr", key, values),
+    }}><DrinkingWindowShadowReviewPanel householdId="household" isOnline
+      onOpenWine={() => undefined} wines={[]} /></LanguageContext.Provider>))
+
+    const refresh = [...container.querySelectorAll("button")]
+      .find((button) => button.textContent === "Actualiser cette comparaison du brouillon")
+    await act(async () => refresh?.click())
+    expect(container.textContent).toContain("La comparaison a changé")
+    expect(container.textContent).toContain("Accord précédent — n’est plus la décision actuelle")
+    expect(container.querySelector("textarea")).toBeTruthy()
+    expect(reviewShadowReport).not.toHaveBeenCalled()
+  })
+
   it("puts the whole-comparison decision after the changed wine and before hundreds of background results", async () => {
     const ready = { ...listing, versionNumber: 2, wineCount: 802, draftIssueCount: 0 }
     const changed = {
