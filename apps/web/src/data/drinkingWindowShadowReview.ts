@@ -104,6 +104,15 @@ export async function requestDrinkingWindowShadowReport(
   }, rpcClient))
 }
 
+export async function refreshDrinkingWindowDraftShadowReport(
+  householdId: string,
+  rpcClient?: RpcClient,
+): Promise<string> {
+  return string(await call("request_drinking_window_draft_shadow_report", {
+    p_household_id: householdId,
+  }, rpcClient))
+}
+
 function optionalString(value: unknown): string | null {
   return value === null ? null : string(value)
 }

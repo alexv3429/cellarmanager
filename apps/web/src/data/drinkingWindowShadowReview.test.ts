@@ -5,6 +5,7 @@ import {
   getShadowReport,
   listShadowReports,
   requestDrinkingWindowShadowReport,
+  refreshDrinkingWindowDraftShadowReport,
   reviewShadowReport,
 } from "./drinkingWindowShadowReview"
 
@@ -88,6 +89,20 @@ describe("private drinking-window comparison review", () => {
     expect(await requestDrinkingWindowShadowReport("household-1", client)).toBe("report-2")
     expect(calls).toEqual([{
       name: "request_drinking_window_shadow_report",
+      args: { p_household_id: "household-1" },
+    }])
+  })
+
+  it("refreshes only an already-shared unpublished draft for the selected household", async () => {
+    const calls: { name: string; args: Record<string, unknown> }[] = []
+    const client = { rpc: async (name: string, args: Record<string, unknown>) => {
+      calls.push({ name, args })
+      return { data: "draft-report-2", error: null }
+    } }
+    expect(await refreshDrinkingWindowDraftShadowReport("household-1", client))
+      .toBe("draft-report-2")
+    expect(calls).toEqual([{
+      name: "request_drinking_window_draft_shadow_report",
       args: { p_household_id: "household-1" },
     }])
   })
