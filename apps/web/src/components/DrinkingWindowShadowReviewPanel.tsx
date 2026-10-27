@@ -8,6 +8,7 @@ import {
   requestDrinkingWindowShadowReport,
   reviewShadowReport,
   type DrinkingWindowRolloutStatus,
+  type ShadowComparisonRow,
   type ShadowReport,
   type ShadowReportListing,
 } from "../data/drinkingWindowShadowReview"
@@ -66,6 +67,10 @@ function scopeLabel(scope: string): string {
     default: return "Reference profile"
   }
 }
+
+const backgroundComparisonStatuses = new Set([
+  "manual_preserved", "no_match", "missing_key", "unchanged",
+])
 
 function reviewOpenKey(householdId: string): string {
   return `cellarmanager:drinking-window-review-open:${householdId}`
@@ -155,6 +160,10 @@ export function DrinkingWindowShadowReviewPanel({
   const orderedRows = useMemo(() => report
     ? orderShadowComparisonRows(report.rows, names)
     : [], [report, names])
+  const focusRows = orderedRows.filter((row) =>
+    !backgroundComparisonStatuses.has(row.comparisonStatus))
+  const otherRows = orderedRows.filter((row) =>
+    backgroundComparisonStatuses.has(row.comparisonStatus))
   const changedCount = report?.rows.filter((row) => row.comparisonStatus === "changed").length ?? 0
   const conflictingIdentityCount = report?.rows.filter((row) =>
     row.draftStatus === "ambiguous" || row.draftStatus === "identity_conflict").length ?? 0
@@ -222,6 +231,45 @@ export function DrinkingWindowShadowReviewPanel({
     } finally {
       setBusy(false)
     }
+  }
+
+  function renderComparisonRow(row: ShadowComparisonRow) {
+    if (!report) return null
+    return <li key={row.wineId}>
+      <button className="wine-detail-link" onClick={() => {
+        setExpanded(true)
+        rememberReviewOpen(householdId, true)
+        onOpenWine(row.wineId)
+      }} type="button">
+        {names.get(row.wineId) ?? row.wineId}
+      </button>
+      <span>{t(comparisonLabel(row.comparisonStatus))}</span>
+      {row.draftStatus === "identity_conflict" ? <p>{t(row.reason === "appellation_outside_region"
+        ? "The appellation and region disagree. Check both against the bottle before editing this wine."
+        : "This wine has conflicting details. Check its identity against the bottle before editing.")}</p> : null}
+      {row.draftStatus === "ambiguous" ? <p>{t("Several wine identities match. Review this wine before approving the comparison.")}</p> : null}
+      <div className="drinking-window-shadow-review__comparison">
+        <section>
+          <h4>{t("Dates currently used in your cellar")}</h4>
+          <WindowMilestones first={row.currentFirstTrialYear}
+            start={row.currentBestStartYear} end={row.currentBestEndYear} t={t} />
+          <small>{t(sourceLabel(row.currentSource))}</small>
+          {row.currentSource === "model" || row.currentSource === "personalized_model"
+            ? <p>{t("These current dates come from the existing model, not this draft. Open the wine above, then ‘When to drink’ → ‘Why this estimate?’ to see the contributing profiles.")}</p>
+            : null}
+        </section>
+        <section>
+          <h4>{t(report.versionStatus === "draft"
+            ? "Draft dates — not in use"
+            : "Compared shared-reference dates")}</h4>
+          <WindowMilestones first={row.proposedFirstTrialYear}
+            start={row.proposedBestStartYear} end={row.proposedBestEndYear} t={t} />
+        </section>
+      </div>
+      {row.matchedScope ? <p><strong>{t("Reference level")}:</strong> {t(scopeLabel(row.matchedScope))}</p> : null}
+      {row.proposedGroupDefinition ? <p><strong>{t("Which wines qualify?")}</strong> {t(row.proposedGroupDefinition)}</p> : null}
+      {row.proposedReferenceRationale ? <p><strong>{t("Where do these dates come from?")}</strong> {t(row.proposedReferenceRationale)}</p> : null}
+    </li>
   }
 
   if (!isOnline || (list?.length === 0 && rollout?.activeVersionNumber === null)) return null
@@ -296,47 +344,14 @@ export function DrinkingWindowShadowReviewPanel({
       {conflictingIdentityCount > 0 ? <Notice tone="warning">
         {t("{count} wine cards have conflicting details in this comparison. These are not date proposals to approve. Check them against the bottles; after editing, use a newer comparison.", { count: String(conflictingIdentityCount) })}
       </Notice> : null}
-      <ol className="drinking-window-shadow-review__rows">
-        {orderedRows.slice(0, shown).map((row) => <li key={row.wineId}>
-          <button className="wine-detail-link" onClick={() => {
-            setExpanded(true)
-            rememberReviewOpen(householdId, true)
-            onOpenWine(row.wineId)
-          }} type="button">
-            {names.get(row.wineId) ?? row.wineId}
-          </button>
-          <span>{t(comparisonLabel(row.comparisonStatus))}</span>
-          {row.draftStatus === "identity_conflict" ? <p>{t(row.reason === "appellation_outside_region"
-            ? "The appellation and region disagree. Check both against the bottle before editing this wine."
-            : "This wine has conflicting details. Check its identity against the bottle before editing.")}</p> : null}
-          {row.draftStatus === "ambiguous" ? <p>{t("Several wine identities match. Review this wine before approving the comparison.")}</p> : null}
-          <div className="drinking-window-shadow-review__comparison">
-            <section>
-              <h4>{t("Dates currently used in your cellar")}</h4>
-              <WindowMilestones first={row.currentFirstTrialYear}
-                start={row.currentBestStartYear} end={row.currentBestEndYear} t={t} />
-              <small>{t(sourceLabel(row.currentSource))}</small>
-              {row.currentSource === "model" || row.currentSource === "personalized_model"
-                ? <p>{t("These current dates come from the existing model, not this draft. Open the wine above, then ‘When to drink’ → ‘Why this estimate?’ to see the contributing profiles.")}</p>
-                : null}
-            </section>
-            <section>
-              <h4>{t(report.versionStatus === "draft"
-                ? "Draft dates — not in use"
-                : "Compared shared-reference dates")}</h4>
-              <WindowMilestones first={row.proposedFirstTrialYear}
-                start={row.proposedBestStartYear} end={row.proposedBestEndYear} t={t} />
-            </section>
-          </div>
-          {row.matchedScope ? <p><strong>{t("Reference level")}:</strong> {t(scopeLabel(row.matchedScope))}</p> : null}
-          {row.proposedGroupDefinition ? <p><strong>{t("Which wines qualify?")}</strong> {t(row.proposedGroupDefinition)}</p> : null}
-          {row.proposedReferenceRationale ? <p><strong>{t("Where do these dates come from?")}</strong> {t(row.proposedReferenceRationale)}</p> : null}
-        </li>)}
-      </ol>
-      {shown < orderedRows.length ? <button onClick={() => setShown(shown + 30)} type="button">
-        {t("Show more wines")}
-      </button> : null}
+      <h4>{t("Results to check before deciding")}</h4>
+      {canDecide ? <p>{t("A wine name opens its card. Your decision below covers the whole comparison, not just that wine.")}</p> : null}
+      {focusRows.length > 0 ? <ol className={`drinking-window-shadow-review__rows${focusRows.length <= 5
+        ? " drinking-window-shadow-review__rows--short" : ""}`}>
+        {focusRows.map(renderComparisonRow)}
+      </ol> : <p>{t("No individual wine result needs closer review in this comparison.")}</p>}
       {canDecide && report.latestDecision && !changingDecision ? <div className="drinking-window-shadow-review__decision">
+        <h4>{t("Your decision on the whole comparison")}</h4>
         <Notice tone={report.latestDecision.verdict === "approve" ? "success" : "warning"}>
           <p>{t(report.latestDecision.verdict === "approve"
             ? report.versionStatus === "draft"
@@ -352,10 +367,15 @@ export function DrinkingWindowShadowReviewPanel({
         </button>
       </div> : null}
       {canDecide && (!report.latestDecision || changingDecision) ? <div className="drinking-window-shadow-review__decision">
+        <h4>{t("Your decision on the whole comparison")}</h4>
+        <p>{t(report.versionStatus === "draft"
+          ? "This decision covers every wine in the saved comparison. Approving the draft does not publish its dates or change your cellar."
+          : "This decision covers every wine in the saved comparison. Using an active reference may change dates in your cellar.")}</p>
         <label>{t("Reason for your decision")}
           <textarea minLength={10} onChange={(event) => setRationale(event.target.value)}
             rows={3} value={rationale} />
         </label>
+        <small>{t("Write at least 10 characters to enable the decision buttons.")}</small>
         {report.latestDecision ? <button onClick={() => {
           setRationale("")
           setChangingDecision(false)
@@ -374,6 +394,16 @@ export function DrinkingWindowShadowReviewPanel({
         </div>
         <small>{t("A changed cellar or reference invalidates this review; a new comparison will be needed.")}</small>
       </div> : null}
+      {otherRows.length > 0 ? <details className="drinking-window-shadow-review__other-results">
+        <summary>{t("Other comparison results ({count})", { count: String(otherRows.length) })}</summary>
+        <p>{t("These wines have unchanged dates, no reviewed match, or insufficient confirmed details. They remain part of the whole-cellar comparison.")}</p>
+        <ol className="drinking-window-shadow-review__rows">
+          {otherRows.slice(0, shown).map(renderComparisonRow)}
+        </ol>
+        {shown < otherRows.length ? <button onClick={() => setShown(shown + 30)} type="button">
+          {t("Show more wines")}
+        </button> : null}
+      </details> : null}
     </section> : null}
   </details>
 }

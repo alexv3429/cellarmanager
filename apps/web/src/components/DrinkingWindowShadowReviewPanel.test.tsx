@@ -234,6 +234,55 @@ describe("shared drinking-window draft comparison", () => {
     expect(reviewShadowReport).not.toHaveBeenCalled()
   })
 
+  it("puts the whole-comparison decision after the changed wine and before hundreds of background results", async () => {
+    const ready = { ...listing, versionNumber: 2, wineCount: 802, draftIssueCount: 0 }
+    const changed = {
+      wineId: "pilot", comparisonStatus: "changed", currentSource: "model",
+      draftStatus: "draft_match", matchedScope: "release",
+      currentFirstTrialYear: 2026, currentBestStartYear: 2031, currentBestEndYear: 2039,
+      proposedFirstTrialYear: 2025, proposedBestStartYear: 2028, proposedBestEndYear: 2040,
+      proposedGroupKey: null, proposedGroupDefinition: null,
+      proposedReferenceRationale: null, reason: null,
+    }
+    vi.mocked(listShadowReports).mockResolvedValue([ready])
+    vi.mocked(getShadowReport).mockResolvedValue({
+      ...ready, contentSha256: "sha", latestDecision: null,
+      rows: [
+        ...Array.from({ length: 801 }, (_, index) => ({
+          ...changed, wineId: `background-${index}`, comparisonStatus: "no_match",
+          draftStatus: "no_match", matchedScope: null,
+          proposedFirstTrialYear: null, proposedBestStartYear: null,
+          proposedBestEndYear: null,
+        })),
+        changed,
+      ],
+    })
+    await act(async () => root.render(<LanguageContext.Provider value={{
+      language: "fr", preference: "fr", setSavedPreference: () => undefined,
+      t: (key, values) => translate("fr", key, values),
+    }}><DrinkingWindowShadowReviewPanel householdId="household" isOnline
+      onOpenWine={() => undefined}
+      wines={[{ id: "pilot", producer: "Burgaud", cuvee: "Côte du Py", vintage: 2022 }]}
+    /></LanguageContext.Provider>))
+    const current = [...container.querySelectorAll("button")]
+      .find((button) => button.textContent?.includes("Comparaison actuelle"))
+    await act(async () => current?.click())
+
+    const focus = container.querySelector(".drinking-window-shadow-review__rows")
+    const decision = container.querySelector(".drinking-window-shadow-review__decision")
+    const other = container.querySelector(".drinking-window-shadow-review__other-results")
+    expect(focus?.querySelectorAll("li")).toHaveLength(1)
+    expect(focus?.textContent).toContain("Burgaud · Côte du Py · 2022")
+    expect(focus?.nextElementSibling).toBe(decision)
+    expect(decision?.textContent).toContain("Votre décision sur toute la comparaison")
+    expect(decision?.textContent).toContain("Approuver cette comparaison")
+    expect(decision?.nextElementSibling).toBe(other)
+    expect(other?.hasAttribute("open")).toBe(false)
+    expect(other?.textContent).toContain("Autres résultats de la comparaison (801)")
+    expect(other?.querySelectorAll("li")).toHaveLength(30)
+    expect(reviewShadowReport).not.toHaveBeenCalled()
+  })
+
   it.each([
     ["approve", "Vous avez approuvé cette comparaison"],
     ["reject", "Vous avez rejeté cette comparaison"],
