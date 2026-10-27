@@ -30,14 +30,19 @@ interface FormState {
 
 function formFor(candidate: DrinkingWindowCandidate): FormState {
   const review = candidate.review
+  const ownerProposal = candidate.sourceIdentity.origin === "cellar-owner-proposal"
+  const ownerRationale = ownerProposal && typeof candidate.sourceIdentity.rationale === "string"
+    ? candidate.sourceIdentity.rationale : ""
+  const ownerUrls = ownerProposal && Array.isArray(candidate.sourceIdentity.evidence_urls)
+    ? candidate.sourceIdentity.evidence_urls.filter((url): url is string => typeof url === "string") : []
   return {
     scope: review?.proposedScope ?? (candidate.candidateScope === "quarantine" ? "" : candidate.candidateScope as ReviewScope),
     first: String(review?.firstTrialYear ?? candidate.firstTrialYear ?? ""),
     bestStart: String(review?.bestStartYear ?? candidate.bestStartYear ?? ""),
     bestEnd: String(review?.bestEndYear ?? candidate.bestEndYear ?? ""),
     group: review?.ageingGroupNote ?? String(candidate.sourceIdentity.historical_bin ?? ""),
-    rationale: review?.rationale ?? "",
-    urls: review?.evidenceUrls.join("\n") ?? "",
+    rationale: review?.rationale ?? ownerRationale,
+    urls: review?.evidenceUrls.join("\n") ?? ownerUrls.join("\n"),
     rights: review?.rightsStatus ?? "unverified",
     disposition: review?.disposition ?? "investigate",
   }
@@ -52,6 +57,11 @@ function optionalYear(value: string): number | null {
 
 function label(value: unknown): string {
   return typeof value === "string" && value.trim() ? value : "—"
+}
+
+function sourceLabel(candidate: DrinkingWindowCandidate): string {
+  return candidate.sourceIdentity.origin === "cellar-owner-proposal"
+    ? "Cellar owner suggestion" : candidate.sourceLocator
 }
 
 export function DrinkingWindowReviewWorkspace({ isOnline }: Props) {
@@ -168,7 +178,7 @@ export function DrinkingWindowReviewWorkspace({ isOnline }: Props) {
     <ReferenceDraftReview isOnline={isOnline} />
 
     <h3>{t("Reference candidates")} ({workspace.candidates.length})</h3>
-    <p>{t("Workbook dates are historical candidates, not approved advice. Supply a coherent three-date proposal and traceable evidence.")}</p>
+    <p>{t("Workbook and cellar-owner suggestions are unverified candidates, not approved advice. Check the exact wine, three dates, evidence and reuse rights.")}</p>
     {workspace.candidates.length === 0 ? <p>{t("No staged reference candidates yet.")}</p> :
       <div className="drinking-window-review-layout">
         <ul className="drinking-window-review-list">{workspace.candidates.map((candidate) =>
@@ -176,13 +186,17 @@ export function DrinkingWindowReviewWorkspace({ isOnline }: Props) {
             <button type="button" aria-pressed={selectedId === candidate.id} onClick={() => select(candidate)}>
               {label(candidate.sourceIdentity.producer || candidate.sourceIdentity.region)} · {label(candidate.sourceIdentity.cuvee)} · {candidate.vintageYear ?? "—"}
             </button>
-            <small>{candidate.sourceLocator} · {candidate.review?.disposition ?? t("Not reviewed")}</small>
+            <small>{t(sourceLabel(candidate))} · {candidate.review?.disposition ?? t("Not reviewed")}</small>
           </li>
         )}</ul>
         {selected && form ? <form className="drinking-window-review-form" onSubmit={(event) => void save(event)}>
-          <h4>{t("Review candidate")}: {selected.sourceLocator}</h4>
+          <h4>{t("Review candidate")}: {t(sourceLabel(selected))}</h4>
           <p>{t("Original source")}: {label(selected.sourceIdentity.producer)} · {label(selected.sourceIdentity.cuvee)} · {label(selected.sourceIdentity.appellation)} · {label(selected.sourceIdentity.region)} · {selected.vintageYear ?? "—"} · {selected.wineColor ?? "—"}</p>
-          <p>{t("Original ageing category")}: {label(selected.sourceIdentity.historical_bin)} · {t("Original dates")}: {selected.bestStartYear ?? "—"}–{selected.bestEndYear ?? "—"}</p>
+          {selected.sourceIdentity.origin === "cellar-owner-proposal"
+            ? <p>{t("Original dates")}: {selected.firstTrialYear ?? "—"} / {selected.bestStartYear ?? "—"}–{selected.bestEndYear ?? "—"} · {t("Bottle size: {size} ml", { size: String(selected.sourceIdentity.format_ml ?? "—") })}</p>
+            : <p>{t("Original ageing category")}: {label(selected.sourceIdentity.historical_bin)} · {t("Original dates")}: {selected.bestStartYear ?? "—"}–{selected.bestEndYear ?? "—"}</p>}
+          {selected.sourceIdentity.origin === "cellar-owner-proposal"
+            ? <p>{t("Submitted reasoning to verify")}: {label(selected.sourceIdentity.rationale)}</p> : null}
           {selected.reviewReason ? <p>{t("Review issue")}: {selected.reviewReason}</p> : null}
           <label>{t("Proposed scope")}
             <select value={form.scope} onChange={(event) => setForm({ ...form, scope: event.target.value as ReviewScope })}>

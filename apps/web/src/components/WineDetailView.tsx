@@ -43,6 +43,7 @@ import { WineFactsPanel } from "./WineFactsPanel"
 import { WineIdentityReviewPanel } from "./WineIdentityReviewPanel"
 import { WineReferenceMatchReview } from "./WineReferenceMatchReview"
 import { WineMaturityPanel } from "./WineMaturityPanel"
+import { SharedWindowCandidatePanel } from "./SharedWindowCandidatePanel"
 import { WinePersonalGuidancePanel } from "./WinePersonalGuidancePanel"
 import { useLanguage } from "../i18n/useLanguage"
 import { formatLocalizedNumber } from "../i18n/formatting"
@@ -1055,6 +1056,15 @@ export function WineDetailView({
         key={`${wine.id}:${identityRevision}`}
         wineId={wine.id}
       />
+
+      {canManageCellar && wine.wine_reference_type === "release" && wine.vintage !== null
+        && wine.format_ml > 0 ? <SharedWindowCandidatePanel
+          formatMl={wine.format_ml}
+          isOnline={isOnline}
+          key={`${wine.id}:${identityRevision}:candidate`}
+          vintage={wine.vintage}
+          wineId={wine.id}
+        /> : null}
 
       <WinePersonalGuidancePanel canManageCellar={canManageCellar} isOnline={isOnline} wineId={wine.id} />
 

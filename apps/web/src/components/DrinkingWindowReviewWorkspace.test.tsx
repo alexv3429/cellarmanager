@@ -60,4 +60,26 @@ describe("curator drinking-window review workspace", () => {
     expect(container.textContent).toContain("Saving a draft does not publish")
     expect(saveDrinkingWindowCandidateReview).not.toHaveBeenCalled()
   })
+
+  it("shows an owner suggestion with its three dates and unverified source material", async () => {
+    vi.mocked(getDrinkingWindowReviewWorkspace).mockResolvedValue({
+      eligible: true, identityRequests: [], candidates: [{
+        ...workspace.candidates[0], sourceLocator: "cellar-owner-proposal:opaque-id",
+        firstTrialYear: 2026, bestStartYear: 2029, bestEndYear: 2040,
+        vintageYear: 2023,
+        sourceIdentity: { origin: "cellar-owner-proposal", producer: "Jean-Marc Burgaud",
+          cuvee: "Côte du Py", format_ml: 750,
+          rationale: "The proposed years reflect this release's structure.",
+          evidence_urls: ["https://example.org/release"] },
+      }],
+    })
+    await act(async () => root.render(<DrinkingWindowReviewWorkspace isOnline />))
+    const choose = [...container.querySelectorAll("button")].find((button) => button.textContent?.includes("Burgaud · Côte du Py · 2023"))
+    await act(async () => choose?.click())
+    expect(container.textContent).toContain("Cellar owner suggestion")
+    expect(container.textContent).toContain("2026 / 2029–2040")
+    expect((container.querySelector('textarea[maxlength="2000"]') as HTMLTextAreaElement).value)
+      .toContain("proposed years reflect")
+    expect(saveDrinkingWindowCandidateReview).not.toHaveBeenCalled()
+  })
 })

@@ -16,7 +16,27 @@ if that model cannot assess them. The owner-authorized pilot comes before
 broader use. No percentage of catalogue coverage is silently implied by this
 release target.
 
-## Status at 27 October 2026
+## Status at 28 October 2026
+
+**Current implementation slice (proposed, not deployed):** a cellar owner can
+submit a three-date suggestion for a confirmed exact release and bottle size
+from its wine card. The owner can see whether the suggestion awaits research
+or has a curator review draft; an authorized curator can inspect it in the
+existing review queue. Submission and curator review do **not** create an
+immutable reference version, publish dates, opt in a household, or alter any
+advice. The new migration has not been applied to the linked project. This
+starts Gate 4 but does not complete it. Next: build an in-app way to turn a
+reviewed candidate into a complete, superseding draft version, carrying
+forward unaffected rows, evidence and memberships; then validate, review and
+publish with separate authority. The current first-100-candidate workspace
+is only a bounded intake view, not a complete paginated maintenance queue.
+
+**Pre-release interface gate:** the owner finds the current drinking-window
+interface messy. Once the underlying contribution, correction and versioning
+pieces are in place, redesign the owner and curator journeys before enabling
+the feature for general use. A clear path from suggestion through review,
+correction, publication, comparison and local choice must be demonstrated on
+mobile; a working backend or a merged PR alone is insufficient.
 
 **Not released.** The merged work through PR #215 provides the database
 foundation, candidate staging, draft diagnostics, review decisions, shadow
@@ -176,7 +196,7 @@ here, not when its PR merges. Dates are not delivery promises.
 | 1. Close owner-facing behavior | In progress | Three-date editing, comparison, identity review, and private group choice are merged. The official card, editor, and draft selector were inspected read-only; mobile, actual edit/clear, stale-report, emergency-off, and owner acceptance remain. |
 | 2. Deploy database capabilities | In progress | The authorized 19-migration batch, PR #215 replacement, and PRs #219–#220 owner-refresh migrations are live. PR #220's completed backup was restored successfully after deployment, but its data dump was still running during the push; see the corrective deployment record. Three existing advice payloads matched the prior batch snapshot; one owner-confirmed pilot link recalculated its old-model advice. The owner tested unchanged refresh and approved the current comparison. Switch, publication, and household opt-in remain off. |
 | 3. Publish one real pilot | Blocked by unfinished Gate 1–2 checks, separate publication authorization, and live postflight | One approved cellar can see a verified real window. |
-| 4. Make reference maintenance routine | Not started | Authorized curators can add/correct evidence-backed versions in the app. |
+| 4. Make reference maintenance routine | In progress (intake slice proposed) | Owner exact-release suggestions can enter curator review after migration; in-app correction, superseding-version construction, and publication workflow remain. |
 | 5. Establish and measure initial coverage | Blocked by gate 4 | One additional high-impact reference is reviewed; gaps remain visible. |
 | 6. Release and operate | Blocked by gates 3–5 | The supported feature has repeatable checks, monitoring, and rollback. |
 
@@ -393,15 +413,20 @@ that every wine must be covered to release a supported first version.
 
 ## Gate 6 — supported release and ongoing operation (product + operator)
 
-1. Run the acceptance set on the deployed app: opted-in and unopted-in
+1. Redesign the owner and curator drinking-window interface before general
+   deployment. Test the mobile paths for proposing dates, understanding review
+   status, correcting a proposal, comparing advice, and making a private
+   choice with the owner. Remove ambiguity between a local estimate, a shared
+   draft, and published advice.
+2. Run the acceptance set on the deployed app: opted-in and unopted-in
    households, manual override, local preference, missing/ambiguous reference,
    version supersession, mobile use, and emergency-off. Record actual results,
    not just test names.
-2. Document who reviews new sources, who may publish, how an owner reports a
+3. Document who reviews new sources, who may publish, how an owner reports a
    wrong date, how a correction is versioned, and when the emergency switch is
    used. Monitor match/ambiguity/fallback and owner rejection rates without
    leaking cellar contents.
-3. Announce the feature as available only after the pilot passes, the routine
+4. Announce the feature as available only after the pilot passes, the routine
    curation workflow works, and the owner accepts the live behavior. State
    measured coverage and limitations visibly; continue gate 5 in batches.
 
