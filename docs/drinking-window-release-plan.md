@@ -64,9 +64,14 @@ run naming only that migration. A post-deployment dry run shows zero pending
 migrations, and the live schema export confirms the authenticated-only refresh
 grant while the report recorder stays service-only. The rehearsal preserved
 810 wines, four households, six auth users, zero publications, and zero enabled
-runtime switches or household rollouts. The refresh action still needs an
-owner walkthrough in the PR preview; it does not approve, publish, or activate
-the shared dates. See the [deployment record](drinking-window-gate2-deployment.md).
+runtime switches or household rollouts. See the
+[deployment record](drinking-window-gate2-deployment.md).
+PR #220's unchanged-refresh migration is now live, and the owner confirmed
+that a saved whole-cellar decision survives refresh. The owner then approved
+the current 802-wine comparison in the preview. A fresh read-only live audit
+found one current, owner-approved, non-manual pilot match, zero publication
+issues, and a matching zero-issue preflight. No reference has yet been
+published or enabled; the pilot publication remains a separate decision.
 The newly supplied 23-profile research bundle passes technical validation
 but its 670 proposed windows remain unapproved; see the
 [intake record](drinking-window-producer-bundle-intake-2026-10-27.md). The
@@ -155,9 +160,11 @@ evidence-fit issues, and 1 missing curator approval. After the owner identified
 their signed-in pilot-owner account, an operator used the audited eligibility
 function to add only its `drinking-window` review scope. No review decision
 had been recorded at the time of that deployment check. The owner has since
-approved the exact draft in the curator role, but a fresh whole-cellar report
-and separate cellar-owner review remain outstanding. Gates 1–2 remain In
-progress and Gate 3 remains Blocked.
+approved the exact draft in the curator role and accepted a current
+whole-cellar comparison as the pilot cellar owner. Gates 1–2 remain In
+progress. The database preflight for Gate 3 is green, but Gate 3 is not
+accepted: the remaining owner-facing checks, separate publication authority,
+and live postflight evidence are still required.
 
 Statuses below mean **Not started**, **In progress**, **Blocked**, or
 **Accepted**. A step becomes Accepted only when its named evidence is recorded
@@ -167,8 +174,8 @@ here, not when its PR merges. Dates are not delivery promises.
 | --- | --- | --- |
 | 0. Reconcile deployment state | Accepted | All 19 migrations replayed on a private clone; the fresh backup, restore, live preflight, and deployment record complete the just-in-time checks. |
 | 1. Close owner-facing behavior | In progress | Three-date editing, comparison, identity review, and private group choice are merged. The official card, editor, and draft selector were inspected read-only; mobile, actual edit/clear, stale-report, emergency-off, and owner acceptance remain. |
-| 2. Deploy database capabilities | In progress | The authorized 19-migration batch, PR #215 replacement, and PR #219 owner-refresh migration are live. Each later migration had a fresh protected backup and successful restored-copy rehearsal. Three existing advice payloads matched the prior batch snapshot; one owner-confirmed pilot link recalculated its old-model advice. Switch, publication, and household opt-in remain off. The owner still needs to test refresh and accept the behavior. |
-| 3. Publish one real pilot | Blocked by gates 1–2 and owner comparison review | One approved cellar can see a verified real window. |
+| 2. Deploy database capabilities | In progress | The authorized 19-migration batch, PR #215 replacement, and PRs #219–#220 owner-refresh migrations are live. PR #220's completed backup was restored successfully after deployment, but its data dump was still running during the push; see the corrective deployment record. Three existing advice payloads matched the prior batch snapshot; one owner-confirmed pilot link recalculated its old-model advice. The owner tested unchanged refresh and approved the current comparison. Switch, publication, and household opt-in remain off. |
+| 3. Publish one real pilot | Blocked by unfinished Gate 1–2 checks, separate publication authorization, and live postflight | One approved cellar can see a verified real window. |
 | 4. Make reference maintenance routine | Not started | Authorized curators can add/correct evidence-backed versions in the app. |
 | 5. Establish and measure initial coverage | Blocked by gate 4 | One additional high-impact reference is reviewed; gaps remain visible. |
 | 6. Release and operate | Blocked by gates 3–5 | The supported feature has repeatable checks, monitoring, and rollback. |
@@ -454,19 +461,22 @@ meaningful. At minimum, each update must:
 | 2026-10-27 · owner decision wording clarification (proposed) | Gate 3 remains Blocked. This is a client-copy refinement in the same PR; no owner verdict is recorded by the code change. | The draft button now says **Accept the proposed dates for my cellar** rather than **Approve this comparison**. The adjacent explanation and saved-decision state say explicitly that clicking does nothing immediately, but if the draft is later published, this consenting cellar automatically adopts the reference dates for eligible wines. A refusal leaves this cellar unchanged. Publication remains a trusted, separate operation; the owner should accept only after reviewing the whole 802-wine comparison and its one changed Côte du Py row. |
 | 2026-10-27 · unchanged-comparison refresh correction (proposed) | Gate 3 remains Blocked. The owner accepted a draft comparison in the preview, then tapped **Refresh this draft comparison**. The live wrapper always created a new report even when its content was identical, leaving the approval on an older report and reopening the decision form. This PR proposes a narrow follow-up migration and UI feedback; **the migration is not applied and no decision is copied**. | The owner-only wrapper now recomputes the whole-cellar hash and returns the latest report ID if the owner, version, draft fingerprint, issue count, wine count, and content hash are identical. A changed cellar or draft still creates a new immutable report and requires a fresh explicit decision. The screen labels saved acceptance, explains why a changed wine remains in the comparison, and distinguishes unchanged refresh from a genuinely new comparison. SQL tests cover decision preservation and invalidation. Deployment requires a separate authorized migration preflight/backup; the owner must review and accept the current fresh report once if the prior acceptance was superseded. No publication or rollout is authorized. |
 | 2026-10-27 · PR #220 authorized refresh deployment | Gate 3 remains Blocked. The owner separately approved only migration `20261027110000` on linked `cellarmanager-v02-dev`; it has now been applied. Live database function and permission state changed, but no owner decision, publication, household rollout, stock, or wine data was changed by the deployment. | [Deployment record](drinking-window-gate2-deployment.md): exactly one migration in the preflight, protected schema/data export, all PR checks green, successful push, zero pending migrations, and live-schema confirmation of unchanged-report reuse. No live report was requested during postflight. The owner must decide the already-superseded latest comparison once, then verify an unchanged refresh retains the saved decision. The visible Côte du Py difference remains a comparison result until publication. |
+| 2026-10-27 · `codex/drinking-window-pilot-deployment` prepublication audit | Gate 3's database preflight is green, but the pilot is **not published** and Gates 1–2 are not yet accepted. The owner accepted the latest comparison and confirmed unchanged refresh preserves that decision. No live SQL write was made in this audit. | Read-only checks on linked `cellarmanager-v02-dev` show draft version 2, zero publication issues, a matching zero-issue preflight, latest report sequence 12 covering 802 wines with one non-manual match, current owner approval/hash, and an unchanged whole-cellar snapshot. Of four households, exactly one has a qualifying approval. Publications 0, enabled household rollouts 0, runtime switch off. The earlier PR #220 backup log used a hash from a still-running data dump; [the corrected record](drinking-window-gate2-deployment.md) gives the final hash and documents a successful isolated restore. Owner-facing checks, explicit publication authority, and live postflight remain open. |
 | 2026-10-27 · 23-profile research bundle intake | Gate 4 remains Not started and Gate 5 remains Blocked; the ZIP was validated privately, not imported into the shared reference or cellar. | [Intake record](drinking-window-producer-bundle-intake-2026-10-27.md): all 23 JSON files pass schema 1.1.0 and cross-reference checks; 670 750 ml proposals are all `candidate_not_approved` and zero are publishable. The supplied B/C/D grades are metadata triage only, not verified date evidence. This PR also explains conflicting identities in the owner comparison before its disabled approval action. |
 
-**Next action:** ask the pilot owner to inspect the fresh conflict-free
-comparison and decide whether the exact Côte du Py 2022 dates are acceptable;
-there is no James proposal to approve. Do not silently rewrite personal wine
-data. Any further corrections require another owner-bound comparison, because
-saved report counts do not change. The
-2040 Côte du Py endpoint remains an owner estimate, not independently
-established as an optimum end. Do **not** revive the old four-item draft;
-James remains research-only. Walk through actual manual edit/clear,
-matched/unmatched, local-choice, mobile, stale-report, and emergency-off cases against the
-revised pilot. Record owner acceptance before accepting Gates 1–2. The curator
-grant is explicit, but the dates still need a merit review. Keep the reference
-switch and household opt-in off; the migration and grant do not authorize
-publication. Decide when to remove
-the protected temporary backup after the owner walkthrough.
+**Next action:** complete the remaining Gate 1–2 owner-facing walkthrough
+(mobile layout, actual manual edit/clear on a chosen test wine, stale-report
+behavior, and emergency-off readiness), record owner acceptance, and obtain
+explicit authority for the exact version 2 pilot publication. Then take and
+verify a **completed** protected backup and rerun the live preflight
+immediately before invoking the trusted publisher. Its
+transaction must enable only the one currently consenting household. Verify
+the Côte du Py three dates and provenance on that household's card, the
+unchanged advice in a non-consenting control household, and the emergency-off
+and restore path. Any intervening cellar or draft edit requires a fresh
+owner comparison; do not transfer consent silently. The 2040 endpoint remains
+an owner estimate, not independently established as an optimum end. Do **not**
+revive the old four-item draft; James remains research-only. Manual
+edit/clear, local choice, mobile, stale-report, and emergency-off walkthroughs
+remain for Gate 1/6 acceptance if not completed in that walkthrough. Keep protected backups until an explicit
+recovery-retention decision.
