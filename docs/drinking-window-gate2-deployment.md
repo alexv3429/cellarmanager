@@ -254,3 +254,42 @@ Retain it until the owner walkthrough and a deliberate recovery decision;
 restoring it over an active database could erase later user changes and is
 not an automatic rollback. Gate 2 remains In progress and Gate 3 remains
 Blocked; the draft is not published or active for any household.
+
+## 27 October follow-up: preserve an unchanged owner decision on refresh
+
+The owner separately authorized **only** PR #220's migration
+`20261027110000_owner_draft_shadow_refresh_reuse.sql` on linked
+`cellarmanager-v02-dev` (`sxdqcvnjtayfxinyospb`) after backup and preflight.
+The CLI dry run named exactly that migration, with no seeds or roles;
+`--skip-vault` excluded unrelated Vault operations. The PR's web, database,
+dependency, Worker build, and CI gate checks passed before deployment.
+
+A fresh schema and data export of `public`, `private`, `auth`, `storage`, and
+`capture_guard` is retained outside Git at
+`/private/tmp/cellarmanager-pr220-backup.ijUEok` (directory mode `0700`,
+files `0600`). SHA-256: `4bfc5a72683860a45d804bf66f5f71f0099b8158ebaad50ffc73dcc49ecc3aa2`
+for `schema.sql`, and `20569dd228883368f569ce327b04680c8659914f423a48ef6515ddc4a2195dde`
+for `data.sql`. The data export repeated the circular-FK warnings; this is
+a protected recovery snapshot, not a tested live rollback. Unlike the earlier
+#219 deployment, this export was not restored into a disposable database;
+the SQL behavior was exercised in the clean CI database suite.
+
+The authorized `supabase db push --skip-vault --yes` applied exactly
+`20261027110000` with exit code 0. A post-deployment dry run reported zero
+pending migrations. A fresh live public-schema export confirms the owner-only
+`SECURITY DEFINER` wrapper now compares the full current snapshot with the
+latest report and returns its ID when unchanged; its grant remains limited to
+`authenticated`. The function's schema changed, but it contains no data
+update, publication, opt-in, or stock operation. We did **not** request a new
+live report or record an owner decision during postflight, and did not
+re-query live data counts. The preview owner walkthrough remains open: the
+old refresh had already superseded the owner's acceptance, so the latest
+comparison needs one fresh explicit owner decision. Subsequent unchanged
+refreshes should retain it; an actual cellar or draft change still requires
+a new decision.
+
+The protected export is temporary and sensitive. Retain it until the owner
+walkthrough and a deliberate recovery decision; restoring it over an active
+database would erase later user changes and is not an automatic rollback.
+Gate 3 remains blocked; no drinking-window reference was published or
+activated by this migration.
