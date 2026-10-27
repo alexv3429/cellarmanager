@@ -65,6 +65,11 @@ export interface ShadowComparisonRow {
 
 export interface ShadowReport extends ShadowReportListing {
   contentSha256: string
+  latestDecision: {
+    verdict: "approve" | "reject"
+    rationale: string
+    decidedAt: string
+  } | null
   rows: ShadowComparisonRow[]
 }
 
@@ -153,9 +158,20 @@ export async function getShadowReport(
   if (!Array.isArray(raw.rows) || string(raw.report_id) !== listing.reportId) {
     throw new Error("Invalid drinking-window review response")
   }
+  const decision = raw.latest_decision === null || raw.latest_decision === undefined
+    ? null : item(raw.latest_decision)
+  const verdict = decision ? string(decision.verdict) : null
+  if (verdict !== null && verdict !== "approve" && verdict !== "reject") {
+    throw new Error("Invalid drinking-window review response")
+  }
   return {
     ...listing,
     contentSha256: string(raw.content_sha256),
+    latestDecision: decision && verdict ? {
+      verdict,
+      rationale: string(decision.rationale),
+      decidedAt: string(decision.decided_at),
+    } : null,
     rows: raw.rows.map((value) => {
       const row = item(value)
       return {

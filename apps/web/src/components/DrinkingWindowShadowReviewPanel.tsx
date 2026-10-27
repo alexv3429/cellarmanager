@@ -111,6 +111,7 @@ export function DrinkingWindowShadowReviewPanel({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
+  const [changingDecision, setChangingDecision] = useState(false)
   const [expanded, setExpanded] = useState(() => wasReviewOpen(householdId))
   const currentListing = list?.find((entry) => entry.versionStatus !== "withdrawn")
   const history = list?.filter((entry) => entry.reportId !== currentListing?.reportId) ?? []
@@ -120,6 +121,7 @@ export function DrinkingWindowShadowReviewPanel({
     setRollout(null)
     setReport(null)
     setError(null)
+    setChangingDecision(false)
     if (!isOnline) return
     let cancelled = false
     void Promise.all([
@@ -156,10 +158,10 @@ export function DrinkingWindowShadowReviewPanel({
   const changedCount = report?.rows.filter((row) => row.comparisonStatus === "changed").length ?? 0
   const conflictingIdentityCount = report?.rows.filter((row) =>
     row.draftStatus === "ambiguous" || row.draftStatus === "identity_conflict").length ?? 0
-  const canApprove = (report?.versionStatus === "draft" || report?.versionStatus === "active")
-    && report.reportId === currentListing?.reportId
-    && report.draftIssueCount === 0
-    && conflictingIdentityCount === 0
+  const canDecide = report !== null && report.reportId === currentListing?.reportId
+    && (report.versionStatus === "active"
+      || (report.versionStatus === "draft" && report.draftIssueCount === 0))
+  const canApprove = canDecide && conflictingIdentityCount === 0
 
   async function prepareComparison(draft: boolean) {
     setBusy(true)
@@ -184,6 +186,8 @@ export function DrinkingWindowShadowReviewPanel({
     setBusy(true)
     setError(null)
     setMessage(null)
+    setChangingDecision(false)
+    setRationale("")
     try {
       setReport(await getShadowReport(listing))
       setShown(30)
@@ -207,6 +211,7 @@ export function DrinkingWindowShadowReviewPanel({
       const current = next.find((entry) => entry.reportId === report.reportId)
       if (current) setReport(await getShadowReport(current))
       setRationale("")
+      setChangingDecision(false)
       setMessage(t(report.versionStatus === "active"
         ? verdict === "approve"
           ? "These reference dates are now enabled for this cellar."
@@ -331,12 +336,32 @@ export function DrinkingWindowShadowReviewPanel({
       {shown < orderedRows.length ? <button onClick={() => setShown(shown + 30)} type="button">
         {t("Show more wines")}
       </button> : null}
-      {report.reportId === currentListing?.reportId
-        && (report.versionStatus === "active" || (report.versionStatus === "draft" && report.draftIssueCount === 0)) ? <div className="drinking-window-shadow-review__decision">
+      {canDecide && report.latestDecision && !changingDecision ? <div className="drinking-window-shadow-review__decision">
+        <Notice tone={report.latestDecision.verdict === "approve" ? "success" : "warning"}>
+          <p>{t(report.latestDecision.verdict === "approve"
+            ? report.versionStatus === "draft"
+              ? "You approved this comparison. The shared dates are not published or in use yet."
+              : "You chose to use this reference version in your cellar."
+            : report.versionStatus === "draft"
+              ? "You rejected this comparison. The shared dates are not published or in use."
+              : "You chose not to use this reference version in your cellar.")}</p>
+          <p><strong>{t("Your reason")}:</strong> {report.latestDecision.rationale}</p>
+        </Notice>
+        <button disabled={busy} onClick={() => setChangingDecision(true)} type="button">
+          {t("Change this decision")}
+        </button>
+      </div> : null}
+      {canDecide && (!report.latestDecision || changingDecision) ? <div className="drinking-window-shadow-review__decision">
         <label>{t("Reason for your decision")}
           <textarea minLength={10} onChange={(event) => setRationale(event.target.value)}
             rows={3} value={rationale} />
         </label>
+        {report.latestDecision ? <button onClick={() => {
+          setRationale("")
+          setChangingDecision(false)
+        }} type="button">
+          {t("Keep my current decision")}
+        </button> : null}
         <div>
           <button disabled={busy || !canApprove || rationale.trim().length < 10}
             onClick={() => void decide("approve")} type="button">{t(report.versionStatus === "active"

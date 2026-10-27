@@ -39,7 +39,7 @@ beforeEach(() => {
     selectedEnabled: false, globalEnabled: false,
   })
   vi.mocked(getShadowReport).mockReset().mockResolvedValue({
-    ...listing, contentSha256: "sha", rows: [{
+    ...listing, contentSha256: "sha", latestDecision: null, rows: [{
       wineId: "wine", comparisonStatus: "changed", currentSource: "model",
       draftStatus: "draft_match", matchedScope: "region",
       currentFirstTrialYear: 2026, currentBestStartYear: 2031, currentBestEndYear: 2039,
@@ -66,7 +66,7 @@ describe("shared drinking-window draft comparison", () => {
     const withdrawn = { ...listing, versionStatus: "withdrawn", draftIssueCount: 0 }
     vi.mocked(listShadowReports).mockResolvedValue([withdrawn])
     vi.mocked(getShadowReport).mockResolvedValue({
-      ...withdrawn, contentSha256: "sha", rows: [],
+      ...withdrawn, contentSha256: "sha", latestDecision: null, rows: [],
     })
     await act(async () => root.render(<LanguageContext.Provider value={{
       language: "fr", preference: "fr", setSavedPreference: () => undefined,
@@ -125,7 +125,7 @@ describe("shared drinking-window draft comparison", () => {
     const ready = { ...listing, versionNumber: 2, draftIssueCount: 0 }
     vi.mocked(listShadowReports).mockResolvedValue([ready])
     vi.mocked(getShadowReport).mockResolvedValue({
-      ...ready, contentSha256: "sha", rows: [{
+      ...ready, contentSha256: "sha", latestDecision: null, rows: [{
         wineId: "conflict", comparisonStatus: "identity_conflict", currentSource: "model",
         draftStatus: "identity_conflict", matchedScope: null,
         currentFirstTrialYear: 2026, currentBestStartYear: 2031, currentBestEndYear: 2039,
@@ -167,7 +167,7 @@ describe("shared drinking-window draft comparison", () => {
       versionStatus: "withdrawn" }
     vi.mocked(listShadowReports).mockResolvedValue([latest, older, withdrawn])
     vi.mocked(getShadowReport).mockImplementation(async (entry) => ({
-      ...entry, contentSha256: "sha", rows: entry.reportId === "latest" ? [{
+      ...entry, contentSha256: "sha", latestDecision: null, rows: entry.reportId === "latest" ? [{
         wineId: "wine", comparisonStatus: "changed", currentSource: "model",
         draftStatus: "draft_match", matchedScope: "release",
         currentFirstTrialYear: 2026, currentBestStartYear: 2031, currentBestEndYear: 2039,
@@ -215,7 +215,7 @@ describe("shared drinking-window draft comparison", () => {
       .mockResolvedValue([fresh, old])
     vi.mocked(refreshDrinkingWindowDraftShadowReport).mockResolvedValue("fresh")
     vi.mocked(getShadowReport).mockImplementation(async (entry) => ({
-      ...entry, contentSha256: "sha", rows: [],
+      ...entry, contentSha256: "sha", latestDecision: null, rows: [],
     }))
     await act(async () => root.render(<LanguageContext.Provider value={{
       language: "fr", preference: "fr", setSavedPreference: () => undefined,
@@ -231,6 +231,44 @@ describe("shared drinking-window draft comparison", () => {
     expect(getShadowReport).toHaveBeenCalledWith(fresh)
     expect(container.textContent).toContain("Comparaison actuelle · Version de référence 2")
     expect(container.textContent).toContain("n’approuve aucune date")
+    expect(reviewShadowReport).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ["approve", "Vous avez approuvé cette comparaison"],
+    ["reject", "Vous avez rejeté cette comparaison"],
+  ] as const)("shows a saved %s decision and opens the form only to change it", async (verdict, status) => {
+    const reviewed = { ...listing, versionNumber: 2, draftIssueCount: 0,
+      latestVerdict: verdict }
+    vi.mocked(listShadowReports).mockResolvedValue([reviewed])
+    vi.mocked(getShadowReport).mockResolvedValue({
+      ...reviewed, contentSha256: "sha", rows: [],
+      latestDecision: {
+        verdict, rationale: "Dates vérifiées pour cette bouteille",
+        decidedAt: "2026-10-27T14:00:00Z",
+      },
+    })
+    await act(async () => root.render(<LanguageContext.Provider value={{
+      language: "fr", preference: "fr", setSavedPreference: () => undefined,
+      t: (key, values) => translate("fr", key, values),
+    }}><DrinkingWindowShadowReviewPanel householdId="household" isOnline
+      onOpenWine={() => undefined} wines={[]} /></LanguageContext.Provider>))
+    const current = [...container.querySelectorAll("button")]
+      .find((button) => button.textContent?.includes("Comparaison actuelle"))
+    await act(async () => current?.click())
+
+    expect(container.textContent).toContain(status)
+    expect(container.textContent).toContain("Dates vérifiées pour cette bouteille")
+    expect(container.querySelector("textarea")).toBeNull()
+    expect(container.textContent).not.toContain("Approuver cette comparaison")
+    const change = [...container.querySelectorAll("button")]
+      .find((button) => button.textContent === "Modifier cette décision")
+    await act(async () => change?.click())
+    expect(container.querySelector("textarea")).toBeTruthy()
+    const keep = [...container.querySelectorAll("button")]
+      .find((button) => button.textContent === "Conserver ma décision actuelle")
+    await act(async () => keep?.click())
+    expect(container.querySelector("textarea")).toBeNull()
     expect(reviewShadowReport).not.toHaveBeenCalled()
   })
 })
