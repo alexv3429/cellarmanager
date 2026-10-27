@@ -888,6 +888,8 @@ export const frenchTextRuntime: Readonly<Record<string, string>> = {
   "Your cellar uses version": "Votre cave utilise la version",
   "Your cellar still uses its current model.": "Votre cave utilise toujours son modèle actuel.",
   "Compare the latest reference with my cellar": "Comparer la dernière référence avec ma cave",
+  "Refresh this draft comparison": "Actualiser cette comparaison du brouillon",
+  "After editing a wine card, refresh to see the new result. This does not approve dates or change your cellar.": "Après avoir corrigé une fiche vin, actualisez la comparaison pour voir le résultat. Cela n’approuve aucune date et ne modifie pas votre cave.",
   "The current dates are the ones you see in your cellar, including your personal timing choice.": "Les dates actuelles sont celles que vous voyez dans votre cave, avec votre préférence personnelle si elle s’applique.",
   "Current reviewed reference": "Référence vérifiée actuelle",
   "Use these reference dates in my cellar": "Utiliser ces dates de référence dans ma cave",

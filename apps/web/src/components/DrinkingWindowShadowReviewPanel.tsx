@@ -4,6 +4,7 @@ import {
   getDrinkingWindowRolloutStatus,
   getShadowReport,
   listShadowReports,
+  refreshDrinkingWindowDraftShadowReport,
   requestDrinkingWindowShadowReport,
   reviewShadowReport,
   type DrinkingWindowRolloutStatus,
@@ -160,12 +161,14 @@ export function DrinkingWindowShadowReviewPanel({
     && report.draftIssueCount === 0
     && conflictingIdentityCount === 0
 
-  async function prepareComparison() {
+  async function prepareComparison(draft: boolean) {
     setBusy(true)
     setError(null)
     setMessage(null)
     try {
-      const id = await requestDrinkingWindowShadowReport(householdId)
+      const id = draft
+        ? await refreshDrinkingWindowDraftShadowReport(householdId)
+        : await requestDrinkingWindowShadowReport(householdId)
       const next = await listShadowReports(householdId)
       setList(next)
       const current = next.find((entry) => entry.reportId === id)
@@ -233,9 +236,15 @@ export function DrinkingWindowShadowReviewPanel({
           ? ` ${t("Your cellar uses version")} ${rollout.selectedVersionNumber}.`
           : ` ${t("Your cellar still uses its current model.")}`}</p>
       <button disabled={busy || !rollout.globalEnabled}
-        onClick={() => void prepareComparison()} type="button">
+        onClick={() => void prepareComparison(false)} type="button">
         {t("Compare the latest reference with my cellar")}
       </button>
+    </div> : null}
+    {currentListing?.versionStatus === "draft" ? <div>
+      <button disabled={busy} onClick={() => void prepareComparison(true)} type="button">
+        {t("Refresh this draft comparison")}
+      </button>
+      <p>{t("After editing a wine card, refresh to see the new result. This does not approve dates or change your cellar.")}</p>
     </div> : null}
     {error ? <Notice role="alert" tone="error">{error}</Notice> : null}
     {message ? <Notice role="status" tone="success">{message}</Notice> : null}

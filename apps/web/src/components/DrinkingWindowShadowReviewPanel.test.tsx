@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import {
   getDrinkingWindowRolloutStatus, getShadowReport, listShadowReports,
-  reviewShadowReport,
+  refreshDrinkingWindowDraftShadowReport, reviewShadowReport,
 } from "../data/drinkingWindowShadowReview"
 import { LanguageContext } from "../i18n/LanguageContext"
 import { translate } from "../i18n/messages"
@@ -15,6 +15,7 @@ vi.mock("../data/drinkingWindowShadowReview", () => ({
   getDrinkingWindowRolloutStatus: vi.fn(),
   getShadowReport: vi.fn(),
   listShadowReports: vi.fn(),
+  refreshDrinkingWindowDraftShadowReport: vi.fn(),
   requestDrinkingWindowShadowReport: vi.fn(),
   reviewShadowReport: vi.fn(),
 }))
@@ -47,6 +48,7 @@ beforeEach(() => {
       proposedGroupDefinition: group, proposedReferenceRationale: rationale, reason: null,
     }],
   })
+  vi.mocked(refreshDrinkingWindowDraftShadowReport).mockReset()
   vi.mocked(reviewShadowReport).mockReset()
   container = document.createElement("div")
   document.body.append(container)
@@ -204,5 +206,31 @@ describe("shared drinking-window draft comparison", () => {
     expect(container.textContent).toContain("2025")
     expect(container.textContent).not.toContain("fiches présentent des informations contradictoires")
     expect(getShadowReport).toHaveBeenLastCalledWith(latest)
+  })
+
+  it("lets an owner refresh a shared draft without approving or editing a wine", async () => {
+    const old = { ...listing, reportId: "old", versionNumber: 2, draftIssueCount: 0 }
+    const fresh = { ...old, reportId: "fresh", recordedAt: "2026-10-27T13:00:00Z" }
+    vi.mocked(listShadowReports).mockResolvedValueOnce([old])
+      .mockResolvedValue([fresh, old])
+    vi.mocked(refreshDrinkingWindowDraftShadowReport).mockResolvedValue("fresh")
+    vi.mocked(getShadowReport).mockImplementation(async (entry) => ({
+      ...entry, contentSha256: "sha", rows: [],
+    }))
+    await act(async () => root.render(<LanguageContext.Provider value={{
+      language: "fr", preference: "fr", setSavedPreference: () => undefined,
+      t: (key, values) => translate("fr", key, values),
+    }}><DrinkingWindowShadowReviewPanel householdId="household" isOnline
+      onOpenWine={() => undefined} wines={[]} /></LanguageContext.Provider>))
+
+    const refresh = [...container.querySelectorAll("button")]
+      .find((button) => button.textContent === "Actualiser cette comparaison du brouillon")
+    expect(refresh).toBeTruthy()
+    await act(async () => refresh?.click())
+    expect(refreshDrinkingWindowDraftShadowReport).toHaveBeenCalledWith("household")
+    expect(getShadowReport).toHaveBeenCalledWith(fresh)
+    expect(container.textContent).toContain("Comparaison actuelle · Version de référence 2")
+    expect(container.textContent).toContain("n’approuve aucune date")
+    expect(reviewShadowReport).not.toHaveBeenCalled()
   })
 })
