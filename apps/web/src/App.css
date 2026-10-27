@@ -8898,6 +8898,11 @@
   padding: 0;
 }
 
+.drinking-window-shadow-review__rows--short {
+  max-height: none;
+  overflow: visible;
+}
+
 .drinking-window-shadow-review__rows li {
   border: 1px solid var(--border, #5c4a50);
   border-radius: 0.5rem;
@@ -8959,8 +8964,26 @@
 }
 
 .drinking-window-shadow-review__decision {
+  border: 1px solid var(--border, #5c4a50);
+  border-radius: 0.5rem;
   display: grid;
   gap: 0.75rem;
+  margin: 1rem 0;
+  min-width: 0;
+  padding: 1rem;
+}
+
+.drinking-window-shadow-review__decision > h4,
+.drinking-window-shadow-review__decision > p {
+  margin: 0;
+}
+
+.drinking-window-shadow-review__other-results {
+  margin-top: 1rem;
+}
+
+.drinking-window-shadow-review__other-results > summary {
+  cursor: pointer;
 }
 
 .drinking-window-shadow-review__decision textarea {

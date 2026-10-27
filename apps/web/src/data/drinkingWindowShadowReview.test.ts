@@ -49,6 +49,21 @@ describe("private drinking-window comparison review", () => {
       proposedGroupDefinition: "Individually reviewed long-ageing wines",
       proposedReferenceRationale: "Owner-authored estimate",
     })
+    expect(report.latestDecision).toBeNull()
+  })
+
+  it("reads the saved owner decision from the detailed report", async () => {
+    const report = await getShadowReport({ ...listing, latestVerdict: "approve" }, rpc({
+      report_id: "report-1", content_sha256: "a".repeat(64), rows: [],
+      latest_decision: {
+        verdict: "approve", rationale: "I checked the proposed dates",
+        decided_at: "2026-10-27T14:00:00Z",
+      },
+    }))
+    expect(report.latestDecision).toEqual({
+      verdict: "approve", rationale: "I checked the proposed dates",
+      decidedAt: "2026-10-27T14:00:00Z",
+    })
   })
 
   it("sends the exact report hash and requires a meaningful decision", async () => {
