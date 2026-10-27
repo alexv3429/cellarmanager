@@ -55,6 +55,18 @@ identity conflicts: one proposed date change, two preserved manual windows,
 84 missing keys, and 715 unmatched wines. The older reports remain immutable
 history, not current work or five wines to approve. Nothing has been published
 or enabled.
+PR #219 adds an owner-only button to record a fresh private comparison of an
+already owner-bound, unpublished draft. On 27 October, its **single** migration
+`20261027100000_owner_draft_shadow_refresh.sql` was applied to linked
+`cellarmanager-v02-dev` after a fresh protected schema/data backup, successful
+restore and migration rehearsal on an isolated local database, and a CLI dry
+run naming only that migration. A post-deployment dry run shows zero pending
+migrations, and the live schema export confirms the authenticated-only refresh
+grant while the report recorder stays service-only. The rehearsal preserved
+810 wines, four households, six auth users, zero publications, and zero enabled
+runtime switches or household rollouts. The refresh action still needs an
+owner walkthrough in the PR preview; it does not approve, publish, or activate
+the shared dates. See the [deployment record](drinking-window-gate2-deployment.md).
 The newly supplied 23-profile research bundle passes technical validation
 but its 670 proposed windows remain unapproved; see the
 [intake record](drinking-window-producer-bundle-intake-2026-10-27.md). The
@@ -155,7 +167,7 @@ here, not when its PR merges. Dates are not delivery promises.
 | --- | --- | --- |
 | 0. Reconcile deployment state | Accepted | All 19 migrations replayed on a private clone; the fresh backup, restore, live preflight, and deployment record complete the just-in-time checks. |
 | 1. Close owner-facing behavior | In progress | Three-date editing, comparison, identity review, and private group choice are merged. The official card, editor, and draft selector were inspected read-only; mobile, actual edit/clear, stale-report, emergency-off, and owner acceptance remain. |
-| 2. Deploy database capabilities | In progress | The authorized 19-migration batch and separately authorized PR #215 replacement migration are live. A fresh protected backup restored and the replacement rehearsed on it. Three existing advice payloads matched the prior batch snapshot; one owner-confirmed pilot link recalculated its old-model advice. Switch, publication, and household opt-in remain off. Owner acceptance is still required. |
+| 2. Deploy database capabilities | In progress | The authorized 19-migration batch, PR #215 replacement, and PR #219 owner-refresh migration are live. Each later migration had a fresh protected backup and successful restored-copy rehearsal. Three existing advice payloads matched the prior batch snapshot; one owner-confirmed pilot link recalculated its old-model advice. Switch, publication, and household opt-in remain off. The owner still needs to test refresh and accept the behavior. |
 | 3. Publish one real pilot | Blocked by gates 1–2 and owner comparison review | One approved cellar can see a verified real window. |
 | 4. Make reference maintenance routine | Not started | Authorized curators can add/correct evidence-backed versions in the app. |
 | 5. Establish and measure initial coverage | Blocked by gate 4 | One additional high-impact reference is reviewed; gaps remain visible. |

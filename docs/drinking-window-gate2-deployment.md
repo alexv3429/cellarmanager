@@ -208,3 +208,49 @@ restoring it over the live database would erase subsequent user changes and
 must never be an automatic rollback. Gate 2 remains In progress and Gate 3
 remains Blocked pending the curator decision, fresh owner comparison, and
 remaining owner acceptance checks.
+
+## 27 October follow-up: owner-initiated draft comparison refresh
+
+The owner separately authorized **only** PR #219's migration
+`20261027100000_owner_draft_shadow_refresh.sql` on linked
+`cellarmanager-v02-dev` (`sxdqcvnjtayfxinyospb`) after backup and preflight.
+The CLI dry run named exactly that one migration, with no seeds or roles;
+`--skip-vault` excluded unrelated Vault operations. No publication, curator
+decision, runtime switch, household opt-in, or stock change was authorized.
+
+A fresh schema and data export of `public`, `private`, `auth`, `storage`, and
+`capture_guard` is retained outside Git at
+`/private/tmp/cellarmanager-pr219-backup.jwh0ek` (directory mode `0700`,
+files `0600`). SHA-256:
+`8c01c64e28d7d3038bb838c1593e7cb16cd788e30c5604060d6137536ae580d3`
+for `schema.sql`, and
+`afca57d04902c1e73d55f8a8a7cc33dc3f1fa69d3b42757820910f9c4287d531`
+for `data.sql`. The data dump again warned about circular foreign keys.
+The backup restored into a disposable local Postgres database with triggers
+disabled **only in the data-restore session**. The first restore stopped on
+a local role-permission difference; the disposable database was recreated
+and restored with its administrator role. After setting its database owner
+to the deployment role, PR #219's SQL succeeded there with `ON_ERROR_STOP=1`.
+The restored snapshot had 810 wines, four households, six auth users, four
+prior private reports, one draft version, zero publications, zero enabled
+runtime switches, and zero enabled household rollouts. Those counts were
+identical after rehearsal. The new function was executable by `authenticated`
+but not `anon`; the underlying report recorder remained inaccessible to
+`authenticated`. The disposable database was dropped after verification.
+
+The authorized `supabase db push --skip-vault --yes` applied exactly
+`20261027100000` with exit code 0. A post-deployment CLI dry run reported
+zero pending migrations. A fresh **live schema** export confirms the new
+function is `SECURITY DEFINER`, checks the signed-in household owner's
+identity and an existing owner-bound report on an unpublished draft, grants
+execution only to `authenticated`, and leaves the report recorder granted
+only to `service_role`. The migration contains no data changes; no new live
+report was requested during postflight. The live data counts were not
+re-queried in this check, so the restored-copy counts above are not presented
+as post-deployment live counts. The preview owner walkthrough remains open.
+
+The protected export is temporary and sensitive, not a managed backup.
+Retain it until the owner walkthrough and a deliberate recovery decision;
+restoring it over an active database could erase later user changes and is
+not an automatic rollback. Gate 2 remains In progress and Gate 3 remains
+Blocked; the draft is not published or active for any household.
