@@ -259,7 +259,7 @@ Blocked; the draft is not published or active for any household.
 
 The owner separately authorized **only** PR #220's migration
 `20261027110000_owner_draft_shadow_refresh_reuse.sql` on linked
-`cellarmanager-v02-dev` (`sxdqcvnjtayfxinyospb`) after backup and preflight.
+`cellarmanager-v02-dev` (`sxdqcvnjtayfxinyospb`) with backup and preflight.
 The CLI dry run named exactly that migration, with no seeds or roles;
 `--skip-vault` excluded unrelated Vault operations. The PR's web, database,
 dependency, Worker build, and CI gate checks passed before deployment.
@@ -267,12 +267,27 @@ dependency, Worker build, and CI gate checks passed before deployment.
 A fresh schema and data export of `public`, `private`, `auth`, `storage`, and
 `capture_guard` is retained outside Git at
 `/private/tmp/cellarmanager-pr220-backup.ijUEok` (directory mode `0700`,
-files `0600`). SHA-256: `4bfc5a72683860a45d804bf66f5f71f0099b8158ebaad50ffc73dcc49ecc3aa2`
-for `schema.sql`, and `20569dd228883368f569ce327b04680c8659914f423a48ef6515ddc4a2195dde`
-for `data.sql`. The data export repeated the circular-FK warnings; this is
-a protected recovery snapshot, not a tested live rollback. Unlike the earlier
-#219 deployment, this export was not restored into a disposable database;
-the SQL behavior was exercised in the clean CI database suite.
+files `0600`). The schema export completed before the push, but the data
+export was **still running when the migration was applied**. An interim
+15 MB data-file hash was mistakenly recorded in the first edition of this
+log; it was not the hash of a completed backup. The data dump subsequently
+completed with its PostgreSQL completion marker. Final SHA-256:
+`4bfc5a72683860a45d804bf66f5f71f0099b8158ebaad50ffc73dcc49ecc3aa2`
+for `schema.sql`, and
+`f55950607b79a8d42b3160d8f720d69d8151af2c826341947e41a05104f8ecfd`
+for `data.sql` (117,175,591 bytes). The dump repeated the circular-FK
+warnings. This timing did **not** meet the promised complete-and-verified
+backup-before-push procedure; do not repeat it.
+
+After this was discovered, the completed export was restored with
+`ON_ERROR_STOP=1` into an isolated local database. The first restore stopped
+on a local role mismatch; the disposable database was recreated under its
+administrator role and both schema and data then restored successfully.
+The restored snapshot contained 810 wines, four households, six auth users,
+two reference versions, 12 private reports, one owner decision, and zero
+publications or household rollouts. The isolated database was removed after
+validation. This proves the completed export is restorable; it is not a
+tested rollback of the live service.
 
 The authorized `supabase db push --skip-vault --yes` applied exactly
 `20261027110000` with exit code 0. A post-deployment dry run reported zero
