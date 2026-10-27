@@ -19,8 +19,17 @@ export interface SharedWindowCandidateStatus {
 interface Options {
   rpc?: (name: string, parameters: Record<string, unknown>) => PromiseLike<{
     data?: unknown
-    error: { message: string } | null
+    error: { message: string; code?: string } | null
   }>
+}
+
+class RpcCallError extends Error {
+  readonly code?: string
+
+  constructor(message: string, code?: string) {
+    super(message)
+    this.code = code
+  }
 }
 
 async function call(name: string, parameters: Record<string, unknown>, options: Options): Promise<unknown> {
@@ -30,7 +39,7 @@ async function call(name: string, parameters: Record<string, unknown>, options: 
     rpc = supabase.rpc.bind(supabase)
   }
   const result = await rpc(name, parameters)
-  if (result.error) throw new Error(result.error.message)
+  if (result.error) throw new RpcCallError(result.error.message, result.error.code)
   return result.data
 }
 
@@ -78,8 +87,15 @@ export async function submitSharedWindowCandidate(
   return result
 }
 
-export async function getMySharedWindowCandidates(wineId: string, options: Options = {}): Promise<SharedWindowCandidateStatus[]> {
-  const result = await call("get_my_drinking_window_candidates_for_wine", { p_wine_id: wineId }, options)
+export async function getMySharedWindowCandidates(wineId: string, options: Options = {}): Promise<SharedWindowCandidateStatus[] | null> {
+  let result: unknown
+  try {
+    result = await call("get_my_drinking_window_candidates_for_wine", { p_wine_id: wineId }, options)
+  } catch (error) {
+    // Worker code may deploy before its separately authorized DB migration.
+    if (error instanceof RpcCallError && error.code === "PGRST202") return null
+    throw error
+  }
   if (!Array.isArray(result)) throw new Error("Invalid shared-window candidate response")
   return result.map((item: unknown) => {
     if (!item || typeof item !== "object" || Array.isArray(item)) {

@@ -48,9 +48,15 @@ describe("shared drinking-window suggestion panel", () => {
     expect(container.textContent).toContain("Awaiting shared-reference review")
   })
 
-  it("does not allow submission offline", async () => {
+  it("does not expose submission offline before availability is established", async () => {
     await act(async () => root.render(<SharedWindowCandidatePanel formatMl={750} isOnline={false} vintage={2023} wineId="wine-23" />))
-    expect((container.querySelector('button[type="submit"]') as HTMLButtonElement).disabled).toBe(true)
+    expect(container.querySelector('button[type="submit"]')).toBeNull()
     expect(getMySharedWindowCandidates).not.toHaveBeenCalled()
+  })
+
+  it("stays hidden if the database migration is not yet installed", async () => {
+    vi.mocked(getMySharedWindowCandidates).mockResolvedValue(null)
+    await act(async () => root.render(<SharedWindowCandidatePanel formatMl={750} isOnline vintage={2023} wineId="wine-23" />))
+    expect(container.querySelector(".shared-window-candidate-panel")).toBeNull()
   })
 })

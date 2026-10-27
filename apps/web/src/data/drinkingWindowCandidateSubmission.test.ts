@@ -57,4 +57,9 @@ describe("shared drinking-window candidate submission", () => {
     }])
     expect(rpc).toHaveBeenCalledWith("get_my_drinking_window_candidates_for_wine", { p_wine_id: "wine-id" })
   })
+
+  it("hides the feature while its separately deployed database function is absent", async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: null, error: { code: "PGRST202", message: "Function not found" } })
+    await expect(getMySharedWindowCandidates("wine-id", { rpc })).resolves.toBeNull()
+  })
 })

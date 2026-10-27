@@ -30,6 +30,7 @@ export function SharedWindowCandidatePanel({ formatMl, isOnline, vintage, wineId
   const [rationale, setRationale] = useState("")
   const [urls, setUrls] = useState("")
   const [candidates, setCandidates] = useState<SharedWindowCandidateStatus[]>([])
+  const [available, setAvailable] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
@@ -38,9 +39,16 @@ export function SharedWindowCandidatePanel({ formatMl, isOnline, vintage, wineId
     if (!isOnline) return
     let active = true
     void getMySharedWindowCandidates(wineId)
-      .then((items) => { if (active) setCandidates(items) })
+      .then((items) => {
+        if (!active) return
+        setAvailable(items !== null)
+        if (items) setCandidates(items)
+      })
       .catch((caught: unknown) => {
-        if (active) setError(caught instanceof Error ? caught.message : "Unable to load shared-date suggestions")
+        if (active) {
+          setAvailable(true)
+          setError(caught instanceof Error ? caught.message : "Unable to load shared-date suggestions")
+        }
       })
     return () => { active = false }
   }, [isOnline, wineId])
@@ -59,7 +67,7 @@ export function SharedWindowCandidatePanel({ formatMl, isOnline, vintage, wineId
         rationale,
         evidenceUrls: urls.split(/\r?\n/).map((url) => url.trim()).filter(Boolean),
       })
-      setCandidates(await getMySharedWindowCandidates(wineId))
+      setCandidates(await getMySharedWindowCandidates(wineId) ?? [])
       setMessage(t("Suggestion sent for shared-reference review. No cellar dates changed."))
     } catch (caught: unknown) {
       setError(caught instanceof Error ? t(caught.message) : t("Could not send this suggestion"))
@@ -67,6 +75,8 @@ export function SharedWindowCandidatePanel({ formatMl, isOnline, vintage, wineId
       setBusy(false)
     }
   }
+
+  if (!available) return null
 
   return <details className="research-inbox shared-window-candidate-panel">
     <summary>{t("Suggest dates for the shared reference")}</summary>
