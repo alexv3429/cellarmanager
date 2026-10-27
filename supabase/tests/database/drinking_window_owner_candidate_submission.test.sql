@@ -14,6 +14,9 @@ select ok(not has_function_privilege('anon',
 select ok(not has_table_privilege('authenticated',
     'public.drinking_window_candidates', 'insert'),
     'Browser clients cannot bypass the owner-scoped submission RPC');
+select ok(not has_table_privilege('authenticated',
+    'private.drinking_window_owner_submissions', 'select'),
+    'Owner attribution stays in a private table');
 
 insert into auth.users (id, email) values
     ('f9300000-0000-4000-8000-000000000001', 'candidate-member@example.test');
@@ -107,6 +110,9 @@ reset role;
 select is((select count(*) from public.drinking_window_candidates
     where id = (select id from submitted_candidate)), 1::bigint,
     'Exactly one inert candidate was staged');
+select is((select count(*) from private.drinking_window_owner_submissions
+    where candidate_id = (select id from submitted_candidate)), 1::bigint,
+    'One private owner attribution was recorded');
 select is((select source_identity ->> 'release_id'
     from public.drinking_window_candidates where id = (select id from submitted_candidate)),
     'f9300000-0000-4000-8000-000000000013',

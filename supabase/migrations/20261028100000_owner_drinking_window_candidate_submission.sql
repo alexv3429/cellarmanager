@@ -3,12 +3,16 @@ begin;
 -- A cellar owner may contribute an exact-release suggestion without gaining
 -- curator or publication privileges. The existing candidate queue remains
 -- inert: a curator review draft is not a shared reference version.
-alter table public.drinking_window_candidates
-    add column submitted_by uuid references auth.users(id) on delete set null;
-
-create unique index drinking_window_candidates_owner_submission_unique
-    on public.drinking_window_candidates(submitted_by, source_sha256)
-    where submitted_by is not null;
+-- Keep ownership private and leave the long-standing workbook candidate row
+-- shape unchanged (its staging replay compares that full row to source data).
+create table private.drinking_window_owner_submissions (
+    candidate_id uuid primary key references public.drinking_window_candidates(id),
+    submitted_by uuid not null references auth.users(id) on delete cascade,
+    source_sha256 text not null,
+    unique (submitted_by, source_sha256)
+);
+revoke all on private.drinking_window_owner_submissions
+    from public, anon, authenticated, powersync_role;
 
 -- Keep new owner submissions visible even while the historical workbook
 -- backlog fills the older, 100-row curator queue. The remainder of the
@@ -82,12 +86,15 @@ begin
                         'disposition', draft.disposition,
                         'created_at', draft.created_at
                     ) end
-            ) order by (candidate.submitted_by is not null) desc,
+            ) order by candidate.owner_submitted desc,
                        candidate.created_at desc, candidate.id desc)
             from (
-                select * from public.drinking_window_candidates
+                select candidate.*, submission.candidate_id is not null as owner_submitted
+                from public.drinking_window_candidates candidate
+                left join private.drinking_window_owner_submissions submission
+                    on submission.candidate_id = candidate.id
                 where review_status <> 'rejected'
-                order by (submitted_by is not null) desc,
+                order by owner_submitted desc,
                          created_at desc, id desc limit 100
             ) candidate
             left join lateral (
@@ -120,6 +127,7 @@ declare
     v_cuvee text;
     v_identity jsonb;
     v_hash text;
+    v_locator text;
     v_id uuid := pg_catalog.gen_random_uuid();
     v_existing uuid;
 begin
@@ -191,13 +199,17 @@ begin
             'best_start_year', p_best_start_year,
             'best_end_year', p_best_end_year
         )::text, 'UTF8'), 'sha256'), 'hex');
-    select id into v_existing from public.drinking_window_candidates
+    v_locator := 'cellar-owner-proposal:' || v_hash;
+    select candidate_id into v_existing from private.drinking_window_owner_submissions
     where submitted_by = auth.uid() and source_sha256 = v_hash;
     if v_existing is not null then
         return v_existing;
     end if;
-    if (select count(*) from public.drinking_window_candidates
-        where submitted_by = auth.uid() and review_status <> 'rejected') >= 20 then
+    if (select count(*) from private.drinking_window_owner_submissions submission
+        join public.drinking_window_candidates candidate
+            on candidate.id = submission.candidate_id
+        where submission.submitted_by = auth.uid()
+          and candidate.review_status <> 'rejected') >= 20 then
         raise exception using errcode = '23514',
             message = 'Too many open suggestions; wait for review before adding more';
     end if;
@@ -205,18 +217,21 @@ begin
     insert into public.drinking_window_candidates (
         id, source_sha256, source_locator, candidate_scope, source_identity,
         wine_color, vintage_year, first_trial_year, best_start_year,
-        best_end_year, review_reason, submitted_by
+        best_end_year, review_reason
     ) values (
-        v_id, v_hash, 'cellar-owner-proposal:' || v_id::text, 'release',
+        v_id, v_hash, v_locator, 'release',
         v_identity, v_wine.color, v_wine.vintage, p_first_trial_year,
         p_best_start_year, p_best_end_year,
-        'Owner-submitted proposal: identity, source rights and dates need independent review.',
-        auth.uid()
-    ) on conflict do nothing returning id into v_existing;
+        'Owner-submitted proposal: identity, source rights and dates need independent review.'
+    ) on conflict (source_sha256, source_locator) do nothing returning id into v_existing;
     if v_existing is null then
         select id into v_existing from public.drinking_window_candidates
-        where submitted_by = auth.uid() and source_sha256 = v_hash;
+        where source_sha256 = v_hash and source_locator = v_locator;
     end if;
+    insert into private.drinking_window_owner_submissions (
+        candidate_id, submitted_by, source_sha256
+    ) values (v_existing, auth.uid(), v_hash)
+    on conflict (submitted_by, source_sha256) do nothing;
     return v_existing;
 end;
 $$;
@@ -256,13 +271,15 @@ begin
             'best_end_year', candidate.best_end_year
         ) order by candidate.created_at desc, candidate.id desc)
         from public.drinking_window_candidates candidate
+        join private.drinking_window_owner_submissions submission
+            on submission.candidate_id = candidate.id
         left join lateral (
             select draft.disposition
             from private.drinking_window_candidate_review_drafts draft
             where draft.candidate_id = candidate.id
             order by draft.created_at desc, draft.id desc limit 1
         ) review on true
-        where candidate.submitted_by = auth.uid()
+        where submission.submitted_by = auth.uid()
           and candidate.source_identity ->> 'release_id' = v_wine.wine_reference_id::text
           and candidate.source_identity ->> 'format_ml' = v_wine.format_ml::text
     ), '[]'::jsonb);
