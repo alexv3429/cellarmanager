@@ -199,7 +199,7 @@ describe("reference draft curator review", () => {
     expect(container.textContent).not.toContain("Owner-authored provisional")
   })
 
-  it("explains that disagreement blocks publication but cannot edit the draft", async () => {
+  it("explains that disagreement blocks publication and directs the reviewer to correction tools", async () => {
     await act(async () => root.render(<LanguageContext.Provider value={{
       language: "fr", preference: "fr", setSavedPreference: () => undefined,
       t: (key, values) => translate("fr", key, values),
@@ -213,7 +213,8 @@ describe("reference draft curator review", () => {
       }
     })
     expect(container.textContent).toContain("Un désaccord bloque la publication, mais ne change pas ces dates")
-    expect(container.textContent).toContain("Il faudra ensuite préparer et réviser un nouveau brouillon")
+    expect(container.textContent).toContain("utilisez les outils de correction ci-dessus")
+    expect(container.textContent).toContain("Corriger les dates ou les sources")
     expect(container.textContent).toContain("Que faut-il corriger ?")
     expect(container.textContent).toContain("Enregistrer le désaccord")
     expect(recordReferenceReview).not.toHaveBeenCalled()

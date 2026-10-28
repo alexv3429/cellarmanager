@@ -9,6 +9,7 @@ import {
   type ReferenceVerdict,
 } from "../data/drinkingWindowReferenceDrafts"
 import { useLanguage } from "../i18n/useLanguage"
+import { DraftRowCorrectionEditor } from "./DraftRowCorrectionEditor"
 import { Notice } from "./Notice"
 
 const PilotDecisionNote = lazy(() => import("./PilotDecisionNote"))
@@ -68,6 +69,7 @@ export function ReferenceDraftReview({ isOnline }: Props) {
   const [workspace, setWorkspace] = useState<ReferenceDraftWorkspace | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
   const [reconsidered, setReconsidered] = useState<string | null>(null)
+  const [correcting, setCorrecting] = useState<string | null>(null)
   const [verdict, setVerdict] = useState<ReferenceVerdict | "">("")
   const [rationale, setRationale] = useState("")
   const [loading, setLoading] = useState(false)
@@ -156,6 +158,7 @@ export function ReferenceDraftReview({ isOnline }: Props) {
             setSelected((current) => current === key ? null : key)
             setOpenSource(null)
             setReconsidered(null)
+            setCorrecting(null)
             setRationale("")
             setVerdict("")
           }}>
@@ -188,6 +191,13 @@ export function ReferenceDraftReview({ isOnline }: Props) {
               </li>)}</ul>}
             {subject.reviews.length ? <p>{t("Current reviewer decisions")}: {subject.reviews.map((review) =>
               `${t(review.verdict === "approve" ? "Approved" : "Disputed")} — ${review.rationale}`).join("; ")}</p> : null}
+            {subject.kind === "row" ? <>
+              <button type="button" onClick={() => setCorrecting(correcting === key ? null : key)}>
+                {t(correcting === key ? "Hide correction tools" : "Correct dates or sources")}
+              </button>
+              {correcting === key ? <DraftRowCorrectionEditor versionId={draft.versionId} rowId={subject.id}
+                subjectHash={subject.hash} isOnline={isOnline} onChanged={refresh} /> : null}
+            </> : null}
             {subject.issues.length === 0 && reconsidered !== key ? <button type="button"
               onClick={() => setReconsidered(key)}>{t("Review this decision again")}</button> :
             <form onSubmit={(event) => void save(event, draft.versionId, subject)}>
@@ -198,7 +208,7 @@ export function ReferenceDraftReview({ isOnline }: Props) {
                   <option value="disagree">{t("Flag a disagreement; block publication")}</option>
                 </select>
               </label>
-              {verdict === "disagree" ? <p role="status">{t("A disagreement blocks publication but does not change these dates. Explain what should change, including your proposed dates if you have them. A revised draft must then be prepared and reviewed.")}</p> : null}
+              {verdict === "disagree" ? <p role="status">{t("A disagreement blocks publication but does not change these dates. Explain what should change, then use the correction tools above and review the updated draft again.")}</p> : null}
               <label>{t(verdict === "disagree" ? "What should be corrected?" : "Why this decision?")}
                 <textarea required minLength={10} maxLength={2000} value={rationale}
                   onChange={(event) => setRationale(event.target.value)} />

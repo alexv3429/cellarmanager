@@ -33,8 +33,14 @@ and follow separate publication/owner-choice gates. All three migrations in
 this slice were applied to the linked project on 28 October after a protected
 backup and successful restored-clone rehearsal. No suggestion or new draft was
 created during deployment, and publication and rollouts remain off. It advances Gate 4 but does not
-complete it. Next: in-app source/evidence linking and correction of staged
-rows, safe supersession rules, a paginated maintenance queue, and the mobile
+complete it. The **next proposed slice, not deployed**, gives an authorized
+reviewer an in-app correction action for an unpublished exact-release row:
+change its three dates and rationale, or link/remove an **existing** reviewed,
+reusable exact-release maturity-window source. Changes are audited and stale
+the prior row approval and whole-cellar comparison; they do not publish dates.
+It cannot register or verify a new evidence record from an owner-submitted URL.
+That source-intake and rights-review workflow remains the next Gate 4 task,
+followed by safe supersession, a paginated maintenance queue, and the mobile
 interface redesign. The current first-100-candidate workspace is only a
 bounded intake view, not a complete paginated maintenance queue.
 
@@ -203,7 +209,7 @@ here, not when its PR merges. Dates are not delivery promises.
 | 1. Close owner-facing behavior | In progress | Three-date editing, comparison, identity review, and private group choice are merged. The official card, editor, and draft selector were inspected read-only; mobile, actual edit/clear, stale-report, emergency-off, and owner acceptance remain. |
 | 2. Deploy database capabilities | In progress | The authorized 19-migration batch, PR #215 replacement, PRs #219–#220 owner-refresh migrations, and PRs #222–#223 owner-suggestion/draft-staging migrations are live. The #222–#223 batch followed a completed protected backup and restored-clone rehearsal; see the [deployment record](drinking-window-gate2-deployment.md). Three existing advice payloads matched the prior batch snapshot; one owner-confirmed pilot link recalculated its old-model advice. The owner tested unchanged refresh and approved the current comparison. Switch, publication, and household opt-in remain off. |
 | 3. Publish one real pilot | Blocked by unfinished Gate 1–2 checks, separate publication authorization, and live postflight | One approved cellar can see a verified real window. |
-| 4. Make reference maintenance routine | In progress (intake and staging live) | Owner exact-release suggestions can enter curator review; a reviewed suggestion can be staged in an unpublished copy. Evidence linking, in-app correction, safe supersession, pagination, and separate publication still remain. |
+| 4. Make reference maintenance routine | In progress (intake and staging live; correction proposed) | Owner exact-release suggestions can enter curator review; a reviewed suggestion can be staged in an unpublished copy. The next PR proposes row correction and linking existing verified evidence. New-source registration/rights review, safe supersession, pagination, and separate publication still remain. |
 | 5. Establish and measure initial coverage | Blocked by gate 4 | One additional high-impact reference is reviewed; gaps remain visible. |
 | 6. Release and operate | Blocked by gates 3–5 | The supported feature has repeatable checks, monitoring, and rollback. |
 
@@ -496,10 +502,13 @@ meaningful. At minimum, each update must:
 | 2026-10-27 · `codex/drinking-window-pilot-deployment` prepublication audit | Gate 3's database preflight is green, but the pilot is **not published** and Gates 1–2 are not yet accepted. The owner accepted the latest comparison and confirmed unchanged refresh preserves that decision. No live SQL write was made in this audit. | Read-only checks on linked `cellarmanager-v02-dev` show draft version 2, zero publication issues, a matching zero-issue preflight, latest report sequence 12 covering 802 wines with one non-manual match, current owner approval/hash, and an unchanged whole-cellar snapshot. Of four households, exactly one has a qualifying approval. Publications 0, enabled household rollouts 0, runtime switch off. The earlier PR #220 backup log used a hash from a still-running data dump; [the corrected record](drinking-window-gate2-deployment.md) gives the final hash and documents a successful isolated restore. Owner-facing checks, explicit publication authority, and live postflight remain open. |
 | 2026-10-27 · 23-profile research bundle intake | Gate 4 remains Not started and Gate 5 remains Blocked; the ZIP was validated privately, not imported into the shared reference or cellar. | [Intake record](drinking-window-producer-bundle-intake-2026-10-27.md): all 23 JSON files pass schema 1.1.0 and cross-reference checks; 670 750 ml proposals are all `candidate_not_approved` and zero are publishable. The supplied B/C/D grades are metadata triage only, not verified date evidence. This PR also explains conflicting identities in the owner comparison before its disabled approval action. |
 | 2026-10-28 · post-merge #222–#223 capability deployment | Gate 2 and Gate 4 remain In progress; Gate 3 remains Blocked. The owner authorized the exact three pending migrations. They were applied to linked `cellarmanager-v02-dev` after a completed protected schema/data backup and a successful restored-clone rehearsal. No suggestion, staged draft, publication, switch, rollout, stock, or cellar advice was changed by the operator. | [Deployment record](drinking-window-gate2-deployment.md): dry run listed exactly `20261028100000`, `20261028110000`, and `20261028120000`; all are in the linked ledger with zero pending. Live counts remain 810 wines, four households, six users, two reference versions, zero publications, zero enabled switches/rollouts, zero new submissions/stagings. Anonymous RPC execution and ordinary-role private-table reads are denied; the public app returned HTTP 200. The next Gate 4 slice must make draft correction and verified evidence review usable in-app. |
+| 2026-10-28 · proposed exact-release correction slice | Gate 4 remains In progress; Gate 3 remains Blocked. The migration and UI are proposed, not applied or released. A curator can correct the three dates and rationale of an unpublished exact-release row and attach/remove only existing, reviewed, reusable exact-release date evidence. Each edit has an append-only audit event; prior row approvals and whole-cellar comparison hashes become stale. No new source is registered, verified, or treated as proof merely because its URL was submitted. | A restored, disposable database accepted the migration; 20 rollback-only SQL assertions covered access, stale approval, whole-draft invalidation, concurrency, evidence gating, same-source date links, audit, and no publication/rollout. Full web tests and build pass. The distinct source-intake/rights-review path is still missing; no live migration, cellar edit, publication, switch, or rollout is authorized by this PR. |
 
-**Next actions:** for Gate 4, implement in-app correction of a staged row and
-link separately verified date evidence before asking for fresh review; then
-address safe supersession, a paginated queue, and the mobile workflow. These
+**Next actions:** for Gate 4, review and deploy the proposed exact-release
+correction/linking slice after a separate migration authorization. Then provide
+in-app registration and actual verification of new evidence and reuse rights;
+only after that address safe supersession, a paginated queue, and the mobile
+workflow. These
 capabilities do not authorize publication. In parallel, complete the remaining
 Gate 1–2 owner-facing walkthrough
 (mobile layout, actual manual edit/clear on a chosen test wine, stale-report
