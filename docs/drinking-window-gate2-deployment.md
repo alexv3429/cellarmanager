@@ -308,3 +308,48 @@ walkthrough and a deliberate recovery decision; restoring it over an active
 database would erase later user changes and is not an automatic rollback.
 Gate 3 remains blocked; no drinking-window reference was published or
 activated by this migration.
+
+## 28 October follow-up: owner suggestions and unpublished draft staging
+
+After PRs #222 and #223 merged, the owner explicitly authorized the pending
+database deployment with backup and rehearsal. The target remained linked
+`cellarmanager-v02-dev` (`sxdqcvnjtayfxinyospb`). A linked-ledger check and
+`supabase db push --dry-run --skip-vault` named exactly three local-only
+migrations: `20261028100000_owner_drinking_window_candidate_submission.sql`,
+`20261028110000_drinking_window_candidate_draft_staging.sql`, and
+`20261028120000_drinking_window_draft_identity_titles.sql`. There were no
+pending remote-only migrations, seeds, roles, or Vault operations in this push.
+
+A fresh protected export of `public`, `private`, `auth`, `storage`, and
+`capture_guard` completed **before** the live push. It is retained temporarily
+outside Git at `/private/tmp/cellarmanager-pr222-223-backup.ufOGs1` (directory
+mode `0700`, both files `0600`). Completed-file SHA-256: `schema.sql`
+`a68fef81bc92a4aac31fc2c4e269eec37327f2c523bb16b43b902ca2e57c5815`
+(1,691,952 bytes); `data.sql`
+`da0f105ab82fb3361eb199958bf0fcee774d8ccbcc5eca2bc67a1fb813845fb8`
+(117,224,750 bytes). The data dump warned about existing circular foreign
+keys. Schema and data restored with `ON_ERROR_STOP=1` into a disposable local
+Supabase Postgres database; triggers were disabled **only in the data-restore
+session**. An initial schema attempt under the non-superuser `postgres` role
+stopped on a role-ownership command, so that disposable database was recreated
+and restored under `supabase_admin`. The restored baseline had 810 wines, four
+households, six auth users, two reference versions, and zero publications,
+enabled switches, or enabled rollouts. All three migrations then succeeded in
+order on that clone as the deployment role; those counts stayed unchanged and
+both private staging tables were present. The disposable database was dropped.
+
+The authorized `supabase db push --skip-vault --yes` applied exactly the three
+files with exit code 0. A fresh linked ledger shows all three applied and no
+pending migration. Aggregate-only live postflight still shows 810 wines,
+four households, six users, two reference versions, **zero** publications,
+enabled switches, enabled household rollouts, owner submissions, or candidate
+stagings. Anonymous execution of owner submission and curator staging is
+denied; `authenticated` has only the guarded RPC entrypoints, not direct read
+access to either private staging table. The public app returned HTTP 200.
+No live owner submission, curator staging, approval, comparison, publication,
+household opt-in, stock action, or advice activation was performed in this
+deployment check. An end-to-end owner/curator walkthrough remains open.
+
+This export is temporary and sensitive, not a managed backup. Do not restore
+it over subsequent live user changes automatically. Gate 2 and Gate 4 remain
+in progress; Gate 3 publication is still separately gated and unauthorized.
