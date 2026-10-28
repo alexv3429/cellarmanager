@@ -8825,6 +8825,26 @@
   overflow-wrap: anywhere;
 }
 
+.drinking-window-draft-correction {
+  display: grid;
+  gap: 0.7rem;
+  min-width: 0;
+  padding: 0.9rem;
+  border: 1px solid var(--border-color, #54434a);
+  border-radius: 0.6rem;
+}
+
+.drinking-window-draft-correction form {
+  display: grid;
+  gap: 0.7rem;
+  min-width: 0;
+}
+
+.drinking-window-draft-correction h5,
+.drinking-window-draft-correction p {
+  margin: 0;
+}
+
 .drinking-window-review-source-status {
   display: block;
   color: var(--muted-color, #a99aa0);
