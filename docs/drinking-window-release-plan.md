@@ -18,10 +18,10 @@ release target.
 
 ## Status at 28 October 2026
 
-**Current implementation slice (proposed, not deployed):** merged PR #222 lets
+**Current implementation slice (merged and database-deployed, not released):** PR #222 lets
 a cellar owner submit a three-date suggestion for a confirmed exact release
 and bottle size from its wine card, and see its review status. An authorized
-reviewer can inspect it in the review queue. The next proposed slice adds a
+reviewer can inspect it in the review queue. Merged PR #223 adds a
 reviewer action that copies a selected unpublished reference version, carries
 forward its rows, groups, memberships and evidence links, and stages one
 reviewed exact-release suggestion in the copy. The review list now names the
@@ -29,8 +29,10 @@ exact producer, cuvée, vintage, colour and bottle size for release rows. The ol
 comparisons, and all cellar advice remain unchanged. It neither copies old
 approvals nor treats submitted URLs as reviewed evidence; the new draft must
 link its own verified sources, pass preflight, receive fresh curator review,
-and follow separate publication/owner-choice gates. No migration in this
-slice has been applied to the linked project. It advances Gate 4 but does not
+and follow separate publication/owner-choice gates. All three migrations in
+this slice were applied to the linked project on 28 October after a protected
+backup and successful restored-clone rehearsal. No suggestion or new draft was
+created during deployment, and publication and rollouts remain off. It advances Gate 4 but does not
 complete it. Next: in-app source/evidence linking and correction of staged
 rows, safe supersession rules, a paginated maintenance queue, and the mobile
 interface redesign. The current first-100-candidate workspace is only a
@@ -199,9 +201,9 @@ here, not when its PR merges. Dates are not delivery promises.
 | --- | --- | --- |
 | 0. Reconcile deployment state | Accepted | All 19 migrations replayed on a private clone; the fresh backup, restore, live preflight, and deployment record complete the just-in-time checks. |
 | 1. Close owner-facing behavior | In progress | Three-date editing, comparison, identity review, and private group choice are merged. The official card, editor, and draft selector were inspected read-only; mobile, actual edit/clear, stale-report, emergency-off, and owner acceptance remain. |
-| 2. Deploy database capabilities | In progress | The authorized 19-migration batch, PR #215 replacement, and PRs #219–#220 owner-refresh migrations are live. PR #220's completed backup was restored successfully after deployment, but its data dump was still running during the push; see the corrective deployment record. Three existing advice payloads matched the prior batch snapshot; one owner-confirmed pilot link recalculated its old-model advice. The owner tested unchanged refresh and approved the current comparison. Switch, publication, and household opt-in remain off. |
+| 2. Deploy database capabilities | In progress | The authorized 19-migration batch, PR #215 replacement, PRs #219–#220 owner-refresh migrations, and PRs #222–#223 owner-suggestion/draft-staging migrations are live. The #222–#223 batch followed a completed protected backup and restored-clone rehearsal; see the [deployment record](drinking-window-gate2-deployment.md). Three existing advice payloads matched the prior batch snapshot; one owner-confirmed pilot link recalculated its old-model advice. The owner tested unchanged refresh and approved the current comparison. Switch, publication, and household opt-in remain off. |
 | 3. Publish one real pilot | Blocked by unfinished Gate 1–2 checks, separate publication authorization, and live postflight | One approved cellar can see a verified real window. |
-| 4. Make reference maintenance routine | In progress (intake merged; staging slice proposed) | Owner exact-release suggestions enter curator review; a reviewed suggestion can be staged in an unpublished copy after this migration. Evidence linking, in-app correction, safe supersession, pagination, and separate publication still remain. |
+| 4. Make reference maintenance routine | In progress (intake and staging live) | Owner exact-release suggestions can enter curator review; a reviewed suggestion can be staged in an unpublished copy. Evidence linking, in-app correction, safe supersession, pagination, and separate publication still remain. |
 | 5. Establish and measure initial coverage | Blocked by gate 4 | One additional high-impact reference is reviewed; gaps remain visible. |
 | 6. Release and operate | Blocked by gates 3–5 | The supported feature has repeatable checks, monitoring, and rollback. |
 
@@ -493,8 +495,13 @@ meaningful. At minimum, each update must:
 | 2026-10-27 · PR #220 authorized refresh deployment | Gate 3 remains Blocked. The owner separately approved only migration `20261027110000` on linked `cellarmanager-v02-dev`; it has now been applied. Live database function and permission state changed, but no owner decision, publication, household rollout, stock, or wine data was changed by the deployment. | [Deployment record](drinking-window-gate2-deployment.md): exactly one migration in the preflight, protected schema/data export, all PR checks green, successful push, zero pending migrations, and live-schema confirmation of unchanged-report reuse. No live report was requested during postflight. The owner must decide the already-superseded latest comparison once, then verify an unchanged refresh retains the saved decision. The visible Côte du Py difference remains a comparison result until publication. |
 | 2026-10-27 · `codex/drinking-window-pilot-deployment` prepublication audit | Gate 3's database preflight is green, but the pilot is **not published** and Gates 1–2 are not yet accepted. The owner accepted the latest comparison and confirmed unchanged refresh preserves that decision. No live SQL write was made in this audit. | Read-only checks on linked `cellarmanager-v02-dev` show draft version 2, zero publication issues, a matching zero-issue preflight, latest report sequence 12 covering 802 wines with one non-manual match, current owner approval/hash, and an unchanged whole-cellar snapshot. Of four households, exactly one has a qualifying approval. Publications 0, enabled household rollouts 0, runtime switch off. The earlier PR #220 backup log used a hash from a still-running data dump; [the corrected record](drinking-window-gate2-deployment.md) gives the final hash and documents a successful isolated restore. Owner-facing checks, explicit publication authority, and live postflight remain open. |
 | 2026-10-27 · 23-profile research bundle intake | Gate 4 remains Not started and Gate 5 remains Blocked; the ZIP was validated privately, not imported into the shared reference or cellar. | [Intake record](drinking-window-producer-bundle-intake-2026-10-27.md): all 23 JSON files pass schema 1.1.0 and cross-reference checks; 670 750 ml proposals are all `candidate_not_approved` and zero are publishable. The supplied B/C/D grades are metadata triage only, not verified date evidence. This PR also explains conflicting identities in the owner comparison before its disabled approval action. |
+| 2026-10-28 · post-merge #222–#223 capability deployment | Gate 2 and Gate 4 remain In progress; Gate 3 remains Blocked. The owner authorized the exact three pending migrations. They were applied to linked `cellarmanager-v02-dev` after a completed protected schema/data backup and a successful restored-clone rehearsal. No suggestion, staged draft, publication, switch, rollout, stock, or cellar advice was changed by the operator. | [Deployment record](drinking-window-gate2-deployment.md): dry run listed exactly `20261028100000`, `20261028110000`, and `20261028120000`; all are in the linked ledger with zero pending. Live counts remain 810 wines, four households, six users, two reference versions, zero publications, zero enabled switches/rollouts, zero new submissions/stagings. Anonymous RPC execution and ordinary-role private-table reads are denied; the public app returned HTTP 200. The next Gate 4 slice must make draft correction and verified evidence review usable in-app. |
 
-**Next action:** complete the remaining Gate 1–2 owner-facing walkthrough
+**Next actions:** for Gate 4, implement in-app correction of a staged row and
+link separately verified date evidence before asking for fresh review; then
+address safe supersession, a paginated queue, and the mobile workflow. These
+capabilities do not authorize publication. In parallel, complete the remaining
+Gate 1–2 owner-facing walkthrough
 (mobile layout, actual manual edit/clear on a chosen test wine, stale-report
 behavior, and emergency-off readiness), record owner acceptance, and obtain
 explicit authority for the exact version 2 pilot publication. Then take and
