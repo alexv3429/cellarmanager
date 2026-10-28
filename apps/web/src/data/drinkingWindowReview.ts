@@ -178,3 +178,24 @@ export async function saveDrinkingWindowCandidateReview(draft: CandidateReviewDr
     p_disposition: draft.disposition,
   }, options))
 }
+
+export async function stageDrinkingWindowCandidateAsDraft(input: {
+  candidateId: string
+  expectedReviewId: string
+  baseVersionId: string
+}, options: Options = {}): Promise<{ versionId: string; versionNumber: number; rowId: string; alreadyStaged: boolean }> {
+  const result = object(await call("stage_drinking_window_candidate_as_draft", {
+    p_candidate_id: input.candidateId,
+    p_expected_review_id: input.expectedReviewId,
+    p_base_version_id: input.baseVersionId,
+  }, options))
+  if (typeof result.already_staged !== "boolean" ||
+    typeof result.version_number !== "number" || !Number.isInteger(result.version_number)) {
+    throw new Error("Invalid draft staging response")
+  }
+  return {
+    versionId: str(result.version_id), versionNumber: result.version_number,
+    rowId: str(result.row_id),
+    alreadyStaged: result.already_staged,
+  }
+}

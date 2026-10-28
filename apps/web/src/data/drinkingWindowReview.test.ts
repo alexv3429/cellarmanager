@@ -4,6 +4,7 @@ import {
   getDrinkingWindowReviewWorkspace,
   parseDrinkingWindowReviewWorkspace,
   saveDrinkingWindowCandidateReview,
+  stageDrinkingWindowCandidateAsDraft,
 } from "./drinkingWindowReview"
 
 const workspace = {
@@ -53,5 +54,19 @@ describe("drinking-window curator workspace boundary", () => {
     }))
     await expect(saveDrinkingWindowCandidateReview({ ...draft, firstTrialYear: null }, { rpc }))
       .rejects.toThrow("complete, sourced window")
+  })
+
+  it("stages a reviewed candidate only through the curator RPC", async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: {
+      version_id: "new-version", version_number: 3, row_id: "new-row", already_staged: false,
+    }, error: null })
+    expect(await stageDrinkingWindowCandidateAsDraft({
+      candidateId: "candidate", expectedReviewId: "review", baseVersionId: "base",
+    }, { rpc })).toEqual({
+      versionId: "new-version", versionNumber: 3, rowId: "new-row", alreadyStaged: false,
+    })
+    expect(rpc).toHaveBeenCalledWith("stage_drinking_window_candidate_as_draft", {
+      p_candidate_id: "candidate", p_expected_review_id: "review", p_base_version_id: "base",
+    })
   })
 })

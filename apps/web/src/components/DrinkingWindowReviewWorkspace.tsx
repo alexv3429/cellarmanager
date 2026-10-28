@@ -3,6 +3,7 @@ import { type FormEvent, useEffect, useState } from "react"
 import {
   getDrinkingWindowReviewWorkspace,
   saveDrinkingWindowCandidateReview,
+  stageDrinkingWindowCandidateAsDraft,
   type CandidateReviewDraft,
   type DrinkingWindowCandidate,
   type DrinkingWindowReviewWorkspace as Workspace,
@@ -10,6 +11,7 @@ import {
   type ReviewScope,
   type RightsStatus,
 } from "../data/drinkingWindowReview"
+import { getReferenceDrafts, type ReferenceDraft } from "../data/drinkingWindowReferenceDrafts"
 import { useLanguage } from "../i18n/useLanguage"
 import { Notice } from "./Notice"
 import { ReferenceDraftReview } from "./ReferenceDraftReview"
@@ -71,6 +73,10 @@ export function DrinkingWindowReviewWorkspace({ isOnline }: Props) {
   const [form, setForm] = useState<FormState | null>(null)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [staging, setStaging] = useState(false)
+  const [baseDrafts, setBaseDrafts] = useState<ReferenceDraft[]>([])
+  const [baseVersionId, setBaseVersionId] = useState("")
+  const [draftRefreshKey, setDraftRefreshKey] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
 
@@ -79,8 +85,12 @@ export function DrinkingWindowReviewWorkspace({ isOnline }: Props) {
     setLoading(true)
     setError(null)
     try {
-      const next = await getDrinkingWindowReviewWorkspace()
+      const [next, references] = await Promise.all([
+        getDrinkingWindowReviewWorkspace(), getReferenceDrafts(),
+      ])
       setWorkspace(next)
+      setBaseDrafts(references.drafts)
+      setBaseVersionId((previous) => references.drafts.some((draft) => draft.versionId === previous) ? previous : "")
       if (selectedId) {
         const candidate = next.candidates.find((item) => item.id === selectedId)
         if (candidate) setForm(formFor(candidate))
@@ -96,8 +106,13 @@ export function DrinkingWindowReviewWorkspace({ isOnline }: Props) {
     setWorkspace(null)
     if (!isOnline) return
     let cancelled = false
-    void getDrinkingWindowReviewWorkspace()
-      .then((next) => { if (!cancelled) setWorkspace(next) })
+    void Promise.all([getDrinkingWindowReviewWorkspace(), getReferenceDrafts()])
+      .then(([next, references]) => {
+        if (!cancelled) {
+          setWorkspace(next)
+          setBaseDrafts(references.drafts)
+        }
+      })
       .catch((caught: unknown) => {
         if (!cancelled) setError(caught instanceof Error ? caught.message : "Unable to load drinking-window reviews")
       })
@@ -145,6 +160,30 @@ export function DrinkingWindowReviewWorkspace({ isOnline }: Props) {
     }
   }
 
+  async function stage() {
+    if (!selected?.review || !baseVersionId || !isOnline) return
+    setStaging(true)
+    setError(null)
+    setMessage(null)
+    try {
+      const result = await stageDrinkingWindowCandidateAsDraft({
+        candidateId: selected.id,
+        expectedReviewId: selected.review.id,
+        baseVersionId,
+      })
+      setMessage(t("Shared draft version {version} created. Dates are not published; evidence and all subjects still need review.", {
+        version: String(result.versionNumber),
+      }))
+      setBaseVersionId("")
+      await refresh()
+      setDraftRefreshKey((value) => value + 1)
+    } catch (caught: unknown) {
+      setError(caught instanceof Error ? caught.message : "Unable to create a shared draft")
+    } finally {
+      setStaging(false)
+    }
+  }
+
   return <details className="research-inbox drinking-window-review-workspace">
     <summary>
       <span>
@@ -175,7 +214,7 @@ export function DrinkingWindowReviewWorkspace({ isOnline }: Props) {
         </li>
       )}</ul>}
 
-    <ReferenceDraftReview isOnline={isOnline} />
+    <ReferenceDraftReview key={draftRefreshKey} isOnline={isOnline} />
 
     <h3>{t("Reference candidates")} ({workspace.candidates.length})</h3>
     <p>{t("Workbook and cellar-owner suggestions are unverified candidates, not approved advice. Check the exact wine, three dates, evidence and reuse rights.")}</p>
@@ -238,6 +277,26 @@ export function DrinkingWindowReviewWorkspace({ isOnline }: Props) {
           </label>
           <button type="submit" disabled={!isOnline || saving}>{saving ? t("Saving…") : t("Save review draft")}</button>
           <small>{t("Saving a draft does not publish or change drinking-window advice.")}</small>
+          {selected.review?.disposition === "propose" && selected.review.proposedScope === "release"
+            && selected.sourceIdentity.origin === "cellar-owner-proposal" ? <div className="drinking-window-review-staging">
+              <h4>{t("Prepare a new shared draft")}</h4>
+              <p>{t("The saved proposal will be added to a copy of the selected draft. The current draft and cellar advice stay unchanged. Sources must still be linked and every subject reviewed before publication.")}</p>
+              <label>{t("Copy this draft version")}
+                <select value={baseVersionId} onChange={(event) => setBaseVersionId(event.target.value)}>
+                  <option value="">{t("Choose a draft version")}</option>
+                  {baseDrafts.map((draft) => <option key={draft.versionId} value={draft.versionId}>
+                    {t("Reference version {number}", { number: String(draft.versionNumber) })} · {draft.subjects.length} {t("subjects")}
+                  </option>)}
+                </select>
+              </label>
+              <button type="button" disabled={!isOnline || staging || saving || !baseVersionId
+                || JSON.stringify(form) !== JSON.stringify(formFor(selected))}
+                onClick={() => void stage()}>
+                {staging ? t("Preparing…") : t("Create a new unpublished draft")}
+              </button>
+              {JSON.stringify(form) !== JSON.stringify(formFor(selected))
+                ? <small>{t("Save your changes before preparing the draft.")}</small> : null}
+            </div> : null}
         </form> : null}
       </div>}
   </details>
