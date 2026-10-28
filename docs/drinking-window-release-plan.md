@@ -18,18 +18,23 @@ release target.
 
 ## Status at 28 October 2026
 
-**Current implementation slice (proposed, not deployed):** a cellar owner can
-submit a three-date suggestion for a confirmed exact release and bottle size
-from its wine card. The owner can see whether the suggestion awaits research
-or has a curator review draft; an authorized curator can inspect it in the
-existing review queue. Submission and curator review do **not** create an
-immutable reference version, publish dates, opt in a household, or alter any
-advice. The new migration has not been applied to the linked project. This
-starts Gate 4 but does not complete it. Next: build an in-app way to turn a
-reviewed candidate into a complete, superseding draft version, carrying
-forward unaffected rows, evidence and memberships; then validate, review and
-publish with separate authority. The current first-100-candidate workspace
-is only a bounded intake view, not a complete paginated maintenance queue.
+**Current implementation slice (proposed, not deployed):** merged PR #222 lets
+a cellar owner submit a three-date suggestion for a confirmed exact release
+and bottle size from its wine card, and see its review status. An authorized
+reviewer can inspect it in the review queue. The next proposed slice adds a
+reviewer action that copies a selected unpublished reference version, carries
+forward its rows, groups, memberships and evidence links, and stages one
+reviewed exact-release suggestion in the copy. The review list now names the
+exact producer, cuvée, vintage, colour and bottle size for release rows. The old version, owner
+comparisons, and all cellar advice remain unchanged. It neither copies old
+approvals nor treats submitted URLs as reviewed evidence; the new draft must
+link its own verified sources, pass preflight, receive fresh curator review,
+and follow separate publication/owner-choice gates. No migration in this
+slice has been applied to the linked project. It advances Gate 4 but does not
+complete it. Next: in-app source/evidence linking and correction of staged
+rows, safe supersession rules, a paginated maintenance queue, and the mobile
+interface redesign. The current first-100-candidate workspace is only a
+bounded intake view, not a complete paginated maintenance queue.
 
 **Pre-release interface gate:** the owner finds the current drinking-window
 interface messy. Once the underlying contribution, correction and versioning
@@ -196,7 +201,7 @@ here, not when its PR merges. Dates are not delivery promises.
 | 1. Close owner-facing behavior | In progress | Three-date editing, comparison, identity review, and private group choice are merged. The official card, editor, and draft selector were inspected read-only; mobile, actual edit/clear, stale-report, emergency-off, and owner acceptance remain. |
 | 2. Deploy database capabilities | In progress | The authorized 19-migration batch, PR #215 replacement, and PRs #219–#220 owner-refresh migrations are live. PR #220's completed backup was restored successfully after deployment, but its data dump was still running during the push; see the corrective deployment record. Three existing advice payloads matched the prior batch snapshot; one owner-confirmed pilot link recalculated its old-model advice. The owner tested unchanged refresh and approved the current comparison. Switch, publication, and household opt-in remain off. |
 | 3. Publish one real pilot | Blocked by unfinished Gate 1–2 checks, separate publication authorization, and live postflight | One approved cellar can see a verified real window. |
-| 4. Make reference maintenance routine | In progress (intake slice proposed) | Owner exact-release suggestions can enter curator review after migration; in-app correction, superseding-version construction, and publication workflow remain. |
+| 4. Make reference maintenance routine | In progress (intake merged; staging slice proposed) | Owner exact-release suggestions enter curator review; a reviewed suggestion can be staged in an unpublished copy after this migration. Evidence linking, in-app correction, safe supersession, pagination, and separate publication still remain. |
 | 5. Establish and measure initial coverage | Blocked by gate 4 | One additional high-impact reference is reviewed; gaps remain visible. |
 | 6. Release and operate | Blocked by gates 3–5 | The supported feature has repeatable checks, monitoring, and rollback. |
 

@@ -3,13 +3,17 @@ import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { getDrinkingWindowReviewWorkspace, saveDrinkingWindowCandidateReview } from "../data/drinkingWindowReview"
+import { getDrinkingWindowReviewWorkspace, saveDrinkingWindowCandidateReview,
+  stageDrinkingWindowCandidateAsDraft } from "../data/drinkingWindowReview"
+import { getReferenceDrafts } from "../data/drinkingWindowReferenceDrafts"
 import { DrinkingWindowReviewWorkspace } from "./DrinkingWindowReviewWorkspace"
 
 vi.mock("../data/drinkingWindowReview", () => ({
   getDrinkingWindowReviewWorkspace: vi.fn(),
   saveDrinkingWindowCandidateReview: vi.fn(),
+  stageDrinkingWindowCandidateAsDraft: vi.fn(),
 }))
+vi.mock("../data/drinkingWindowReferenceDrafts", () => ({ getReferenceDrafts: vi.fn() }))
 vi.mock("./ReferenceDraftReview", () => ({ ReferenceDraftReview: () => <div>Reference drafts</div> }))
 
 const workspace = {
@@ -31,6 +35,12 @@ beforeEach(() => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true)
   vi.mocked(getDrinkingWindowReviewWorkspace).mockReset().mockResolvedValue(workspace)
   vi.mocked(saveDrinkingWindowCandidateReview).mockReset().mockResolvedValue("review")
+  vi.mocked(stageDrinkingWindowCandidateAsDraft).mockReset().mockResolvedValue({
+    versionId: "new-version", versionNumber: 3, rowId: "new-row", alreadyStaged: false,
+  })
+  vi.mocked(getReferenceDrafts).mockReset().mockResolvedValue({ eligible: true, drafts: [{
+    versionId: "base-version", versionNumber: 2, subjects: [],
+  }] })
   container = document.createElement("div")
   document.body.append(container)
   root = createRoot(container)
@@ -81,5 +91,36 @@ describe("curator drinking-window review workspace", () => {
     expect((container.querySelector('textarea[maxlength="2000"]') as HTMLTextAreaElement).value)
       .toContain("proposed years reflect")
     expect(saveDrinkingWindowCandidateReview).not.toHaveBeenCalled()
+  })
+
+  it("stages only a saved exact-release proposal into a new unpublished draft", async () => {
+    vi.mocked(getDrinkingWindowReviewWorkspace).mockResolvedValue({
+      eligible: true, identityRequests: [], candidates: [{
+        ...workspace.candidates[0],
+        sourceIdentity: { origin: "cellar-owner-proposal", producer: "Burgaud",
+          cuvee: "James", format_ml: 750, region: "Beaujolais", appellation: "Morgon" },
+        review: { id: "review", proposedScope: "release", firstTrialYear: 2026,
+          bestStartYear: 2032, bestEndYear: 2042, ageingGroupNote: "",
+          rationale: "Reviewed exact-release proposal.", evidenceUrls: ["https://example.org/source"],
+          rightsStatus: "reuse-allowed", disposition: "propose", createdAt: "2026-10-28" },
+      }],
+    })
+    await act(async () => root.render(<DrinkingWindowReviewWorkspace isOnline />))
+    const choose = [...container.querySelectorAll("button")].find((button) => button.textContent?.includes("Burgaud · James"))
+    await act(async () => choose?.click())
+    const base = [...container.querySelectorAll("select")].find((select) => select.querySelector('option[value="base-version"]'))
+    expect(base).toBeTruthy()
+    await act(async () => {
+      if (base) {
+        base.value = "base-version"
+        base.dispatchEvent(new Event("change", { bubbles: true }))
+      }
+    })
+    const stage = [...container.querySelectorAll("button")].find((button) => button.textContent?.includes("Create a new unpublished draft"))
+    await act(async () => stage?.click())
+    expect(stageDrinkingWindowCandidateAsDraft).toHaveBeenCalledWith({
+      candidateId: "candidate", expectedReviewId: "review", baseVersionId: "base-version",
+    })
+    expect(container.textContent).toContain("Dates are not published")
   })
 })

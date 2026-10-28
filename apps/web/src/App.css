@@ -8777,6 +8777,19 @@
   border-radius: 0.6rem;
 }
 
+.drinking-window-review-staging {
+  display: grid;
+  gap: 0.7rem;
+  min-width: 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color, #54434a);
+}
+
+.drinking-window-review-staging h4,
+.drinking-window-review-staging p {
+  margin: 0;
+}
+
 .drinking-window-review-form label {
   display: grid;
   gap: 0.3rem;
