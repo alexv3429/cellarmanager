@@ -7,6 +7,7 @@ import {
   type DraftRowCorrection,
 } from "../data/drinkingWindowDraftCorrections"
 import { useLanguage } from "../i18n/useLanguage"
+import { DraftSourceIntakePanel } from "./DraftSourceIntakePanel"
 import { Notice } from "./Notice"
 
 interface Props {
@@ -147,7 +148,10 @@ export function DraftRowCorrectionEditor({ versionId, rowId, subjectHash, isOnli
         </label>
         <button type="button" disabled={!isOnline || busy || !selectedEvidence}
           onClick={() => void changeEvidence("attach", selectedEvidence)}>{t("Link reviewed source")}</button>
-      </div> : <p>{t("No reviewed reusable source is available for this exact wine yet. Registering and verifying a new source is a separate step.")}</p>}
+      </div> : <p>{t("No reviewed reusable source is available for this exact wine yet. Register and verify one below.")}</p>}
+      <DraftSourceIntakePanel versionId={versionId} rowId={rowId} rowHash={row.hash}
+        linkedEvidenceIds={row.linked.map((link) => link.evidenceId)}
+        isOnline={isOnline} onChanged={async () => { await reload(); await onChanged() }} />
       {row.history.length ? <details><summary>{t("Correction history")}</summary>
         <ul>{row.history.map((event, index) => <li key={`${event.createdAt}:${index}`}>
           {new Date(event.createdAt).toLocaleString()} · {t(event.action)}

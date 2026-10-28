@@ -8845,6 +8845,35 @@
   margin: 0;
 }
 
+.drinking-window-source-intake {
+  min-width: 0;
+  padding: 0.8rem;
+  border: 1px solid var(--border-color, #54434a);
+  border-radius: 0.5rem;
+}
+
+.drinking-window-source-intake > * + *,
+.drinking-window-source-intake li > * + * {
+  margin-top: 0.7rem;
+}
+
+.drinking-window-source-intake ul {
+  padding-left: 1.1rem;
+}
+
+.drinking-window-source-intake li {
+  overflow-wrap: anywhere;
+  padding-block: 0.7rem;
+  border-bottom: 1px solid var(--border-color, #54434a);
+}
+
+.drinking-window-source-review,
+.drinking-window-source-actions {
+  display: grid;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
 .drinking-window-review-source-status {
   display: block;
   color: var(--muted-color, #a99aa0);
