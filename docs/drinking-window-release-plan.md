@@ -22,7 +22,7 @@ precedence and acceptance examples.
 ## Current delivery checkpoint — 29 October 2026
 
 The [PR #227](https://github.com/alexv3429/cellarmanager/pull/227) is
-**open with passing CI, not merged, and not released**. Its seven new
+**merged and database-deployed, but the feature is not released**. Its seven new
 database migrations, plus two earlier pending drinking-window migrations,
 were [backed up, rehearsed and applied](drinking-window-gate0-nine-migration-deployment.md)
 to the linked project on 29 October 2026 with the owner's authorization.
@@ -71,8 +71,26 @@ Web lint, 881 tests, and the production build pass. None of these tests is
 evidence that a real producer profile or live household has been activated.
 PR #227 also passed its GitHub database, web, dependency-audit, Worker-build,
 and aggregate CI gates. The linked database now has the nine migrations;
-the official app code has not changed, and no profile has been imported,
-published, or enabled for a household.
+no profile has been imported, published, or enabled for a household.
+
+**Gate 1 work in slot 2/6 (29 October):** The proposed branch adds a private,
+owner-managed producer rule for a confirmed producer/cuvée, producer/appellation,
+or producer/region, always bound to one vintage and colour. Wine-specific dates
+still win; then an applicable cellar rule; then a published exact or eligible
+broader shared row; then the labelled existing model. A member's timing offset
+shifts all three published years together, while the original shared years
+remain visible; it does not shift explicit cellar dates. The wine card offers
+rule scope, three years, reason, and removal. Its form uses the **unshifted**
+shared/model years as defaults so one member's personal preference cannot be
+silently saved for the whole cellar. This is **not deployed to the linked
+database or official app** and does not publish any shared dates. A disposable
+local clone passed the new migration, all 31 drinking-window SQL suites, and
+the 39 new rollback-only assertions. The full local repository CI passes,
+including web lint (existing warnings), 885 tests, and the production build;
+PR CI status is recorded in the Gate 1 PR
+before review. Gate 1
+does not include the routine user/curator publication flow, full profile
+exchange, or populated common base; those remain Gates 2–5.
 
 **Execution status (the contract defines each exit test):**
 
@@ -87,8 +105,8 @@ in every PR description.
 
 | Gate | Status now | Next concrete action |
 | --- | --- | --- |
-| 0. Lock product contract | Verified by owner on 29 October 2026; nine migrations safely deployed; #227 still open | Keep the agreed contract and acceptance cases stable; Gate 1 implements their automated tests. |
-| 1. Core selection and private preferences | Incomplete | Make offsets apply to reviewed references, add cellar-only producer rules, and verify exact/broader/model precedence on real wine fixtures. |
+| 0. Lock product contract | Verified by owner on 29 October 2026; #227 merged and nine migrations safely deployed | Preserve the agreed contract and acceptance cases. |
+| 1. Core selection and private preferences | In progress in slot 2/6; local migration, 39 new SQL assertions, 31 drinking-window suites, and web checks pass; not deployed | Complete PR CI; then review explicit scope and private-offset behavior. |
 | 2. User and curator workflows | Partial foundation in #227 | Make self-approved curator publication and user proposal → shared update a routine in-app path without permanent publisher/household gates. |
 | 3. Complete profile exchange | Partial foundation in #227 | Import/export full producer JSON plus agreed appellation and region templates, retaining non-date facts and batch diff/review. |
 | 4. Prepare initial common base | Not started | Process all 23 supplied files and reviewed fallbacks in staging; prepare an approved publication manifest and quarantine every exception with a reason. |

@@ -50,6 +50,7 @@ export interface MaturityOverviewItem {
 
 export type DrinkingWindowSource =
   | "manual"
+  | "cellar_producer"
   | "reviewed_reference"
   | "model_estimate"
   | "unavailable"
@@ -62,6 +63,38 @@ export interface WineMaturityReference {
   rationale: string
   referenceRowId: string
   versionNumber: number
+  personalYearShift?: number
+  effectiveBestEndYear?: number
+  effectiveBestStartYear?: number
+  effectiveFirstTrialYear?: number
+}
+
+export type HouseholdProducerWindowScope =
+  | "product"
+  | "producer_appellation"
+  | "producer_region"
+
+export interface HouseholdProducerWindowRule {
+  id: string
+  scope: HouseholdProducerWindowScope
+  firstTrialYear: number
+  bestStartYear: number
+  bestEndYear: number
+  note: string
+  updatedAt: string
+}
+
+export interface HouseholdProducerWindowRules {
+  status: string
+  context: {
+    producerName?: string
+    productName?: string
+    appellationName?: string | null
+    regionName?: string
+    vintageYear?: number
+  }
+  applicable: HouseholdProducerWindowRule[]
+  selected: HouseholdProducerWindowRule | null
 }
 
 export interface MaturityRecommendation {
@@ -152,6 +185,7 @@ export interface WineMaturity {
   effectiveSource?: DrinkingWindowSource
   reference?: WineMaturityReference | null
   referenceStatus?: { reason: string; status: string } | null
+  producerRules?: HouseholdProducerWindowRules | null
 }
 
 interface RpcClient {
@@ -256,6 +290,7 @@ function optionalVerdict(value: unknown): MaturityVerdict | null {
 function parseDrinkingWindowSource(value: unknown): DrinkingWindowSource {
   if (
     value !== "manual" &&
+    value !== "cellar_producer" &&
     value !== "reviewed_reference" &&
     value !== "model_estimate" &&
     value !== "unavailable"
@@ -263,6 +298,44 @@ function parseDrinkingWindowSource(value: unknown): DrinkingWindowSource {
     throw new Error("Invalid maturity response: effective source")
   }
   return value
+}
+
+function parseHouseholdProducerWindowRule(value: unknown): HouseholdProducerWindowRule {
+  const item = record(value, "cellar producer rule")
+  const scope = item.scope
+  if (scope !== "product" && scope !== "producer_appellation" && scope !== "producer_region") {
+    throw new Error("Invalid maturity response: producer rule scope")
+  }
+  return {
+    id: text(item.id, "producer rule ID"),
+    scope,
+    firstTrialYear: integer(item.first_trial_year, "producer rule first year"),
+    bestStartYear: integer(item.best_start_year, "producer rule best start"),
+    bestEndYear: integer(item.best_end_year, "producer rule best end"),
+    note: text(item.note, "producer rule note"),
+    updatedAt: text(item.updated_at, "producer rule updated time"),
+  }
+}
+
+function parseHouseholdProducerWindowRules(value: unknown): HouseholdProducerWindowRules | null {
+  if (value === null || value === undefined) return null
+  const item = record(value, "cellar producer rules")
+  const rawContext = record(item.context, "producer rule context")
+  if (!Array.isArray(item.applicable)) {
+    throw new Error("Invalid maturity response: applicable producer rules")
+  }
+  return {
+    status: text(item.status, "producer rule status"),
+    context: {
+      producerName: rawContext.producer_name === undefined ? undefined : text(rawContext.producer_name, "producer name"),
+      productName: rawContext.product_name === undefined ? undefined : text(rawContext.product_name, "product name"),
+      appellationName: rawContext.appellation_name === undefined ? undefined : optionalText(rawContext.appellation_name, "appellation name"),
+      regionName: rawContext.region_name === undefined ? undefined : text(rawContext.region_name, "region name"),
+      vintageYear: rawContext.vintage_year === undefined ? undefined : integer(rawContext.vintage_year, "vintage year"),
+    },
+    applicable: item.applicable.map(parseHouseholdProducerWindowRule),
+    selected: item.selected === null ? null : parseHouseholdProducerWindowRule(item.selected),
+  }
 }
 
 function assessmentReason(value: unknown): MaturityAssessmentReason {
@@ -555,6 +628,14 @@ export function parseWineMaturity(value: unknown): WineMaturity {
       rationale: text(parsed.rationale, "reference rationale"),
       referenceRowId: text(parsed.reference_row_id, "reference row ID"),
       versionNumber: integer(parsed.version_number, "reference version number"),
+      personalYearShift: parsed.personal_year_shift === undefined
+        ? undefined : integer(parsed.personal_year_shift, "reference personal shift"),
+      effectiveFirstTrialYear: parsed.effective_first_trial_year === undefined
+        ? undefined : integer(parsed.effective_first_trial_year, "reference effective first year"),
+      effectiveBestStartYear: parsed.effective_best_start_year === undefined
+        ? undefined : integer(parsed.effective_best_start_year, "reference effective best start"),
+      effectiveBestEndYear: parsed.effective_best_end_year === undefined
+        ? undefined : integer(parsed.effective_best_end_year, "reference effective best end"),
     }
   }
 
@@ -581,6 +662,7 @@ export function parseWineMaturity(value: unknown): WineMaturity {
         : parseDrinkingWindowSource(item.effective_source),
     reference,
     referenceStatus,
+    producerRules: parseHouseholdProducerWindowRules(item.producer_rules),
   }
 }
 
@@ -764,4 +846,35 @@ export async function clearWineMaturityOverride(
       rpcClient,
     ),
   )
+}
+
+export async function setHouseholdProducerWindowRule(
+  wineId: string,
+  scope: HouseholdProducerWindowScope,
+  years: { firstTrialYear: number; bestStartYear: number; bestEndYear: number },
+  note: string,
+  rpcClient?: RpcClient,
+): Promise<void> {
+  if (years.firstTrialYear > years.bestStartYear || years.bestStartYear > years.bestEndYear ||
+      !note.trim()) {
+    throw new Error("Enter three ordered years and a short reason")
+  }
+  await rpcResult("set_household_producer_window_rule", {
+    p_wine_id: wineId,
+    p_scope: scope,
+    p_first_trial_year: years.firstTrialYear,
+    p_best_start_year: years.bestStartYear,
+    p_best_end_year: years.bestEndYear,
+    p_note: note.trim(),
+  }, rpcClient)
+}
+
+export async function clearHouseholdProducerWindowRule(
+  ruleId: string,
+  rpcClient?: RpcClient,
+): Promise<void> {
+  const result = await rpcResult("clear_household_producer_window_rule", {
+    p_rule_id: ruleId,
+  }, rpcClient)
+  if (result !== true) throw new Error("Unable to remove the producer rule")
 }

@@ -3,7 +3,7 @@ import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { getWineMaturity, setWineMaturityOverride, supportsThreeMilestoneManualOverrides, type WineMaturity } from "../data/wineMaturity"
+import { getWineMaturity, setHouseholdProducerWindowRule, setWineMaturityOverride, supportsThreeMilestoneManualOverrides, type WineMaturity } from "../data/wineMaturity"
 import { getProfileReviewInbox, getWineProfileReviewTargets } from "../data/profileReviews"
 import { WineMaturityPanel } from "./WineMaturityPanel"
 
@@ -11,6 +11,7 @@ vi.mock("../data/wineMaturity", async (importOriginal) => ({
   ...await importOriginal<typeof import("../data/wineMaturity")>(),
   getWineMaturity: vi.fn(),
   setWineMaturityOverride: vi.fn(),
+  setHouseholdProducerWindowRule: vi.fn(),
   supportsThreeMilestoneManualOverrides: vi.fn(),
 }))
 vi.mock("../data/profileReviews", async (importOriginal) => ({
@@ -121,6 +122,36 @@ describe("wine maturity manual window", () => {
       { firstTrialYear: 2025, bestStartYear: 2028, bestEndYear: 2035, drinkByYear: 2040 },
       null,
       "",
+    )
+  })
+
+  it("shows personal reviewed dates but pre-fills a cellar-wide rule from unshifted shared dates", async () => {
+    const reviewed = maturity(null, false)
+    reviewed.calibration = { active: true, maturity: null, updatedAt: "2026-10-29T10:00:00Z", yearShift: 2 }
+    reviewed.reference = {
+      ...reviewed.reference!, personalYearShift: 2,
+      effectiveFirstTrialYear: 2027, effectiveBestStartYear: 2030, effectiveBestEndYear: 2037,
+    }
+    reviewed.producerRules = {
+      status: "ok",
+      context: { producerName: "Burgaud", appellationName: "Morgon", regionName: "Beaujolais", vintageYear: 2022 },
+      applicable: [], selected: null,
+    }
+    vi.mocked(getWineMaturity).mockResolvedValue(reviewed)
+    await act(async () => root.render(<WineMaturityPanel canManageCellar householdId="household-1" isOnline wineId="wine-1" />))
+
+    expect([...container.querySelectorAll(".wine-maturity__window dd")].map((item) => item.textContent))
+      .toEqual(["2027", "2030", "2037"])
+    const producerRuleForm = container.querySelector(".wine-maturity__producer-rule form") as HTMLFormElement
+    expect((producerRuleForm.querySelector('input[name="firstTrialYear"]') as HTMLInputElement).value).toBe("2025")
+    expect((producerRuleForm.querySelector('input[name="bestStartYear"]') as HTMLInputElement).value).toBe("2028")
+    expect((producerRuleForm.querySelector('input[name="bestEndYear"]') as HTMLInputElement).value).toBe("2035")
+
+    const note = producerRuleForm.querySelector('input[name="note"]') as HTMLInputElement
+    note.value = "Our cellar's preference"
+    await act(async () => producerRuleForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })))
+    expect(setHouseholdProducerWindowRule).toHaveBeenCalledWith(
+      "wine-1", "product", { firstTrialYear: 2025, bestStartYear: 2028, bestEndYear: 2035 }, "Our cellar's preference",
     )
   })
 })

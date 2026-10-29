@@ -3839,6 +3839,30 @@
   gap: 8px;
 }
 
+.wine-maturity__producer-rule-list {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wine-maturity__producer-rule-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.wine-maturity__producer-rule form label:first-child,
+.wine-maturity__producer-rule form label:nth-last-child(2) {
+  grid-column: span 2;
+}
+
 .wine-serving,
 .wine-observations {
   display: grid;

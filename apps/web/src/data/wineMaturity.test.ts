@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest"
 
 import {
+  clearHouseholdProducerWindowRule,
   clearMemberMaturityCalibration,
   getMemberMaturityCalibration,
   getHouseholdMaturityOverview,
@@ -9,6 +10,7 @@ import {
   parseWineMaturity,
   reviewWineMaturity,
   setMemberMaturityCalibration,
+  setHouseholdProducerWindowRule,
   setWineMaturityOverride,
   supportsThreeMilestoneManualOverrides,
 } from "./wineMaturity"
@@ -162,6 +164,63 @@ describe("maturity RPC boundary", () => {
       bestEndYear: 2032, versionNumber: 3,
     })
     expect(result.projection?.maturity.bestEndYear).toBe(2031)
+  })
+
+  it("parses the underlying shared years and a separately adjusted personal view", () => {
+    const result = parseWineMaturity({
+      ...maturityResponse(),
+      effective_source: "reviewed_reference",
+      reference: {
+        version_number: 4, reference_row_id: "reference-1", matched_scope: "release",
+        first_trial_year: 2025, best_start_year: 2028, best_end_year: 2040,
+        effective_first_trial_year: 2027, effective_best_start_year: 2030,
+        effective_best_end_year: 2042, personal_year_shift: 2,
+        rationale: "Reviewed exact release.",
+      },
+    })
+    expect(result.reference).toMatchObject({
+      firstTrialYear: 2025, bestStartYear: 2028, bestEndYear: 2040,
+      effectiveFirstTrialYear: 2027, effectiveBestStartYear: 2030,
+      effectiveBestEndYear: 2042, personalYearShift: 2,
+    })
+  })
+
+  it("parses cellar-only producer rules without treating them as shared evidence", () => {
+    const rule = {
+      id: "rule-1", scope: "product", first_trial_year: 2026,
+      best_start_year: 2030, best_end_year: 2041,
+      note: "My cellar timing", updated_at: "2026-10-30T00:00:00Z",
+    }
+    const result = parseWineMaturity({
+      ...maturityResponse(), effective_source: "cellar_producer",
+      producer_rules: {
+        status: "ok", context: {
+          producer_name: "Jean-Marc Burgaud", product_name: "Côte du Py",
+          appellation_name: "Morgon", region_name: "Beaujolais", vintage_year: 2022,
+        },
+        applicable: [rule], selected: rule,
+      },
+    })
+    expect(result.producerRules?.selected).toMatchObject({
+      scope: "product", firstTrialYear: 2026, bestStartYear: 2030, bestEndYear: 2041,
+    })
+  })
+
+  it("saves and removes a cellar producer rule through narrow RPCs", async () => {
+    const rpc = vi.fn().mockResolvedValueOnce({ data: { status: "saved", rule_id: "rule-1" }, error: null })
+      .mockResolvedValueOnce({ data: true, error: null })
+    const client = { rpc }
+    await setHouseholdProducerWindowRule("wine-1", "product", {
+      firstTrialYear: 2025, bestStartYear: 2028, bestEndYear: 2040,
+    }, "My cellar timing", client)
+    await clearHouseholdProducerWindowRule("rule-1", client)
+    expect(rpc).toHaveBeenNthCalledWith(1, "set_household_producer_window_rule", {
+      p_wine_id: "wine-1", p_scope: "product", p_first_trial_year: 2025,
+      p_best_start_year: 2028, p_best_end_year: 2040, p_note: "My cellar timing",
+    })
+    expect(rpc).toHaveBeenNthCalledWith(2, "clear_household_producer_window_rule", {
+      p_rule_id: "rule-1",
+    })
   })
 
   it("keeps v1/v2 recommendations compatible when no hierarchy trace exists", () => {
