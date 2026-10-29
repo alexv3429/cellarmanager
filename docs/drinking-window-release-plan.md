@@ -71,10 +71,19 @@ and aggregate CI gates. The linked database and official app have not changed.
 
 **Execution status (the contract defines each exit test):**
 
+**Hard PR budget:** [PR #227](https://github.com/alexv3429/cellarmanager/pull/227)
+is **slot 1/6, Gate 0**. Gates 1–5 have one PR each, slots 2/6–6/6. This
+counts #227; it does not permit six additional PRs. Fixes go into the open
+gate PR or the next planned gate PR after merge. Gate 5 must include actual
+deployment and postflight verification; merging its PR is not enough. If the
+remaining work cannot be delivered safely within these slots, stop and ask
+the owner before changing scope or opening another PR. Record slot and gate
+in every PR description.
+
 | Gate | Status now | Next concrete action |
 | --- | --- | --- |
 | 0. Lock product contract | In progress; private-cellar ownership and personal-offset scope confirmed by owner | Owner reviews the full contract; convert its examples into acceptance fixtures and reconcile conflicting older notes. |
-| 1. Core selection and private preferences | Incomplete | Make offsets apply to reviewed references, add private producer windows, and verify exact/broader/model precedence on real wine fixtures. |
+| 1. Core selection and private preferences | Incomplete | Make offsets apply to reviewed references, add cellar-only producer rules, and verify exact/broader/model precedence on real wine fixtures. |
 | 2. User and curator workflows | Partial foundation in #227 | Make self-approved curator publication and user proposal → shared update a routine in-app path without permanent publisher/household gates. |
 | 3. Complete profile exchange | Partial foundation in #227 | Import/export full producer JSON plus agreed appellation and region templates, retaining non-date facts and batch diff/review. |
 | 4. Prepare initial common base | Not started | Process all 23 supplied files and reviewed fallbacks in staging; prepare an approved publication manifest and quarantine every exception with a reason. |
@@ -88,6 +97,10 @@ and expected result, and any decision required. No passing test or bulk import
 silently approves unverified dates.
 
 ## Historical status at 28 October 2026
+
+The older gate numbers in this historical section belong to superseded
+rollout plans. They are **not** the six current contract gates or extra PR
+slots; the current gate board and PR budget above govern work from #227 onward.
 
 **Current implementation slice (merged and database-deployed, not released):** PR #222 lets
 a cellar owner submit a three-date suggestion for a confirmed exact release
