@@ -1,22 +1,111 @@
 # Drinking-window release plan — living delivery record
 
-This is the **single progress record** for shipping reviewed, three-milestone
-drinking windows in CellarManager. The [reference policy](drinking-window-reference-policy.md)
-defines the rules; the [implementation plan](drinking-window-implementation-plan.md)
-and [rollout runbook](drinking-window-staged-rollout.md) contain technical detail.
-Neither a merged PR nor a passing synthetic test makes this feature released.
+This is the **single progress record** for shipping the
+[drinking-window product contract](drinking-window-product-contract.md). That
+contract now defines the target behavior and outcome gates. The older
+[reference policy](drinking-window-reference-policy.md),
+[implementation plan](drinking-window-implementation-plan.md), and
+[rollout runbook](drinking-window-staged-rollout.md) are historical/technical
+inputs where they differ; reconcile them before general release. Neither a
+merged PR nor a passing synthetic test makes the feature released.
 
-**Release target:** A cellar owner can see a reviewed shared window with **start
-tasting / probable optimal start / probable optimal end**, know exactly why it
-matched, compare it with the advice they currently see, choose whether to use
-it, override it privately, and return safely to the previous advice. A curator
-can maintain the shared reference without a code PR for each wine. Wines with
-no reviewed match retain clearly labelled existing-model advice, or no advice
-if that model cannot assess them. The owner-authorized pilot comes before
-broader use. No percentage of catalogue coverage is silently implied by this
-release target.
+**Release target:** One complete, provenance-labelled three-date window from
+the most specific applicable shared profile, or a private cellar choice,
+followed by a personal offset when applicable. Curators can maintain and
+publish complete shared profiles from the app without a developer PR or a
+second curator; users can suggest individual changes. The supplied producer
+profiles become a reviewed common base, with appellation and region fallbacks
+and the labelled existing model as last resort. The initial pilot is a safety
+gate, not the permanent way to distribute updates. See the contract for exact
+precedence and acceptance examples.
 
-## Status at 28 October 2026
+## Current delivery checkpoint — 29 October 2026
+
+The [PR #227](https://github.com/alexv3429/cellarmanager/pull/227) is
+**open with passing CI, not merged, and not released**. Its seven new
+database migrations, plus two earlier pending drinking-window migrations,
+were [backed up, rehearsed and applied](drinking-window-gate0-nine-migration-deployment.md)
+to the linked project on 29 October 2026 with the owner's authorization.
+It is a useful curation foundation, **not** the complete product contract.
+Its current behavior is:
+
+1. A reviewer uploads the owner-supplied v1.1 producer JSON files to an
+   unpublished research queue. Import does not assert rights, approve a date,
+   or change anyone's advice. A reviewer explicitly matches each proposed
+   vintage and bottle size to a canonical release before adding it to a
+   working reference version. When a producer, cuvée, release, region or
+   appellation is genuinely missing, the reviewer can create its shared
+   identity in the app after searching for duplicates and recording a reason.
+   Those identity decisions are audited; they do not link household wines or
+   promote dates. The 23-file bundle parses as 670 research proposals; none
+   has been imported into the linked project. A read-only inventory found
+   only 8 canonical producers, 3 cuvées/releases, 2 regions and 2
+   appellations on that project, so identity creation is essential rather
+   than optional for the broader batch.
+2. A reviewer may maintain a producer/appellation, producer/region,
+   appellation, or region fallback **in the app**. Every fallback has its own
+   named ageing category, explicitly eligible wines or places, and three
+   vintage-specific years. No region borrows another region's dates. Exact
+   release rows continue to outrank broader fallbacks; the existing model
+   remains the last resort when there is no reviewed match.
+3. The reviewer documents either exact source-stated dates or an explicitly
+   labelled, shareable editorial estimate with context links. Group scope and
+   membership have separate reviewable explanations. Corrections to dates,
+   group definition, or membership are audited, detach superseded evidence,
+   and require fresh approval. A draft can be copied without inheriting old
+   approvals or cellar comparisons.
+4. The reviewer runs the complete draft preflight. A pilot cellar owner
+   requests and approves a fresh whole-cellar comparison. Publication is a
+   separate in-app action requiring a one-time publisher grant; the migration
+   grants that role to **nobody**. Other households remain unchanged. Existing
+   opt-in, personal override, and emergency-off behavior remain in place.
+
+**Local verification completed:** all 131 migrations replayed from an empty
+disposable database (with the local Supabase storage schema prerequisite but
+without its data). All 30 rollback-only drinking-window database suites,
+including the eight new suites, passed with the synthetic seed. A positive test
+followed review → zero-issue preflight → matched-wine comparison → owner
+approval → authorized publication → another household unchanged. It also
+exposed and fixed a post-publication comparison regression before deployment.
+Web lint, 881 tests, and the production build pass. None of these tests is
+evidence that a real producer profile or live household has been activated.
+PR #227 also passed its GitHub database, web, dependency-audit, Worker-build,
+and aggregate CI gates. The linked database now has the nine migrations;
+the official app code has not changed, and no profile has been imported,
+published, or enabled for a household.
+
+**Execution status (the contract defines each exit test):**
+
+**Hard PR budget:** [PR #227](https://github.com/alexv3429/cellarmanager/pull/227)
+is **slot 1/6, Gate 0**. Gates 1–5 have one PR each, slots 2/6–6/6. This
+counts #227; it does not permit six additional PRs. Fixes go into the open
+gate PR or the next planned gate PR after merge. Gate 5 must include actual
+deployment and postflight verification; merging its PR is not enough. If the
+remaining work cannot be delivered safely within these slots, stop and ask
+the owner before changing scope or opening another PR. Record slot and gate
+in every PR description.
+
+| Gate | Status now | Next concrete action |
+| --- | --- | --- |
+| 0. Lock product contract | Verified by owner on 29 October 2026; nine migrations safely deployed; #227 still open | Keep the agreed contract and acceptance cases stable; Gate 1 implements their automated tests. |
+| 1. Core selection and private preferences | Incomplete | Make offsets apply to reviewed references, add cellar-only producer rules, and verify exact/broader/model precedence on real wine fixtures. |
+| 2. User and curator workflows | Partial foundation in #227 | Make self-approved curator publication and user proposal → shared update a routine in-app path without permanent publisher/household gates. |
+| 3. Complete profile exchange | Partial foundation in #227 | Import/export full producer JSON plus agreed appellation and region templates, retaining non-date facts and batch diff/review. |
+| 4. Prepare initial common base | Not started | Process all 23 supplied files and reviewed fallbacks in staging; prepare an approved publication manifest and quarantine every exception with a reason. |
+| 5. Release and verify | Not started | Rehearse and authorize migrations, publish the approved initial base, pilot on mobile, then verify ordinary cross-household publication and rollback on the official app. |
+
+**Merge/deployment rule:** Do not describe #227 as feature-complete or ask the
+owner to deploy its migrations as the end state. Update this record whenever
+implementation changes a gate. Before each merge/test request, state the exact
+behavior available, the missing behavior, data/migration effects, a test path
+and expected result, and any decision required. No passing test or bulk import
+silently approves unverified dates.
+
+## Historical status at 28 October 2026
+
+The older gate numbers in this historical section belong to superseded
+rollout plans. They are **not** the six current contract gates or extra PR
+slots; the current gate board and PR budget above govern work from #227 onward.
 
 **Current implementation slice (merged and database-deployed, not released):** PR #222 lets
 a cellar owner submit a three-date suggestion for a confirmed exact release

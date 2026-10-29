@@ -80,10 +80,11 @@ describe("reference draft curator review", () => {
     expect(container.querySelector("a")?.getAttribute("href")).toBe("https://example.test/review")
     expect(container.querySelector("a")?.getAttribute("target")).toBe("_self")
     const select = container.querySelector("select")
-    const submit = container.querySelector('button[type="submit"]')
+    const reviewForm = select?.closest("form")
+    const submit = reviewForm?.querySelector('button[type="submit"]') as HTMLButtonElement | null
     expect(select?.value).toBe("")
     expect(submit?.disabled).toBe(true)
-    const textarea = container.querySelector("textarea")
+    const textarea = reviewForm?.querySelector("textarea")
     await act(async () => {
       if (textarea) {
         Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")?.set?.call(textarea, "I checked the dates and the evidence.")
@@ -127,7 +128,7 @@ describe("reference draft curator review", () => {
     expect(container.textContent).toContain("brouillon non publié")
     await act(async () => container.querySelector("summary")?.dispatchEvent(new MouseEvent("click", { bubbles: true })))
     expect(container.textContent).toContain("I verified these three years.")
-    expect(container.querySelector("form")).toBeNull()
+    expect(container.querySelector("form select")).toBeNull()
     const reconsider = [...container.querySelectorAll("button")].find((button) => button.textContent === "Réexaminer cette décision")
     expect(reconsider).toBeDefined()
     await act(async () => reconsider?.click())

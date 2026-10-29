@@ -51,6 +51,9 @@ import { ProfileReviewInbox } from "./ProfileReviewInbox"
 import { ProfileGovernanceInbox } from "./ProfileGovernanceInbox"
 import { DrinkingWindowReviewWorkspace } from "./DrinkingWindowReviewWorkspace"
 import { DrinkingWindowShadowReviewPanel } from "./DrinkingWindowShadowReviewPanel"
+import { editorialContextId, editorialEvidenceId } from "../data/drinkingWindowEditorialEstimate"
+import { EditorialEstimateNote } from "./EditorialEstimateNote"
+import { EditorialContextNote } from "./EditorialContextNote"
 import { WineDuplicateReview } from "./WineDuplicateReview"
 import { WineIdentityReviewPanel } from "./WineIdentityReviewPanel"
 import { useLanguage } from "../i18n/useLanguage"
@@ -223,6 +226,16 @@ export function CatalogView({
   onOpenWine,
 }: CatalogViewProps) {
   const { language, t } = useLanguage()
+  const [openEditorialId, setOpenEditorialId] = useState<string | null>(() => editorialEvidenceId(window.location.href))
+  const [openEditorialContextId, setOpenEditorialContextId] = useState<string | null>(() => editorialContextId(window.location.href))
+  useEffect(() => {
+    const refreshEditorial = () => {
+      setOpenEditorialId(editorialEvidenceId(window.location.href))
+      setOpenEditorialContextId(editorialContextId(window.location.href))
+    }
+    window.addEventListener("popstate", refreshEditorial)
+    return () => window.removeEventListener("popstate", refreshEditorial)
+  }, [])
   const {
     data: wines,
     error,
@@ -848,6 +861,20 @@ export function CatalogView({
   return (
     <main>
       <h1>{t("Wine catalog")}</h1>
+      {openEditorialId ? <section className="drinking-window-source-note">
+        <button type="button" onClick={() => {
+          window.history.replaceState(window.history.state, "", "/catalog")
+          setOpenEditorialId(null)
+        }}>{t("Close editorial estimate")}</button>
+        <EditorialEstimateNote evidenceId={openEditorialId} />
+      </section> : null}
+      {openEditorialContextId ? <section className="drinking-window-source-note">
+        <button type="button" onClick={() => {
+          window.history.replaceState(window.history.state, "", "/catalog")
+          setOpenEditorialContextId(null)
+        }}>{t("Close editorial assessment")}</button>
+        <EditorialContextNote evidenceId={openEditorialContextId} />
+      </section> : null}
       <p>{t("All synchronized wines are shown here, including wines with no bottles currently in stock.")}</p>
 
       {!isOnline ? (
@@ -1213,7 +1240,7 @@ export function CatalogView({
         />
 
         <ProfileGovernanceInbox isOnline={isOnline} />
-        <DrinkingWindowReviewWorkspace isOnline={isOnline} />
+        <DrinkingWindowReviewWorkspace householdId={householdId} isOnline={isOnline} />
         <DrinkingWindowShadowReviewPanel
           key={householdId}
           householdId={householdId}

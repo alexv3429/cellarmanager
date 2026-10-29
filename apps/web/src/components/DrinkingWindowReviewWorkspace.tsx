@@ -12,11 +12,21 @@ import {
   type RightsStatus,
 } from "../data/drinkingWindowReview"
 import { getReferenceDrafts, type ReferenceDraft } from "../data/drinkingWindowReferenceDrafts"
+import {
+  getProducerProfileCandidates,
+  searchProducerCandidateReleases,
+  stageProducerCandidateIntoDraft,
+  type CanonicalReleaseOption,
+} from "../data/drinkingWindowProducerImport"
 import { useLanguage } from "../i18n/useLanguage"
 import { Notice } from "./Notice"
+import { DrinkingWindowReleasePanel } from "./DrinkingWindowReleasePanel"
+import { CanonicalReleaseCreation } from "./CanonicalReleaseCreation"
+import { CurationPlaceCreation } from "./CurationPlaceCreation"
+import { ProducerProfileImportPanel } from "./ProducerProfileImportPanel"
 import { ReferenceDraftReview } from "./ReferenceDraftReview"
 
-interface Props { isOnline: boolean }
+interface Props { householdId: string; isOnline: boolean }
 
 interface FormState {
   scope: ReviewScope | ""
@@ -32,10 +42,11 @@ interface FormState {
 
 function formFor(candidate: DrinkingWindowCandidate): FormState {
   const review = candidate.review
-  const ownerProposal = candidate.sourceIdentity.origin === "cellar-owner-proposal"
-  const ownerRationale = ownerProposal && typeof candidate.sourceIdentity.rationale === "string"
+  const suppliedProposal = candidate.sourceIdentity.origin === "cellar-owner-proposal"
+    || candidate.sourceIdentity.origin === "producer-exchange"
+  const suppliedRationale = suppliedProposal && typeof candidate.sourceIdentity.rationale === "string"
     ? candidate.sourceIdentity.rationale : ""
-  const ownerUrls = ownerProposal && Array.isArray(candidate.sourceIdentity.evidence_urls)
+  const suppliedUrls = suppliedProposal && Array.isArray(candidate.sourceIdentity.evidence_urls)
     ? candidate.sourceIdentity.evidence_urls.filter((url): url is string => typeof url === "string") : []
   return {
     scope: review?.proposedScope ?? (candidate.candidateScope === "quarantine" ? "" : candidate.candidateScope as ReviewScope),
@@ -43,8 +54,8 @@ function formFor(candidate: DrinkingWindowCandidate): FormState {
     bestStart: String(review?.bestStartYear ?? candidate.bestStartYear ?? ""),
     bestEnd: String(review?.bestEndYear ?? candidate.bestEndYear ?? ""),
     group: review?.ageingGroupNote ?? String(candidate.sourceIdentity.historical_bin ?? ""),
-    rationale: review?.rationale ?? ownerRationale,
-    urls: review?.evidenceUrls.join("\n") ?? ownerUrls.join("\n"),
+    rationale: review?.rationale ?? suppliedRationale,
+    urls: review?.evidenceUrls.join("\n") ?? suppliedUrls.join("\n"),
     rights: review?.rightsStatus ?? "unverified",
     disposition: review?.disposition ?? "investigate",
   }
@@ -62,14 +73,21 @@ function label(value: unknown): string {
 }
 
 function sourceLabel(candidate: DrinkingWindowCandidate): string {
-  return candidate.sourceIdentity.origin === "cellar-owner-proposal"
-    ? "Cellar owner suggestion" : candidate.sourceLocator
+  if (candidate.sourceIdentity.origin === "cellar-owner-proposal") return "Cellar owner suggestion"
+  if (candidate.sourceIdentity.origin === "producer-exchange") return "Producer research profile"
+  return candidate.sourceLocator
 }
 
-export function DrinkingWindowReviewWorkspace({ isOnline }: Props) {
+export function DrinkingWindowReviewWorkspace({ householdId, isOnline }: Props) {
   const { t } = useLanguage()
   const [workspace, setWorkspace] = useState<Workspace | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [selectedPackageHash, setSelectedPackageHash] = useState<string | null>(null)
+  const [releaseQuery, setReleaseQuery] = useState("")
+  const [releaseOptions, setReleaseOptions] = useState<CanonicalReleaseOption[]>([])
+  const [chosenReleaseId, setChosenReleaseId] = useState("")
+  const [identityReason, setIdentityReason] = useState("")
+  const [searchingReleases, setSearchingReleases] = useState(false)
   const [form, setForm] = useState<FormState | null>(null)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -86,7 +104,8 @@ export function DrinkingWindowReviewWorkspace({ isOnline }: Props) {
     setError(null)
     try {
       const [next, references] = await Promise.all([
-        getDrinkingWindowReviewWorkspace(), getReferenceDrafts(),
+        selectedPackageHash ? getProducerProfileCandidates(selectedPackageHash) : getDrinkingWindowReviewWorkspace(),
+        getReferenceDrafts(),
       ])
       setWorkspace(next)
       setBaseDrafts(references.drafts)
@@ -106,7 +125,10 @@ export function DrinkingWindowReviewWorkspace({ isOnline }: Props) {
     setWorkspace(null)
     if (!isOnline) return
     let cancelled = false
-    void Promise.all([getDrinkingWindowReviewWorkspace(), getReferenceDrafts()])
+    void Promise.all([
+      selectedPackageHash ? getProducerProfileCandidates(selectedPackageHash) : getDrinkingWindowReviewWorkspace(),
+      getReferenceDrafts(),
+    ])
       .then(([next, references]) => {
         if (!cancelled) {
           setWorkspace(next)
@@ -117,7 +139,7 @@ export function DrinkingWindowReviewWorkspace({ isOnline }: Props) {
         if (!cancelled) setError(caught instanceof Error ? caught.message : "Unable to load drinking-window reviews")
       })
     return () => { cancelled = true }
-  }, [isOnline])
+  }, [isOnline, selectedPackageHash])
 
   const selected = workspace?.candidates.find((item) => item.id === selectedId) ?? null
   if (!workspace?.eligible) return null
@@ -125,6 +147,10 @@ export function DrinkingWindowReviewWorkspace({ isOnline }: Props) {
   function select(candidate: DrinkingWindowCandidate) {
     setSelectedId(candidate.id)
     setForm(formFor(candidate))
+    setReleaseQuery(String(candidate.sourceIdentity.cuvee ?? "").trim())
+    setReleaseOptions([])
+    setChosenReleaseId("")
+    setIdentityReason("")
     setError(null)
     setMessage(null)
   }
@@ -184,6 +210,43 @@ export function DrinkingWindowReviewWorkspace({ isOnline }: Props) {
     }
   }
 
+  async function searchReleases() {
+    if (!selected || !isOnline) return
+    setSearchingReleases(true)
+    setError(null)
+    try {
+      setReleaseOptions(await searchProducerCandidateReleases(selected.id, releaseQuery))
+      setChosenReleaseId("")
+    } catch (caught: unknown) {
+      setError(caught instanceof Error ? caught.message : "Unable to search shared wines")
+    } finally {
+      setSearchingReleases(false)
+    }
+  }
+
+  async function stageProducer() {
+    if (!selected?.review || !baseVersionId || !chosenReleaseId || !isOnline) return
+    setStaging(true)
+    setError(null)
+    setMessage(null)
+    try {
+      await stageProducerCandidateIntoDraft({
+        candidateId: selected.id,
+        expectedReviewId: selected.review.id,
+        versionId: baseVersionId,
+        releaseId: chosenReleaseId,
+        identityReason,
+      })
+      setMessage(t("Release added to the unpublished draft. Evidence links and a fresh reference review are still required."))
+      await refresh()
+      setDraftRefreshKey((value) => value + 1)
+    } catch (caught: unknown) {
+      setError(caught instanceof Error ? caught.message : "Unable to stage producer proposal")
+    } finally {
+      setStaging(false)
+    }
+  }
+
   return <details className="research-inbox drinking-window-review-workspace">
     <summary>
       <span>
@@ -214,7 +277,12 @@ export function DrinkingWindowReviewWorkspace({ isOnline }: Props) {
         </li>
       )}</ul>}
 
+    <DrinkingWindowReleasePanel householdId={householdId} isOnline={isOnline}
+      onChanged={async () => { await refresh(); setDraftRefreshKey((value) => value + 1) }} />
     <ReferenceDraftReview key={draftRefreshKey} isOnline={isOnline} />
+
+    <ProducerProfileImportPanel isOnline={isOnline} selectedHash={selectedPackageHash}
+      onSelect={(hash) => { setSelectedId(null); setForm(null); setSelectedPackageHash(hash) }} />
 
     <h3>{t("Reference candidates")} ({workspace.candidates.length})</h3>
     <p>{t("Workbook and cellar-owner suggestions are unverified candidates, not approved advice. Check the exact wine, three dates, evidence and reuse rights.")}</p>
@@ -231,10 +299,10 @@ export function DrinkingWindowReviewWorkspace({ isOnline }: Props) {
         {selected && form ? <form className="drinking-window-review-form" onSubmit={(event) => void save(event)}>
           <h4>{t("Review candidate")}: {t(sourceLabel(selected))}</h4>
           <p>{t("Original source")}: {label(selected.sourceIdentity.producer)} · {label(selected.sourceIdentity.cuvee)} · {label(selected.sourceIdentity.appellation)} · {label(selected.sourceIdentity.region)} · {selected.vintageYear ?? "—"} · {selected.wineColor ?? "—"}</p>
-          {selected.sourceIdentity.origin === "cellar-owner-proposal"
+          {selected.sourceIdentity.origin === "cellar-owner-proposal" || selected.sourceIdentity.origin === "producer-exchange"
             ? <p>{t("Original dates")}: {selected.firstTrialYear ?? "—"} / {selected.bestStartYear ?? "—"}–{selected.bestEndYear ?? "—"} · {t("Bottle size: {size} ml", { size: String(selected.sourceIdentity.format_ml ?? "—") })}</p>
             : <p>{t("Original ageing category")}: {label(selected.sourceIdentity.historical_bin)} · {t("Original dates")}: {selected.bestStartYear ?? "—"}–{selected.bestEndYear ?? "—"}</p>}
-          {selected.sourceIdentity.origin === "cellar-owner-proposal"
+          {selected.sourceIdentity.origin === "cellar-owner-proposal" || selected.sourceIdentity.origin === "producer-exchange"
             ? <p>{t("Submitted reasoning to verify")}: {label(selected.sourceIdentity.rationale)}</p> : null}
           {selected.reviewReason ? <p>{t("Review issue")}: {selected.reviewReason}</p> : null}
           <label>{t("Proposed scope")}
@@ -293,6 +361,58 @@ export function DrinkingWindowReviewWorkspace({ isOnline }: Props) {
                 || JSON.stringify(form) !== JSON.stringify(formFor(selected))}
                 onClick={() => void stage()}>
                 {staging ? t("Preparing…") : t("Create a new unpublished draft")}
+              </button>
+              {JSON.stringify(form) !== JSON.stringify(formFor(selected))
+                ? <small>{t("Save your changes before preparing the draft.")}</small> : null}
+            </div> : null}
+          {selected.review?.disposition === "propose" && selected.review.proposedScope === "release"
+            && selected.sourceIdentity.origin === "producer-exchange" ? <div className="drinking-window-review-staging">
+              <h4>{t("Add this reviewed release to an unpublished profile draft")}</h4>
+              <p>{t("Confirm the canonical wine identity. This adds only this release to the draft; it does not publish dates. Check and link the sources on the draft before approving it.")}</p>
+              <CurationPlaceCreation key={selected.id} isOnline={isOnline}
+                initialRegionName={String(selected.sourceIdentity.region ?? "")}
+                initialAppellationName={String(selected.sourceIdentity.appellation ?? "")} />
+              <label>{t("Search shared wines")}
+                <input value={releaseQuery} onChange={(event) => setReleaseQuery(event.target.value)} />
+              </label>
+              <button type="button" disabled={!isOnline || searchingReleases || releaseQuery.trim().length < 2}
+                onClick={() => void searchReleases()}>{searchingReleases ? t("Searching…") : t("Search exact releases")}</button>
+              <label>{t("Confirmed wine and vintage")}
+                <select value={chosenReleaseId} onChange={(event) => setChosenReleaseId(event.target.value)}>
+                  <option value="">{t("Choose the exact shared wine")}</option>
+                  {releaseOptions.map((option) => <option key={option.releaseId} value={option.releaseId}>
+                    {option.producer} · {option.cuvee} · {option.vintage}
+                  </option>)}
+                </select>
+              </label>
+              {typeof selected.vintageYear === "number" ? <CanonicalReleaseCreation key={selected.id}
+                candidateId={selected.id} expectedReviewId={selected.review.id}
+                proposedProducer={String(selected.sourceIdentity.producer ?? "")}
+                proposedCuvee={String(selected.sourceIdentity.cuvee ?? "")}
+                vintage={selected.vintageYear} isOnline={isOnline}
+                onCreated={(releaseId, producer, cuvee, reason) => {
+                  setReleaseOptions((current) => current.some((item) => item.releaseId === releaseId)
+                    ? current : [...current, { releaseId, producer, cuvee, vintage: selected.vintageYear! }])
+                  setChosenReleaseId(releaseId)
+                  setIdentityReason(reason)
+                }} /> : null}
+              <label>{t("Why is this the same wine?")}
+                <textarea minLength={10} maxLength={1000} value={identityReason}
+                  onChange={(event) => setIdentityReason(event.target.value)} />
+              </label>
+              <label>{t("Unpublished profile draft")}
+                <select value={baseVersionId} onChange={(event) => setBaseVersionId(event.target.value)}>
+                  <option value="">{t("Choose a draft version")}</option>
+                  {baseDrafts.map((draft) => <option key={draft.versionId} value={draft.versionId}>
+                    {t("Reference version {number}", { number: String(draft.versionNumber) })}
+                  </option>)}
+                </select>
+              </label>
+              <button type="button" disabled={!isOnline || staging || saving || !baseVersionId
+                || !chosenReleaseId || identityReason.trim().length < 10
+                || JSON.stringify(form) !== JSON.stringify(formFor(selected))}
+                onClick={() => void stageProducer()}>
+                {staging ? t("Preparing…") : t("Add to unpublished draft")}
               </button>
               {JSON.stringify(form) !== JSON.stringify(formFor(selected))
                 ? <small>{t("Save your changes before preparing the draft.")}</small> : null}

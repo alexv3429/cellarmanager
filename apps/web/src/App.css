@@ -8825,6 +8825,47 @@
   overflow-wrap: anywhere;
 }
 
+.drinking-window-profile-import,
+.drinking-window-release-panel,
+.drinking-window-fallback-editor,
+.drinking-window-fallback-editor form,
+.drinking-window-target-picker,
+.drinking-window-reference-review form {
+  display: grid;
+  gap: 0.7rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.drinking-window-profile-import label,
+.drinking-window-release-panel label,
+.drinking-window-fallback-editor label,
+.drinking-window-target-picker label,
+.drinking-window-reference-review form label {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.drinking-window-profile-import input,
+.drinking-window-profile-import select,
+.drinking-window-release-panel input,
+.drinking-window-release-panel select,
+.drinking-window-release-panel textarea,
+.drinking-window-target-picker input,
+.drinking-window-target-picker select,
+.drinking-window-reference-review form textarea {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.drinking-window-release-panel li,
+.drinking-window-profile-import li,
+.drinking-window-source-note li {
+  overflow-wrap: anywhere;
+}
+
 .drinking-window-draft-correction {
   display: grid;
   gap: 0.7rem;
