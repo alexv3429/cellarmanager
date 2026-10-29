@@ -73,7 +73,7 @@ PR #227 also passed its GitHub database, web, dependency-audit, Worker-build,
 and aggregate CI gates. The linked database now has the nine migrations;
 no profile has been imported, published, or enabled for a household.
 
-**Gate 1 work in slot 2/6 (29 October):** The proposed branch adds a private,
+**Gate 1 work in slot 2/6 (29 October):** PR #228 adds a private,
 owner-managed producer rule for a confirmed producer/cuvée, producer/appellation,
 or producer/region, always bound to one vintage and colour. Wine-specific dates
 still win; then an applicable cellar rule; then a published exact or eligible
@@ -82,13 +82,16 @@ shifts all three published years together, while the original shared years
 remain visible; it does not shift explicit cellar dates. The wine card offers
 rule scope, three years, reason, and removal. Its form uses the **unshifted**
 shared/model years as defaults so one member's personal preference cannot be
-silently saved for the whole cellar. This is **not deployed to the linked
-database or official app** and does not publish any shared dates. A disposable
+silently saved for the whole cellar. The single Gate 1 migration was
+[backed up, rehearsed, and deployed](drinking-window-gate1-deployment.md)
+to the linked database after all PR CI checks passed and the owner authorized
+it. The PR preview is reachable; an authenticated owner walkthrough and merge
+are still pending. The Gate 1 client is **not yet on the official app**, and
+no shared dates were published. A disposable
 local clone passed the new migration, all 31 drinking-window SQL suites, and
 the 39 new rollback-only assertions. The full local repository CI passes,
 including web lint (existing warnings), 885 tests, and the production build;
-PR CI status is recorded in the Gate 1 PR
-before review. Gate 1
+PR CI passed before linked deployment. Gate 1
 does not include the routine user/curator publication flow, full profile
 exchange, or populated common base; those remain Gates 2–5.
 
@@ -106,7 +109,7 @@ in every PR description.
 | Gate | Status now | Next concrete action |
 | --- | --- | --- |
 | 0. Lock product contract | Verified by owner on 29 October 2026; #227 merged and nine migrations safely deployed | Preserve the agreed contract and acceptance cases. |
-| 1. Core selection and private preferences | In progress in slot 2/6; local migration, 39 new SQL assertions, 31 drinking-window suites, and web checks pass; not deployed | Complete PR CI; then review explicit scope and private-offset behavior. |
+| 1. Core selection and private preferences | In progress in slot 2/6; PR #228 CI passes, migration is backed up and deployed, preview is reachable; owner walkthrough and merge remain | Test explicit scope, precedence, and private-offset behavior in the PR preview, then merge if accepted. |
 | 2. User and curator workflows | Partial foundation in #227 | Make self-approved curator publication and user proposal → shared update a routine in-app path without permanent publisher/household gates. |
 | 3. Complete profile exchange | Partial foundation in #227 | Import/export full producer JSON plus agreed appellation and region templates, retaining non-date facts and batch diff/review. |
 | 4. Prepare initial common base | Not started | Process all 23 supplied files and reviewed fallbacks in staging; prepare an approved publication manifest and quarantine every exception with a reason. |
