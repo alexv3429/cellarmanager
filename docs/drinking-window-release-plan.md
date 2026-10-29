@@ -22,7 +22,10 @@ precedence and acceptance examples.
 ## Current delivery checkpoint — 29 October 2026
 
 The [PR #227](https://github.com/alexv3429/cellarmanager/pull/227) is
-**open with passing CI, not merged, not database-deployed, and not released**.
+**open with passing CI, not merged, and not released**. Its seven new
+database migrations, plus two earlier pending drinking-window migrations,
+were [backed up, rehearsed and applied](drinking-window-gate0-nine-migration-deployment.md)
+to the linked project on 29 October 2026 with the owner's authorization.
 It is a useful curation foundation, **not** the complete product contract.
 Its current behavior is:
 
@@ -67,7 +70,9 @@ exposed and fixed a post-publication comparison regression before deployment.
 Web lint, 881 tests, and the production build pass. None of these tests is
 evidence that a real producer profile or live household has been activated.
 PR #227 also passed its GitHub database, web, dependency-audit, Worker-build,
-and aggregate CI gates. The linked database and official app have not changed.
+and aggregate CI gates. The linked database now has the nine migrations;
+the official app code has not changed, and no profile has been imported,
+published, or enabled for a household.
 
 **Execution status (the contract defines each exit test):**
 
@@ -82,7 +87,7 @@ in every PR description.
 
 | Gate | Status now | Next concrete action |
 | --- | --- | --- |
-| 0. Lock product contract | Verified by owner on 29 October 2026; #227 still open | Keep the agreed contract and acceptance cases stable; Gate 1 implements their automated tests. |
+| 0. Lock product contract | Verified by owner on 29 October 2026; nine migrations safely deployed; #227 still open | Keep the agreed contract and acceptance cases stable; Gate 1 implements their automated tests. |
 | 1. Core selection and private preferences | Incomplete | Make offsets apply to reviewed references, add cellar-only producer rules, and verify exact/broader/model precedence on real wine fixtures. |
 | 2. User and curator workflows | Partial foundation in #227 | Make self-approved curator publication and user proposal → shared update a routine in-app path without permanent publisher/household gates. |
 | 3. Complete profile exchange | Partial foundation in #227 | Import/export full producer JSON plus agreed appellation and region templates, retaining non-date facts and batch diff/review. |
