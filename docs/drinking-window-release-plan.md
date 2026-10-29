@@ -18,9 +18,9 @@ release target.
 
 ## Current delivery checkpoint — 29 October 2026
 
-The next consolidated change is **implemented locally, not merged, not deployed,
-and not released**. It is deliberately one end-to-end workflow rather than
-another single-wine seed:
+The consolidated [PR #227](https://github.com/alexv3429/cellarmanager/pull/227)
+is **open with passing CI, not merged, not database-deployed, and not released**.
+It is deliberately one end-to-end workflow rather than another single-wine seed:
 
 1. A reviewer uploads the owner-supplied v1.1 producer JSON files to an
    unpublished research queue. Import does not assert rights, approve a date,
@@ -62,6 +62,8 @@ approval → authorized publication → another household unchanged. It also
 exposed and fixed a post-publication comparison regression before deployment.
 Web lint, 881 tests, and the production build pass. None of these tests is
 evidence that a real producer profile or live household has been activated.
+PR #227 also passed its GitHub database, web, dependency-audit, Worker-build,
+and aggregate CI gates. The linked database and official app have not changed.
 
 **Remaining actions, in order (each updates this record):**
 
