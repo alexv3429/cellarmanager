@@ -1,26 +1,30 @@
 # Drinking-window release plan — living delivery record
 
-This is the **single progress record** for shipping reviewed, three-milestone
-drinking windows in CellarManager. The [reference policy](drinking-window-reference-policy.md)
-defines the rules; the [implementation plan](drinking-window-implementation-plan.md)
-and [rollout runbook](drinking-window-staged-rollout.md) contain technical detail.
-Neither a merged PR nor a passing synthetic test makes this feature released.
+This is the **single progress record** for shipping the
+[drinking-window product contract](drinking-window-product-contract.md). That
+contract now defines the target behavior and outcome gates. The older
+[reference policy](drinking-window-reference-policy.md),
+[implementation plan](drinking-window-implementation-plan.md), and
+[rollout runbook](drinking-window-staged-rollout.md) are historical/technical
+inputs where they differ; reconcile them before general release. Neither a
+merged PR nor a passing synthetic test makes the feature released.
 
-**Release target:** A cellar owner can see a reviewed shared window with **start
-tasting / probable optimal start / probable optimal end**, know exactly why it
-matched, compare it with the advice they currently see, choose whether to use
-it, override it privately, and return safely to the previous advice. A curator
-can maintain the shared reference without a code PR for each wine. Wines with
-no reviewed match retain clearly labelled existing-model advice, or no advice
-if that model cannot assess them. The owner-authorized pilot comes before
-broader use. No percentage of catalogue coverage is silently implied by this
-release target.
+**Release target:** One complete, provenance-labelled three-date window from
+the most specific applicable shared profile, or a private cellar choice,
+followed by a personal offset when applicable. Curators can maintain and
+publish complete shared profiles from the app without a developer PR or a
+second curator; users can suggest individual changes. The supplied producer
+profiles become a reviewed common base, with appellation and region fallbacks
+and the labelled existing model as last resort. The initial pilot is a safety
+gate, not the permanent way to distribute updates. See the contract for exact
+precedence and acceptance examples.
 
 ## Current delivery checkpoint — 29 October 2026
 
-The consolidated [PR #227](https://github.com/alexv3429/cellarmanager/pull/227)
-is **open with passing CI, not merged, not database-deployed, and not released**.
-It is deliberately one end-to-end workflow rather than another single-wine seed:
+The [PR #227](https://github.com/alexv3429/cellarmanager/pull/227) is
+**open with passing CI, not merged, not database-deployed, and not released**.
+It is a useful curation foundation, **not** the complete product contract.
+Its current behavior is:
 
 1. A reviewer uploads the owner-supplied v1.1 producer JSON files to an
    unpublished research queue. Import does not assert rights, approve a date,
@@ -65,33 +69,23 @@ evidence that a real producer profile or live household has been activated.
 PR #227 also passed its GitHub database, web, dependency-audit, Worker-build,
 and aggregate CI gates. The linked database and official app have not changed.
 
-**Remaining actions, in order (each updates this record):**
+**Execution status (the contract defines each exit test):**
 
-1. Review and merge the consolidated implementation. Check that the mobile
-   reviewer path is understandable and that no one mistakes research estimates
-   for producer-published dates. This does not authorize publication.
-2. Back up the linked database, rehearse the seven new migrations against a
-   restored copy, then apply them to the linked project with explicit owner
-   authorization. Deploy the matching Worker and verify the build hash.
-3. In the app, import the supplied producer profiles as research, create or
-   resolve missing canonical identities, and curate one precise producer/cuvée/vintage/format
-   reference first. Keep the other 669 proposals unpublished until reviewed;
-   document exact source fit, rights and editorial estimates separately.
-4. Complete the owner-visible mobile pilot: inspect a real matched wine,
-   reject/correct a draft once, recheck it, approve a fresh comparison, and
-   verify that no other household changes. Grant publisher authority to an
-   explicitly chosen account only when the owner authorizes the live pilot.
-5. Publish that pilot through the app, verify the three dates and rationale on
-   the official wine card, test private override/opt-out and emergency-off,
-   then record postflight evidence here. Only then mark the pilot released.
-6. Grow producer coverage and use appellation/region estimates only for
-   reviewed memberships where no more specific profile exists. Measure gaps
-   and revisit the curator/mobile interface before a general rollout.
+| Gate | Status now | Next concrete action |
+| --- | --- | --- |
+| 0. Lock product contract | In progress; private-cellar ownership and personal-offset scope confirmed by owner | Owner reviews the full contract; convert its examples into acceptance fixtures and reconcile conflicting older notes. |
+| 1. Core selection and private preferences | Incomplete | Make offsets apply to reviewed references, add private producer windows, and verify exact/broader/model precedence on real wine fixtures. |
+| 2. User and curator workflows | Partial foundation in #227 | Make self-approved curator publication and user proposal → shared update a routine in-app path without permanent publisher/household gates. |
+| 3. Complete profile exchange | Partial foundation in #227 | Import/export full producer JSON plus agreed appellation and region templates, retaining non-date facts and batch diff/review. |
+| 4. Prepare initial common base | Not started | Process all 23 supplied files and reviewed fallbacks in staging; prepare an approved publication manifest and quarantine every exception with a reason. |
+| 5. Release and verify | Not started | Rehearse and authorize migrations, publish the approved initial base, pilot on mobile, then verify ordinary cross-household publication and rollback on the official app. |
 
-**Stop conditions:** a missing canonical identity, uncertain rights or date
-provenance, stale review/comparison, failed mobile path, unauthorized publisher,
-or a change to a non-pilot household prevents activation. No bulk import or
-passing test silently overrides these gates.
+**Merge/deployment rule:** Do not describe #227 as feature-complete or ask the
+owner to deploy its migrations as the end state. Update this record whenever
+implementation changes a gate. Before each merge/test request, state the exact
+behavior available, the missing behavior, data/migration effects, a test path
+and expected result, and any decision required. No passing test or bulk import
+silently approves unverified dates.
 
 ## Historical status at 28 October 2026
 
