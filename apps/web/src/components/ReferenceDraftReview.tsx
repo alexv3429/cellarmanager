@@ -8,8 +8,13 @@ import {
   type ReferenceSubject,
   type ReferenceVerdict,
 } from "../data/drinkingWindowReferenceDrafts"
+import { editorialContextId, editorialEvidenceId } from "../data/drinkingWindowEditorialEstimate"
 import { useLanguage } from "../i18n/useLanguage"
 import { DraftRowCorrectionEditor } from "./DraftRowCorrectionEditor"
+import { FallbackSubjectCorrectionEditor } from "./FallbackSubjectCorrectionEditor"
+import { EditorialEstimateNote } from "./EditorialEstimateNote"
+import { EditorialContextNote } from "./EditorialContextNote"
+import { EditorialAttestationForm } from "./EditorialAttestationForm"
 import { Notice } from "./Notice"
 
 const PilotDecisionNote = lazy(() => import("./PilotDecisionNote"))
@@ -174,7 +179,12 @@ export function ReferenceDraftReview({ isOnline }: Props) {
             <h5>{t("Linked sources")}</h5>
             {subject.evidence.length === 0 ? <p>{t("No source linked; do not approve before checking.")}</p> :
               <ul>{groupedEvidence(subject.evidence).map(({ source, claimParts }, index) => <li key={index}>
-                {isPilotDecisionNote(source) ? <button type="button" className="drinking-window-source-note__toggle"
+                {editorialContextId(source.sourceUrl) || editorialEvidenceId(source.sourceUrl) ? <button type="button" className="drinking-window-source-note__toggle"
+                  aria-expanded={openSource === `${key}:${index}`}
+                  aria-controls={`${key}:${index}:source`}
+                  onClick={() => setOpenSource(openSource === `${key}:${index}` ? null : `${key}:${index}`)}>
+                  {t(editorialContextId(source.sourceUrl) ? "Read the editorial assessment in the app" : "Read the editorial estimate in the app")}
+                </button> : isPilotDecisionNote(source) ? <button type="button" className="drinking-window-source-note__toggle"
                   aria-expanded={openSource === `${key}:${index}`}
                   aria-controls={`${key}:${index}:source`}
                   onClick={() => setOpenSource(openSource === `${key}:${index}` ? null : `${key}:${index}`)}>
@@ -183,20 +193,31 @@ export function ReferenceDraftReview({ isOnline }: Props) {
                   <a href={source.sourceUrl} target="_self">{t(source.sourceName)}</a> : t(source.sourceName)}
                 <span> · {claimParts.map((claimPart) => t(claimPart)).join(", ")}</span>
                 <small className="drinking-window-review-source-status">{source.reviewStatus === "reviewed" ? t("Source record reviewed") : `${t("Source record")}: ${t(source.reviewStatus)}`} · {t(source.reuseRight)}</small>
-                {isPilotDecisionNote(source) && openSource === `${key}:${index}` ? <div id={`${key}:${index}:source`} className="drinking-window-source-note">
+                {editorialContextId(source.sourceUrl) && openSource === `${key}:${index}` ?
+                  <div id={`${key}:${index}:source`}><EditorialContextNote evidenceId={editorialContextId(source.sourceUrl)!} /></div>
+                  : editorialEvidenceId(source.sourceUrl) && openSource === `${key}:${index}` ?
+                  <div id={`${key}:${index}:source`}><EditorialEstimateNote evidenceId={editorialEvidenceId(source.sourceUrl)!} /></div>
+                  : isPilotDecisionNote(source) && openSource === `${key}:${index}` ? <div id={`${key}:${index}:source`} className="drinking-window-source-note">
                   <Suspense fallback={<p>{t("Loading decision note…")}</p>}><PilotDecisionNote /></Suspense>
                   <a href={source.sourceUrl ?? undefined} target="_self">{t("Open the original on GitHub")}</a>
                 </div> : source.sourceUrl?.startsWith("https://") && !isPilotDecisionNote(source) ?
                   <small className="drinking-window-review-source-status">{t("Opens the source in this tab; use Back to return to the review.")}</small> : null}
               </li>)}</ul>}
+            <EditorialAttestationForm versionId={draft.versionId} kind={subject.kind}
+              subjectId={subject.id} subjectHash={subject.hash} isOnline={isOnline}
+              onChanged={refresh} />
             {subject.reviews.length ? <p>{t("Current reviewer decisions")}: {subject.reviews.map((review) =>
               `${t(review.verdict === "approve" ? "Approved" : "Disputed")} — ${review.rationale}`).join("; ")}</p> : null}
-            {subject.kind === "row" ? <>
+            {subject.kind === "row" || subject.kind === "group" || subject.kind === "membership" ? <>
               <button type="button" onClick={() => setCorrecting(correcting === key ? null : key)}>
-                {t(correcting === key ? "Hide correction tools" : "Correct dates or sources")}
+                {t(correcting === key ? "Hide correction tools" : subject.kind === "row"
+                  ? "Correct dates or sources" : "Correct this fallback")}
               </button>
-              {correcting === key ? <DraftRowCorrectionEditor versionId={draft.versionId} rowId={subject.id}
-                subjectHash={subject.hash} isOnline={isOnline} onChanged={refresh} /> : null}
+              {correcting === key ? subject.kind === "row" && subject.details.scope === "release"
+                ? <DraftRowCorrectionEditor versionId={draft.versionId} rowId={subject.id}
+                    subjectHash={subject.hash} isOnline={isOnline} onChanged={refresh} />
+                : <FallbackSubjectCorrectionEditor versionId={draft.versionId} kind={subject.kind}
+                    subjectId={subject.id} isOnline={isOnline} onChanged={refresh} /> : null}
             </> : null}
             {subject.issues.length === 0 && reconsidered !== key ? <button type="button"
               onClick={() => setReconsidered(key)}>{t("Review this decision again")}</button> :

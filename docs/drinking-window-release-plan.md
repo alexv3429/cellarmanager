@@ -16,7 +16,82 @@ if that model cannot assess them. The owner-authorized pilot comes before
 broader use. No percentage of catalogue coverage is silently implied by this
 release target.
 
-## Status at 28 October 2026
+## Current delivery checkpoint — 29 October 2026
+
+The next consolidated change is **implemented locally, not merged, not deployed,
+and not released**. It is deliberately one end-to-end workflow rather than
+another single-wine seed:
+
+1. A reviewer uploads the owner-supplied v1.1 producer JSON files to an
+   unpublished research queue. Import does not assert rights, approve a date,
+   or change anyone's advice. A reviewer explicitly matches each proposed
+   vintage and bottle size to a canonical release before adding it to a
+   working reference version. When a producer, cuvée, release, region or
+   appellation is genuinely missing, the reviewer can create its shared
+   identity in the app after searching for duplicates and recording a reason.
+   Those identity decisions are audited; they do not link household wines or
+   promote dates. The 23-file bundle parses as 670 research proposals; none
+   has been imported into the linked project. A read-only inventory found
+   only 8 canonical producers, 3 cuvées/releases, 2 regions and 2
+   appellations on that project, so identity creation is essential rather
+   than optional for the broader batch.
+2. A reviewer may maintain a producer/appellation, producer/region,
+   appellation, or region fallback **in the app**. Every fallback has its own
+   named ageing category, explicitly eligible wines or places, and three
+   vintage-specific years. No region borrows another region's dates. Exact
+   release rows continue to outrank broader fallbacks; the existing model
+   remains the last resort when there is no reviewed match.
+3. The reviewer documents either exact source-stated dates or an explicitly
+   labelled, shareable editorial estimate with context links. Group scope and
+   membership have separate reviewable explanations. Corrections to dates,
+   group definition, or membership are audited, detach superseded evidence,
+   and require fresh approval. A draft can be copied without inheriting old
+   approvals or cellar comparisons.
+4. The reviewer runs the complete draft preflight. A pilot cellar owner
+   requests and approves a fresh whole-cellar comparison. Publication is a
+   separate in-app action requiring a one-time publisher grant; the migration
+   grants that role to **nobody**. Other households remain unchanged. Existing
+   opt-in, personal override, and emergency-off behavior remain in place.
+
+**Local verification completed:** all 131 migrations replayed from an empty
+disposable database (with the local Supabase storage schema prerequisite but
+without its data). All 30 rollback-only drinking-window database suites,
+including the eight new suites, passed with the synthetic seed. A positive test
+followed review → zero-issue preflight → matched-wine comparison → owner
+approval → authorized publication → another household unchanged. It also
+exposed and fixed a post-publication comparison regression before deployment.
+Web lint, 881 tests, and the production build pass. None of these tests is
+evidence that a real producer profile or live household has been activated.
+
+**Remaining actions, in order (each updates this record):**
+
+1. Review and merge the consolidated implementation. Check that the mobile
+   reviewer path is understandable and that no one mistakes research estimates
+   for producer-published dates. This does not authorize publication.
+2. Back up the linked database, rehearse the seven new migrations against a
+   restored copy, then apply them to the linked project with explicit owner
+   authorization. Deploy the matching Worker and verify the build hash.
+3. In the app, import the supplied producer profiles as research, create or
+   resolve missing canonical identities, and curate one precise producer/cuvée/vintage/format
+   reference first. Keep the other 669 proposals unpublished until reviewed;
+   document exact source fit, rights and editorial estimates separately.
+4. Complete the owner-visible mobile pilot: inspect a real matched wine,
+   reject/correct a draft once, recheck it, approve a fresh comparison, and
+   verify that no other household changes. Grant publisher authority to an
+   explicitly chosen account only when the owner authorizes the live pilot.
+5. Publish that pilot through the app, verify the three dates and rationale on
+   the official wine card, test private override/opt-out and emergency-off,
+   then record postflight evidence here. Only then mark the pilot released.
+6. Grow producer coverage and use appellation/region estimates only for
+   reviewed memberships where no more specific profile exists. Measure gaps
+   and revisit the curator/mobile interface before a general rollout.
+
+**Stop conditions:** a missing canonical identity, uncertain rights or date
+provenance, stale review/comparison, failed mobile path, unauthorized publisher,
+or a change to a non-pilot household prevents activation. No bulk import or
+passing test silently overrides these gates.
+
+## Historical status at 28 October 2026
 
 **Current implementation slice (merged and database-deployed, not released):** PR #222 lets
 a cellar owner submit a three-date suggestion for a confirmed exact release
