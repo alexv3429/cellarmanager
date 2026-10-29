@@ -1,6 +1,6 @@
 # Drinking windows — product contract and execution plan
 
-**Status: proposed contract for owner confirmation, 29 October 2026.** This is
+**Status: owner-confirmed contract, 29 October 2026.** This is
 the single product definition for the drinking-window feature. It records the
 owner's requested end state, not a claim that the current application already
 does it. The [living release record](drinking-window-release-plan.md) tracks
@@ -204,18 +204,18 @@ decide what changes; do not silently open a seventh PR or declare success.
 
 | PR slot | Gate | Work to deliver | Exit evidence |
 | --- | --- | --- | --- |
-| 1/6 · #227 | 0. Lock this contract | Reconcile conflicting older notes and record acceptance cases. The cellar-only producer-rule ownership is confirmed above. | Owner confirms the complete contract; expected results are recorded for Côte du Py, appellation, region, offset and cellar-only choices. Gate 1 turns these into automated tests. |
+| 1/6 · #227 | 0. Lock this contract | Reconcile conflicting older notes and record acceptance cases. The cellar-only producer-rule ownership is confirmed above. | Owner confirmed the contract and simplified diagram on 29 October 2026; expected results are recorded for Côte du Py, appellation, region, offset and cellar-only choices. Gate 1 turns these into automated tests. |
 | 2/6 | 1. Correct the core selection and preferences | Make the published selector follow the exact → applicable broader → model order; apply personal offsets to reviewed dates; add cellar-only producer rules; preserve private wine windows. | Automated precedence, no-mixing, identity, membership, format, colour, vintage, offset and override tests pass; the wine card shows base and effective dates with source. |
 | 3/6 | 2. Finish curator and user workflows | User proposes one window; curator directly authors or edits, self-approves and publishes. Replace pilot-only publisher/household approvals as routine requirements while keeping audit, preflight, diff and rollback. | In the app, one user proposes Burgaud 2023; one curator publishes it without another curator, developer PR or household opt-in; a second user sees it and private choices remain unchanged. |
 | 4/6 | 3. Import complete profiles | Support whole producer v1.1 files and agreed appellation/region JSON; preview identity mapping and changes; preserve window and optional profile facts with provenance; batch-approve valid rows, quarantine others. | Curator can import and publish a complete profile from the app; re-import/idempotency and malformed/conflicting-file tests pass; no silent partial import. |
 | 5/6 | 4. Prepare the initial common base | Process all 23 supplied producer files and the reviewed appellation/region fallbacks in a staging/restored database. Resolve canonical identities and membership; prepare approved rows for publication and report every excluded row with a reason. | A coverage manifest lists each file, row and status; real catalogue fixtures resolve exact, appellation and region matches; no row is assumed publishable because it parsed. |
 | 6/6 | 5. Release and verify | Rehearse migrations on a restored backup, deploy code and schema, publish the approved initial base, run a mobile pilot, then enable ordinary shared publication. | Official app shows correct source, dates and private adjustments; user/curator end-to-end test passes; another cellar receives a new approved vintage; emergency-off/rollback work; release record contains build, migration, published-row counts and postflight evidence. |
 
-### Current gap ledger (before work on this contract)
+### Current gap ledger
 
-- **Gate 0:** The owner confirmed cellar-wide producer rules and a
-  personal offset. This complete contract still awaits review; older
-  documentation describes different approval and rollout rules.
+- **Gate 0:** The owner confirmed cellar-wide producer rules, personal
+  offsets and this complete contract. Older documentation describes different
+  approval and rollout rules and is superseded where it conflicts.
 - **Gate 1:** Exact/broader reference selection and a private wine window
   exist in prior work, but the existing personal offset explicitly excludes
   reviewed references. Cellar-only producer-rule authoring is absent.

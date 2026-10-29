@@ -82,7 +82,7 @@ in every PR description.
 
 | Gate | Status now | Next concrete action |
 | --- | --- | --- |
-| 0. Lock product contract | In progress; private-cellar ownership and personal-offset scope confirmed by owner | Owner reviews the full contract; convert its examples into acceptance fixtures and reconcile conflicting older notes. |
+| 0. Lock product contract | Verified by owner on 29 October 2026; #227 still open | Keep the agreed contract and acceptance cases stable; Gate 1 implements their automated tests. |
 | 1. Core selection and private preferences | Incomplete | Make offsets apply to reviewed references, add cellar-only producer rules, and verify exact/broader/model precedence on real wine fixtures. |
 | 2. User and curator workflows | Partial foundation in #227 | Make self-approved curator publication and user proposal → shared update a routine in-app path without permanent publisher/household gates. |
 | 3. Complete profile exchange | Partial foundation in #227 | Import/export full producer JSON plus agreed appellation and region templates, retaining non-date facts and batch diff/review. |
