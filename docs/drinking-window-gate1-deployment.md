@@ -51,7 +51,16 @@ returns HTTP 200; an authenticated owner walkthrough has **not** yet been
 performed. No profile was imported or published, no household was opted in,
 and no wine or stock record was changed by this deployment.
 
-Retain the protected export through owner testing and a deliberate recovery
-decision. Never restore it over later live user changes automatically. The
-next step is the Gate 1 owner preview test; merging PR #228 does not complete
-Gates 2–5.
+Retain the protected export through a deliberate recovery decision. Never
+restore it over later live user changes automatically. The owner preview
+result is recorded below; merging PR #228 does not complete Gates 2–5.
+
+## Owner preview check — 30 October 2026
+
+The owner reported creating a cellar-only producer rule on the preview wine
+card, confirming that it took effect, and removing it. A subsequent
+aggregate-only linked query found zero cellar-only producer rules, consistent
+with the reported cleanup. This checks the create/select/remove path on a real
+cellar. The separate cross-member personal-offset behavior was not manually
+checked in this walkthrough; it remains covered by the automated Gate 1
+tests. No shared profile was published or household rollout enabled.

@@ -85,8 +85,11 @@ shared/model years as defaults so one member's personal preference cannot be
 silently saved for the whole cellar. The single Gate 1 migration was
 [backed up, rehearsed, and deployed](drinking-window-gate1-deployment.md)
 to the linked database after all PR CI checks passed and the owner authorized
-it. The PR preview is reachable; an authenticated owner walkthrough and merge
-are still pending. The Gate 1 client is **not yet on the official app**, and
+it. The owner tested creating, selecting, and removing a cellar-only rule in
+the PR preview on 30 October; a live aggregate check confirmed zero rules
+remain. The cross-member personal-offset behavior was not manually checked
+in that walkthrough. Merge is still pending. The Gate 1 client is **not yet
+on the official app**, and
 no shared dates were published. A disposable
 local clone passed the new migration, all 31 drinking-window SQL suites, and
 the 39 new rollback-only assertions. The full local repository CI passes,
@@ -109,7 +112,7 @@ in every PR description.
 | Gate | Status now | Next concrete action |
 | --- | --- | --- |
 | 0. Lock product contract | Verified by owner on 29 October 2026; #227 merged and nine migrations safely deployed | Preserve the agreed contract and acceptance cases. |
-| 1. Core selection and private preferences | In progress in slot 2/6; PR #228 CI passes, migration is backed up and deployed, preview is reachable; owner walkthrough and merge remain | Test explicit scope, precedence, and private-offset behavior in the PR preview, then merge if accepted. |
+| 1. Core selection and private preferences | In progress in slot 2/6; PR #228 CI passes, migration is backed up and deployed, and owner tested create/select/remove on the preview; merge remains | Merge #228 if the reviewed behavior is accepted; cross-member personal-offset behavior has automated but not manual coverage. |
 | 2. User and curator workflows | Partial foundation in #227 | Make self-approved curator publication and user proposal → shared update a routine in-app path without permanent publisher/household gates. |
 | 3. Complete profile exchange | Partial foundation in #227 | Import/export full producer JSON plus agreed appellation and region templates, retaining non-date facts and batch diff/review. |
 | 4. Prepare initial common base | Not started | Process all 23 supplied files and reviewed fallbacks in staging; prepare an approved publication manifest and quarantine every exception with a reason. |
