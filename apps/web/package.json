@@ -12,6 +12,7 @@
     "pwa:assets": "pwa-assets-generator --preset minimal-2023 public/favicon.svg"
   },
   "dependencies": {
+    "ajv": "^8.20.0",
     "@powersync/react": "^2.0.1",
     "@powersync/web": "^2.3.1",
     "@supabase/supabase-js": "^2.116.0",

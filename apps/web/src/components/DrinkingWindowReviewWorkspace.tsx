@@ -21,6 +21,7 @@ import {
 import { useLanguage } from "../i18n/useLanguage"
 import { Notice } from "./Notice"
 import { DrinkingWindowReleasePanel } from "./DrinkingWindowReleasePanel"
+import { FullProfileExchangePanel } from "./FullProfileExchangePanel"
 import { CanonicalReleaseCreation } from "./CanonicalReleaseCreation"
 import { CurationPlaceCreation } from "./CurationPlaceCreation"
 import { ProducerProfileImportPanel } from "./ProducerProfileImportPanel"
@@ -277,10 +278,12 @@ export function DrinkingWindowReviewWorkspace({ householdId, isOnline }: Props) 
         </li>
       )}</ul>}
 
-    <DrinkingWindowReleasePanel householdId={householdId} isOnline={isOnline}
+    <DrinkingWindowReleasePanel key={draftRefreshKey} householdId={householdId} isOnline={isOnline}
       onChanged={async () => { await refresh(); setDraftRefreshKey((value) => value + 1) }} />
     <ReferenceDraftReview key={draftRefreshKey} isOnline={isOnline} />
 
+    <FullProfileExchangePanel isOnline={isOnline}
+      onStaged={() => { void refresh(); setDraftRefreshKey((value) => value + 1) }} />
     <ProducerProfileImportPanel isOnline={isOnline} selectedHash={selectedPackageHash}
       onSelect={(hash) => { setSelectedId(null); setForm(null); setSelectedPackageHash(hash) }} />
 

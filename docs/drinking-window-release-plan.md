@@ -96,7 +96,7 @@ PR CI passed before linked deployment. Gate 1
 does not include the routine user/curator publication flow, full profile
 exchange, or populated common base; those remain Gates 2–5.
 
-**Gate 2 work in slot 3/6 (30 October, PR #229 open):** A curator can
+**Gate 2 work in slot 3/6 (30 October, PR #229 merged):** A curator can
 stage an exact canonical wine/vintage and three dates directly in an
 unpublished version. That row remains unreviewed until its evidence, rights,
 and dates receive fresh review. The existing cellar-owner suggestion path
@@ -121,7 +121,32 @@ lint with existing warnings, and production build), and all
 The linked project was [backed up, rehearsed, deployed, and checked](drinking-window-gate2-routine-publication-deployment.md)
 successfully. Postflight found 810 wines, four households, six users, two
 reference versions, zero publications and zero enabled switches. The signed-in
-curator workflow has not yet been walked through; Gate 2 is not accepted.
+curator workflow has not yet been walked through; the owner confirmed the
+unpublished-draft section in the preview and merged #229. Publication and
+cross-cellar effects remain unverified on real data.
+
+**Gate 3 work in slot 4/6 (30 October, in progress; no PR or linked deployment yet):**
+The proposed implementation stores a complete immutable producer, appellation
+or region exchange document for curator-only export and review. It previews
+each exact release or ageing group against canonical identities, quarantines
+unresolved/conflicting entries with reasons, and stages reviewed valid entries
+in one transaction. Three-date rows carry source-context URLs and an explicit
+curator declaration that the dates are shared editorial estimates, not dates
+asserted by the source page. Optional history, grapes, structure and pairing
+facts remain in the private exchange archive; **they are not yet displayed as
+official profile facts**. Staging does not publish. The existing Gate 2
+preflight, impact preview and curator publication remain separate required
+actions. Format-specific release windows can coexist in one version, and an
+exact bottle-size match outranks a size-neutral match at the same scope.
+All 23 owner-supplied audited producer JSON files pass the proposed client
+validation, but none has been imported, approved or published. The migration
+and 21 rollback-only assertions pass on a disposable local clone, including
+non-curator denial, stale-preview refusal, idempotency, conflict quarantine,
+source-link provenance, two bottle sizes and a regional group. Full local
+repository CI passes (web lint with pre-existing warnings, 892 web tests with
+one optional local-file audit skipped, and production build). The remaining
+Gate 3 check is an end-to-end curator preview on an authorized test project.
+No linked-database migration is authorized by this record.
 
 **Execution status (the contract defines each exit test):**
 
@@ -138,8 +163,8 @@ in every PR description.
 | --- | --- | --- |
 | 0. Lock product contract | Verified by owner on 29 October 2026; #227 merged and nine migrations safely deployed | Preserve the agreed contract and acceptance cases. |
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
-| 2. User and curator workflows | In progress in slot 3/6, PR #229; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Walk through a user proposal and curator review in the preview; publication and second-cellar effects remain to be verified with an approved draft and an explicit release decision. |
-| 3. Complete profile exchange | Partial foundation in #227 | Import/export full producer JSON plus agreed appellation and region templates, retaining non-date facts and batch diff/review; resolve the current one-row-per-release/version constraint if multiple bottle sizes need distinct dates. |
+| 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
+| 3. Complete profile exchange | In progress in slot 4/6; local 23-file validation and 20 rollback-only SQL checks pass; not linked-deployed | Complete CI and curator preview, then ask separately before any linked migration. Exact-name place identities must resolve uniquely or their groups remain quarantined; optional facts remain private until a later display model is reviewed. |
 | 4. Prepare initial common base | Not started | Process all 23 supplied files and reviewed fallbacks in staging; prepare an approved publication manifest and quarantine every exception with a reason. |
 | 5. Release and verify | Not started | Rehearse and authorize migrations, publish the approved initial base, pilot on mobile, then verify ordinary cross-household publication and rollback on the official app. |
 
