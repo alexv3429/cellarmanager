@@ -19,7 +19,7 @@ and the labelled existing model as last resort. The initial pilot is a safety
 gate, not the permanent way to distribute updates. See the contract for exact
 precedence and acceptance examples.
 
-## Current delivery checkpoint — 29 October 2026
+## Current delivery checkpoint — 30 October 2026
 
 The [PR #227](https://github.com/alexv3429/cellarmanager/pull/227) is
 **merged and database-deployed, but the feature is not released**. Its seven new
@@ -88,15 +88,35 @@ to the linked database after all PR CI checks passed and the owner authorized
 it. The owner tested creating, selecting, and removing a cellar-only rule in
 the PR preview on 30 October; a live aggregate check confirmed zero rules
 remain. The cross-member personal-offset behavior was not manually checked
-in that walkthrough. Merge is still pending. The Gate 1 client is **not yet
-on the official app**, and
-no shared dates were published. A disposable
+in that walkthrough. PR #228 is merged; no shared dates were published. A disposable
 local clone passed the new migration, all 31 drinking-window SQL suites, and
 the 39 new rollback-only assertions. The full local repository CI passes,
 including web lint (existing warnings), 885 tests, and the production build;
 PR CI passed before linked deployment. Gate 1
 does not include the routine user/curator publication flow, full profile
 exchange, or populated common base; those remain Gates 2–5.
+
+**Gate 2 work in slot 3/6 (30 October, PR in preparation):** A curator can
+stage an exact canonical wine/vintage and three dates directly in an
+unpublished version. That row remains unreviewed until its evidence, rights,
+and dates receive fresh review. The existing cellar-owner suggestion path
+remains the user entry point. After a zero-issue preflight, the curator must
+inspect a fingerprint-bound aggregate impact preview, then may publish
+directly in the app. Publication no longer requires a separate publisher
+grant or cellar-owner pilot approval; eligible wines in all households use
+the published reference automatically. Private wine and producer rules keep
+their precedence. The former owner comparison is informational; historical
+decisions remain visible but do not control publication. The immutable
+publication trail and emergency-off switch remain. This migration is
+**local only, not applied to the linked database**; this PR publishes no
+dates. Gates 3–5 still cover full JSON exchange, the reviewed initial base,
+and official release. Any linked-database migration needs separate owner
+authorization after backup and rehearsal.
+The isolated local rehearsal database passed all 32 rollback-only
+drinking-window SQL suites, including direct authoring and cross-household
+publication assertions. Repository CI passed locally (885 web tests,
+lint with existing warnings, and production build). PR CI and linked-project
+deployment have not yet run.
 
 **Execution status (the contract defines each exit test):**
 
@@ -112,9 +132,9 @@ in every PR description.
 | Gate | Status now | Next concrete action |
 | --- | --- | --- |
 | 0. Lock product contract | Verified by owner on 29 October 2026; #227 merged and nine migrations safely deployed | Preserve the agreed contract and acceptance cases. |
-| 1. Core selection and private preferences | In progress in slot 2/6; PR #228 CI passes, migration is backed up and deployed, and owner tested create/select/remove on the preview; merge remains | Merge #228 if the reviewed behavior is accepted; cross-member personal-offset behavior has automated but not manual coverage. |
-| 2. User and curator workflows | Partial foundation in #227 | Make self-approved curator publication and user proposal → shared update a routine in-app path without permanent publisher/household gates. |
-| 3. Complete profile exchange | Partial foundation in #227 | Import/export full producer JSON plus agreed appellation and region templates, retaining non-date facts and batch diff/review. |
+| 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
+| 2. User and curator workflows | In progress in slot 3/6; direct exact authoring, impact preview and direct curator publication implemented locally, not linked-deployed | Pass CI, rehearse and authorize the migration, then test user proposal → curator review → publication and second-cellar visibility with private choices preserved. |
+| 3. Complete profile exchange | Partial foundation in #227 | Import/export full producer JSON plus agreed appellation and region templates, retaining non-date facts and batch diff/review; resolve the current one-row-per-release/version constraint if multiple bottle sizes need distinct dates. |
 | 4. Prepare initial common base | Not started | Process all 23 supplied files and reviewed fallbacks in staging; prepare an approved publication manifest and quarantine every exception with a reason. |
 | 5. Release and verify | Not started | Rehearse and authorize migrations, publish the approved initial base, pilot on mobile, then verify ordinary cross-household publication and rollback on the official app. |
 

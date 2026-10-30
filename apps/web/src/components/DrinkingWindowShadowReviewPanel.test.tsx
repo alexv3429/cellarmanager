@@ -121,7 +121,7 @@ describe("shared drinking-window draft comparison", () => {
     expect(reviewShadowReport).not.toHaveBeenCalled()
   })
 
-  it("explains why an identity conflict blocks owner approval and links to the wine", async () => {
+  it("explains an identity conflict and links to the wine without offering approval", async () => {
     const ready = { ...listing, versionNumber: 2, draftIssueCount: 0 }
     vi.mocked(listShadowReports).mockResolvedValue([ready])
     vi.mocked(getShadowReport).mockResolvedValue({
@@ -149,10 +149,10 @@ describe("shared drinking-window draft comparison", () => {
     expect(container.textContent).toContain("1 fiches présentent des informations contradictoires")
     expect(container.textContent).toContain("Ce ne sont pas des dates à approuver")
     expect(container.textContent).toContain("L’appellation et la région ne concordent pas")
-    expect(container.textContent).toContain("une nouvelle comparaison sera nécessaire")
+    expect(container.textContent).toContain("consultez une comparaison plus récente")
     const approve = [...container.querySelectorAll("button")]
       .find((button) => button.textContent === "Accepter les dates proposées pour ma cave")
-    expect(approve?.disabled).toBe(true)
+    expect(approve).toBeUndefined()
     const wine = [...container.querySelectorAll("button.wine-detail-link")]
       .find((button) => button.textContent?.includes("Boillot · Aux Caves"))
     await act(async () => wine?.click())
@@ -234,7 +234,7 @@ describe("shared drinking-window draft comparison", () => {
     expect(reviewShadowReport).not.toHaveBeenCalled()
   })
 
-  it("keeps an accepted decision when refreshing an unchanged comparison", async () => {
+  it("shows an old pilot decision only as history after an unchanged refresh", async () => {
     const accepted = { ...listing, reportId: "accepted", versionNumber: 2,
       draftIssueCount: 0, latestVerdict: "approve" }
     vi.mocked(listShadowReports).mockResolvedValue([accepted])
@@ -254,22 +254,21 @@ describe("shared drinking-window draft comparison", () => {
 
     const current = [...container.querySelectorAll("button")]
       .find((button) => button.textContent?.includes("Comparaison actuelle"))
-    expect(current?.textContent).toContain("Acceptée pour cette cave — non publiée")
+    expect(current?.textContent).toContain("Proposition non publiée")
     await act(async () => current?.click())
-    expect(container.textContent).toContain("Votre accord est enregistré")
-    expect(container.textContent).toContain("Résultats couverts par votre décision enregistrée")
+    expect(container.textContent).toContain("Ancienne décision du pilote (historique seulement)")
 
     const refresh = [...container.querySelectorAll("button")]
       .find((button) => button.textContent === "Actualiser cette comparaison du brouillon")
     await act(async () => refresh?.click())
     expect(refreshDrinkingWindowDraftShadowReport).toHaveBeenCalledWith("household")
-    expect(container.textContent).toContain("Rien n’a changé. Cette comparaison et votre décision enregistrée restent valides")
-    expect(container.textContent).toContain("Vous avez accepté les dates proposées pour votre cave")
+    expect(container.textContent).toContain("Cette comparaison n’a pas changé")
+    expect(container.textContent).toContain("I accept these proposed dates")
     expect(container.querySelector("textarea")).toBeNull()
     expect(reviewShadowReport).not.toHaveBeenCalled()
   })
 
-  it("explains that a changed comparison needs a new decision without copying consent", async () => {
+  it("refreshes a changed comparison without copying an old pilot decision", async () => {
     const accepted = { ...listing, reportId: "accepted", versionNumber: 2,
       draftIssueCount: 0, latestVerdict: "approve" }
     const changed = { ...accepted, reportId: "changed", latestVerdict: null }
@@ -292,13 +291,13 @@ describe("shared drinking-window draft comparison", () => {
     const refresh = [...container.querySelectorAll("button")]
       .find((button) => button.textContent === "Actualiser cette comparaison du brouillon")
     await act(async () => refresh?.click())
-    expect(container.textContent).toContain("La comparaison a changé")
-    expect(container.textContent).toContain("Accord précédent — n’est plus la décision actuelle")
-    expect(container.querySelector("textarea")).toBeTruthy()
+    expect(container.textContent).toContain("Une nouvelle comparaison est prête à être consultée")
+    expect(container.textContent).not.toContain("I accept these proposed dates")
+    expect(container.querySelector("textarea")).toBeNull()
     expect(reviewShadowReport).not.toHaveBeenCalled()
   })
 
-  it("puts the whole-comparison decision after the changed wine and before hundreds of background results", async () => {
+  it("puts the changed wine before hundreds of background results without a decision form", async () => {
     const ready = { ...listing, versionNumber: 2, wineCount: 802, draftIssueCount: 0 }
     const changed = {
       wineId: "pilot", comparisonStatus: "changed", currentSource: "model",
@@ -337,12 +336,8 @@ describe("shared drinking-window draft comparison", () => {
     const other = container.querySelector(".drinking-window-shadow-review__other-results")
     expect(focus?.querySelectorAll("li")).toHaveLength(1)
     expect(focus?.textContent).toContain("Burgaud · Côte du Py · 2022")
-    expect(focus?.nextElementSibling).toBe(decision)
-    expect(decision?.textContent).toContain("Votre décision sur toute la comparaison")
-    expect(decision?.textContent).toContain("Accepter les dates proposées pour ma cave")
-    expect(decision?.textContent).toContain("Accepter ne change rien maintenant")
-    expect(decision?.textContent).toContain("votre cave utilisera automatiquement ses dates")
-    expect(decision?.nextElementSibling).toBe(other)
+    expect(decision).toBeNull()
+    expect(focus?.nextElementSibling).toBe(other)
     expect(other?.hasAttribute("open")).toBe(false)
     expect(other?.textContent).toContain("Autres résultats de la comparaison (801)")
     expect(other?.querySelectorAll("li")).toHaveLength(30)
@@ -350,9 +345,9 @@ describe("shared drinking-window draft comparison", () => {
   })
 
   it.each([
-    ["approve", "Vous avez accepté les dates proposées pour votre cave"],
-    ["reject", "Vous avez refusé les dates proposées pour votre cave"],
-  ] as const)("shows a saved %s decision and opens the form only to change it", async (verdict, status) => {
+    ["approve"],
+    ["reject"],
+  ] as const)("shows a saved %s pilot decision as history only", async (verdict) => {
     const reviewed = { ...listing, versionNumber: 2, draftIssueCount: 0,
       latestVerdict: verdict }
     vi.mocked(listShadowReports).mockResolvedValue([reviewed])
@@ -372,18 +367,13 @@ describe("shared drinking-window draft comparison", () => {
       .find((button) => button.textContent?.includes("Comparaison actuelle"))
     await act(async () => current?.click())
 
-    expect(container.textContent).toContain(status)
+    expect(container.textContent).toContain("Ancienne décision du pilote (historique seulement)")
     expect(container.textContent).toContain("Dates vérifiées pour cette bouteille")
     expect(container.querySelector("textarea")).toBeNull()
     expect(container.textContent).not.toContain("Accepter les dates proposées pour ma cave")
     const change = [...container.querySelectorAll("button")]
       .find((button) => button.textContent === "Modifier cette décision")
-    await act(async () => change?.click())
-    expect(container.querySelector("textarea")).toBeTruthy()
-    const keep = [...container.querySelectorAll("button")]
-      .find((button) => button.textContent === "Conserver ma décision actuelle")
-    await act(async () => keep?.click())
-    expect(container.querySelector("textarea")).toBeNull()
+    expect(change).toBeUndefined()
     expect(reviewShadowReport).not.toHaveBeenCalled()
   })
 })

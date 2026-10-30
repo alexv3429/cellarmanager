@@ -31,7 +31,7 @@ $test$, '42501', 'An active curator grant for this profile type is required',
 
 set local request.jwt.claim.sub = 'f9400000-0000-4000-8000-000000000001';
 select is((public.get_drinking_window_release_workspace() ->> 'can_publish')::boolean,
-    false, 'A curator is not automatically a publisher');
+    true, 'A current curator may publish after the required review and preview');
 select set_config('app.test_working',
     public.create_drinking_window_working_draft(current_setting('app.test_base')::uuid)
       ->> 'version_id', true);
@@ -39,8 +39,8 @@ select is((public.get_drinking_window_release_workspace() -> 'versions' -> 0 ->>
     'Copying prepares the next unpublished version');
 select throws_ok($test$
     select public.publish_reviewed_drinking_window_draft(current_setting('app.test_working')::uuid)
-$test$, '42501', 'Shared-reference publication requires a separate publisher grant',
-    'A curator without a publisher grant cannot activate any reference');
+$test$, '23514', 'The draft still has publication issues',
+    'The curator-only publisher helper does not bypass draft review');
 select is((public.check_drinking_window_working_draft(
     current_setting('app.test_working')::uuid) ->> 'issue_count')::integer > 0,
     true, 'A copied version needs fresh review before publication');

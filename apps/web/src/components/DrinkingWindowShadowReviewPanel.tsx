@@ -6,7 +6,6 @@ import {
   listShadowReports,
   refreshDrinkingWindowDraftShadowReport,
   requestDrinkingWindowShadowReport,
-  reviewShadowReport,
   type DrinkingWindowRolloutStatus,
   type ShadowComparisonRow,
   type ShadowReport,
@@ -112,11 +111,9 @@ export function DrinkingWindowShadowReviewPanel({
   const [rollout, setRollout] = useState<DrinkingWindowRolloutStatus | null>(null)
   const [report, setReport] = useState<ShadowReport | null>(null)
   const [shown, setShown] = useState(30)
-  const [rationale, setRationale] = useState("")
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
-  const [changingDecision, setChangingDecision] = useState(false)
   const [expanded, setExpanded] = useState(() => wasReviewOpen(householdId))
   const currentListing = list?.find((entry) => entry.versionStatus !== "withdrawn")
   const history = list?.filter((entry) => entry.reportId !== currentListing?.reportId) ?? []
@@ -126,7 +123,6 @@ export function DrinkingWindowShadowReviewPanel({
     setRollout(null)
     setReport(null)
     setError(null)
-    setChangingDecision(false)
     if (!isOnline) return
     let cancelled = false
     void Promise.all([
@@ -167,10 +163,6 @@ export function DrinkingWindowShadowReviewPanel({
   const changedCount = report?.rows.filter((row) => row.comparisonStatus === "changed").length ?? 0
   const conflictingIdentityCount = report?.rows.filter((row) =>
     row.draftStatus === "ambiguous" || row.draftStatus === "identity_conflict").length ?? 0
-  const canDecide = report !== null && report.reportId === currentListing?.reportId
-    && (report.versionStatus === "active"
-      || (report.versionStatus === "draft" && report.draftIssueCount === 0))
-  const canApprove = canDecide && conflictingIdentityCount === 0
 
   async function prepareComparison(draft: boolean) {
     setBusy(true)
@@ -185,10 +177,8 @@ export function DrinkingWindowShadowReviewPanel({
       const current = next.find((entry) => entry.reportId === id)
       if (current) await openReport(current)
       if (draft) setMessage(t(id === currentListing?.reportId
-        ? "Nothing changed. This comparison and your saved decision remain valid."
-        : currentListing?.latestVerdict
-          ? "The comparison changed. Your earlier decision remains in history; review this new comparison before deciding again."
-          : "A new comparison is ready to review."))
+        ? "Nothing changed in this comparison."
+        : "A new comparison is ready to inspect."))
     } catch (caught: unknown) {
       setError(caught instanceof Error ? caught.message : String(caught))
     } finally {
@@ -200,39 +190,9 @@ export function DrinkingWindowShadowReviewPanel({
     setBusy(true)
     setError(null)
     setMessage(null)
-    setChangingDecision(false)
-    setRationale("")
     try {
       setReport(await getShadowReport(listing))
       setShown(30)
-    } catch (caught: unknown) {
-      setError(caught instanceof Error ? caught.message : String(caught))
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  async function decide(verdict: "approve" | "reject") {
-    if (!report) return
-    setBusy(true)
-    setError(null)
-    setMessage(null)
-    try {
-      await reviewShadowReport(report, verdict, rationale)
-      const next = await listShadowReports(householdId)
-      setList(next)
-      setRollout(await getDrinkingWindowRolloutStatus(householdId))
-      const current = next.find((entry) => entry.reportId === report.reportId)
-      if (current) setReport(await getShadowReport(current))
-      setRationale("")
-      setChangingDecision(false)
-      setMessage(t(report.versionStatus === "active"
-        ? verdict === "approve"
-          ? "These reference dates are now enabled for this cellar."
-          : "This version will not be used in this cellar."
-        : verdict === "approve"
-          ? "Your acceptance was recorded. Your dates stay unchanged until this draft is published."
-          : "Your refusal was recorded. Your cellar stays unchanged."))
     } catch (caught: unknown) {
       setError(caught instanceof Error ? caught.message : String(caught))
     } finally {
@@ -288,13 +248,13 @@ export function DrinkingWindowShadowReviewPanel({
       setExpanded(open)
       rememberReviewOpen(householdId, open)
     }}>
-    <summary>{t("Review shared drinking-window dates")}</summary>
-    <p>{t("Compare shared reference dates with your current cellar before using them.")}</p>
+    <summary>{t("Compare shared drinking-window dates")}</summary>
+    <p>{t("This optional comparison does not approve or switch dates. Published dates are available to all cellars; your private dates still take priority.")}</p>
     {rollout?.activeVersionNumber ? <div>
       <p>{t("Latest reference version")}: {rollout.activeVersionNumber}.
         {rollout.selectedEnabled && rollout.selectedVersionNumber
-          ? ` ${t("Your cellar uses version")} ${rollout.selectedVersionNumber}.`
-          : ` ${t("Your cellar still uses its current model.")}`}</p>
+          ? ` ${t("Shared dates are available from version")} ${rollout.selectedVersionNumber}.`
+          : ` ${t("Shared reference is currently paused.")}`}</p>
       <button disabled={busy || !rollout.globalEnabled}
         onClick={() => void prepareComparison(false)} type="button">
         {t("Compare the latest reference with my cellar")}
@@ -314,17 +274,11 @@ export function DrinkingWindowShadowReviewPanel({
       onClick={() => void openReport(currentListing)}
       type="button"
     >{t("Latest comparison")} · {t("Reference version")} {currentListing.versionNumber}
-      {` · ${t(currentListing.latestVerdict === "approve"
-        ? currentListing.versionStatus === "draft"
-          ? "Accepted for this cellar — unpublished"
-          : "Approved"
-        : currentListing.latestVerdict === "reject"
-          ? currentListing.versionStatus === "draft"
-            ? "Declined for this cellar — unpublished"
-            : "Rejected"
-          : currentListing.versionStatus === "draft" && currentListing.draftIssueCount > 0
-            ? "Draft under review — no action needed"
-            : "Unpublished proposal")}`}
+      {` · ${t(currentListing.versionStatus === "draft" && currentListing.draftIssueCount > 0
+        ? "Draft under review — no action needed"
+        : currentListing.versionStatus === "draft"
+          ? "Unpublished proposal"
+          : "Published reference")}`}
     </button> : null}
     {history.length > 0 ? <details className="drinking-window-shadow-review__history">
       <summary>{t("Earlier comparisons and withdrawn versions")}</summary>
@@ -334,10 +288,8 @@ export function DrinkingWindowShadowReviewPanel({
         {t("Reference version")} {entry.versionNumber} · {t("Comparison from")} {new Date(entry.recordedAt).toLocaleDateString()}
         {` · ${t(entry.versionStatus === "withdrawn"
           ? "Withdrawn — no review needed"
-          : entry.latestVerdict === "approve"
-            ? "Earlier acceptance — no longer current"
-            : entry.latestVerdict === "reject"
-              ? "Earlier refusal — no longer current"
+          : entry.latestVerdict === "approve" || entry.latestVerdict === "reject"
+            ? "Earlier pilot decision — history only"
               : "Older snapshot")}`}
       </button>)}
     </details> : null}
@@ -355,67 +307,19 @@ export function DrinkingWindowShadowReviewPanel({
       </Notice> : null}
       {report.versionStatus === "draft" ? <p>{t("This draft is not in use. Your cellar still shows its current dates.")}</p>
         : <p>{t("The current dates are the ones you see in your cellar, including your personal timing choice.")}</p>}
-      {canDecide && report.versionStatus === "draft" && report.latestDecision?.verdict === "approve"
-        ? <Notice tone="success">{t("Your acceptance is saved. Wines with different dates remain visible because this is a comparison, not a task list. Proposed dates will be used only if the draft is published.")}</Notice>
-        : null}
       {report.draftIssueCount > 0 ? <Notice tone="warning">
-        {t("{count} reference checks are still pending. No decision is needed from you yet.", { count: String(report.draftIssueCount) })}
+        {t("{count} reference checks are still pending. This draft cannot be published yet.", { count: String(report.draftIssueCount) })}
       </Notice> : null}
       {conflictingIdentityCount > 0 ? <Notice tone="warning">
         {t("{count} wine cards have conflicting details in this comparison. These are not date proposals to approve. Check them against the bottles; after editing, use a newer comparison.", { count: String(conflictingIdentityCount) })}
       </Notice> : null}
-      <h4>{t(canDecide && report.latestDecision
-        ? "Results covered by your saved decision"
-        : "Results to check before deciding")}</h4>
-      {canDecide && !report.latestDecision ? <p>{t("A wine name opens its card. Your decision below covers the whole comparison, not just that wine.")}</p> : null}
+      <h4>{t("Comparison results")}</h4>
+      <p>{t("A wine name opens its card. This report is informational; it does not control publication.")}</p>
       {focusRows.length > 0 ? <ol className={`drinking-window-shadow-review__rows${focusRows.length <= 5
         ? " drinking-window-shadow-review__rows--short" : ""}`}>
         {focusRows.map(renderComparisonRow)}
       </ol> : <p>{t("No individual wine result needs closer review in this comparison.")}</p>}
-      {canDecide && report.latestDecision && !changingDecision ? <div className="drinking-window-shadow-review__decision">
-        <h4>{t("Your decision on the whole comparison")}</h4>
-        <Notice tone={report.latestDecision.verdict === "approve" ? "success" : "warning"}>
-          <p>{t(report.latestDecision.verdict === "approve"
-            ? report.versionStatus === "draft"
-              ? "You accepted the proposed dates for your cellar. Nothing has changed yet; if this draft is published, your cellar will use it."
-              : "You chose to use this reference version in your cellar."
-            : report.versionStatus === "draft"
-              ? "You declined the proposed dates for your cellar. Nothing has changed."
-              : "You chose not to use this reference version in your cellar.")}</p>
-          <p><strong>{t("Your reason")}:</strong> {report.latestDecision.rationale}</p>
-        </Notice>
-        <button disabled={busy} onClick={() => setChangingDecision(true)} type="button">
-          {t("Change this decision")}
-        </button>
-      </div> : null}
-      {canDecide && (!report.latestDecision || changingDecision) ? <div className="drinking-window-shadow-review__decision">
-        <h4>{t("Your decision on the whole comparison")}</h4>
-        <p>{t(report.versionStatus === "draft"
-          ? "This decision covers every wine in this saved comparison. Accepting changes nothing now. If the draft is published later, your cellar will automatically use its dates for eligible wines."
-          : "This decision covers every wine in the saved comparison. Using an active reference may change dates in your cellar.")}</p>
-        <label>{t("Reason for your decision")}
-          <textarea minLength={10} onChange={(event) => setRationale(event.target.value)}
-            rows={3} value={rationale} />
-        </label>
-        <small>{t("Write at least 10 characters to enable the decision buttons.")}</small>
-        {report.latestDecision ? <button onClick={() => {
-          setRationale("")
-          setChangingDecision(false)
-        }} type="button">
-          {t("Keep my current decision")}
-        </button> : null}
-        <div>
-          <button disabled={busy || !canApprove || rationale.trim().length < 10}
-            onClick={() => void decide("approve")} type="button">{t(report.versionStatus === "active"
-              ? "Use these reference dates in my cellar"
-              : "Accept the proposed dates for my cellar")}</button>
-          <button disabled={busy || rationale.trim().length < 10}
-            onClick={() => void decide("reject")} type="button">{t(report.versionStatus === "active"
-              ? "Do not use this version"
-              : "Do not adopt these dates for my cellar")}</button>
-        </div>
-        <small>{t("A changed cellar or reference invalidates this review; a new comparison will be needed.")}</small>
-      </div> : null}
+      {report.latestDecision ? <small>{t("Earlier pilot decision (history only)")}: {report.latestDecision.rationale}</small> : null}
       {otherRows.length > 0 ? <details className="drinking-window-shadow-review__other-results">
         <summary>{t("Other comparison results ({count})", { count: String(otherRows.length) })}</summary>
         <p>{t("These wines have unchanged dates, no reviewed match, or insufficient confirmed details. They remain part of the whole-cellar comparison.")}</p>
