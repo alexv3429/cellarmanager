@@ -125,7 +125,7 @@ curator workflow has not yet been walked through; the owner confirmed the
 unpublished-draft section in the preview and merged #229. Publication and
 cross-cellar effects remain unverified on real data.
 
-**Gate 3 work in slot 4/6 (30 October, in progress; no PR or linked deployment yet):**
+**Gate 3 work in slot 4/6 (30 October, PR #230 open; linked migrations applied):**
 The proposed implementation stores a complete immutable producer, appellation
 or region exchange document for curator-only export and review. It previews
 each exact release or ageing group against canonical identities, quarantines
@@ -146,7 +146,14 @@ source-link provenance, two bottle sizes and a regional group. Full local
 repository CI passes (web lint with pre-existing warnings, 892 web tests with
 one optional local-file audit skipped, and production build). The remaining
 Gate 3 check is an end-to-end curator preview on an authorized test project.
-No linked-database migration is authorized by this record.
+After the owner's separate authorization, the two migrations were
+[backed up, rehearsed on restored linked data, applied and checked](drinking-window-gate3-deployment.md)
+on `cellarmanager-v02-dev`. The linked dry run now has no pending migrations.
+Read-only postflight matched preflight: 810 wines, four households, two
+reference versions, zero publications, zero enabled rollouts, zero imported
+profiles and zero staged profile links. No shared dates or optional facts
+were published. The PR preview `/catalog` responds, but the signed-in curator
+import/export and preview flow still needs an owner walkthrough before merge.
 
 **Execution status (the contract defines each exit test):**
 
@@ -164,7 +171,7 @@ in every PR description.
 | 0. Lock product contract | Verified by owner on 29 October 2026; #227 merged and nine migrations safely deployed | Preserve the agreed contract and acceptance cases. |
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
-| 3. Complete profile exchange | In progress in slot 4/6; local 23-file validation and 20 rollback-only SQL checks pass; not linked-deployed | Complete CI and curator preview, then ask separately before any linked migration. Exact-name place identities must resolve uniquely or their groups remain quarantined; optional facts remain private until a later display model is reviewed. |
+| 3. Complete profile exchange | PR #230 open in slot 4/6; CI green; 23-file read-only validation and 21 rollback-only SQL checks pass; two linked migrations backed up, rehearsed, applied and checked; no profile imported | Owner checks the signed-in curator import/export and preview path in the PR preview before merge. Exact-name place identities must resolve uniquely or their groups remain quarantined; optional facts remain private until a later display model is reviewed. |
 | 4. Prepare initial common base | Not started | Process all 23 supplied files and reviewed fallbacks in staging; prepare an approved publication manifest and quarantine every exception with a reason. |
 | 5. Release and verify | Not started | Rehearse and authorize migrations, publish the approved initial base, pilot on mobile, then verify ordinary cross-household publication and rollback on the official app. |
 
