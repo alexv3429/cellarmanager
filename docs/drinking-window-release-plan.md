@@ -96,7 +96,7 @@ PR CI passed before linked deployment. Gate 1
 does not include the routine user/curator publication flow, full profile
 exchange, or populated common base; those remain Gates 2–5.
 
-**Gate 2 work in slot 3/6 (30 October, PR in preparation):** A curator can
+**Gate 2 work in slot 3/6 (30 October, PR #229 open):** A curator can
 stage an exact canonical wine/vintage and three dates directly in an
 unpublished version. That row remains unreviewed until its evidence, rights,
 and dates receive fresh review. The existing cellar-owner suggestion path
@@ -107,18 +107,21 @@ grant or cellar-owner pilot approval; eligible wines in all households use
 the published reference automatically. Private wine and producer rules keep
 their precedence. The former owner comparison is informational; historical
 decisions remain visible but do not control publication. The immutable
-publication trail and emergency-off switch remain. This migration is
-**local only, not applied to the linked database**; this PR publishes no
-dates. Gates 3–5 still cover full JSON exchange, the reviewed initial base,
-and official release. Any linked-database migration needs separate owner
+publication trail and emergency-off switch remain. The owner authorized the
+single Gate 2 migration after CI passed, backup, and rehearsal; it is now
+applied to the linked project. **No dates were published or activated**.
+Gates 3–5 still cover full JSON exchange, the reviewed initial base, and
+official release. Future linked-database migrations still need separate owner
 authorization after backup and rehearsal.
 The isolated local rehearsal database passed all 32 rollback-only
 drinking-window SQL suites, including direct authoring and cross-household
 publication assertions. Repository CI passed locally (885 web tests,
 lint with existing warnings, and production build), and all
 [PR #229](https://github.com/alexv3429/cellarmanager/pull/229) CI checks pass.
-The linked project was [backed up and a restored copy rehearsed](drinking-window-gate2-routine-publication-deployment.md)
-successfully; the migration has **not** been applied there.
+The linked project was [backed up, rehearsed, deployed, and checked](drinking-window-gate2-routine-publication-deployment.md)
+successfully. Postflight found 810 wines, four households, six users, two
+reference versions, zero publications and zero enabled switches. The signed-in
+curator workflow has not yet been walked through; Gate 2 is not accepted.
 
 **Execution status (the contract defines each exit test):**
 
@@ -135,7 +138,7 @@ in every PR description.
 | --- | --- | --- |
 | 0. Lock product contract | Verified by owner on 29 October 2026; #227 merged and nine migrations safely deployed | Preserve the agreed contract and acceptance cases. |
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
-| 2. User and curator workflows | In progress in slot 3/6, PR #229; CI green, backup and restored-copy rehearsal passed; migration not linked-deployed | Obtain owner authorization for the one migration, then test user proposal → curator review → publication and second-cellar visibility with private choices preserved. |
+| 2. User and curator workflows | In progress in slot 3/6, PR #229; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Walk through a user proposal and curator review in the preview; publication and second-cellar effects remain to be verified with an approved draft and an explicit release decision. |
 | 3. Complete profile exchange | Partial foundation in #227 | Import/export full producer JSON plus agreed appellation and region templates, retaining non-date facts and batch diff/review; resolve the current one-row-per-release/version constraint if multiple bottle sizes need distinct dates. |
 | 4. Prepare initial common base | Not started | Process all 23 supplied files and reviewed fallbacks in staging; prepare an approved publication manifest and quarantine every exception with a reason. |
 | 5. Release and verify | Not started | Rehearse and authorize migrations, publish the approved initial base, pilot on mobile, then verify ordinary cross-household publication and rollback on the official app. |

@@ -36,10 +36,21 @@ the new private audit table or call the low-level publication function.
 
 ## Linked deployment
 
-**Not applied.** The linked database, profiles, windows, and cellar advice
-remain unchanged pending owner authorization. Before applying, repeat the
-dry run and verify that this is still the only pending migration. After
-applying, compare aggregate counts and grants with the rehearsal. Do not
-publish a draft as part of migration deployment. Retain the protected export
-until a deliberate recovery decision; never restore it over later live user
-changes automatically.
+After all PR checks passed, the owner authorized this one migration. A fresh
+dry run still named only `20261030100000_drinking_window_routine_publication.sql`.
+It was applied to the linked project on 30 October 2026; the subsequent dry
+run reported **zero pending migrations** and no seed or role change.
+
+Read-only linked postflight counts matched the rehearsal: **810 wines, four
+households, six auth users, two reference versions, zero publications, zero
+enabled runtime switches, zero new draft-authorship rows, and zero impact
+previews**. The guarded authoring and impact-preview RPCs are executable by
+`authenticated`, not `anon`; `authenticated` cannot execute the low-level
+publication function or read the private authorship table. The curator and
+draft-validation checks within those RPCs remain in force. Installing the
+migration did **not** publish a draft, activate dates for any cellar, or edit
+stock. A signed-in curator workflow walkthrough is still required before Gate
+2 acceptance; the initial shared base remains for Gates 3–5.
+
+Retain the protected export until a deliberate recovery decision; never
+restore it over later live user changes automatically.
