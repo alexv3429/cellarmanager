@@ -222,8 +222,8 @@ select isnt(private.drinking_window_shadow_snapshot(
     'A private choice change invalidates an earlier owner comparison');
 
 -- Isolated matcher fixture: bypass the publication workflow only inside this
--- rollback-only test, so the active reader can be checked against both a
--- selected and an unselected household. This does not approve the draft.
+-- rollback-only test. The old household rollout is retained as historical
+-- data, but the active reader now follows the global published version.
 select set_config('app.drinking_window_publication', 'on', true);
 update public.drinking_window_reference_versions version
 set status = 'active', published_at = now(),
@@ -246,7 +246,7 @@ where singleton;
 select is(private.drinking_window_active_match(
     'f7000000-0000-4000-8000-000000000001') ->> 'reference_row_id',
     'f7000000-0000-4000-8000-000000000003',
-    'Opted-in active advice follows the explicit local group');
+    'Published advice follows the explicit local group choice');
 
 set local role authenticated;
 select set_config('test.ageing_revision',
@@ -279,9 +279,9 @@ select is(public.manage_household_wine_ageing_choice(
     'Owner can adjust a choice on their pinned superseded version');
 reset role;
 select is(private.drinking_window_active_match(
-    'f7000000-0000-4000-8000-000000000001') ->> 'reference_row_id',
-    'f7000000-0000-4000-8000-000000000003',
-    'The pinned version uses that owner choice without changing publication');
+    'f7000000-0000-4000-8000-000000000001') ->> 'status',
+    'unpublished',
+    'A pinned superseded version cannot keep supplying common advice');
 set local role authenticated;
 select set_config('test.ageing_revision',
     public.get_household_wine_ageing_choices(
@@ -301,7 +301,7 @@ select public.manage_household_wine_ageing_choice(
 reset role;
 select is(private.drinking_window_active_match(
     'f7000000-0000-4000-8000-000000000001') ->> 'status',
-    'no_match', 'Explicitly unclassified wine has no group-specific active row');
+    'unpublished', 'An unclassified choice cannot reactivate a superseded version');
 update public.wines set cuvee = 'Côte du Py corrected'
 where id = 'f7000000-0000-4000-8000-000000000001';
 select is((select wine_reference_id from public.wines
@@ -309,7 +309,7 @@ select is((select wine_reference_id from public.wines
     null::uuid, 'Changing wine text invalidates its old canonical release link');
 select is(private.drinking_window_active_match(
     'f7000000-0000-4000-8000-000000000001') ->> 'status',
-    'no_match', 'The old local choice cannot restore a group after identity changes');
+    'unpublished', 'An old local choice cannot restore a superseded reference after identity changes');
 
 insert into public.wines
     (id, household_id, producer, cuvee, vintage, color, appellation, area,
@@ -324,7 +324,7 @@ where product.canonical_name = 'Jean-Marc Burgaud, Côte du Py, Morgon'
   and release.vintage_year = 2022;
 select is(private.drinking_window_active_match(
     'f7000000-0000-4000-8000-000000000004') ->> 'status',
-    'unpublished', 'Another household is unchanged without its own opt-in');
+    'unpublished', 'No household reads a superseded version, regardless of historical opt-in');
 
 select * from finish();
 rollback;
