@@ -7,13 +7,16 @@ import {
 import type { LocationStoragePurpose } from "../data/cellarSetup"
 import {
   clearMemberMaturityCalibration,
+  clearHouseholdProducerWindowRule,
   clearWineMaturityOverride,
   getWineMaturity,
   maturityCalibrationLabel,
   maturityAssessmentReasonMessage,
   reviewWineMaturity,
   setMemberMaturityCalibration,
+  setHouseholdProducerWindowRule,
   setWineMaturityOverride,
+  type HouseholdProducerWindowScope,
   supportsThreeMilestoneManualOverrides,
   type MaturityRecommendation,
   type MaturityVerdict,
@@ -121,8 +124,20 @@ function maturityLayerLabel(layer: string): string {
       return "Cuvée"
     case "release":
       return "Exact vintage"
+    case "producer_appellation":
+      return "Producer and appellation"
+    case "producer_region":
+      return "Producer and region"
     default:
       return layer.replaceAll("-", " ")
+  }
+}
+
+function producerRuleScopeLabel(scope: HouseholdProducerWindowScope): string {
+  switch (scope) {
+    case "product": return "This producer’s cuvée in this appellation"
+    case "producer_appellation": return "All this producer’s wines in this appellation"
+    case "producer_region": return "All this producer’s wines in this region"
   }
 }
 
@@ -417,6 +432,50 @@ export function WineMaturityPanel({
     }
   }
 
+  async function saveProducerRule(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!isOnline || !canManageCellar) return
+    const form = event.currentTarget
+    const data = new FormData(form)
+    setBusyAction("producer-rule")
+    setError(null)
+    setMessage(null)
+    try {
+      await setHouseholdProducerWindowRule(
+        wineId,
+        String(data.get("scope")) as HouseholdProducerWindowScope,
+        {
+          firstTrialYear: yearInput(form, "firstTrialYear"),
+          bestStartYear: yearInput(form, "bestStartYear"),
+          bestEndYear: yearInput(form, "bestEndYear"),
+        },
+        String(data.get("note") ?? ""),
+      )
+      setResult(await getWineMaturity(wineId))
+      setMessage(t("Your cellar producer rule was saved. It does not change the shared database."))
+    } catch (caughtError: unknown) {
+      setError(caughtError instanceof Error ? caughtError.message : "Unable to save the producer rule")
+    } finally {
+      setBusyAction(null)
+    }
+  }
+
+  async function clearProducerRule(ruleId: string) {
+    if (!isOnline || !canManageCellar) return
+    setBusyAction(`clear-producer-rule:${ruleId}`)
+    setError(null)
+    setMessage(null)
+    try {
+      await clearHouseholdProducerWindowRule(ruleId)
+      setResult(await getWineMaturity(wineId))
+      setMessage(t("The cellar producer rule was removed. The next applicable source is restored."))
+    } catch (caughtError: unknown) {
+      setError(caughtError instanceof Error ? caughtError.message : "Unable to remove the producer rule")
+    } finally {
+      setBusyAction(null)
+    }
+  }
+
   async function submitProfileReview(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!isOnline || !reviewTarget?.profileId) return
@@ -459,21 +518,38 @@ export function WineMaturityPanel({
   const activePersonalizedModel =
     calibration?.active && personalizedModel ? personalizedModel : null
   const override = result?.override ?? null
+  const activeProducerRule = result?.effectiveSource === "cellar_producer"
+    ? result.producerRules?.selected ?? null : null
   const activeReference =
     result?.effectiveSource === "reviewed_reference"
       ? result.reference ?? null
       : null
-  const referenceState = activeReference
-    ? new Date().getFullYear() < activeReference.firstTrialYear
+  const effectiveReference = activeReference ? {
+    firstTrialYear: activeReference.effectiveFirstTrialYear ?? activeReference.firstTrialYear,
+    bestStartYear: activeReference.effectiveBestStartYear ?? activeReference.bestStartYear,
+    bestEndYear: activeReference.effectiveBestEndYear ?? activeReference.bestEndYear,
+  } : null
+  const referenceState = effectiveReference
+    ? new Date().getFullYear() < effectiveReference.firstTrialYear
       ? "hold"
-      : new Date().getFullYear() < activeReference.bestStartYear
+      : new Date().getFullYear() < effectiveReference.bestStartYear
         ? "assess"
-        : new Date().getFullYear() <= activeReference.bestEndYear
+        : new Date().getFullYear() <= effectiveReference.bestEndYear
           ? "ready"
           : "assess-now"
     : null
+  const producerRuleState = activeProducerRule
+    ? new Date().getFullYear() < activeProducerRule.firstTrialYear
+      ? "hold"
+      : new Date().getFullYear() < activeProducerRule.bestStartYear
+        ? "assess"
+        : new Date().getFullYear() <= activeProducerRule.bestEndYear
+          ? "ready" : "assess-now"
+    : null
   const displayedRecommendation = activePersonalizedModel ?? model
-  const displayedYears = override ?? activeReference ?? displayedRecommendation
+  const displayedYears = override ?? activeProducerRule ?? effectiveReference ?? displayedRecommendation
+  // A cellar-wide rule must never silently inherit this member's personal shift.
+  const producerRuleSuggestedYears = result?.producerRules?.selected ?? override ?? activeReference ?? model
   const inlineProfileIds = new Set(
     model?.contributions.flatMap((contribution) =>
       contribution.profileId ? [contribution.profileId] : [],
@@ -536,7 +612,7 @@ export function WineMaturityPanel({
         </Notice>
       ) : null}
 
-      {!isLoading && isOnline && result && projection === null && !activeReference ? (
+      {!isLoading && isOnline && result && projection === null && !activeReference && !activeProducerRule && !override ? (
         <Notice tone={result.demandStatus === "needs-review" ? "warning" : undefined}>
           {result.demandStatus === "needs-review"
             ? result.assessmentReason
@@ -550,15 +626,19 @@ export function WineMaturityPanel({
         <Notice tone="warning">{t("The wine identity needs review before a drinking window can be suggested.")}</Notice>
       ) : null}
 
-      {displayedYears && (override || activeReference || (projection && model)) && result?.effectiveSource !== "unavailable" ? (
+      {displayedYears && (override || activeProducerRule || activeReference || (projection && model)) && result?.effectiveSource !== "unavailable" ? (
         <>
-          <div className={`wine-maturity__summary wine-maturity__summary--${referenceState ?? displayedRecommendation?.state ?? model?.state ?? "assess"}`}>
+          <div className={`wine-maturity__summary wine-maturity__summary--${producerRuleState ?? referenceState ?? displayedRecommendation?.state ?? model?.state ?? "assess"}`}>
             <div>
               <span className="wine-maturity__badge">
                 {override
                   ? t("Manual window")
+                  : activeProducerRule
+                    ? t("Cellar producer rule")
                   : activeReference
-                    ? t("Reviewed reference")
+                    ? activeReference.personalYearShift
+                      ? t("Personal timing · reviewed reference")
+                      : t("Reviewed reference")
                   : activePersonalizedModel
                     ? t("Personal timing")
                     : result?.effectiveSource === "model_estimate"
@@ -568,12 +648,14 @@ export function WineMaturityPanel({
               <h3>
                 {override
                   ? t("Your maturity window")
+                  : activeProducerRule
+                    ? t("Your cellar’s producer window")
                   : activeReference
                     ? t("Reviewed drinking window")
                     : t(displayedRecommendation?.headline ?? model?.headline ?? "")}
               </h3>
               <p>
-                {override?.note ?? (activeReference
+                {override?.note ?? activeProducerRule?.note ?? (activeReference
                   ? activeReference.rationale
                   : t(displayedRecommendation?.message ?? model?.message ?? ""))}
               </p>
@@ -581,6 +663,8 @@ export function WineMaturityPanel({
             <span className="wine-maturity__confidence">
               {override
                 ? t("Owner estimate")
+                : activeProducerRule
+                  ? t("Cellar-owner estimate")
                 : activeReference
                   ? `${t("Reviewed reference")} · v${activeReference.versionNumber}`
                   : t(`${model?.confidenceLabel[0]?.toUpperCase()}${model?.confidenceLabel.slice(1)} canonical confidence`)}
@@ -602,9 +686,9 @@ export function WineMaturityPanel({
             </div>
           </dl>
 
-          {!override && !activeReference && "drinkByYear" in displayedYears ? (
+          {!override && !activeProducerRule && !activeReference && displayedRecommendation ? (
             <p className="wine-maturity__confidence">
-              {t("Existing model drink-by estimate")}: {displayedYears.drinkByYear}. {t("This is not an expiry date.")}
+              {t("Existing model drink-by estimate")}: {displayedRecommendation.drinkByYear}. {t("This is not an expiry date.")}
             </p>
           ) : null}
 
@@ -619,6 +703,18 @@ export function WineMaturityPanel({
             {" "}{t("The end of the optimal period is not an expiry date.")}
           </p> : null}
 
+          {activeReference && (activeReference.personalYearShift ?? 0) !== 0 ? (
+            <p className="wine-maturity__confidence">
+              {t("Shared dates")}: {activeReference.firstTrialYear} / {activeReference.bestStartYear}–{activeReference.bestEndYear}.
+              {" "}{t("Your private timing shifts all three dates; the shared reference is unchanged.")}
+            </p>
+          ) : null}
+
+          {activeProducerRule ? <p className="wine-maturity__confidence">
+            {t(producerRuleScopeLabel(activeProducerRule.scope))} · {result?.producerRules?.context.vintageYear}.
+            {" "}{t("These dates belong to this cellar; personal timing is not added again.")}
+          </p> : null}
+
           <section
             aria-labelledby="maturity-calibration-heading"
             className="wine-maturity__calibration"
@@ -626,8 +722,10 @@ export function WineMaturityPanel({
             <header>
               <div>
                 <h3 id="maturity-calibration-heading">{t("Your timing preference")}</h3>
-                <p>{activeReference
-                  ? t("Your timing preference applies to model estimates, not this reviewed reference. You can still set a manual window for this wine.")
+                <p>{activeProducerRule
+                  ? t("Your cellar’s explicit dates take priority; your personal timing is not applied a second time.")
+                  : activeReference
+                    ? t("Shift all three reviewed dates for your account only. The shared reference and other members remain unchanged.")
                   : t("Shift every canonical drinking window for your account only. Shared profiles and other members remain unchanged.")}</p>
               </div>
               <span className="wine-maturity__confidence">
@@ -635,7 +733,7 @@ export function WineMaturityPanel({
               </span>
             </header>
 
-            {calibration && personalizedModel && model && !activeReference ? (
+            {calibration && personalizedModel && model && !activeReference && !activeProducerRule && !override ? (
               <div className="wine-maturity__calibration-comparison">
                 <MaturityComparisonColumn
                   label={t("Canonical guidance")}
@@ -652,6 +750,10 @@ export function WineMaturityPanel({
 
             {calibration && override ? (
               <Notice tone="warning">{t("This preference still applies to your other wines, but this wine's manual window takes priority.")}</Notice>
+            ) : null}
+
+            {calibration && activeProducerRule && !override ? (
+              <Notice tone="warning">{t("This preference still applies to other wines, but this cellar’s producer rule takes priority here.")}</Notice>
             ) : null}
 
             <form
@@ -724,7 +826,7 @@ export function WineMaturityPanel({
             </div>
           ) : null}
 
-          {!activeReference && projection && model ? <details className="wine-maturity__explanation">
+          {!activeReference && !activeProducerRule && projection && model ? <details className="wine-maturity__explanation">
             <summary>{t("Why this estimate?")}</summary>
             <p>{t("Model specificity:")}{t(projection.specificity.replaceAll("-", " "))}{t(". Calculated")}{formatLocalizedDate(projection.calculatedAt, language)}.
             </p>
@@ -833,7 +935,7 @@ export function WineMaturityPanel({
             ) : null}
           </details> : null}
 
-          {!activeReference && projection ? <div className="wine-maturity__feedback">
+          {!activeReference && !activeProducerRule && projection ? <div className="wine-maturity__feedback">
             <span>{t("Is this model result credible?")}</span>
             <div>
               {(["useful", "questionable", "wrong"] as const).map(
@@ -858,10 +960,12 @@ export function WineMaturityPanel({
             <summary>{override ? "Edit your window" : "Adjust this window"}</summary>
             <p>{activeReference
               ? t("Your values take priority; the reviewed reference remains unchanged.")
+              : activeProducerRule
+                ? t("Your wine-specific values take priority; the cellar producer rule remains unchanged.")
               : t("Your values take priority in the app; the original model and its evidence remain unchanged.")}</p>
             {!threeMilestoneEditing ? <p>{t("The three-date editor is not active in this cellar yet. You can keep using the current four-date form.")}</p> : null}
             <form
-              key={override?.updatedAt ?? projection?.calculatedAt ?? activeReference?.referenceRowId}
+              key={override?.updatedAt ?? activeProducerRule?.updatedAt ?? projection?.calculatedAt ?? activeReference?.referenceRowId}
               onSubmit={(event) => void saveOverride(event)}
             >
               <label>{t("Start tasting")}<input
@@ -896,7 +1000,7 @@ export function WineMaturityPanel({
                 />
               </label> : null}
               {!threeMilestoneEditing ? <label>{t("Drink by")}<input
-                  defaultValue={override?.drinkByYear ?? ("drinkByYear" in displayedYears ? displayedYears.drinkByYear ?? "" : "")}
+                  defaultValue={override?.drinkByYear ?? displayedRecommendation?.drinkByYear ?? ""}
                   min="1800"
                   name="drinkByYear"
                   required
@@ -933,6 +1037,8 @@ export function WineMaturityPanel({
                   >
                     {busyAction === "clear-override"
                       ? "Clearing…"
+                      : result?.producerRules?.selected
+                        ? t("Use the cellar producer rule again")
                       : result?.reference
                         ? t("Use shared guidance again")
                         : "Use model again"}
@@ -942,6 +1048,59 @@ export function WineMaturityPanel({
             </form>
           </details> : null}
         </>
+      ) : null}
+
+      {canManageCellar && result?.producerRules ? (
+        <details className="wine-maturity__override wine-maturity__producer-rule">
+          <summary>{t("Cellar-only producer dates")}</summary>
+          {result.producerRules.status !== "ok" ? (
+            <p>{t("Confirm this wine’s canonical producer, cuvée, vintage and place before setting a producer rule.")}</p>
+          ) : (
+            <>
+              <p>{t("Choose exactly which wines this rule covers. It belongs only to this cellar and never changes shared profiles or another cellar.")}</p>
+              <p>{result.producerRules.context.producerName} · {result.producerRules.context.vintageYear} · {result.producerRules.context.regionName}</p>
+              {result.producerRules.applicable.length > 0 ? (
+                <ul className="wine-maturity__producer-rule-list">
+                  {result.producerRules.applicable.map((rule) => (
+                    <li key={rule.id}>
+                      <span>{t(producerRuleScopeLabel(rule.scope))}: {rule.firstTrialYear} / {rule.bestStartYear}–{rule.bestEndYear}</span>
+                      <button disabled={!isOnline || busyAction !== null}
+                        onClick={() => void clearProducerRule(rule.id)} type="button">
+                        {busyAction === `clear-producer-rule:${rule.id}` ? t("Clearing…") : t("Remove this rule")}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              <form key={result.producerRules.selected?.updatedAt ?? "new-rule"}
+                onSubmit={(event) => void saveProducerRule(event)}>
+                <label>{t("This rule applies to")}
+                  <select defaultValue={result.producerRules.selected?.scope ??
+                    (result.producerRules.context.appellationName ? "product" : "producer_region")} name="scope">
+                    {result.producerRules.context.appellationName ? (
+                      <>
+                        <option value="product">{t(producerRuleScopeLabel("product"))}</option>
+                        <option value="producer_appellation">{t(producerRuleScopeLabel("producer_appellation"))}</option>
+                      </>
+                    ) : null}
+                    <option value="producer_region">{t(producerRuleScopeLabel("producer_region"))}</option>
+                  </select>
+                </label>
+                <label>{t("Start tasting")}<input defaultValue={producerRuleSuggestedYears?.firstTrialYear ?? ""}
+                  min={result.producerRules.context.vintageYear ?? 1800} name="firstTrialYear" required type="number" /></label>
+                <label>{t("Probable optimal period starts")}<input defaultValue={producerRuleSuggestedYears?.bestStartYear ?? ""}
+                  min={result.producerRules.context.vintageYear ?? 1800} name="bestStartYear" required type="number" /></label>
+                <label>{t("Probable optimal period ends")}<input defaultValue={producerRuleSuggestedYears?.bestEndYear ?? ""}
+                  min={result.producerRules.context.vintageYear ?? 1800} name="bestEndYear" required type="number" /></label>
+                <label>{t("Why these dates?")}<input defaultValue={result.producerRules.selected?.note ?? ""}
+                  maxLength={1000} name="note" required type="text" /></label>
+                <div><button disabled={!isOnline || busyAction !== null} type="submit">
+                  {busyAction === "producer-rule" ? t("Saving…") : t("Save cellar producer rule")}
+                </button></div>
+              </form>
+            </>
+          )}
+        </details>
       ) : null}
     </section>
   )
