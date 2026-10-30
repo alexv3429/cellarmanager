@@ -115,8 +115,10 @@ authorization after backup and rehearsal.
 The isolated local rehearsal database passed all 32 rollback-only
 drinking-window SQL suites, including direct authoring and cross-household
 publication assertions. Repository CI passed locally (885 web tests,
-lint with existing warnings, and production build). PR CI and linked-project
-deployment have not yet run.
+lint with existing warnings, and production build), and all
+[PR #229](https://github.com/alexv3429/cellarmanager/pull/229) CI checks pass.
+The linked project was [backed up and a restored copy rehearsed](drinking-window-gate2-routine-publication-deployment.md)
+successfully; the migration has **not** been applied there.
 
 **Execution status (the contract defines each exit test):**
 
@@ -133,7 +135,7 @@ in every PR description.
 | --- | --- | --- |
 | 0. Lock product contract | Verified by owner on 29 October 2026; #227 merged and nine migrations safely deployed | Preserve the agreed contract and acceptance cases. |
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
-| 2. User and curator workflows | In progress in slot 3/6; direct exact authoring, impact preview and direct curator publication implemented locally, not linked-deployed | Pass CI, rehearse and authorize the migration, then test user proposal → curator review → publication and second-cellar visibility with private choices preserved. |
+| 2. User and curator workflows | In progress in slot 3/6, PR #229; CI green, backup and restored-copy rehearsal passed; migration not linked-deployed | Obtain owner authorization for the one migration, then test user proposal → curator review → publication and second-cellar visibility with private choices preserved. |
 | 3. Complete profile exchange | Partial foundation in #227 | Import/export full producer JSON plus agreed appellation and region templates, retaining non-date facts and batch diff/review; resolve the current one-row-per-release/version constraint if multiple bottle sizes need distinct dates. |
 | 4. Prepare initial common base | Not started | Process all 23 supplied files and reviewed fallbacks in staging; prepare an approved publication manifest and quarantine every exception with a reason. |
 | 5. Release and verify | Not started | Rehearse and authorize migrations, publish the approved initial base, pilot on mobile, then verify ordinary cross-household publication and rollback on the official app. |
