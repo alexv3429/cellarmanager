@@ -219,7 +219,10 @@ rolled back; it used synthetic fallback dates solely to test selection.
 The curator UI now accepts multiple complete JSON files in one selection,
 saves each through the same permission-checked import action, reports partial
 failures, and retains failed files for retry. No profile is approved or
-published by this batch action. The 23-file live import has not happened yet.
+published by this batch action. A rollback-only import of **all 23 documents
+and 670 proposals** through the curator RPC passed on the disposable restored
+copy; the reference-row count stayed unchanged. The private generated SQL
+was removed afterward. The 23-file live import has not happened yet.
 No live dates, canonical links, or reference rows changed. The six-PR budget
 remains binding. This audit reveals that a broad initial common base cannot
 be declared ready without real curator identity, date, membership and source
@@ -242,7 +245,7 @@ in every PR description.
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
 | 3. Complete profile exchange | #230 merged in slot 4/6; full CI green, linked migrations backed up/rehearsed/applied; signed-in owner import/preview/export checked; one Burgaud file saved privately and candidates added to Proposals, nothing published live | Preserve full-profile exchange and audited in-app curator path. |
-| 4. Prepare initial common base | Draft #231 in slot 5/6: all 23 files/670 rows audited against restored canonical data; 9 identity-ready, 1 existing reviewed draft, 669 quarantined, 0 newly approved; fallbacks unreviewed; rollback-only exact/appellation/region real-catalogue rehearsal passed; multiple-file curator import added but live 23-file import not yet done | Import every supplied profile into the app's curator workflow, resolve identities and secure reviews for an initial publication manifest. Do not mislabel the research bundle as approved. |
+| 4. Prepare initial common base | Draft #231 in slot 5/6: all 23 files/670 rows audited against restored canonical data; 9 identity-ready, 1 existing reviewed draft, 669 quarantined, 0 newly approved; fallbacks unreviewed; rollback-only full 23-file curator import and exact/appellation/region real-catalogue rehearsals passed; multiple-file UI added but live import not yet done | Import every supplied profile into the official curator workflow, resolve identities and secure reviews for an initial publication manifest. Do not mislabel the research bundle as approved. |
 | 5. Release and verify | Not started | Rehearse and authorize migrations, publish the approved initial base, pilot on mobile, then verify ordinary cross-household publication and rollback on the official app. |
 
 **Merge/deployment rule:** Do not describe #227 as feature-complete or ask the

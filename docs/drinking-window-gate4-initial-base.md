@@ -21,6 +21,12 @@ publish drinking advice.
   3 schema. A read-only [canonical snapshot query](../scripts/drinking_window/gate4_canonical_snapshot.sql)
   supplied its producers, products, releases, places, aliases and current
   reference-row approvals. The snapshot itself remains private.
+- The [full-bundle import rehearsal](../scripts/drinking_window/gate4_import_rehearsal.mjs)
+  generated a private SQL input and imported **all 23 documents and 670
+  proposals** through the curator-only app RPC in a single rollback-only
+  transaction on that disposable copy. It verified that the reference-row
+  count stayed unchanged. The generated SQL was removed immediately after
+  the successful run; the linked project was not touched.
 - [Explicit identity triage decisions](drinking-window-gate4-identity-decisions.json)
   are local to this audit. They are neither global aliases nor permission to
   create or attach a canonical release. In particular, a classification or
@@ -101,7 +107,8 @@ passed. This does not approve the synthetic fallback dates or publish them.
    accepts multiple JSON files, saves each through the existing curator-only
    import RPC, reports every failure, and retains failed files for retry. It
    does **not** approve or publish them. The supplied ZIP must be extracted
-   before selecting its JSON files; live import remains to be performed.
+   before selecting its JSON files; the full 23-file import passed on the
+   disposable copy, but live import remains to be performed.
    Gate 5 can publish
    approved rows only after those checks and explicit release authorization.
    One Côte du Py row alone is **not** the owner's intended 6/6 outcome. The
