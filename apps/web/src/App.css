@@ -8777,6 +8777,7 @@
 .shared-reference-admin__tabs button[aria-current="page"] {
   border-color: var(--accent, #bf7688);
   background: var(--surface-raised, #3b2931);
+  color: #fff;
   font-weight: 700;
 }
 
