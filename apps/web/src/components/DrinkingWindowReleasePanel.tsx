@@ -16,9 +16,14 @@ import { FallbackProfileEditor } from "./FallbackProfileEditor"
 import { ExactReleaseDraftEditor } from "./ExactReleaseDraftEditor"
 import { Notice } from "./Notice"
 
-interface Props { householdId: string; isOnline: boolean; onChanged: () => Promise<void> }
+interface Props {
+  householdId: string
+  isOnline: boolean
+  onChanged: () => Promise<void>
+  preferredVersionId?: string
+}
 
-export function DrinkingWindowReleasePanel({ householdId, isOnline, onChanged }: Props) {
+export function DrinkingWindowReleasePanel({ householdId, isOnline, onChanged, preferredVersionId }: Props) {
   const { t } = useLanguage()
   const [workspace, setWorkspace] = useState<ReleaseWorkspace | null>(null)
   const [selectedId, setSelectedId] = useState("")
@@ -49,13 +54,14 @@ export function DrinkingWindowReleasePanel({ householdId, isOnline, onChanged }:
     void getReleaseWorkspace().then((next) => {
       if (!cancelled) {
         setWorkspace(next)
-        setSelectedId((current) => current || next.versions[0]?.versionId || "")
+        setSelectedId((current) => next.versions.some((version) => version.versionId === preferredVersionId)
+          ? preferredVersionId! : current || next.versions[0]?.versionId || "")
       }
     }).catch((caught: unknown) => {
       if (!cancelled) setError(caught instanceof Error ? caught.message : "Unable to load versions")
     })
     return () => { cancelled = true }
-  }, [isOnline])
+  }, [isOnline, preferredVersionId])
 
   async function act(action: "copy" | "check" | "impact" | "pilot" | "publish") {
     if (!selectedId || !isOnline) return

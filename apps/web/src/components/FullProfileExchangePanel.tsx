@@ -17,7 +17,7 @@ import { createWorkingDraft, getReleaseWorkspace, type ReferenceVersionSummary }
 import { useLanguage } from "../i18n/useLanguage"
 import { Notice } from "./Notice"
 
-interface Props { isOnline: boolean; onStaged?: () => void }
+interface Props { isOnline: boolean; onStaged?: (versionId: string) => void }
 
 function CanonicalMappingSearch({ kind, suggestedName, selectedId, onSelect, disabled }: {
   kind: "producer" | "product"; suggestedName: string; selectedId: string
@@ -183,7 +183,7 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
       setMessage(t("{staged} valid entries prepared; {quarantined} excluded for correction. Nothing has been published.", {
         staged: String(result.staged), quarantined: String(result.quarantined),
       }))
-      onStaged?.()
+      onStaged?.(stagingPreview.versionId)
     } catch (caught: unknown) {
       setError(caught instanceof Error ? caught.message : "Unable to stage the profile")
     } finally { setBusy(false) }

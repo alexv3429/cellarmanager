@@ -97,6 +97,7 @@ export function DrinkingWindowReviewWorkspace({ householdId, isOnline }: Props) 
   const [baseDrafts, setBaseDrafts] = useState<ReferenceDraft[]>([])
   const [baseVersionId, setBaseVersionId] = useState("")
   const [draftRefreshKey, setDraftRefreshKey] = useState(0)
+  const [stagedVersionId, setStagedVersionId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<"profiles" | "proposals" | "publication">("proposals")
@@ -272,13 +273,20 @@ export function DrinkingWindowReviewWorkspace({ householdId, isOnline }: Props) 
     {activeTab === "profiles" ? <>
       <ProfileGovernanceInbox isOnline={isOnline} />
       <FullProfileExchangePanel isOnline={isOnline}
-        onStaged={() => { void refresh(); setDraftRefreshKey((value) => value + 1) }} />
+        onStaged={(versionId) => {
+          setStagedVersionId(versionId)
+          setActiveTab("publication")
+          setMessage(t("Profile entries prepared in the selected draft. Check that draft and preview its impact before publishing."))
+          void refresh()
+          setDraftRefreshKey((value) => value + 1)
+        }} />
       <ProducerProfileImportPanel isOnline={isOnline} selectedHash={selectedPackageHash}
         onSelect={(hash) => { setSelectedId(null); setForm(null); setSelectedPackageHash(hash); setActiveTab("proposals") }} />
     </> : null}
 
     {activeTab === "publication" ? <>
       <DrinkingWindowReleasePanel key={`release-${draftRefreshKey}`} householdId={householdId} isOnline={isOnline}
+        preferredVersionId={stagedVersionId ?? undefined}
         onChanged={async () => { await refresh(); setDraftRefreshKey((value) => value + 1) }} />
       <ReferenceDraftReview key={`review-${draftRefreshKey}`} isOnline={isOnline} />
     </> : null}
