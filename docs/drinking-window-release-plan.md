@@ -175,6 +175,12 @@ action; Burgaud now appears under Proposals. That older research-intake action
 creates unapproved individual candidates, not staged complete-profile rows or
 published advice. A controlled signed-in staging walkthrough remains
 unchecked; no shared dates or optional facts are published by either action.
+The same PR now carries a rollback-only exact-release integration test covering
+complete-profile import, identity mapping, reviewed batch staging, preflight,
+impact preview, curator publication and visibility in two cellars. The app
+now opens Publication on the exact staged draft rather than making the curator
+find it again. This is test evidence on a disposable database, not a live
+Burgaud publication; the test and full CI must pass before Gate 3 can close.
 
 **Execution status (the contract defines each exit test):**
 
@@ -192,7 +198,7 @@ in every PR description.
 | 0. Lock product contract | Verified by owner on 29 October 2026; #227 merged and nine migrations safely deployed | Preserve the agreed contract and acceptance cases. |
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
-| 3. Complete profile exchange | PR #230 open in slot 4/6; 23-file read-only validation and 21 rollback-only SQL checks pass; two linked migrations backed up, rehearsed, applied and checked; one Burgaud file saved privately and research candidates separately added to Proposals, nothing staged or published | Owner import, preview and export checked; controlled staging still needs a signed-in walkthrough before merge. Exact-name place identities must resolve uniquely or their groups remain quarantined; optional facts remain private until a later display model is reviewed. |
+| 3. Complete profile exchange | PR #230 open in slot 4/6; 23-file read-only validation and 21 earlier rollback-only SQL checks pass; a new import-to-publication integration test is pending CI; two linked migrations backed up, rehearsed, applied and checked; one Burgaud file saved privately and research candidates separately added to Proposals, nothing staged or published live | Owner import, preview and export checked; verify the new integration test and UI handoff before merge. Burgaud's unresolved exact identities remain quarantined for Gate 4; optional facts remain private until a later display model is reviewed. |
 | 4. Prepare initial common base | Not started | Process all 23 supplied files and reviewed fallbacks in staging; prepare an approved publication manifest and quarantine every exception with a reason. |
 | 5. Release and verify | Not started | Rehearse and authorize migrations, publish the approved initial base, pilot on mobile, then verify ordinary cross-household publication and rollback on the official app. |
 

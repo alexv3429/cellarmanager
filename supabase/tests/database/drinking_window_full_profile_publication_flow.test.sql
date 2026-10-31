@@ -29,7 +29,7 @@ select set_config('app.profile_flow_document', $$
 {
   "format":"cellarmanager.producer_research",
   "schema_version":"1.1.0",
-  "dataset_version":"synthetic-gate3-publication",
+  "dataset_version":"1.0.0",
   "scope":"producer_independent_of_any_household",
   "status":"draft_for_curator_review",
   "producer":{"name":"Domaine Jean-Marc Burgaud"},
