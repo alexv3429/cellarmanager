@@ -15,6 +15,7 @@ vi.mock("@powersync/react", () => ({ useQuery: (sql: string) => ({
 }) }))
 vi.mock("./InventoryQueueReview", () => ({ InventoryQueueReview: () => <section>Own browser queue</section> }))
 vi.mock("./StatisticsView", () => ({ StatisticsView: () => <section>Household statistics</section> }))
+vi.mock("./DrinkingWindowDashboard", () => ({ DrinkingWindowDashboard: () => <section>Drinking-window overview</section> }))
 const onOpenWine = vi.fn()
 const row: InventoryActivityRow = {
   id: "rejected-request", user_id: "self", operation_type: "REMOVE", wine_id: "old-id", catalog_wine_id: "canonical-id",
@@ -69,6 +70,19 @@ describe("rejected-operation UX", () => {
     await click("Wine movements")
     expect(container.textContent).not.toContain("Household statistics")
     expect(window.location.search).toBe("")
+  })
+  it("opens the drinking-window dashboard without showing synchronization activity", async () => {
+    await render()
+    await click("When to drink")
+    expect(container.textContent).toContain("Drinking-window overview")
+    expect(container.textContent).not.toContain("Stored locally and queued")
+    expect(window.location.search).toBe("?tab=drinking")
+  })
+  it("opens a bookmarked drinking-window URL directly", async () => {
+    window.history.replaceState({}, "", "/activity?tab=drinking")
+    await render()
+    expect(container.textContent).toContain("Drinking-window overview")
+    expect(container.querySelector('button[aria-pressed="true"]')?.textContent).toBe("When to drink")
   })
   it("keeps an unconfirmed request out of wine movements while making the queue discoverable", async () => {
     query.rows = [{ ...row, status: "PENDING", error_code: null, error_message: null }]
