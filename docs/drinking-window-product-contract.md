@@ -59,6 +59,22 @@ cellar owner enters their own three years for a stated producer, vintage and
 scope of wines; it affects only their cellar. It cannot silently carry over
 to another vintage or to every cuvée.
 
+**Release coverage (owner clarification, 31 October 2026):** The sixth and
+final PR is not complete when profiles are merely imported or waiting for
+review. The official app must be running the selection flow above for the
+owner's real cellar, with complete three-date windows for *nearly all* active
+wines. The working minimum is **95% of active wines**, with each remaining
+uncovered wine and its reason enumerated. This is a floor, not permission to
+stop at 95% if more wines can safely be covered. Report separately how many
+windows come from cellar choices, approved exact producer/cuvée profiles,
+approved broader producer/appellation/region profiles, and the labelled
+existing model. Model-only coverage must not be presented as shared-profile
+coverage. The supplied 23 profiles must be used to maximize reviewed,
+specific matches, but their unreviewed proposals cannot become official
+advice by import alone. If this coverage and approval work cannot be finished
+safely within the six PR slots, do not call the feature released or quietly
+lower the target.
+
 An exact shared row must match the **canonical producer, cuvée, vintage,
 appellation, region and colour**. An explicitly
 size-specific record must match the bottle size; otherwise size is not used

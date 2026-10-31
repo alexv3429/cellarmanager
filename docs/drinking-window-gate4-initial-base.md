@@ -109,12 +109,22 @@ passed. This does not approve the synthetic fallback dates or publish them.
    does **not** approve or publish them. The supplied ZIP must be extracted
    before selecting its JSON files; the full 23-file import passed on the
    disposable copy, but live import remains to be performed.
-   Gate 5 can publish
-   approved rows only after those checks and explicit release authorization.
-   One Côte du Py row alone is **not** the owner's intended 6/6 outcome. The
-   remaining profiles must be usable for continued in-app review without a
-   developer PR, and the owner must explicitly choose whether any unreviewed
-   estimate can be shown provisionally before curator approval.
+   Gate 5 can publish approved rows only after those checks and explicit
+   release authorization. One Côte du Py row alone is **not** the owner's
+   intended 6/6 outcome. The remaining profiles must be usable for continued
+   in-app review without a developer PR; unreviewed estimates must not be
+   shown as recommendations.
+
+The owner has since specified a stronger release outcome: nearly all active
+wines in the real cellar must have a coherent three-date window in the
+official app. The working floor is 95%, with every uncovered exception
+listed, and with reviewed exact, reviewed broader, private and labelled-model
+sources counted separately. The current manifest measures proposal readiness,
+**not** wine-card coverage, so this gate is not ready to pass. Its next
+read-only measurement is a whole-cellar source-by-source baseline and a
+ranked list of uncovered wines/bottles. Editorial review should then target
+the high-impact rows and scoped fallbacks; importing 670 unreviewed proposals
+cannot satisfy the outcome by itself.
 
 This audit exposes a material gap in the original six-PR plan: the 23-file
 bundle is a research package, not a pre-approved reference base. Unless

@@ -20,16 +20,21 @@ gate, not the permanent way to distribute updates. See the contract for exact
 precedence and acceptance examples.
 
 **Owner clarification on 31 October:** 6/6 means the feature is live in the
-official app and uses the supplied data, not merely a one-wine demonstration.
-At minimum, all 23 producer documents must be present in the app's shared
-curator workflow with every proposed row accounted for, and the published
-reference must actually drive applicable wine cards across households at
-exact, appellation and region depth where approved data exists. Do not call a
-single Côte du Py publication completion of the full data objective. The
-bundle currently labels its 670 date proposals unapproved; whether those
-proposals may be shown as *provisional* recommendations before individual
-curator review is a product-policy decision pending explicit owner direction.
-Until then, the agreed reviewed-only publication rule remains in force.
+official app and gives complete three-date windows to nearly all active wines
+in the owner's cellar, not merely a one-wine demonstration or 23 imported
+files awaiting approval. Use **95% as the working minimum**, report every
+remaining exception, and keep improving safe coverage. Measure and disclose
+separately the number of wines served by private choices, reviewed exact
+producer/cuvée rows, reviewed broader producer/appellation/region rows, the
+labelled existing model, and no safe window. All 23 supplied producer
+documents and 670 proposals must be accounted for, and reviewed applicable
+rows must actually drive wine cards. A high total achieved only through the
+old model does not demonstrate that the new shared-profile base is mature.
+The bundle itself says the proposals are unapproved; **no provisional or
+official recommendation may bypass curator review**. The remaining editorial
+work is part of delivery, not a post-release queue. If the target cannot be
+met safely within the six-PR budget, stop and report the gap rather than
+declare 6/6 complete or add a seventh PR without the owner's agreement.
 
 ## Current delivery checkpoint — 31 October 2026
 
@@ -226,7 +231,12 @@ was removed afterward. The 23-file live import has not happened yet.
 No live dates, canonical links, or reference rows changed. The six-PR budget
 remains binding. This audit reveals that a broad initial common base cannot
 be declared ready without real curator identity, date, membership and source
-review; Gate 5 must not silently publish the remaining proposals.
+review; Gate 5 must not silently publish the remaining proposals. **The
+current Gate 4 result is not yet a route to the owner's near-all-wines release
+target:** first measure real-cellar three-date coverage and its source mix;
+then prioritize identity and date review by wines affected, not by JSON row
+count. Keep this work inside #231 and its app-based curation workflow; do not
+move an unbounded review backlog into Gate 5 and call it a finished base.
 
 **Execution status (the contract defines each exit test):**
 
@@ -245,8 +255,8 @@ in every PR description.
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
 | 3. Complete profile exchange | #230 merged in slot 4/6; full CI green, linked migrations backed up/rehearsed/applied; signed-in owner import/preview/export checked; one Burgaud file saved privately and candidates added to Proposals, nothing published live | Preserve full-profile exchange and audited in-app curator path. |
-| 4. Prepare initial common base | Draft #231 in slot 5/6: all 23 files/670 rows audited against restored canonical data; 9 identity-ready, 1 existing reviewed draft, 669 quarantined, 0 newly approved; fallbacks unreviewed; rollback-only full 23-file curator import and exact/appellation/region real-catalogue rehearsals passed; multiple-file UI added but live import not yet done | Import every supplied profile into the official curator workflow, resolve identities and secure reviews for an initial publication manifest. Do not mislabel the research bundle as approved. |
-| 5. Release and verify | Not started | Rehearse and authorize migrations, publish the approved initial base, pilot on mobile, then verify ordinary cross-household publication and rollback on the official app. |
+| 4. Prepare initial common base | Draft #231 in slot 5/6: all 23 files/670 rows audited against restored canonical data; 9 identity-ready, 1 existing reviewed draft, 669 quarantined, 0 newly approved; fallbacks unreviewed; rollback-only full 23-file curator import and exact/appellation/region real-catalogue rehearsals passed; multiple-file UI added but live import not yet done. Real-cellar source-by-source coverage is still unmeasured. | Import every supplied profile into the official curator workflow; measure active-wine coverage and rank gaps by affected wines/bottles; resolve and review enough high-impact exact rows and defensibly scoped fallbacks that Gate 5 has a credible path to near-all coverage. Do not mislabel the research bundle as approved. |
+| 5. Release and verify | Not started | Publish the approved reference, enable it for the consenting cellar, and verify the official app on real wines. Gate 5 passes only with a complete source-by-source coverage report, at least 95% of active wines with coherent three-date windows, each exception named, and the reviewer-approved profile dates shown where applicable; then verify cross-household behavior and rollback. |
 
 **Merge/deployment rule:** Do not describe #227 as feature-complete or ask the
 owner to deploy its migrations as the end state. Update this record whenever
