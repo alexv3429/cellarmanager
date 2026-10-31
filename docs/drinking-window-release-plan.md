@@ -145,8 +145,9 @@ and 21 rollback-only assertions pass on a disposable local clone, including
 non-curator denial, stale-preview refusal, idempotency, conflict quarantine,
 source-link provenance, two bottle sizes and a regional group. Full local
 repository CI passes (web lint with pre-existing warnings, 892 web tests with
-one optional local-file audit skipped, and production build). The remaining
-Gate 3 check is an end-to-end curator preview on an authorized test project.
+one optional local-file audit skipped, and production build). The owner later
+completed signed-in import, preview and export checks on the authorized
+preview; these actions do not publish dates.
 After the owner's separate authorization, the two migrations were
 [backed up, rehearsed on restored linked data, applied and checked](drinking-window-gate3-deployment.md)
 on `cellarmanager-v02-dev`. The linked dry run now has no pending migrations.
@@ -173,14 +174,19 @@ control when the producer is the first blocker. The owner then confirmed the
 complete-profile export works and used the separate **Add to review queue**
 action; Burgaud now appears under Proposals. That older research-intake action
 creates unapproved individual candidates, not staged complete-profile rows or
-published advice. A controlled signed-in staging walkthrough remains
-unchecked; no shared dates or optional facts are published by either action.
+published advice. A controlled live staging walkthrough remains unperformed
+because the current Burgaud file has no new row with a reviewed canonical
+identity; no shared dates or optional facts are published by either action.
 The same PR now carries a rollback-only exact-release integration test covering
 complete-profile import, identity mapping, reviewed batch staging, preflight,
 impact preview, curator publication and visibility in two cellars. The app
 now opens Publication on the exact staged draft rather than making the curator
-find it again. This is test evidence on a disposable database, not a live
-Burgaud publication; the test and full CI must pass before Gate 3 can close.
+find it again. The rollback-only database test now passes on CI after setting
+the fixture wine fields before linking their canonical release, as the app
+requires. It proves import/re-import, preview, staging, preflight, impact,
+publication and visibility in two cellars on disposable data. The web tests
+verify the exact-version handoff. This is not a live Burgaud publication;
+real-profile identity and date review remain Gate 4 work.
 
 **Execution status (the contract defines each exit test):**
 
@@ -198,7 +204,7 @@ in every PR description.
 | 0. Lock product contract | Verified by owner on 29 October 2026; #227 merged and nine migrations safely deployed | Preserve the agreed contract and acceptance cases. |
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
-| 3. Complete profile exchange | PR #230 open in slot 4/6; 23-file read-only validation and 21 earlier rollback-only SQL checks pass; a new import-to-publication integration test is pending CI; two linked migrations backed up, rehearsed, applied and checked; one Burgaud file saved privately and research candidates separately added to Proposals, nothing staged or published live | Owner import, preview and export checked; verify the new integration test and UI handoff before merge. Burgaud's unresolved exact identities remain quarantined for Gate 4; optional facts remain private until a later display model is reviewed. |
+| 3. Complete profile exchange | PR #230 open in slot 4/6; full CI green, including the new rollback-only import-to-publication test across two cellars; 23-file read-only validation and signed-in owner import/preview/export checked; exact-version UI handoff covered by web tests; two linked migrations backed up, rehearsed, applied and checked; one Burgaud file saved privately and research candidates separately added to Proposals, nothing staged or published live | Ready for owner merge review. Burgaud's unresolved exact identities remain quarantined for Gate 4; optional facts remain private until a later display model is reviewed. |
 | 4. Prepare initial common base | Not started | Process all 23 supplied files and reviewed fallbacks in staging; prepare an approved publication manifest and quarantine every exception with a reason. |
 | 5. Release and verify | Not started | Rehearse and authorize migrations, publish the approved initial base, pilot on mobile, then verify ordinary cross-household publication and rollback on the official app. |
 
