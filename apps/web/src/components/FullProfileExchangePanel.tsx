@@ -123,8 +123,10 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
           errors.push(`${entry.fileName}: ${caught instanceof Error ? caught.message : String(caught)}`)
         }
       }
-      setImports(await listFullProfileExchanges())
       setPendingProfiles(failed)
+      let refreshError = ""
+      try { setImports(await listFullProfileExchanges()) }
+      catch (caught) { refreshError = caught instanceof Error ? caught.message : String(caught) }
       if (saved.length === 1) {
         setSelectedProfileId(saved[0].profile.id)
         setSelectedDocument(saved[0].preview)
@@ -135,10 +137,13 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
         ? t("Complete profile saved for review. No dates were published.")
         : t("{count} complete profiles saved for review. No dates were published.",
           { count: String(saved.length) }))
-      if (errors.length) setError((errors.length === 1
-        ? t("One profile could not be saved. It remains selected for retry:")
-        : t("{count} profiles could not be saved. They remain selected for retry:",
-          { count: String(errors.length) })) + " " + errors.join(" · "))
+      if (errors.length || refreshError) setError([
+        ...(errors.length ? [(errors.length === 1
+          ? t("One profile could not be saved. It remains selected for retry:")
+          : t("{count} profiles could not be saved. They remain selected for retry:",
+            { count: String(errors.length) })) + " " + errors.join(" · ")] : []),
+        ...(refreshError ? [`${t("Unable to refresh saved profiles.")} ${refreshError}`] : []),
+      ].join(" · "))
     } catch (caught: unknown) {
       setError(caught instanceof Error ? caught.message : "Unable to save profile")
     } finally { setBusy(false) }
@@ -232,7 +237,7 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
         onChange={(event) => void choose(event.target.files)} />
     </label>
     {pendingProfiles.length ? <div>
-      <ul>{pendingProfiles.map(({ fileName, preview }) => <li key={fileName}>
+      <ul>{pendingProfiles.map(({ fileName, preview }, index) => <li key={`${fileName}:${index}`}>
         {fileName} · {preview.name} · {t(preview.kind)} · {preview.datasetVersion} · {preview.releaseCount} {t("proposed windows")} · {preview.factCount} {t("retained profile facts")} · {preview.sourceCount} {t("source pointers")}
       </li>)}</ul>
       <p>{t("The dates and source rights are still unreviewed. Importing cannot affect any cellar.")}</p>

@@ -71,6 +71,7 @@ export const frenchText: Readonly<Record<string, string>> = {
   "{count} complete profiles saved for review. No dates were published.": "{count} profils complets conservés pour révision. Aucune date n’a été publiée.",
   "{count} profiles could not be saved. They remain selected for retry:": "{count} profils n’ont pas pu être enregistrés. Ils restent sélectionnés pour une nouvelle tentative :",
   "One profile could not be saved. It remains selected for retry:": "Un profil n’a pas pu être enregistré. Il reste sélectionné pour une nouvelle tentative :",
+  "Unable to refresh saved profiles.": "Impossible d’actualiser la liste des profils enregistrés.",
   "Complete profile saved for review. No dates were published.": "Profil complet conservé pour révision. Aucune date n’a été publiée.",
   "Saved complete profiles": "Profils complets enregistrés",
   "Export JSON": "Exporter le JSON",
