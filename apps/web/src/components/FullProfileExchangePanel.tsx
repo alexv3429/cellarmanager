@@ -189,6 +189,13 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
     } finally { setBusy(false) }
   }
 
+  const quarantineReasons = stagingPreview?.items.reduce((counts, item) => {
+    if (item.status === "quarantined" && item.reason) {
+      counts.set(item.reason, (counts.get(item.reason) || 0) + 1)
+    }
+    return counts
+  }, new Map<string, number>())
+
   return <details className="research-inbox drinking-window-profile-import">
     <summary><strong>{t("Complete profile exchange")}</strong></summary>
     <p>{t("Import a complete producer, appellation or region JSON profile for curator review. History, grapes, style, service, pairings and source pointers are retained. This does not approve or publish any dates.")}</p>
@@ -255,17 +262,26 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
         onClick={() => void inspect()}>{t("Preview mapping and changes")}</button>
       {stagingPreview ? <div>
         <p>{stagingPreview.ready} {t("ready")} · {stagingPreview.unchanged} {t("unchanged")} · {stagingPreview.quarantined} {t("quarantined")}</p>
+        {quarantineReasons?.size ? <Notice tone="warning">
+          <strong>{t("Why entries were set aside")}</strong>
+          <ul>{[...quarantineReasons].map(([reason, count]) => <li key={reason}>
+            {count} · {t(reason)}
+          </li>)}</ul>
+          {quarantineReasons.has("Producer has no unique canonical identity")
+            ? <p>{t("Select the existing shared producer under name mapping, then preview again. Other identity checks follow after that first match.")}</p>
+            : null}
+        </Notice> : null}
         <p>{t("Only unique exact canonical identities can be prepared. Unmatched or conflicting entries remain in the saved profile; they are not silently imported.")}</p>
         <ul>{stagingPreview.items.map((item) => <li key={item.key}>
           <strong>{item.name}</strong> · {t(item.status)}
           {item.canonicalId ? <> · {t("Canonical ID")}: <code>{item.canonicalId}</code></> : null}
-          {item.reason ? <> · {item.reason}</> : null}
+          {item.reason ? <> · {t(item.reason)}</> : null}
           {item.firstTrialYear ? <> · {item.firstTrialYear} / {item.bestStartYear}–{item.bestEndYear}</> : null}
           {item.rationale ? <p>{item.rationale}</p> : null}
           {item.children.length ? <ul>{item.children.map((child) => <li key={child.key}>
             {child.name}{child.firstTrialYear ? `: ${child.firstTrialYear} / ${child.bestStartYear}–${child.bestEndYear}` : ""}
             {child.canonicalId ? <> · {t("Canonical ID")}: <code>{child.canonicalId}</code></> : null}
-            {child.reason ? <> · {child.reason}</> : null}
+            {child.reason ? <> · {t(child.reason)}</> : null}
             {child.rationale ? <p>{child.rationale}</p> : null}
             {child.sourceUrls.length ? <details><summary>{t("Context links to review")}</summary>
               <ul>{child.sourceUrls.map((url) => <li key={url}><a href={url} target="_blank" rel="noopener noreferrer">{url}</a></li>)}</ul>

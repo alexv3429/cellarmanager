@@ -139,7 +139,8 @@ preflight, impact preview and curator publication remain separate required
 actions. Format-specific release windows can coexist in one version, and an
 exact bottle-size match outranks a size-neutral match at the same scope.
 All 23 owner-supplied audited producer JSON files pass the proposed client
-validation, but none has been imported, approved or published. The migration
+validation. The owner has since saved one Burgaud file in the curator-private
+exchange archive; none has been staged, approved or published. The migration
 and 21 rollback-only assertions pass on a disposable local clone, including
 non-curator denial, stale-preview refusal, idempotency, conflict quarantine,
 source-link provenance, two bottle sizes and a regional group. Full local
@@ -149,7 +150,7 @@ Gate 3 check is an end-to-end curator preview on an authorized test project.
 After the owner's separate authorization, the two migrations were
 [backed up, rehearsed on restored linked data, applied and checked](drinking-window-gate3-deployment.md)
 on `cellarmanager-v02-dev`. The linked dry run now has no pending migrations.
-Read-only postflight matched preflight: 810 wines, four households, two
+Initial read-only postflight matched preflight: 810 wines, four households, two
 reference versions, zero publications, zero enabled rollouts, zero imported
 profiles and zero staged profile links. No shared dates or optional facts
 were published. During the Gate 3 preview, the owner found the Catalogue
@@ -160,9 +161,17 @@ profile, proposal and publication tasks under Settings at
 `/admin/shared-reference`. The server continues to enforce curator permission;
 the client hides the Settings link and guards direct navigation when that
 permission is absent. This is a Gate 3 usability correction, not a new gate or
-PR. A signed-in curator must still verify JSON import/export, preview and
-staging in the PR preview before merge; no shared dates or optional facts
-are published by this navigation change.
+PR. The signed-in owner subsequently imported Burgaud dataset 1.2.0 privately:
+26 proposed windows, 28 retained facts and 31 source pointers. Its first
+preview quarantined all 26 because the file says `Domaine Jean-Marc Burgaud`
+but the canonical producer is `Jean-Marc Burgaud`. In a separate read-only
+preview, explicitly mapping that producer and the existing Côte du Py cuvée
+yielded one unchanged 2022/750 ml row and 25 quarantined entries; most still
+need exact cuvée or release identities. No row was staged. The same PR now
+groups and translates quarantine reasons and points to the name-mapping
+control when the producer is the first blocker. Export and a controlled
+signed-in staging walkthrough remain to be checked before merge; no shared
+dates or optional facts are published by this navigation or copy change.
 
 **Execution status (the contract defines each exit test):**
 
@@ -180,7 +189,7 @@ in every PR description.
 | 0. Lock product contract | Verified by owner on 29 October 2026; #227 merged and nine migrations safely deployed | Preserve the agreed contract and acceptance cases. |
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
-| 3. Complete profile exchange | PR #230 open in slot 4/6; CI green; 23-file read-only validation and 21 rollback-only SQL checks pass; two linked migrations backed up, rehearsed, applied and checked; no profile imported | Owner checks the signed-in curator import/export and preview path in the PR preview before merge. Exact-name place identities must resolve uniquely or their groups remain quarantined; optional facts remain private until a later display model is reviewed. |
+| 3. Complete profile exchange | PR #230 open in slot 4/6; 23-file read-only validation and 21 rollback-only SQL checks pass; two linked migrations backed up, rehearsed, applied and checked; one Burgaud file saved privately, nothing staged or published | Owner import and preview checked; export and controlled staging still need a signed-in walkthrough before merge. Exact-name place identities must resolve uniquely or their groups remain quarantined; optional facts remain private until a later display model is reviewed. |
 | 4. Prepare initial common base | Not started | Process all 23 supplied files and reviewed fallbacks in staging; prepare an approved publication manifest and quarantine every exception with a reason. |
 | 5. Release and verify | Not started | Rehearse and authorize migrations, publish the approved initial base, pilot on mobile, then verify ordinary cross-household publication and rollback on the official app. |
 
