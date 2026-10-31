@@ -24,7 +24,7 @@ select set_config('app.profile_flow_producer', (select producer_id::text
     where id = current_setting('app.profile_flow_product')::uuid), true);
 select set_config('app.profile_flow_map', jsonb_build_object(
     'producer_id', current_setting('app.profile_flow_producer'),
-    'cuvees', jsonb_build_object('james', current_setting('app.profile_flow_product')))::text, true);
+    'cuvees', jsonb_build_object('py', current_setting('app.profile_flow_product')))::text, true);
 select set_config('app.profile_flow_document', $$
 {
   "format":"cellarmanager.producer_research",
@@ -33,20 +33,20 @@ select set_config('app.profile_flow_document', $$
   "scope":"producer_independent_of_any_household",
   "status":"draft_for_curator_review",
   "producer":{"name":"Domaine Jean-Marc Burgaud"},
-  "cuvees":[{"id":"james","name":"James","appellation":"Morgon","region":"Beaujolais","color":"red"}],
-  "sources":[{"id":"context","url":"https://example.org/synthetic-james-context"}],
+  "cuvees":[{"id":"py","name":"Côte du Py","appellation":"Morgon","region":"Beaujolais","color":"red"}],
+  "sources":[{"id":"context","url":"https://example.org/synthetic-py-context"}],
   "exact_release_calibrations":[
-    {"cuvee_id":"james","vintage":2022,"format_ml":1500,
+    {"cuvee_id":"py","vintage":2022,"format_ml":1500,
      "proposal":{"first_trial_year":2026,"best_start_year":2029,"best_end_year":2038,
-       "rationale":"A synthetic editorial estimate for the 1500 ml James release, not producer-published dates.",
+       "rationale":"A synthetic editorial estimate for the 1500 ml Côte du Py release, not producer-published dates.",
        "supporting_source_ids":["context"],
-       "supporting_source_urls":["https://example.org/synthetic-james-context"]}}
+       "supporting_source_urls":["https://example.org/synthetic-py-context"]}}
   ],
   "import_policy":{"review_required":true,"no_direct_production_publication":true}
 }
 $$, true);
 
-update public.wines set producer = 'Jean-Marc Burgaud', cuvee = 'James',
+update public.wines set producer = 'Jean-Marc Burgaud', cuvee = 'Côte du Py',
     vintage = 2022, color = 'red', area = 'Beaujolais', appellation = 'Morgon',
     format_ml = 1500, wine_reference_type = 'release',
     wine_reference_id = current_setting('app.profile_flow_release')::uuid
