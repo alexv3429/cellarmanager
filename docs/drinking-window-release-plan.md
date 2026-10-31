@@ -169,9 +169,12 @@ preview, explicitly mapping that producer and the existing Côte du Py cuvée
 yielded one unchanged 2022/750 ml row and 25 quarantined entries; most still
 need exact cuvée or release identities. No row was staged. The same PR now
 groups and translates quarantine reasons and points to the name-mapping
-control when the producer is the first blocker. Export and a controlled
-signed-in staging walkthrough remain to be checked before merge; no shared
-dates or optional facts are published by this navigation or copy change.
+control when the producer is the first blocker. The owner then confirmed the
+complete-profile export works and used the separate **Add to review queue**
+action; Burgaud now appears under Proposals. That older research-intake action
+creates unapproved individual candidates, not staged complete-profile rows or
+published advice. A controlled signed-in staging walkthrough remains
+unchecked; no shared dates or optional facts are published by either action.
 
 **Execution status (the contract defines each exit test):**
 
@@ -189,7 +192,7 @@ in every PR description.
 | 0. Lock product contract | Verified by owner on 29 October 2026; #227 merged and nine migrations safely deployed | Preserve the agreed contract and acceptance cases. |
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
-| 3. Complete profile exchange | PR #230 open in slot 4/6; 23-file read-only validation and 21 rollback-only SQL checks pass; two linked migrations backed up, rehearsed, applied and checked; one Burgaud file saved privately, nothing staged or published | Owner import and preview checked; export and controlled staging still need a signed-in walkthrough before merge. Exact-name place identities must resolve uniquely or their groups remain quarantined; optional facts remain private until a later display model is reviewed. |
+| 3. Complete profile exchange | PR #230 open in slot 4/6; 23-file read-only validation and 21 rollback-only SQL checks pass; two linked migrations backed up, rehearsed, applied and checked; one Burgaud file saved privately and research candidates separately added to Proposals, nothing staged or published | Owner import, preview and export checked; controlled staging still needs a signed-in walkthrough before merge. Exact-name place identities must resolve uniquely or their groups remain quarantined; optional facts remain private until a later display model is reviewed. |
 | 4. Prepare initial common base | Not started | Process all 23 supplied files and reviewed fallbacks in staging; prepare an approved publication manifest and quarantine every exception with a reason. |
 | 5. Release and verify | Not started | Rehearse and authorize migrations, publish the approved initial base, pilot on mobile, then verify ordinary cross-household publication and rollback on the official app. |
 
