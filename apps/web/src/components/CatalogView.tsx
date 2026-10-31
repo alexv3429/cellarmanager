@@ -48,8 +48,6 @@ import {
 import { EnrichmentResearchInbox } from "./EnrichmentResearchInbox"
 import { Notice } from "./Notice"
 import { ProfileReviewInbox } from "./ProfileReviewInbox"
-import { ProfileGovernanceInbox } from "./ProfileGovernanceInbox"
-import { DrinkingWindowReviewWorkspace } from "./DrinkingWindowReviewWorkspace"
 import { DrinkingWindowShadowReviewPanel } from "./DrinkingWindowShadowReviewPanel"
 import { editorialContextId, editorialEvidenceId } from "../data/drinkingWindowEditorialEstimate"
 import { EditorialEstimateNote } from "./EditorialEstimateNote"
@@ -217,13 +215,19 @@ const CATALOG_QUERY = `
 interface CatalogViewProps {
   householdId: string
   isOnline: boolean
+  mode?: "catalog" | "review"
+  onBackToCatalog?: () => void
   onOpenWine: (wineId: string) => void
+  onOpenReview?: () => void
 }
 
 export function CatalogView({
   householdId,
   isOnline,
+  mode = "catalog",
+  onBackToCatalog,
   onOpenWine,
+  onOpenReview,
 }: CatalogViewProps) {
   const { language, t } = useLanguage()
   const [openEditorialId, setOpenEditorialId] = useState<string | null>(() => editorialEvidenceId(window.location.href))
@@ -860,7 +864,15 @@ export function CatalogView({
 
   return (
     <main>
-      <h1>{t("Wine catalog")}</h1>
+      {mode === "review" ? <>
+        <button type="button" onClick={onBackToCatalog}>{t("Back to catalogue")}</button>
+        <h1>{t("Improve my catalogue")}</h1>
+        <p>{t("Review gaps in your cellar data and research requests here. Shared-database decisions are managed separately.")}</p>
+      </> : <>
+        <h1>{t("Wine catalog")}</h1>
+        <p>{t("All synchronized wines are shown here, including wines with no bottles currently in stock.")}</p>
+        <button className="catalog-review-link" type="button" onClick={onOpenReview}>{t("Improve my catalogue")}</button>
+      </>}
       {openEditorialId ? <section className="drinking-window-source-note">
         <button type="button" onClick={() => {
           window.history.replaceState(window.history.state, "", "/catalog")
@@ -875,8 +887,6 @@ export function CatalogView({
         }}>{t("Close editorial assessment")}</button>
         <EditorialContextNote evidenceId={openEditorialContextId} />
       </section> : null}
-      <p>{t("All synchronized wines are shown here, including wines with no bottles currently in stock.")}</p>
-
       {!isOnline ? (
         <Notice tone="warning">{t("Offline · catalog edits are disabled.")}</Notice>
       ) : null}
@@ -903,7 +913,7 @@ export function CatalogView({
         </Notice>
       ) : null}
 
-      <section aria-labelledby="catalog-filters-heading">
+      {mode === "catalog" ? <section aria-labelledby="catalog-filters-heading">
         <h2 id="catalog-filters-heading">{t("Find wines")}</h2>
 
         <label>{t("Search")}<input
@@ -1080,14 +1090,14 @@ export function CatalogView({
           onClick={clearFilters}
           type="button"
         >{t("Clear filters")}</button>
-      </section>
+      </section> : null}
 
       {maturityError ? (
         <Notice role="alert" tone="warning">{t("Maturity guidance is temporarily unavailable:")}{maturityError}
         </Notice>
       ) : null}
 
-      <section
+      {mode === "review" ? <><section
         aria-labelledby="catalog-coverage-heading"
         className="catalog-coverage"
       >
@@ -1239,8 +1249,6 @@ export function CatalogView({
           onOpenWine={onOpenWine}
         />
 
-        <ProfileGovernanceInbox isOnline={isOnline} />
-        <DrinkingWindowReviewWorkspace householdId={householdId} isOnline={isOnline} />
         <DrinkingWindowShadowReviewPanel
           key={householdId}
           householdId={householdId}
@@ -1257,6 +1265,7 @@ export function CatalogView({
         isOnline={isOnline}
         wines={catalogWines}
       />
+      </> : null}
 
       <datalist id="catalog-color-suggestions">
         {colorSuggestions.map((color) => (

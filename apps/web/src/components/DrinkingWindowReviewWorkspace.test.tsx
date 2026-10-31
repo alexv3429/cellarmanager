@@ -15,6 +15,14 @@ vi.mock("../data/drinkingWindowReview", () => ({
 }))
 vi.mock("../data/drinkingWindowReferenceDrafts", () => ({ getReferenceDrafts: vi.fn() }))
 vi.mock("./ReferenceDraftReview", () => ({ ReferenceDraftReview: () => <div>Reference drafts</div> }))
+vi.mock("./DrinkingWindowReleasePanel", () => ({ DrinkingWindowReleasePanel: ({ preferredVersionId }: {
+  preferredVersionId?: string
+}) => <div>Publication controls {preferredVersionId}</div> }))
+vi.mock("./ProfileGovernanceInbox", () => ({ ProfileGovernanceInbox: () => <div>Profile governance</div> }))
+vi.mock("./FullProfileExchangePanel", () => ({ FullProfileExchangePanel: ({ onStaged }: {
+  onStaged: (versionId: string) => void
+}) => <button type="button" onClick={() => onStaged("staged-version")}>Complete profiles</button> }))
+vi.mock("./ProducerProfileImportPanel", () => ({ ProducerProfileImportPanel: () => <div>Producer profiles</div> }))
 
 const workspace = {
   eligible: true,
@@ -53,6 +61,31 @@ afterEach(async () => {
 })
 
 describe("curator drinking-window review workspace", () => {
+  it("separates profile, proposal and publication tasks", async () => {
+    await act(async () => root.render(<DrinkingWindowReviewWorkspace householdId="home" isOnline />))
+    expect(container.textContent).toContain("Reference candidates")
+    expect(container.textContent).not.toContain("Publication controls")
+    const tabs = [...container.querySelectorAll("nav button")]
+    expect(tabs.map((button) => button.textContent)).toEqual(["Profiles", "Proposals", "Publication"])
+    await act(async () => tabs[0].click())
+    expect(container.textContent).toContain("Profile governance")
+    expect(container.textContent).not.toContain("Reference candidates")
+    await act(async () => tabs[2].click())
+    expect(container.textContent).toContain("Publication controls")
+    expect(container.textContent).toContain("Reference drafts")
+    expect(container.textContent).not.toContain("Profile governance")
+  })
+  it("opens publication on the exact version prepared from a complete profile", async () => {
+    await act(async () => root.render(<DrinkingWindowReviewWorkspace householdId="home" isOnline />))
+    const profiles = [...container.querySelectorAll("nav button")]
+      .find((button) => button.textContent === "Profiles")
+    await act(async () => profiles?.click())
+    const stage = [...container.querySelectorAll("button")]
+      .find((button) => button.textContent === "Complete profiles")
+    await act(async () => stage?.click())
+    expect(container.textContent).toContain("Publication controls staged-version")
+    expect(container.textContent).toContain("Check that draft and preview its impact before publishing")
+  })
   it("stays invisible without a curator grant", async () => {
     vi.mocked(getDrinkingWindowReviewWorkspace).mockResolvedValue({ eligible: false, candidates: [], identityRequests: [] })
     await act(async () => root.render(<DrinkingWindowReviewWorkspace isOnline />))

@@ -1,0 +1,31 @@
+{
+  "format": "cellarmanager.place_profile",
+  "schema_version": "1.0.0",
+  "dataset_version": "1.0.0",
+  "generated_on": "2026-10-30",
+  "language": "fr",
+  "status": "draft_for_curator_review",
+  "profile_kind": "appellation",
+  "place": {
+    "name": "REPLACE: appellation name",
+    "region": "REPLACE: parent region name",
+    "country_code": "FR",
+    "aliases": [],
+    "source_ids": ["replace_source_id"]
+  },
+  "ageing_groups": [],
+  "facts": [],
+  "sources": [
+    {
+      "id": "replace_source_id",
+      "title": "REPLACE: source title",
+      "url": "https://example.invalid/replace-with-real-source",
+      "checked_on": "2026-10-30",
+      "reuse": {
+        "status": "rights_not_reviewed",
+        "store_raw_content": false,
+        "pointer_candidate_only": true
+      }
+    }
+  ]
+}
