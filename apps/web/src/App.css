@@ -8765,6 +8765,21 @@
   margin-block: 1.5rem 0.35rem;
 }
 
+.catalog-review-link { margin-block: 0.5rem 1rem; }
+
+.shared-reference-admin__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-block: 1.25rem;
+}
+
+.shared-reference-admin__tabs button[aria-current="page"] {
+  border-color: var(--accent, #bf7688);
+  background: var(--surface-raised, #3b2931);
+  font-weight: 700;
+}
+
 .drinking-window-review-list {
   display: grid;
   gap: 0.5rem;

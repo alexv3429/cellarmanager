@@ -26,6 +26,7 @@ import { CanonicalReleaseCreation } from "./CanonicalReleaseCreation"
 import { CurationPlaceCreation } from "./CurationPlaceCreation"
 import { ProducerProfileImportPanel } from "./ProducerProfileImportPanel"
 import { ReferenceDraftReview } from "./ReferenceDraftReview"
+import { ProfileGovernanceInbox } from "./ProfileGovernanceInbox"
 
 interface Props { householdId: string; isOnline: boolean }
 
@@ -98,6 +99,7 @@ export function DrinkingWindowReviewWorkspace({ householdId, isOnline }: Props) 
   const [draftRefreshKey, setDraftRefreshKey] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<"profiles" | "proposals" | "publication">("proposals")
 
   async function refresh() {
     if (!isOnline) return
@@ -248,14 +250,7 @@ export function DrinkingWindowReviewWorkspace({ householdId, isOnline }: Props) 
     }
   }
 
-  return <details className="research-inbox drinking-window-review-workspace">
-    <summary>
-      <span>
-        <strong>{t("Shared drinking-window review")}</strong>
-        <small>{t("Curator workspace · drafts only")}</small>
-      </span>
-      <span aria-hidden="true" className="research-inbox__chevron">▾</span>
-    </summary>
+  return <section className="research-inbox drinking-window-review-workspace">
     <div className="research-inbox__heading">
       <div>
         <h2>{t("Shared drinking-window review")}</h2>
@@ -267,6 +262,29 @@ export function DrinkingWindowReviewWorkspace({ householdId, isOnline }: Props) 
     {error ? <Notice role="alert" tone="warning">{error}</Notice> : null}
     {message ? <Notice role="status" tone="success">{message}</Notice> : null}
 
+    <nav aria-label={t("Shared database tasks")} className="shared-reference-admin__tabs">
+      {(["profiles", "proposals", "publication"] as const).map((tab) =>
+        <button key={tab} type="button" aria-current={activeTab === tab ? "page" : undefined}
+          onClick={() => setActiveTab(tab)}>{t(tab === "profiles" ? "Profiles" : tab === "proposals" ? "Proposals" : "Publication")}</button>
+      )}
+    </nav>
+
+    {activeTab === "profiles" ? <>
+      <ProfileGovernanceInbox isOnline={isOnline} />
+      <FullProfileExchangePanel isOnline={isOnline}
+        onStaged={() => { void refresh(); setDraftRefreshKey((value) => value + 1) }} />
+      <ProducerProfileImportPanel isOnline={isOnline} selectedHash={selectedPackageHash}
+        onSelect={(hash) => { setSelectedId(null); setForm(null); setSelectedPackageHash(hash); setActiveTab("proposals") }} />
+    </> : null}
+
+    {activeTab === "publication" ? <>
+      <DrinkingWindowReleasePanel key={`release-${draftRefreshKey}`} householdId={householdId} isOnline={isOnline}
+        onChanged={async () => { await refresh(); setDraftRefreshKey((value) => value + 1) }} />
+      <ReferenceDraftReview key={`review-${draftRefreshKey}`} isOnline={isOnline} />
+    </> : null}
+
+    {activeTab === "proposals" ? <>
+
     <h3>{t("Missing shared wine identities")} ({workspace.identityRequests.length})</h3>
     <p>{t("These owner requests need identity research. This queue cannot rename or link their wines.")}</p>
     {workspace.identityRequests.length === 0 ? <p>{t("No pending identity requests.")}</p> :
@@ -277,15 +295,6 @@ export function DrinkingWindowReviewWorkspace({ householdId, isOnline }: Props) 
           {request.sourceChanged ? <small>{t("Owner data changed since this request; verify before acting.")}</small> : null}
         </li>
       )}</ul>}
-
-    <DrinkingWindowReleasePanel key={draftRefreshKey} householdId={householdId} isOnline={isOnline}
-      onChanged={async () => { await refresh(); setDraftRefreshKey((value) => value + 1) }} />
-    <ReferenceDraftReview key={draftRefreshKey} isOnline={isOnline} />
-
-    <FullProfileExchangePanel isOnline={isOnline}
-      onStaged={() => { void refresh(); setDraftRefreshKey((value) => value + 1) }} />
-    <ProducerProfileImportPanel isOnline={isOnline} selectedHash={selectedPackageHash}
-      onSelect={(hash) => { setSelectedId(null); setForm(null); setSelectedPackageHash(hash) }} />
 
     <h3>{t("Reference candidates")} ({workspace.candidates.length})</h3>
     <p>{t("Workbook and cellar-owner suggestions are unverified candidates, not approved advice. Check the exact wine, three dates, evidence and reuse rights.")}</p>
@@ -422,5 +431,6 @@ export function DrinkingWindowReviewWorkspace({ householdId, isOnline }: Props) 
             </div> : null}
         </form> : null}
       </div>}
-  </details>
+    </> : null}
+  </section>
 }

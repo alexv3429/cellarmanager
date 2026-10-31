@@ -11,6 +11,8 @@ import { useAccountRoute } from "./navigation/useAccountRoute"
 import { AccountView } from "./components/AccountView"
 import { ActivityView } from "./components/ActivityView"
 import { CatalogView } from "./components/CatalogView"
+import { SharedReferenceAdminView } from "./components/SharedReferenceAdminView"
+import { getReleaseWorkspace } from "./data/drinkingWindowReleaseWorkflow"
 import { MemberCellarView } from "./components/MemberCellarView"
 import { CellarSetupView } from "./components/CellarSetupView"
 import { InventoryQueueReview } from "./components/InventoryQueueReview"
@@ -112,6 +114,22 @@ function ReadyAuthenticatedApp({
       (household) => household.id === activeHouseholdId,
     )?.name ?? t("shell.yourHousehold")
   const permissions = getHouseholdPermissions(activeHouseholdRole)
+  const [curatorPermission, setCuratorPermission] = useState<{
+    userId: string
+    canCurate: boolean
+  } | null>(null)
+  const curatorAccessChecked = !isOnline || curatorPermission?.userId === userId
+  const canCurateSharedReference = isOnline && curatorPermission?.userId === userId && curatorPermission.canCurate
+  useEffect(() => {
+    let cancelled = false
+    if (!isOnline) return
+    void getReleaseWorkspace().then((workspace) => {
+      if (!cancelled) setCuratorPermission({ userId, canCurate: workspace.canPublish })
+    }).catch(() => {
+      if (!cancelled) setCuratorPermission({ userId, canCurate: false })
+    })
+    return () => { cancelled = true }
+  }, [isOnline, userId])
 
   const [requestedRoute, setRoute] =
     useState<AppRoute>(() =>
@@ -245,7 +263,8 @@ function ReadyAuthenticatedApp({
   const displayedView = route.view === "wine" ? wineDetailReturnView : route.view
   const translatedPageLabels = {
     inventory: t("nav.inventory"), cellar: t("nav.cellar"), pairing: t("nav.pairing"),
-    activity: t("nav.activity"), catalog: t("nav.catalog"), import: t("nav.data"), setup: t("nav.setup"),
+    activity: t("nav.activity"), catalog: t("nav.catalog"), catalogReview: t("Improve my catalogue"),
+    referenceAdmin: t("Shared database administration"), import: t("nav.data"), setup: t("nav.setup"),
   }
   const pageLabel = translatedPageLabels[displayedView as keyof typeof translatedPageLabels]
     ?? getAppRouteTitle(route).replace(" · CellarManager", "")
@@ -254,6 +273,7 @@ function ReadyAuthenticatedApp({
     <AppShell
       activeHouseholdId={activeHouseholdId}
       activeHouseholdRole={activeHouseholdRole}
+      canCurateSharedReference={canCurateSharedReference}
       contentKey={
         route.view === "wine"
           ? `wine:${route.wineId}`
@@ -324,13 +344,26 @@ function ReadyAuthenticatedApp({
         </div>
       ) : null}
 
-      {route.view === "catalog" ? (
+      {route.view === "catalog" || route.view === "catalogReview" ? (
         <CatalogView
           householdId={activeHouseholdId}
           isOnline={isOnline}
+          mode={route.view === "catalogReview" ? "review" : "catalog"}
+          onBackToCatalog={() => changeView("catalog")}
+          onOpenReview={() => changeView("catalogReview")}
           onOpenWine={(wineId) =>
-            openWineDetail(wineId, "catalog")
+            openWineDetail(wineId, route.view === "catalogReview" ? "catalogReview" : "catalog")
           }
+        />
+      ) : null}
+
+      {route.view === "referenceAdmin" ? (
+        <SharedReferenceAdminView
+          canCurate={canCurateSharedReference}
+          accessChecked={curatorAccessChecked}
+          householdId={activeHouseholdId}
+          isOnline={isOnline}
+          onBackToCatalog={() => changeView("catalog")}
         />
       ) : null}
 

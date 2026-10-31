@@ -152,8 +152,17 @@ on `cellarmanager-v02-dev`. The linked dry run now has no pending migrations.
 Read-only postflight matched preflight: 810 wines, four households, two
 reference versions, zero publications, zero enabled rollouts, zero imported
 profiles and zero staged profile links. No shared dates or optional facts
-were published. The PR preview `/catalog` responds, but the signed-in curator
-import/export and preview flow still needs an owner walkthrough before merge.
+were published. During the Gate 3 preview, the owner found the Catalogue
+overwhelming because household cleanup and shared curatorial controls appeared
+before the wine list. The same PR now makes `/catalog` wine-first, moves
+cellar-data/research cleanup to `/catalog/review`, and puts curator-only shared
+profile, proposal and publication tasks under Settings at
+`/admin/shared-reference`. The server continues to enforce curator permission;
+the client hides the Settings link and guards direct navigation when that
+permission is absent. This is a Gate 3 usability correction, not a new gate or
+PR. A signed-in curator must still verify JSON import/export, preview and
+staging in the PR preview before merge; no shared dates or optional facts
+are published by this navigation change.
 
 **Execution status (the contract defines each exit test):**
 

@@ -32,6 +32,7 @@ import { formatLocalizedDateTime } from "../i18n/formatting"
 interface AppShellProps {
   activeHouseholdId: string
   activeHouseholdRole: HouseholdRole
+  canCurateSharedReference?: boolean
   children: ReactNode
   contentKey: string
   deviceRegistration: RegisteredDevicesState
@@ -73,6 +74,7 @@ function errorMessage(error: unknown): string | null {
 export function AppShell({
   activeHouseholdId,
   activeHouseholdRole,
+  canCurateSharedReference = false,
   children,
   contentKey,
   deviceRegistration,
@@ -247,6 +249,11 @@ export function AppShell({
                 href={getAppViewPath("members")} onClick={(event) => navigate(event, "members")}>{t("shell.members")}</a>
               <a aria-current={view === "devices" ? "page" : undefined} className="app-shell__account-link"
                 href={getAppViewPath("devices")} onClick={(event) => navigate(event, "devices")}>{t("shell.devices")}</a>
+              {canCurateSharedReference ? <>
+                <span className="app-shell__settings-label">{t("Shared database")}</span>
+                <a aria-current={view === "referenceAdmin" ? "page" : undefined} className="app-shell__account-link"
+                  href={getAppViewPath("referenceAdmin")} onClick={(event) => navigate(event, "referenceAdmin")}>{t("Shared database administration")}</a>
+              </> : null}
               <button className="app-shell__sign-out" onClick={() => void signOut()} title={isOnline ? undefined : t("Reconnect before signing out")} type="button">{t("shell.signOut")}</button>
             </nav>
           </ShellDisclosure>
@@ -283,7 +290,7 @@ export function AppShell({
         </a>
 
         {permissions.canManageCatalog ? <a
-          aria-current={view === "catalog" ? "page" : undefined}
+          aria-current={view === "catalog" || view === "catalogReview" ? "page" : undefined}
           href={getAppViewPath("catalog")}
           onClick={(event) => navigate(event, "catalog")}
         >

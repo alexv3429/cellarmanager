@@ -4,6 +4,8 @@ export type AppView =
   | "pairing"
   | "activity"
   | "catalog"
+  | "catalogReview"
+  | "referenceAdmin"
   | "import"
   | "invite"
   | "members"
@@ -30,6 +32,8 @@ const APP_VIEW_PATHS: Record<AppView, string> = {
   pairing: "/pairing",
   activity: "/activity",
   catalog: "/catalog",
+  catalogReview: "/catalog/review",
+  referenceAdmin: "/admin/shared-reference",
   import: "/data",
   invite: "/invite",
   members: "/members",
@@ -86,6 +90,10 @@ export function getAppRouteFromPathname(
       return { view: "activity", wineId: null }
     case "/catalog":
       return { view: "catalog", wineId: null }
+    case "/catalog/review":
+      return { view: "catalogReview", wineId: null }
+    case "/admin/shared-reference":
+      return { view: "referenceAdmin", wineId: null }
     case "/data":
     case "/import":
       return { view: "import", wineId: null }
@@ -117,6 +125,8 @@ export function getAppRouteTitle(route: AppRoute): string {
       : {
           activity: "Activity",
           catalog: "Catalog",
+          catalogReview: "Improve my catalog",
+          referenceAdmin: "Shared database administration",
           cellar: "Cellar",
           import: "Cellar data",
           invite: "Household invitations",
@@ -148,6 +158,8 @@ export function getWineDetailReturnView(
     returnView === "pairing" ||
     returnView === "activity" ||
     returnView === "catalog" ||
+    returnView === "catalogReview" ||
+    returnView === "referenceAdmin" ||
     returnView === "import" ||
     returnView === "invite" ||
     returnView === "members" ||
@@ -163,7 +175,7 @@ export function getAppRouteForRole(
   route: AppRoute,
   role: "owner" | "member",
 ): AppRoute {
-  if (role === "member" && (route.view === "inventory" || route.view === "catalog")) {
+  if (role === "member" && (route.view === "inventory" || route.view === "catalog" || route.view === "catalogReview")) {
     return { view: "cellar", wineId: null }
   }
   if (role === "owner" && route.view === "cellar") {

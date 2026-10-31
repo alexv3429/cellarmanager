@@ -11,7 +11,7 @@ import {
 } from "./appNavigation"
 
 describe("app navigation", () => {
-  it.each(["/", "/catalog", "/catalog/", "/cellar", "/cellar/"])("resolves %s to the Member cellar on refresh or history navigation", (path) => {
+  it.each(["/", "/catalog", "/catalog/", "/catalog/review", "/cellar", "/cellar/"])("resolves %s to the Member cellar on refresh or history navigation", (path) => {
     expect(getAppRouteForRole(getAppRouteFromPathname(path), "member")).toEqual({ view: "cellar", wineId: null })
   })
 
@@ -37,6 +37,8 @@ describe("app navigation", () => {
     expect(getAppViewFromPathname("/activity")).toBe("activity")
     expect(getAppViewFromPathname("/statistics")).toBe("activity")
     expect(getAppViewFromPathname("/catalog")).toBe("catalog")
+    expect(getAppViewFromPathname("/catalog/review")).toBe("catalogReview")
+    expect(getAppViewFromPathname("/admin/shared-reference")).toBe("referenceAdmin")
     expect(getAppViewFromPathname("/data")).toBe("import")
     expect(getAppViewFromPathname("/import")).toBe("import")
     expect(getAppViewFromPathname("/invite")).toBe("invite")
@@ -103,6 +105,8 @@ describe("app navigation", () => {
     expect(getAppViewPath("pairing")).toBe("/pairing")
     expect(getAppViewPath("activity")).toBe("/activity")
     expect(getAppViewPath("catalog")).toBe("/catalog")
+    expect(getAppViewPath("catalogReview")).toBe("/catalog/review")
+    expect(getAppViewPath("referenceAdmin")).toBe("/admin/shared-reference")
     expect(getAppViewPath("import")).toBe("/data")
     expect(getAppViewPath("invite")).toBe("/invite")
     expect(getAppViewPath("setup")).toBe("/setup")
