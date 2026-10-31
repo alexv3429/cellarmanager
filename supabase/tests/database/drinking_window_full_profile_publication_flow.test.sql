@@ -48,7 +48,12 @@ $$, true);
 
 update public.wines set producer = 'Jean-Marc Burgaud', cuvee = 'Côte du Py',
     vintage = 2022, color = 'red', area = 'Beaujolais', appellation = 'Morgon',
-    format_ml = 1500, wine_reference_type = 'release',
+    format_ml = 1500
+where id in ('00000000-0000-4000-8000-000000000110',
+             '00000000-0000-4000-8000-000000000210');
+-- Changing a wine's descriptive fields invalidates its canonical link. Attach
+-- the verified release only after those edits, as the user workflow does.
+update public.wines set wine_reference_type = 'release',
     wine_reference_id = current_setting('app.profile_flow_release')::uuid
 where id in ('00000000-0000-4000-8000-000000000110',
              '00000000-0000-4000-8000-000000000210');
@@ -81,19 +86,6 @@ select is((public.stage_drinking_window_profile_exchange(
 select is((public.check_drinking_window_working_draft(
     current_setting('app.profile_flow_version')::uuid)->>'issue_count')::integer, 0,
     'The complete-profile draft passes publication preflight');
-reset role;
-select diag('profile flow fixture ' || jsonb_build_object(
-    'wines', (select jsonb_agg(jsonb_build_object('id', id, 'format_ml', format_ml,
-        'reference_type', wine_reference_type, 'reference_id', wine_reference_id))
-        from public.wines where id in ('00000000-0000-4000-8000-000000000110',
-            '00000000-0000-4000-8000-000000000210')),
-    'rows', (select jsonb_agg(jsonb_build_object('scope', scope, 'format_ml', format_ml,
-        'release_id', release_id, 'product_id', product_id, 'producer_id', producer_id,
-        'region_id', region_id, 'appellation_id', appellation_id, 'color', wine_color,
-        'vintage', vintage_year)) from public.drinking_window_reference_rows
-        where version_id = current_setting('app.profile_flow_version')::uuid),
-    'context', private.drinking_window_wine_context('00000000-0000-4000-8000-000000000110'))::text);
-set local role authenticated;
 select is((public.preview_drinking_window_publication_impact(
     current_setting('app.profile_flow_version')::uuid)->>'matched_count')::integer, 2,
     'Impact preview finds the exact release in two separate cellars');
