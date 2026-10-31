@@ -54,8 +54,7 @@ function CanonicalMappingSearch({ kind, suggestedName, selectedId, onSelect, dis
 export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
   const { t } = useLanguage()
   const [imports, setImports] = useState<FullProfileImport[]>([])
-  const [preview, setPreview] = useState<FullProfilePreview | null>(null)
-  const [fileName, setFileName] = useState("")
+  const [pendingProfiles, setPendingProfiles] = useState<{ fileName: string; preview: FullProfilePreview }[]>([])
   const [versions, setVersions] = useState<ReferenceVersionSummary[]>([])
   const [selectedProfileId, setSelectedProfileId] = useState("")
   const [selectedDocument, setSelectedDocument] = useState<FullProfilePreview | null>(null)
@@ -83,36 +82,63 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
     return () => { cancelled = true }
   }, [isOnline])
 
-  async function choose(file: File | undefined) {
-    setPreview(null)
+  async function choose(files: FileList | null) {
+    setPendingProfiles([])
     setError(null)
     setMessage(null)
-    if (!file) return
+    if (!files?.length) return
     try {
-      if (file.size > 2_000_000) throw new Error("Profile file exceeds 2 MB")
-      const parsed = JSON.parse(await file.text()) as unknown
-      setPreview(previewFullProfileExchange(parsed))
-      setFileName(file.name)
+      if (files.length > 30) throw new Error(t("Choose at most 30 profile files at a time."))
+      const next: { fileName: string; preview: FullProfilePreview }[] = []
+      for (const file of Array.from(files)) {
+        if (file.size > 2_000_000) throw new Error(`${file.name}: ${t("Profile file exceeds 2 MB")}`)
+        try {
+          next.push({ fileName: file.name,
+            preview: previewFullProfileExchange(JSON.parse(await file.text()) as unknown) })
+        } catch (caught) {
+          throw new Error(`${file.name}: ${caught instanceof Error ? caught.message : String(caught)}`)
+        }
+      }
+      setPendingProfiles(next)
     } catch (caught: unknown) {
       setError(caught instanceof Error ? caught.message : "Invalid profile file")
     }
   }
 
   async function save() {
-    if (!preview || !isOnline) return
+    if (!pendingProfiles.length || !isOnline) return
     setBusy(true)
     setError(null)
     setMessage(null)
     try {
-      const saved = await importFullProfileExchange(preview.document)
+      const saved: { profile: FullProfileImport; preview: FullProfilePreview }[] = []
+      const failed: { fileName: string; preview: FullProfilePreview }[] = []
+      const errors: string[] = []
+      for (const entry of pendingProfiles) {
+        try {
+          saved.push({ profile: await importFullProfileExchange(entry.preview.document),
+            preview: entry.preview })
+        } catch (caught) {
+          failed.push(entry)
+          errors.push(`${entry.fileName}: ${caught instanceof Error ? caught.message : String(caught)}`)
+        }
+      }
       setImports(await listFullProfileExchanges())
-      setPreview(null)
-      setSelectedProfileId(saved.id)
-      setSelectedDocument(preview)
-      setIdentityMap({})
-      setStagingPreview(null)
-      setMessage(saved.name + (saved.submittedAt ? " · " : "")
-        + t("Complete profile saved for review. No dates were published."))
+      setPendingProfiles(failed)
+      if (saved.length === 1) {
+        setSelectedProfileId(saved[0].profile.id)
+        setSelectedDocument(saved[0].preview)
+        setIdentityMap({})
+        setStagingPreview(null)
+      }
+      if (saved.length) setMessage(saved.length === 1
+        ? t("Complete profile saved for review. No dates were published.")
+        : t("{count} complete profiles saved for review. No dates were published.",
+          { count: String(saved.length) }))
+      if (errors.length) setError((errors.length === 1
+        ? t("One profile could not be saved. It remains selected for retry:")
+        : t("{count} profiles could not be saved. They remain selected for retry:",
+          { count: String(errors.length) })) + " " + errors.join(" · "))
     } catch (caught: unknown) {
       setError(caught instanceof Error ? caught.message : "Unable to save profile")
     } finally { setBusy(false) }
@@ -201,16 +227,19 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
     <p>{t("Import a complete producer, appellation or region JSON profile for curator review. History, grapes, style, service, pairings and source pointers are retained. This does not approve or publish any dates.")}</p>
     {error ? <Notice role="alert" tone="warning">{error}</Notice> : null}
     {message ? <Notice role="status" tone="success">{message}</Notice> : null}
-    <label>{t("Choose a complete JSON profile")}
-      <input type="file" accept=".json,application/json" disabled={!isOnline || busy}
-        onChange={(event) => void choose(event.target.files?.[0])} />
+    <label>{t("Choose complete JSON profiles")}
+      <input type="file" accept=".json,application/json" multiple disabled={!isOnline || busy}
+        onChange={(event) => void choose(event.target.files)} />
     </label>
-    {preview ? <div>
-      <p>{fileName} · {preview.name} · {t(preview.kind)} · {preview.datasetVersion}</p>
-      <p>{preview.releaseCount} {t("proposed windows")} · {preview.factCount} {t("retained profile facts")} · {preview.sourceCount} {t("source pointers")}</p>
+    {pendingProfiles.length ? <div>
+      <ul>{pendingProfiles.map(({ fileName, preview }) => <li key={fileName}>
+        {fileName} · {preview.name} · {t(preview.kind)} · {preview.datasetVersion} · {preview.releaseCount} {t("proposed windows")} · {preview.factCount} {t("retained profile facts")} · {preview.sourceCount} {t("source pointers")}
+      </li>)}</ul>
       <p>{t("The dates and source rights are still unreviewed. Importing cannot affect any cellar.")}</p>
       <button type="button" disabled={!isOnline || busy} onClick={() => void save()}>
-        {busy ? t("Importing…") : t("Save complete profile for review")}
+        {busy ? t("Importing…") : pendingProfiles.length === 1
+          ? t("Save complete profile for review")
+          : t("Save {count} complete profiles for review", { count: String(pendingProfiles.length) })}
       </button>
     </div> : null}
     {imports.length ? <div>

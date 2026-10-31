@@ -19,7 +19,19 @@ and the labelled existing model as last resort. The initial pilot is a safety
 gate, not the permanent way to distribute updates. See the contract for exact
 precedence and acceptance examples.
 
-## Current delivery checkpoint — 30 October 2026
+**Owner clarification on 31 October:** 6/6 means the feature is live in the
+official app and uses the supplied data, not merely a one-wine demonstration.
+At minimum, all 23 producer documents must be present in the app's shared
+curator workflow with every proposed row accounted for, and the published
+reference must actually drive applicable wine cards across households at
+exact, appellation and region depth where approved data exists. Do not call a
+single Côte du Py publication completion of the full data objective. The
+bundle currently labels its 670 date proposals unapproved; whether those
+proposals may be shown as *provisional* recommendations before individual
+curator review is a product-policy decision pending explicit owner direction.
+Until then, the agreed reviewed-only publication rule remains in force.
+
+## Current delivery checkpoint — 31 October 2026
 
 The [PR #227](https://github.com/alexv3429/cellarmanager/pull/227) is
 **merged and database-deployed, but the feature is not released**. Its seven new
@@ -188,6 +200,31 @@ publication and visibility in two cellars on disposable data. The web tests
 verify the exact-version handoff. This is not a live Burgaud publication;
 real-profile identity and date review remain Gate 4 work.
 
+**Gate 4 work in slot 5/6 (31 October, in progress; no PR or linked write
+yet):** PR #230 is merged. The [initial-base audit](drinking-window-gate4-initial-base.md)
+processed the complete 23-file, 670-row quality-audited bundle against an
+isolated restored-catalogue copy with Gate 3 schema. The per-file/per-row
+manifest finds nine unambiguous canonical identities, one Côte du Py 2022
+row already separately reviewed in existing draft version 2, **669
+quarantined rows, and zero newly approved rows**. The eight previously
+proposed Alsace/Beaujolais 2022–2023 fallbacks also have zero approved rows
+because scope membership and evidence remain unreviewed. The source bundle
+explicitly labels every proposal unapproved and source rights unreviewed;
+parsing, matching, or adding to the research queue cannot change that. Seven
+focused Node tests pass, including a guard against confusing Côte du Py and
+James. A prior Gate 3 synthetic integration fixture was corrected to use
+the actual reviewed Côte du Py release ID instead of the distinct James ID.
+The restored-catalogue exact/appellation/region SQL rehearsal passed and
+rolled back; it used synthetic fallback dates solely to test selection.
+The curator UI now accepts multiple complete JSON files in one selection,
+saves each through the same permission-checked import action, reports partial
+failures, and retains failed files for retry. No profile is approved or
+published by this batch action. The 23-file live import has not happened yet.
+No live dates, canonical links, or reference rows changed. The six-PR budget
+remains binding. This audit reveals that a broad initial common base cannot
+be declared ready without real curator identity, date, membership and source
+review; Gate 5 must not silently publish the remaining proposals.
+
 **Execution status (the contract defines each exit test):**
 
 **Hard PR budget:** [PR #227](https://github.com/alexv3429/cellarmanager/pull/227)
@@ -204,8 +241,8 @@ in every PR description.
 | 0. Lock product contract | Verified by owner on 29 October 2026; #227 merged and nine migrations safely deployed | Preserve the agreed contract and acceptance cases. |
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
-| 3. Complete profile exchange | PR #230 open in slot 4/6; full CI green, including the new rollback-only import-to-publication test across two cellars; 23-file read-only validation and signed-in owner import/preview/export checked; exact-version UI handoff covered by web tests; two linked migrations backed up, rehearsed, applied and checked; one Burgaud file saved privately and research candidates separately added to Proposals, nothing staged or published live | Ready for owner merge review. Burgaud's unresolved exact identities remain quarantined for Gate 4; optional facts remain private until a later display model is reviewed. |
-| 4. Prepare initial common base | Not started | Process all 23 supplied files and reviewed fallbacks in staging; prepare an approved publication manifest and quarantine every exception with a reason. |
+| 3. Complete profile exchange | #230 merged in slot 4/6; full CI green, linked migrations backed up/rehearsed/applied; signed-in owner import/preview/export checked; one Burgaud file saved privately and candidates added to Proposals, nothing published live | Preserve full-profile exchange and audited in-app curator path. |
+| 4. Prepare initial common base | In progress in slot 5/6: all 23 files/670 rows audited against restored canonical data; 9 identity-ready, 1 existing reviewed draft, 669 quarantined, 0 newly approved; fallbacks unreviewed; rollback-only exact/appellation/region real-catalogue rehearsal passed; multiple-file curator import added but live 23-file import not yet done | Import every supplied profile into the app's curator workflow, resolve identities and secure reviews for an initial publication manifest. Do not mislabel the research bundle as approved. |
 | 5. Release and verify | Not started | Rehearse and authorize migrations, publish the approved initial base, pilot on mobile, then verify ordinary cross-household publication and rollback on the official app. |
 
 **Merge/deployment rule:** Do not describe #227 as feature-complete or ask the

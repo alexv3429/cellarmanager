@@ -4,7 +4,7 @@ import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import {
-  exportFullProfileExchange, listFullProfileExchanges, previewFullProfileExchange,
+  exportFullProfileExchange, importFullProfileExchange, listFullProfileExchanges, previewFullProfileExchange,
   previewProfileStaging, stageProfileExchange,
 } from "../data/drinkingWindowProfileExchange"
 import { getReleaseWorkspace } from "../data/drinkingWindowReleaseWorkflow"
@@ -19,7 +19,10 @@ vi.mock("../data/drinkingWindowReleaseWorkflow", () => ({
   createWorkingDraft: vi.fn(), getReleaseWorkspace: vi.fn(),
 }))
 vi.mock("../data/drinkingWindowFallbackAuthoring", () => ({ searchCurationTargets: vi.fn() }))
-vi.mock("../i18n/useLanguage", () => ({ useLanguage: () => ({ t: (key: string) => key }) }))
+vi.mock("../i18n/useLanguage", () => ({ useLanguage: () => ({
+  t: (key: string, values?: Record<string, string>) => Object.entries(values || {})
+    .reduce((text, [name, value]) => text.replaceAll(`{${name}}`, value), key),
+}) }))
 
 let root: Root
 let container: HTMLDivElement
@@ -62,6 +65,38 @@ afterEach(async () => {
 })
 
 describe("complete profile exchange", () => {
+  it("accepts multiple profiles and retains failed imports for an explicit retry", async () => {
+    vi.mocked(importFullProfileExchange)
+      .mockResolvedValueOnce({ id: "first", documentSha256: "hash-first", kind: "producer",
+        name: "First", schemaVersion: "1.1.0", datasetVersion: "1.0.0",
+        releaseCount: 1, submittedAt: "2026-10-31" })
+      .mockRejectedValueOnce(new Error("Network interrupted"))
+      .mockResolvedValueOnce({ id: "second", documentSha256: "hash-second", kind: "producer",
+        name: "Second", schemaVersion: "1.1.0", datasetVersion: "1.0.0",
+        releaseCount: 1, submittedAt: "2026-10-31" })
+    await act(async () => root.render(<FullProfileExchangePanel isOnline />))
+    await act(async () => container.querySelector("summary")?.click())
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+    expect(input.multiple).toBe(true)
+    Object.defineProperty(input, "files", { configurable: true, value: [
+      { name: "First.json", size: 50, text: async () => '{"name":"First"}' },
+      { name: "Second.json", size: 50, text: async () => '{"name":"Second"}' },
+    ] })
+    await act(async () => input.dispatchEvent(new Event("change", { bubbles: true })))
+    const saveTwo = [...container.querySelectorAll("button")]
+      .find((button) => button.textContent === "Save 2 complete profiles for review")
+    expect(saveTwo).toBeTruthy()
+    await act(async () => saveTwo?.click())
+    expect(importFullProfileExchange).toHaveBeenCalledTimes(2)
+    expect(container.textContent).toContain("Complete profile saved for review")
+    expect(container.textContent).toContain("Second.json: Network interrupted")
+    const retry = [...container.querySelectorAll("button")]
+      .find((button) => button.textContent === "Save complete profile for review")
+    await act(async () => retry?.click())
+    expect(importFullProfileExchange).toHaveBeenCalledTimes(3)
+    expect(container.textContent).not.toContain("Second.json: Network interrupted")
+  })
+
   it("groups a shared identity blocker before individual quarantined releases", async () => {
     await act(async () => root.render(<FullProfileExchangePanel isOnline />))
     await act(async () => container.querySelector("summary")?.click())

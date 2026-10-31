@@ -14,8 +14,20 @@ select set_config('app.profile_flow_version', gen_random_uuid()::text, true);
 insert into public.drinking_window_reference_versions (id, version_number)
 values (current_setting('app.profile_flow_version')::uuid,
     (select max(version_number) + 1 from public.drinking_window_reference_versions));
-select set_config('app.profile_flow_release',
-    '0ea70dd0-a315-4fff-f438-c9b3ed5fe573', true);
+-- Use the previously reviewed Côte du Py release, not another Burgaud 2022
+-- release with an equally valid canonical UUID (notably James).
+select set_config('app.profile_flow_release', (select r.release_id::text
+    from public.drinking_window_reference_rows r
+    join public.drinking_window_reference_versions v on v.id = r.version_id
+    where v.version_number = 2 and r.scope = 'release'
+      and r.format_ml = 750 and r.vintage_year = 2022), true);
+select ok((select private.normalize_wine_reference_text(p.canonical_name)
+    like '%cote du py%' and private.normalize_wine_reference_text(p.canonical_name)
+    not like '%james%'
+    from public.wine_reference_releases r
+    join public.wine_reference_products p on p.id = r.product_id
+    where r.id = current_setting('app.profile_flow_release')::uuid),
+    'The fixture links the Côte du Py product rather than James');
 select set_config('app.profile_flow_product', (select product_id::text
     from public.wine_reference_releases
     where id = current_setting('app.profile_flow_release')::uuid), true);
