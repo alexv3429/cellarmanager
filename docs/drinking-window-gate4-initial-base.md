@@ -187,6 +187,18 @@ profile, but label overlap is not a canonical link or date approval. The
 preview changed no shared identities, draft rows or cellar advice. It shows
 why a successful 23-file upload alone cannot meet the feature goal.
 
+The curator then selected the two existing, uniquely identifiable shared
+products, `À la Côte` and `Les Raspillères`, in the read-only mapping preview.
+The result was still **0 ready / 0 unchanged / 51 set aside**: 42 lacked a
+unique shared cuvée identity, while nine now failed the region check. The
+profile calls that region `Bourgogne — Mâconnais`; the current staging RPC
+requires an exact canonical region label and offers no region mapping in the
+app. The audited local identity-decision file proposes `Bourgogne` as the
+parent region, but that proposal is not a linked curator selection or an
+approved date. Gate 4 needs an explicit, validated region mapping and a path
+to review the remaining canonical product/release identities; no approximate
+match may silently become a reference row.
+
 The owner has since specified a stronger release outcome: nearly all active
 wines in the real cellar must have a coherent three-date window in the
 official app. The working floor is 95%, with every uncovered exception
