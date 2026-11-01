@@ -340,6 +340,17 @@ linked project. The UI and database regression tests pass locally. Gate 4
 remains a no-go while the canonical library is sparse and date review is
 unfinished.
 
+**Restored-copy measurement, 2 November:** After applying only the new
+reconciliation migration to the disposable 1 November restore, an owner-role,
+read-only preview of all 785 unlinked active wines returned **six unique
+name-containment suggestions, zero ambiguous suggestions and 779 without a
+candidate**; none of the six used an exact canonical name or curated alias.
+No link was created. The previous identity-creation audit therefore remains
+the dominant Gate 4 task: verified producer, cuvée and release identities from
+the supplied profiles must populate the common graph before the cellar-wide
+reconciler can provide meaningful coverage. Do not present the six as
+confirmed matches or count them toward published-window coverage.
+
 **Execution status (the contract defines each exit test):**
 
 **Hard PR budget:** [PR #227](https://github.com/alexv3429/cellarmanager/pull/227)

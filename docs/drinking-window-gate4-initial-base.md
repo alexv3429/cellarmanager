@@ -142,6 +142,16 @@ This removes the one-by-one search burden where there is a unique candidate,
 but does not yet establish actual real-cellar coverage. A fresh link-count
 audit is required after preview deployment and owner review.
 
+That first aggregate preview was rehearsed on the restored, disposable
+1 November copy: **785 unlinked active wine cards → six unique
+name-containment suggestions, zero ambiguous, 779 without a candidate**.
+There were no exact-name/curated-alias candidates. No link, alias, cellar
+description or date was changed. This is a quantitative demonstration that
+the sparse shared identity graph, not just the review UI, blocks broad
+profile-based coverage. The remaining work is to curate and add verified
+producer/cuvée/release identities from the supplied profiles, then rerun
+the preview and review the real candidates.
+
 The [candidate-only profile-impact analyzer](../scripts/drinking_window/gate4_profile_impact.mjs)
 compared the 23 private JSON files with labels in the fresh isolated copy,
 using a **private, local-only producer spelling map**. By producer spelling,
