@@ -119,6 +119,15 @@ appellation/region fallback where the place is unambiguous, but an exact
 producer/cuvée window requires a reviewed canonical link. This is a Gate 4
 release blocker, not a defect in the owner's cellar entries.
 
+The owner clarified on 2 November that retaining an approximate local label
+while CellarManager finds the corresponding common identity was a founding
+product principle. The existing one-wine-at-a-time search and confirmation
+panel cannot be the plan for the 785 unlinked cards. Gate 4 needs candidate
+generation from the local wine, an auditable automatic link only for a unique
+and fully consistent identity, a batchable ambiguity review, and a retry when
+a missing canonical identity is added. A suggested or fuzzy match must not
+activate profile dates before confirmation; local labels must remain intact.
+
 The [candidate-only profile-impact analyzer](../scripts/drinking_window/gate4_profile_impact.mjs)
 compared the 23 private JSON files with labels in the fresh isolated copy,
 using a **private, local-only producer spelling map**. By producer spelling,

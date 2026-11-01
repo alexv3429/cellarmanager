@@ -87,6 +87,25 @@ the app asks for correction instead of guessing. A producer-wide row is only
 used when a curator explicitly defined it as applicable; the absence of a
 cuvée-specific row does not itself make another row generic.
 
+**Local labels are not the identity system (owner clarification, 2 November
+2026).** A cellar owner may enter and keep an approximate producer/cuvée
+description. CellarManager must use those fields to *find* the corresponding
+shared identity, not require the owner to rewrite the wine card into canonical
+terminology. The workflow distinguishes three states: local description,
+suggested shared match, and confirmed shared link. A unique match supported
+by approved aliases or other exact, consistent identity fields may be linked
+automatically with an audit trail; an OCR or fuzzy candidate alone remains a
+suggestion and cannot activate a shared drinking window. For an ambiguous
+candidate, the app offers a focused, preferably batchable owner review rather
+than a manual search for every wine. If the shared identity does not yet
+exist, the wine remains locally usable and the missing identity enters the
+curator queue. When the shared catalogue gains a verified producer, cuvée or
+release, CellarManager retries unresolved local wines. None of these steps
+silently rewrites the owner's description or turns a household spelling into
+a global alias. Gate 4 must measure confirmed links, suggested matches and
+unresolved wines separately; the current one-by-one identity review panel is
+not sufficient evidence of this contract at cellar scale.
+
 At appellation and region scope, a reviewed ageing category or an explicit
 all-wines applicability statement is required where wines have materially
 different ageing styles. Membership is reviewed, not inferred from price,
