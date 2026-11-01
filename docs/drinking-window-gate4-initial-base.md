@@ -336,6 +336,15 @@ other 28 Dureuil proposals remain unstaged. The UI then showed two approved
 rows in that draft: the previously reviewed Burgaud Côte du Py 2022 and
 this Dureuil release.
 
+Two nearby rows illustrate why a bulk approval would be unsafe. The Dureuil
+Le Meix Cadot 2021 proposal cites an iDealwine **2019** page as its release
+source even though a separate 2021 retailer page supports the proposed years;
+its archived source metadata must be corrected before use. The Burgaud Côte
+du Py 2019 proposal claims a page gives exact `boire à partir`/`apogée`
+years, but the [cited iDealwine page](https://www.idealwine.com/fr/prix-vin/119876-2019-Bouteille-Beaujolais-Morgon-Jean-Marc-Burgaud-rouge)
+shows the wine and 75 cl format and only general ageing advice in the
+reviewed page content. Neither row was approved on that basis.
+
 The draft passed its built-in checks. Its read-only impact preview reported
 **1 match among 804 wine cards**, with one card potentially displaying
 different dates and 298 cards having unconfirmed identities. The new
