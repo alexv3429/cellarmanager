@@ -7,6 +7,7 @@ import {
   exportFullProfileExchange, importFullProfileExchange, listFullProfileExchanges, previewFullProfileExchange,
   previewProfileStaging, stageProfileExchange,
 } from "../data/drinkingWindowProfileExchange"
+import { searchCurationTargets } from "../data/drinkingWindowFallbackAuthoring"
 import { getReleaseWorkspace } from "../data/drinkingWindowReleaseWorkflow"
 import { FullProfileExchangePanel } from "./FullProfileExchangePanel"
 
@@ -115,6 +116,43 @@ describe("complete profile exchange", () => {
     expect(container.textContent).toContain("2 · Producer has no unique canonical identity")
     expect(container.textContent).toContain("Select the existing shared producer under name mapping")
     expect(container.textContent).not.toContain("Prepare valid entries in this draft")
+  })
+
+  it("passes an explicitly reviewed region mapping to the staging preview", async () => {
+    vi.mocked(previewFullProfileExchange).mockReturnValue({
+      kind: "producer", name: "Frantz Chagnoleau", datasetVersion: "1.1.0",
+      releaseCount: 1, factCount: 0, sourceCount: 0,
+      document: { producer: { name: "Frantz Chagnoleau" }, cuvees: [{
+        id: "a_la_cote", name: "À la Côte", region: "Bourgogne — Mâconnais",
+        appellation: "Saint-Véran",
+      }] },
+    })
+    vi.mocked(searchCurationTargets).mockResolvedValue([{
+      id: "region-bourgogne", label: "Bourgogne", detail: "region",
+    }])
+    await act(async () => root.render(<FullProfileExchangePanel isOnline />))
+    await act(async () => container.querySelector("summary")?.click())
+    const profile = container.querySelector("select") as HTMLSelectElement
+    await act(async () => {
+      profile.value = "profile"
+      profile.dispatchEvent(new Event("change", { bubbles: true }))
+    })
+    const mapping = [...container.querySelectorAll("summary")]
+      .find((summary) => summary.textContent === "Map profile names to shared wine identities")
+    await act(async () => mapping?.click())
+    expect(container.textContent).toContain("Bourgogne — Mâconnais")
+    const regionLabel = [...container.querySelectorAll("label")]
+      .find((label) => label.textContent?.includes("Shared region"))
+    const search = regionLabel?.parentElement?.querySelector("button")
+    await act(async () => search?.click())
+    const result = [...container.querySelectorAll("button")]
+      .find((button) => button.textContent === "Bourgogne · region")
+    await act(async () => result?.click())
+    const inspect = [...container.querySelectorAll("button")]
+      .find((button) => button.textContent === "Preview mapping and changes")
+    await act(async () => inspect?.click())
+    expect(previewProfileStaging).toHaveBeenCalledWith(
+      expect.anything(), "draft", { regions: { "Bourgogne — Mâconnais": "region-bourgogne" } })
   })
 
   it("passes the exact staged draft to the publication workflow", async () => {

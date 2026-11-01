@@ -20,7 +20,7 @@ import { Notice } from "./Notice"
 interface Props { isOnline: boolean; onStaged?: (versionId: string) => void }
 
 function CanonicalMappingSearch({ kind, suggestedName, selectedId, onSelect, disabled }: {
-  kind: "producer" | "product"; suggestedName: string; selectedId: string
+  kind: "producer" | "product" | "region" | "appellation"; suggestedName: string; selectedId: string
   onSelect: (id: string, label: string) => void; disabled: boolean
 }) {
   const { t } = useLanguage()
@@ -34,7 +34,8 @@ function CanonicalMappingSearch({ kind, suggestedName, selectedId, onSelect, dis
     catch (caught: unknown) { setError(caught instanceof Error ? caught.message : "Search failed") }
   }
   return <div className="drinking-window-profile-mapping-search">
-    <label>{kind === "producer" ? t("Shared producer") : t("Shared cuvée")}
+    <label>{kind === "producer" ? t("Shared producer") : kind === "product" ? t("Shared cuvée")
+      : kind === "region" ? t("Shared region") : t("Shared appellation")}
       <input value={query} disabled={disabled} onChange={(event) => setQuery(event.target.value)} />
     </label>
     <button type="button" disabled={disabled || query.trim().length < 2}
@@ -226,6 +227,10 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
     }
     return counts
   }, new Map<string, number>())
+  const profileCuvees = selectedDocument?.kind === "producer"
+    ? selectedDocument.document.cuvees as Record<string, unknown>[] : []
+  const profileRegions = [...new Set(profileCuvees.map((cuvee) => String(cuvee.region)))].sort()
+  const profileAppellations = [...new Set(profileCuvees.map((cuvee) => String(cuvee.appellation)))].sort()
 
   return <details className="research-inbox drinking-window-profile-import">
     <summary><strong>{t("Complete profile exchange")}</strong></summary>
@@ -266,13 +271,34 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
       </label>
       {selectedDocument?.kind === "producer" ? <details>
         <summary>{t("Map profile names to shared wine identities")}</summary>
-        <p>{t("Exact names are matched automatically. For names that differ, select the existing shared producer and cuvée; the vintage is checked before any window can be staged.")}</p>
+        <p>{t("Exact names are matched automatically. For names that differ, select the existing shared producer, cuvée, region and appellation; the vintage and place relationship are checked before any window can be staged.")}</p>
         <p>{String((selectedDocument.document.producer as Record<string, unknown>).name)}</p>
         <CanonicalMappingSearch key={selectedProfileId + ":producer"} kind="producer"
           suggestedName={String((selectedDocument.document.producer as Record<string, unknown>).name)}
           selectedId={identityMap.producer_id || ""} disabled={busy || !isOnline}
-          onSelect={(id) => { setIdentityMap({ producer_id: id, cuvees: {} }); setStagingPreview(null) }} />
-        {(selectedDocument.document.cuvees as Record<string, unknown>[]).map((cuvee) => <div key={String(cuvee.id)}>
+          onSelect={(id) => { setIdentityMap((current) => ({ ...current, producer_id: id })); setStagingPreview(null) }} />
+        <h5>{t("Places named in this profile")}</h5>
+        <p>{t("A place mapping is a curator decision for this import only. It does not rename a region or change another cellar.")}</p>
+        {profileRegions.map((name) => <div key={`region:${name}`}>
+          <strong>{name}</strong>
+          <CanonicalMappingSearch key={`${selectedProfileId}:region:${name}`} kind="region" suggestedName={name}
+            selectedId={identityMap.regions?.[name] || ""} disabled={busy || !isOnline}
+            onSelect={(id) => {
+              setIdentityMap((current) => ({ ...current, regions: { ...current.regions, [name]: id } }))
+              setStagingPreview(null)
+            }} />
+        </div>)}
+        {profileAppellations.map((name) => <div key={`appellation:${name}`}>
+          <strong>{name}</strong>
+          <CanonicalMappingSearch key={`${selectedProfileId}:appellation:${name}`} kind="appellation" suggestedName={name}
+            selectedId={identityMap.appellations?.[name] || ""} disabled={busy || !isOnline}
+            onSelect={(id) => {
+              setIdentityMap((current) => ({ ...current, appellations: { ...current.appellations, [name]: id } }))
+              setStagingPreview(null)
+            }} />
+        </div>)}
+        <h5>{t("Cuvées named in this profile")}</h5>
+        {profileCuvees.map((cuvee) => <div key={String(cuvee.id)}>
           <strong>{String(cuvee.name)}</strong> · {String(cuvee.appellation)}
           <CanonicalMappingSearch key={selectedProfileId + ":" + String(cuvee.id)} kind="product" suggestedName={String(cuvee.name)}
             selectedId={identityMap.cuvees?.[String(cuvee.id)] || ""} disabled={busy || !isOnline}
@@ -304,6 +330,9 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
           </li>)}</ul>
           {quarantineReasons.has("Producer has no unique canonical identity")
             ? <p>{t("Select the existing shared producer under name mapping, then preview again. Other identity checks follow after that first match.")}</p>
+            : null}
+          {quarantineReasons.has("Region has no unique canonical identity")
+            ? <p>{t("Select the matching shared region under place mapping, then preview again. No date will be approved by this selection.")}</p>
             : null}
         </Notice> : null}
         <p>{t("Only unique exact canonical identities can be prepared. Unmatched or conflicting entries remain in the saved profile; they are not silently imported.")}</p>

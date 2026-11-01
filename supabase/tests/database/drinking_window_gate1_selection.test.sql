@@ -252,5 +252,36 @@ select is(public.clear_wine_maturity_override(
     'reviewed_reference', 'Clearing manual dates restores reviewed advice');
 reset role;
 
+-- A package link carries the same exact release and the stated bottle size.
+-- It must not silently match an unrelated vintage or format.
+insert into public.wine_reference_entities(id, entity_type)
+values ('fc100000-0000-4000-8000-000000000116', 'package');
+insert into public.wine_reference_packages(id, release_id, volume_ml)
+select 'fc100000-0000-4000-8000-000000000116', release_id, 750
+from gate1_ids;
+update public.wines set wine_reference_type = 'package',
+    wine_reference_id = 'fc100000-0000-4000-8000-000000000116'
+where id = '00000000-0000-4000-8000-000000000110';
+select is(private.drinking_window_wine_context(
+    '00000000-0000-4000-8000-000000000110') ->> 'status', 'ready',
+    'A confirmed package resolves to its canonical release');
+select is(private.drinking_window_wine_context(
+    '00000000-0000-4000-8000-000000000110') ->> 'release_id',
+    (select release_id::text from gate1_ids),
+    'Package lineage preserves the exact vintage release');
+select is(private.drinking_window_active_match(
+    '00000000-0000-4000-8000-000000000110') ->> 'reference_row_id',
+    (select row_id::text from gate1_ids),
+    'The published reader selects the exact window for a 750 ml package link');
+select is(private.drinking_window_producer_rule_identity(
+    '00000000-0000-4000-8000-000000000110') ->> 'status', 'ok',
+    'A package link also supports cellar-only producer rules');
+update public.wines set format_ml = 1500
+where id = '00000000-0000-4000-8000-000000000110';
+select isnt(private.drinking_window_active_match(
+    '00000000-0000-4000-8000-000000000110') ->> 'status',
+    'match',
+    'Changing the bottle size cannot retain the package-specific window');
+
 select * from finish();
 rollback;

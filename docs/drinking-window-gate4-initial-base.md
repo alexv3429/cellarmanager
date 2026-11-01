@@ -222,6 +222,47 @@ reference selector also accepts `product` and `release` links but not
 reader fix before this profile can appear on that wine card. Keep the draft
 unpublished until these paths are tested end to end.
 
+**Gate 4 continuation, 1 November (still in draft #231):** Two additive
+migrations and the curator UI now provide an explicit, import-scoped mapping
+from a profile's region/appellation wording to existing canonical places,
+without creating a global alias. The staging preview still checks that the
+chosen appellation belongs to the chosen region, and a missing release or
+format remains quarantined. A separate reader fix resolves a confirmed
+package link through its release and checks the bottle size; it also lets
+cellar-only producer rules use that same confirmed lineage. No fuzzy cellar
+text is promoted to a shared identity.
+
+Both migrations applied cleanly **only to an isolated database restored from
+the protected backup**, not to the linked Supabase project. The two focused
+pgTAP suites passed there (44 package/core-selection assertions and 26
+profile-exchange assertions), along with focused web tests. On that copy,
+10 of the 15 active package-linked wine cards now have a complete canonical
+context; three remain blocked by an unresolved appellation and two by an
+unresolved region. Chagnoleau À la Côte 2019 resolves; 2021 and 2022 remain
+unlinked. The provided Chagnoleau JSON was imported only into that isolated
+copy for a **preview**, with the existing shared producer and two cuvées
+selected, plus `Bourgogne — Mâconnais` → `Bourgogne`, `Saint-Véran` →
+`Saint-Veran`, and `Viré-Clessé` → `Vire-Clesse`. The preview returned
+**1 ready (À la Côte 2019 / 750 ml), 42 cuvée-identity blockers and eight
+release-identity blockers**. This is an identity result, **not an approval of
+the proposed dates**. No reference row was staged or published by this test.
+
+The [read-only discrepancy query](../scripts/drinking_window/gate4_identity_matched_discrepancies.sql)
+compares only an unadjusted current legacy projection and an exact proposed
+row for the same confirmed release, vintage, colour, place and format. It
+flags a five-year-or-greater gap on any of the three milestones; it never
+chooses dates. On the protected copy, only **one** wine/draft-row pair was
+comparable and it had **no five-year flag**. This tiny sample is not evidence
+that the remaining 669 proposals agree with the old model.
+
+**Remaining Gate 4 blockers:** the 42 Chagnoleau cuvées and eight releases
+above need a reviewed canonical identity path; 785 of 802 active wine cards
+were unlinked at the baseline; and the supplied proposed dates/source rights
+still need actual curator review. The newly available place mapping and
+package reader do not themselves deliver near-all profile-based coverage or
+authorize publication. Re-run the whole-cellar source mix after any linked
+migration is separately backed up, rehearsed and authorized.
+
 The owner has since specified a stronger release outcome: nearly all active
 wines in the real cellar must have a coherent three-date window in the
 official app. The working floor is 95%, with every uncovered exception

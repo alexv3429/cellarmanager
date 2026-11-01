@@ -60,6 +60,8 @@ export interface ProfileStageResult {
 export interface ProfileIdentityMap {
   producer_id?: string
   cuvees?: Record<string, string>
+  regions?: Record<string, string>
+  appellations?: Record<string, string>
 }
 
 interface RpcOptions {
