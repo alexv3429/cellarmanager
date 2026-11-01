@@ -98,7 +98,8 @@ describe("household wine identity panel", () => {
     expect(previewWineIdentityReconciliation).toHaveBeenCalledWith([wine.id])
     expect(confirmWineIdentityReconciliation).not.toHaveBeenCalled()
     expect(container.textContent).toContain("Name overlap — check carefully")
-    await click("Select all single matches for review")
+    const checkbox = container.querySelector<HTMLInputElement>('.wine-identity-review__batch-list input[type="checkbox"]')
+    await act(async () => checkbox?.click())
     await click("Confirm selected links")
     expect(confirmWineIdentityReconciliation).toHaveBeenCalledWith([{
       wineId: wine.id, referenceId: identity.referenceId, sourceFingerprint: "fingerprint",

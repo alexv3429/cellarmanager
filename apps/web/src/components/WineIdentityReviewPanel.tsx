@@ -50,6 +50,7 @@ export function WineIdentityReviewPanel({ compact = false, initialWineId = "", i
   const [reconciling, setReconciling] = useState(false)
   const [batchSaving, setBatchSaving] = useState(false)
   const [batchSelected, setBatchSelected] = useState<string[]>([])
+  const [batchPage, setBatchPage] = useState(0)
 
   const selected = wines.find((wine) => wine.id === selectedId) ?? null
   const isLinked = (wine: WineCatalogEntry) =>
@@ -66,6 +67,8 @@ export function WineIdentityReviewPanel({ compact = false, initialWineId = "", i
   const uniqueSuggestions = reconciliation?.filter((item) => item.candidateCount === 1) ?? []
   const ambiguousSuggestions = reconciliation?.filter((item) => item.candidateCount > 1) ?? []
   const missingSuggestions = reconciliation?.filter((item) => item.candidateCount === 0) ?? []
+  const visiblePage = Math.min(batchPage, Math.max(0, Math.ceil(uniqueSuggestions.length / 100) - 1))
+  const visibleSuggestions = uniqueSuggestions.slice(visiblePage * 100, (visiblePage + 1) * 100)
 
   async function findCellarMatches() {
     if (!isOnline || reconciling) return
@@ -74,6 +77,7 @@ export function WineIdentityReviewPanel({ compact = false, initialWineId = "", i
     setMessage(null)
     setReconciliation(null)
     setBatchSelected([])
+    setBatchPage(0)
     try {
       const ids = wines.filter((wine) => !isLinked(wine) && !wine.merged_into_wine_id).map((wine) => wine.id)
       const all: WineIdentityReconciliationItem[] = []
@@ -224,11 +228,13 @@ export function WineIdentityReviewPanel({ compact = false, initialWineId = "", i
           {reconciliation ? <>
             <p>{uniqueSuggestions.length} {t("one possible match")} · {ambiguousSuggestions.length} {t("several possible matches")} · {missingSuggestions.length} {t("no match yet")}</p>
             {uniqueSuggestions.length > 0 ? <>
-              <button type="button" disabled={batchSaving} onClick={() => setBatchSelected(uniqueSuggestions.map((item) => item.wineId))}>
-                {t("Select all single matches for review")}
+              <button type="button" disabled={batchSaving} onClick={() => setBatchSelected((current) => [
+                ...new Set([...current, ...visibleSuggestions.filter((item) => item.candidates[0].matchBasis === "exact_or_curated_alias").map((item) => item.wineId)]),
+              ])}>
+                {t("Select same-name matches on this page")}
               </button>
               <div className="wine-identity-review__batch-list">
-                {uniqueSuggestions.slice(0, 100).map((item) => {
+                {visibleSuggestions.map((item) => {
                   const wine = wines.find((entry) => entry.id === item.wineId)
                   const candidate = item.candidates[0]
                   return <label key={item.wineId}>
@@ -240,7 +246,12 @@ export function WineIdentityReviewPanel({ compact = false, initialWineId = "", i
                   </label>
                 })}
               </div>
-              {uniqueSuggestions.length > 100 ? <p>{t("Showing the first 100 suggestions. Select all to include the rest.")}</p> : null}
+              {uniqueSuggestions.length > 100 ? <div className="wine-identity-review__batch-pages">
+                <button type="button" disabled={visiblePage === 0} onClick={() => setBatchPage(visiblePage - 1)}>{t("Previous matches")}</button>
+                <span>{visiblePage + 1} / {Math.ceil(uniqueSuggestions.length / 100)}</span>
+                <button type="button" disabled={visiblePage >= Math.ceil(uniqueSuggestions.length / 100) - 1}
+                  onClick={() => setBatchPage(visiblePage + 1)}>{t("Next matches")}</button>
+              </div> : null}
               <button type="button" disabled={batchSaving || batchSelected.length === 0} onClick={() => void confirmBatch()}>
                 {batchSaving ? t("Saving…") : `${t("Confirm selected links")} (${Math.min(batchSelected.length, 50)})`}
               </button>

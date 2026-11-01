@@ -326,6 +326,9 @@ exact canonical name, curated alias, or sufficiently long name containment
 may produce a *suggestion* for the same vintage; a substring is explicitly
 marked for careful checking. Nothing links or applies dates during preview.
 The owner can select proposed unique links and confirm them in batches of 50.
+The page-level bulk selector includes only exact names or curated aliases;
+name-containment suggestions require individual checkbox review, and no
+hidden page is bulk-selected.
 Each link rechecks the current candidate and source fingerprint, uses the
 existing owner-only guarded RPC, and writes a per-wine audit decision without
 rewriting the local producer/cuvée. Ambiguous wines stay in individual review;

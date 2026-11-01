@@ -132,7 +132,9 @@ The current draft PR now adds an owner-only whole-cellar reconciliation preview
 and an audited batch confirmation for unique, same-vintage suggestions. The
 preview distinguishes exact/curated-alias names from mere name containment;
 the latter is not asserted to be a verified identity. No suggestion is
-automatically linked. Ambiguous candidates, missing canonical identities and
+automatically linked. Only exact/curated-alias names can be selected in bulk
+on the displayed page; containment suggestions require individual selection.
+Ambiguous candidates, missing canonical identities and
 cards with no vintage match stay unchanged. A new canonical release can be
 found by rerunning the preview. The new SQL was applied **only to local
 Supabase** for rollback-only regression tests, not to the linked project.
