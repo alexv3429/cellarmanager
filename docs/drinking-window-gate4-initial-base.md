@@ -159,18 +159,33 @@ recovery material, not a durable managed backup.
 4. Re-run the manifest and restored-catalogue rehearsal after review. The
    approved publication manifest must contain only rows whose current
    approvals, source rights and membership pass the database preflight.
-5. Make all 23 complete profile documents available in the app's curator
-   workflow; the coverage manifest alone is not an import. The Gate 4 UI now
-   accepts multiple JSON files, saves each through the existing curator-only
-   import RPC, reports every failure, and retains failed files for retry. It
-   does **not** approve or publish them. The supplied ZIP must be extracted
-   before selecting its JSON files; the full 23-file import passed on the
-   disposable copy, but live import remains to be performed.
+5. **Completed 1 November:** all 23 complete JSON documents (670 proposed
+   windows) were selected in the Gate 4 preview under the authorized owner
+   curator account and saved into the linked project's curator archive. The
+   app reported `23 profils complets conservés pour révision. Aucune date
+   n'a été publiée.` All 23 appeared under saved complete profiles. The
+   Publication tab still showed draft version 2 with one unpublished window;
+   publication was disabled. This is a linked **research-archive write**, not
+   a profile approval, reference-row change or cellar opt-in. The Gate 4 UI
+   accepts multiple JSON files, saves each through the curator-only import
+   RPC, reports every failure and retains failed files for retry. The
+   supplied ZIP had to be extracted before selecting the JSON files.
    Gate 5 can publish approved rows only after those checks and explicit
    release authorization. One Côte du Py row alone is **not** the owner's
    intended 6/6 outcome. The remaining profiles must be usable for continued
    in-app review without a developer PR; unreviewed estimates must not be
    shown as recommendations.
+
+The first linked, read-only mapping preview after import demonstrates the
+remaining identity work. For **Frantz Chagnoleau**, all 51 proposed rows were
+initially set aside because the profile producer name did not resolve to one
+canonical producer. Selecting the existing unique `Frantz Chagnoleau`
+producer in the preview changed the diagnosis to **51 cuvée identities not
+uniquely resolved**; still zero rows were ready. The local-only impact triage
+had found 22 exact cuvée-label/colour wine cards (48 bottles) for this
+profile, but label overlap is not a canonical link or date approval. The
+preview changed no shared identities, draft rows or cellar advice. It shows
+why a successful 23-file upload alone cannot meet the feature goal.
 
 The owner has since specified a stronger release outcome: nearly all active
 wines in the real cellar must have a coherent three-date window in the
