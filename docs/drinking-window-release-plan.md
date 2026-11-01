@@ -319,6 +319,24 @@ ambiguous candidates and genuinely missing shared identities separately
 before publication. This is a clarification of the existing canonical
 identity requirement, not a new PR or a change to the six-slot budget.
 
+**Gate 4 implementation in draft #231, 2 November:** The app now requests a
+whole-cellar preview in bounded groups of 100 active, unlinked wines. The
+owner sees unique, ambiguous and missing shared identities separately. An
+exact canonical name, curated alias, or sufficiently long name containment
+may produce a *suggestion* for the same vintage; a substring is explicitly
+marked for careful checking. Nothing links or applies dates during preview.
+The owner can select proposed unique links and confirm them in batches of 50.
+Each link rechecks the current candidate and source fingerprint, uses the
+existing owner-only guarded RPC, and writes a per-wine audit decision without
+rewriting the local producer/cuvée. Ambiguous wines stay in individual review;
+missing identities stay unchanged and can be requested. This is a first
+scalable reconciliation workflow, **not automatic proof that the 785 unlinked
+cards now match**. It must be deployed after a fresh backup/rehearsal and
+measured against the real cellar; the newly added migration is not on the
+linked project. The UI and database regression tests pass locally. Gate 4
+remains a no-go while the canonical library is sparse and date review is
+unfinished.
+
 **Execution status (the contract defines each exit test):**
 
 **Hard PR budget:** [PR #227](https://github.com/alexv3429/cellarmanager/pull/227)

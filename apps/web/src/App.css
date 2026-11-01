@@ -6238,6 +6238,11 @@
 .wine-identity-review__editor h3, .wine-identity-review__editor p { margin: 0; overflow-wrap: anywhere; }
 .wine-identity-review__editor p button { display: block; margin-top: .5rem; }
 .wine-identity-review__confirm { display: grid; gap: .5rem; padding: .75rem; border: 1px solid var(--border); border-radius: .5rem; }
+.wine-identity-review__batch { display: grid; gap: .65rem; min-width: 0; padding: .8rem; border: 1px solid var(--border); border-radius: .5rem; }
+.wine-identity-review__batch p, .wine-identity-review__batch h3 { margin: 0; }
+.wine-identity-review__batch-list { display: grid; gap: .4rem; max-height: 24rem; overflow-y: auto; }
+.wine-identity-review__batch-list label { display: flex; align-items: start; gap: .6rem; padding: .5rem; border: 1px solid var(--border); border-radius: .4rem; overflow-wrap: anywhere; }
+.wine-identity-review__batch-list small { display: block; color: var(--text-muted, #b6aeb2); }
 @media (max-width: 700px) { .wine-identity-review__layout { grid-template-columns: minmax(0, 1fr); } }
 
 .wine-ageing-review { min-width: 0; border: 1px solid var(--border); border-radius: .75rem; padding: 1rem; margin-block: 1rem; }

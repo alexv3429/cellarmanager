@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react"
 
 import {
+  confirmWineIdentityReconciliation,
   getHouseholdWineIdentityStatus,
   manageHouseholdWineIdentity,
+  previewWineIdentityReconciliation,
   requestSharedWineIdentity,
   searchHouseholdWineIdentities,
   type HouseholdWineIdentityStatus,
   type SharedWineIdentity,
+  type WineIdentityReconciliationItem,
 } from "../data/householdWineIdentities"
 import type { WineCatalogEntry } from "../data/wineCatalog"
 import { useLanguage } from "../i18n/useLanguage"
@@ -43,6 +46,10 @@ export function WineIdentityReviewPanel({ compact = false, initialWineId = "", i
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [localLinks, setLocalLinks] = useState<Record<string, string | null>>({})
+  const [reconciliation, setReconciliation] = useState<WineIdentityReconciliationItem[] | null>(null)
+  const [reconciling, setReconciling] = useState(false)
+  const [batchSaving, setBatchSaving] = useState(false)
+  const [batchSelected, setBatchSelected] = useState<string[]>([])
 
   const selected = wines.find((wine) => wine.id === selectedId) ?? null
   const isLinked = (wine: WineCatalogEntry) =>
@@ -56,6 +63,58 @@ export function WineIdentityReviewPanel({ compact = false, initialWineId = "", i
     (!term || wineLabel(wine).toLocaleLowerCase().includes(term) ||
       (wine.appellation ?? "").toLocaleLowerCase().includes(term)),
   )
+  const uniqueSuggestions = reconciliation?.filter((item) => item.candidateCount === 1) ?? []
+  const ambiguousSuggestions = reconciliation?.filter((item) => item.candidateCount > 1) ?? []
+  const missingSuggestions = reconciliation?.filter((item) => item.candidateCount === 0) ?? []
+
+  async function findCellarMatches() {
+    if (!isOnline || reconciling) return
+    setReconciling(true)
+    setError(null)
+    setMessage(null)
+    setReconciliation(null)
+    setBatchSelected([])
+    try {
+      const ids = wines.filter((wine) => !isLinked(wine) && !wine.merged_into_wine_id).map((wine) => wine.id)
+      const all: WineIdentityReconciliationItem[] = []
+      for (let index = 0; index < ids.length; index += 100) {
+        all.push(...await previewWineIdentityReconciliation(ids.slice(index, index + 100)))
+      }
+      setReconciliation(all)
+    } catch (cause) {
+      setError(String(cause))
+    } finally {
+      setReconciling(false)
+    }
+  }
+
+  async function confirmBatch() {
+    if (!reconciliation || batchSaving || !isOnline) return
+    const chosen = uniqueSuggestions.filter((item) => batchSelected.includes(item.wineId)).slice(0, 50)
+    if (chosen.length === 0) return
+    setBatchSaving(true)
+    setError(null)
+    setMessage(null)
+    try {
+      await confirmWineIdentityReconciliation(chosen.map((item) => ({
+        wineId: item.wineId,
+        referenceId: item.candidates[0].referenceId,
+        sourceFingerprint: item.sourceFingerprint,
+      })))
+      setLocalLinks((current) => Object.fromEntries([
+        ...Object.entries(current),
+        ...chosen.map((item) => [item.wineId, item.candidates[0].referenceId]),
+      ]))
+      setReconciliation((current) => current?.filter((item) => !chosen.some((done) => done.wineId === item.wineId)) ?? null)
+      setBatchSelected((current) => current.filter((id) => !chosen.some((done) => done.wineId === id)))
+      setMessage(t("Wine links confirmed for this cellar. Your wine descriptions were not changed."))
+      onChanged?.()
+    } catch (cause) {
+      setError(String(cause))
+    } finally {
+      setBatchSaving(false)
+    }
+  }
 
   useEffect(() => {
     if (!open || !isOnline || !selectedId) return
@@ -156,6 +215,47 @@ export function WineIdentityReviewPanel({ compact = false, initialWineId = "", i
         {!isOnline ? <Notice tone="warning">{t("Reconnect to review wine identities.")}</Notice> : null}
         {error ? <Notice role="alert" tone="error">{error}</Notice> : null}
         {message ? <Notice role="status" tone="success">{message}</Notice> : null}
+        {!compact ? <section className="wine-identity-review__batch" aria-label={t("Find shared matches for my cellar")}>
+          <button type="button" disabled={!isOnline || reconciling || batchSaving || unmatchedCount === 0}
+            onClick={() => void findCellarMatches()}>
+            {reconciling ? t("Looking for matches…") : t("Find shared matches for my cellar")}
+          </button>
+          <p>{t("This checks your cellar against the shared library. It does not rename wines or apply dates. Review suggestions before linking.")}</p>
+          {reconciliation ? <>
+            <p>{uniqueSuggestions.length} {t("one possible match")} · {ambiguousSuggestions.length} {t("several possible matches")} · {missingSuggestions.length} {t("no match yet")}</p>
+            {uniqueSuggestions.length > 0 ? <>
+              <button type="button" disabled={batchSaving} onClick={() => setBatchSelected(uniqueSuggestions.map((item) => item.wineId))}>
+                {t("Select all single matches for review")}
+              </button>
+              <div className="wine-identity-review__batch-list">
+                {uniqueSuggestions.slice(0, 100).map((item) => {
+                  const wine = wines.find((entry) => entry.id === item.wineId)
+                  const candidate = item.candidates[0]
+                  return <label key={item.wineId}>
+                    <input type="checkbox" checked={batchSelected.includes(item.wineId)} disabled={batchSaving}
+                      onChange={(event) => setBatchSelected((current) => event.target.checked
+                        ? [...current, item.wineId] : current.filter((id) => id !== item.wineId))} />
+                    <span><strong>{wine ? wineLabel(wine) : item.wineId}</strong> → {candidate.producerName} · {candidate.productName} · {candidate.vintageYear ?? t("NV")}
+                      <small>{candidate.matchBasis === "exact_or_curated_alias" ? t("Same name or reviewed alias") : t("Name overlap — check carefully")}</small></span>
+                  </label>
+                })}
+              </div>
+              {uniqueSuggestions.length > 100 ? <p>{t("Showing the first 100 suggestions. Select all to include the rest.")}</p> : null}
+              <button type="button" disabled={batchSaving || batchSelected.length === 0} onClick={() => void confirmBatch()}>
+                {batchSaving ? t("Saving…") : `${t("Confirm selected links")} (${Math.min(batchSelected.length, 50)})`}
+              </button>
+              {batchSelected.length > 50 ? <p>{t("Links are saved in batches of 50. Confirm again for the rest.")}</p> : null}
+            </> : null}
+            {ambiguousSuggestions.length > 0 ? <div>
+              <h3>{t("Several possible matches — review individually")}</h3>
+              {ambiguousSuggestions.slice(0, 50).map((item) => {
+                const wine = wines.find((entry) => entry.id === item.wineId)
+                return wine ? <button key={item.wineId} type="button" onClick={() => selectWine(wine)}>{wineLabel(wine)} · {item.candidateCount} {t("candidates")}</button> : null
+              })}
+            </div> : null}
+            {missingSuggestions.length > 0 ? <p>{t("Wines with no match stay unchanged. You can request a shared entry from their individual review.")}</p> : null}
+          </> : null}
+        </section> : null}
         {!compact ? <>
           <label>{t("Find a wine in your catalogue")}
             <input type="search" value={localSearch} onChange={(event) => setLocalSearch(event.target.value)} />

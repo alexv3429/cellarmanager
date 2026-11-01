@@ -128,6 +128,18 @@ and fully consistent identity, a batchable ambiguity review, and a retry when
 a missing canonical identity is added. A suggested or fuzzy match must not
 activate profile dates before confirmation; local labels must remain intact.
 
+The current draft PR now adds an owner-only whole-cellar reconciliation preview
+and an audited batch confirmation for unique, same-vintage suggestions. The
+preview distinguishes exact/curated-alias names from mere name containment;
+the latter is not asserted to be a verified identity. No suggestion is
+automatically linked. Ambiguous candidates, missing canonical identities and
+cards with no vintage match stay unchanged. A new canonical release can be
+found by rerunning the preview. The new SQL was applied **only to local
+Supabase** for rollback-only regression tests, not to the linked project.
+This removes the one-by-one search burden where there is a unique candidate,
+but does not yet establish actual real-cellar coverage. A fresh link-count
+audit is required after preview deployment and owner review.
+
 The [candidate-only profile-impact analyzer](../scripts/drinking_window/gate4_profile_impact.mjs)
 compared the 23 private JSON files with labels in the fresh isolated copy,
 using a **private, local-only producer spelling map**. By producer spelling,
