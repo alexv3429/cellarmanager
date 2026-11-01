@@ -1,6 +1,6 @@
 # Drinking windows — product contract and execution plan
 
-**Status: owner-confirmed contract, 29 October 2026.** This is
+**Status: owner-confirmed contract, clarified 1 November 2026.** This is
 the single product definition for the drinking-window feature. It records the
 owner's requested end state, not a claim that the current application already
 does it. The [living release record](drinking-window-release-plan.md) tracks
@@ -33,11 +33,8 @@ flowchart TD
     P -- No --> R["Search the shared profiles in the order below"]
     R --> F{"First complete, eligible match?"}
     F -- Yes --> S["Use its three dates from one profile"]
-    F -- No --> N{"Can the existing model safely estimate?"}
-    N -- Yes --> M["Use a labelled model estimate"]
-    N -- No --> Z["Show no window and explain why"]
+    F -- No --> Z["Show no shared window and explain why"]
     S --> A["Apply this person's younger/older offset, if set"]
-    M --> A
     A --> D["Show the dates and where they came from"]
     O --> D
     Z --> D
@@ -52,8 +49,12 @@ The shared-profile search stops at the first complete, eligible match:
 | 3 | Appellation profile | Same appellation, vintage and colour; this wine belongs to the reviewed ageing group. |
 | 4 | Region profile | Same region, vintage and colour; this wine belongs to the reviewed ageing group. |
 
-If none matches, the existing model is a **labelled last resort**, not a
-shared profile. If it cannot safely estimate a window, the card says so. A
+This diagram is the **target after legacy-model retirement**. During the
+transition, if no eligible shared row matches, the existing model may still
+provide a clearly labelled provisional estimate; it is never a shared
+profile and must not be counted as profile coverage. After cutover, an
+unmatched wine has no shared recommendation until a suitable profile is
+reviewed, although an explicit cellar-only choice can still supply dates. A
 cellar-only producer rule is different from a shared producer profile: the
 cellar owner enters their own three years for a stated producer, vintage and
 scope of wines; it affects only their cellar. It cannot silently carry over
@@ -68,8 +69,9 @@ uncovered wine and its reason enumerated. This is a floor, not permission to
 stop at 95% if more wines can safely be covered. Report separately how many
 windows come from cellar choices, approved exact producer/cuvée profiles,
 approved broader producer/appellation/region profiles, and the labelled
-existing model. Model-only coverage must not be presented as shared-profile
-coverage. The supplied 23 profiles must be used to maximize reviewed,
+existing model while the transition lasts. Model-only coverage must not be
+presented as shared-profile coverage or as proof that the new system is ready
+for full cutover. The supplied 23 profiles must be used to maximize reviewed,
 specific matches, but their unreviewed proposals cannot become official
 advice by import alone. If this coverage and approval work cannot be finished
 safely within the six PR slots, do not call the feature released or quietly
@@ -119,8 +121,35 @@ choice changes the shared database.
 | Same row, personal offset +2 years | Display shared 2025 / 2028–2040 and personal 2027 / 2030–2042; no shared edit. |
 | No exact Côte du Py 2022 row, but a reviewed applicable Morgon 2022 group exists | Use the complete Morgon row, labelled appellation estimate. |
 | No applicable Morgon row, but a reviewed applicable Beaujolais 2022 group exists | Use the complete Beaujolais row, labelled region estimate. |
-| Neither broader group includes this wine | Do not borrow another group's dates; use the labelled model estimate if safe, otherwise no window. |
+| Neither broader group includes this wine | Do not borrow another group's dates; during transition only, a clearly labelled old-model estimate may be shown if safe. After cutover, show no shared recommendation. |
 | The cellar owner entered dates for this wine or a cellar-only Burgaud rule covering it | Use those cellar dates and preserve them through future shared updates. |
+
+### Retiring the old model and checking differences
+
+**Owner clarification (1 November 2026):** The old calculation is a
+temporary bridge, not a permanent tier of the new reference hierarchy. The
+intended end state uses only explicit cellar choices and eligible, reviewed
+producer → appellation → region profiles. Do not average, combine or choose
+between old and new dates according to which seems closer.
+
+Before retiring the old model, compare its **unadjusted** three-year estimate
+with a proposed profile's three years only for a cellar wine linked to the
+**same confirmed canonical shared wine identity**, vintage and applicable
+bottle format. A similar name, an unlinked cellar wine or a broad region
+analogue is not enough to establish that comparison. Compare each milestone
+separately; if any corresponding years differ by **five years or more**, flag
+that wine and the specific year difference for human review. This is a
+diagnostic, not an automatic rejection of the profile or a reason to keep the
+old value. Differences below five years do not by themselves require review.
+If either complete triplet is missing, report the comparison as unavailable
+rather than inventing a gap. Personal offsets and cellar overrides must not
+distort this comparison.
+
+The release record must report how many active wines are served by reviewed
+profiles, cellar choices, the old model alone, and no window. The old model
+can be removed from the user-facing advice path only after the remaining
+legacy-only wines and any material differences have been examined and the
+owner has accepted the cutover; until then its presence remains explicit.
 
 ## 2. How the shared database changes
 

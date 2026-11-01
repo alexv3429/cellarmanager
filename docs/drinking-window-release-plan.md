@@ -14,10 +14,11 @@ the most specific applicable shared profile, or a private cellar choice,
 followed by a personal offset when applicable. Curators can maintain and
 publish complete shared profiles from the app without a developer PR or a
 second curator; users can suggest individual changes. The supplied producer
-profiles become a reviewed common base, with appellation and region fallbacks
-and the labelled existing model as last resort. The initial pilot is a safety
-gate, not the permanent way to distribute updates. See the contract for exact
-precedence and acceptance examples.
+profiles become a reviewed common base, with appellation and region fallbacks.
+The labelled existing model is a **transition-only bridge**, not part of the
+intended end state. The initial pilot is a safety gate, not the permanent way
+to distribute updates. See the contract for exact precedence and acceptance
+examples.
 
 **Owner clarification on 31 October:** 6/6 means the feature is live in the
 official app and gives complete three-date windows to nearly all active wines
@@ -35,6 +36,24 @@ official recommendation may bypass curator review**. The remaining editorial
 work is part of delivery, not a post-release queue. If the target cannot be
 met safely within the six-PR budget, stop and report the gap rather than
 declare 6/6 complete or add a seventh PR without the owner's agreement.
+
+**Owner decision on 1 November — legacy cutover and discrepancy review:**
+Eventually remove the old calculation from user-facing drinking-window
+selection. During transition, its estimates can be compared with reviewed
+profile candidates **only for the same confirmed shared wine identity**, exact
+vintage and applicable bottle format. Compare the unadjusted three milestones
+individually. A gap of **five years or more on any milestone** flags a human
+review with the affected wine and dates; a smaller gap alone does not. The
+old result is diagnostic evidence, not a veto or a source of published profile
+dates. Unlinked wines, incomplete windows and personal/cellar adjustments
+cannot produce a meaningful old-versus-new gap. Keep reporting legacy-only
+coverage separately and list the wines still depending on it. This decision
+changes the *target* from a permanent model fallback to a staged retirement;
+it does not claim that current code or live data have changed. Before cutover,
+review the remaining legacy-only cases and material gaps with the owner. Keep
+this work in the remaining Gate 4/5 PR slots; if it cannot be done safely
+within the six-PR budget, report that explicitly rather than silently adding
+another PR or declaring the end state delivered.
 
 ## Current delivery checkpoint — 31 October 2026
 
@@ -274,8 +293,8 @@ in every PR description.
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
 | 3. Complete profile exchange | #230 merged in slot 4/6; full CI green, linked migrations backed up/rehearsed/applied; signed-in owner import/preview/export checked; one Burgaud file saved privately and candidates added to Proposals, nothing published live | Preserve full-profile exchange and audited in-app curator path. |
-| 4. Prepare initial common base | Draft #231 in slot 5/6: 23 files/670 unapproved proposals saved to the linked curator archive; no dates staged or published. The private manifest found nine identities only under local triage hypotheses, not nine app-ready matches. The real-cellar baseline is 753/802 complete windows (751 old model, two manual), but **785/802 wine cards have no shared reference link** and zero active windows come from reviewed profiles. Chagnoleau À la Côte 2019 exists in the cellar and links to a package; 2021/2022 exist but have no shared link. The JSON proposes 2019 and 2022, not 2021. The import preview has 0/51 ready after selected mappings (42 cuvée, nine region blockers). | **No-go for merge/publication.** Correct the shared-link reconciliation and package-link reader, provide explicit curator-reviewed place/identity mapping, then measure real wine-card coverage by source. Review high-impact exact dates and defensibly scoped fallbacks before Gate 5. Do not equate an imported profile, a local name overlap or an old-model estimate with a shared match. |
-| 5. Release and verify | Not started | Publish the approved reference, enable it for the consenting cellar, and verify the official app on real wines. Gate 5 passes only with a complete source-by-source coverage report, at least 95% of active wines with coherent three-date windows, each exception named, and the reviewer-approved profile dates shown where applicable; then verify cross-household behavior and rollback. |
+| 4. Prepare initial common base | Draft #231 in slot 5/6: 23 files/670 unapproved proposals saved to the linked curator archive; no dates staged or published. The private manifest found nine identities only under local triage hypotheses, not nine app-ready matches. The real-cellar baseline is 753/802 complete windows (751 old model, two manual), but **785/802 wine cards have no shared reference link** and zero active windows come from reviewed profiles. Chagnoleau À la Côte 2019 exists in the cellar and links to a package; 2021/2022 exist but have no shared link. The JSON proposes 2019 and 2022, not 2021. The import preview has 0/51 ready after selected mappings (42 cuvée, nine region blockers). | **No-go for merge/publication.** Correct the shared-link reconciliation and package-link reader, provide explicit curator-reviewed place/identity mapping, then measure real wine-card coverage by source. Add identity-matched old/new discrepancy reporting (five-year threshold) without treating the old model as a reason to discard reviewed dates. Review high-impact exact dates and defensibly scoped fallbacks before Gate 5. |
+| 5. Release and verify | Not started | Publish the approved reference, enable it for the consenting cellar, and verify the official app on real wines. Gate 5 passes only with a complete source-by-source coverage report, at least 95% of active wines with coherent three-date windows, each exception named, and the reviewer-approved profile dates shown where applicable; then verify cross-household behavior and rollback. Report legacy-only wines and material old/new discrepancies explicitly before deciding with the owner whether the legacy bridge can be removed. Do not call a model-dominated result the completed new system. |
 
 **Merge/deployment rule:** Do not describe #227 as feature-complete or ask the
 owner to deploy its migrations as the end state. Update this record whenever
