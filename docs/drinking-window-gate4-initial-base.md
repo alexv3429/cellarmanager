@@ -233,8 +233,9 @@ package link through its release and checks the bottle size; it also lets
 cellar-only producer rules use that same confirmed lineage. No fuzzy cellar
 text is promoted to a shared identity.
 
-Both migrations applied cleanly **only to an isolated database restored from
-the protected backup**, not to the linked Supabase project. The two focused
+In the initial rehearsal, both migrations applied cleanly **only to an isolated
+database restored from the protected backup**; the later authorized linked
+deployment is recorded below. The two focused
 pgTAP suites passed there (44 package/core-selection assertions and 26
 profile-exchange assertions), along with focused web tests. On that copy,
 10 of the 15 active package-linked wine cards now have a complete canonical
@@ -265,9 +266,13 @@ This third migration compiled on the isolated protected restore; 17
 rollback-only database assertions passed for curator access, multi-format
 sources, missing vintages, stale previews, explicit confirmation, audit and
 zero date/cellar changes. Five focused UI tests, one client-contract test, the full 902-test web suite
-(one existing skip), and the production web build passed. The linked project
-has **not** received this migration, and no real curator identity batch has
-been executed. This is an app workflow for resolving canonical gaps, not an
+(one existing skip), and the production web build passed. After all PR CI
+checks passed, the owner authorized a fresh protected backup, complete
+restored-copy rehearsal and linked application of **all three** Gate 4
+migrations on 1 November. The [deployment record](drinking-window-gate4-deployment.md)
+confirms a clean linked migration ledger, no seeds or roles, and no invoked
+identity batch. No real curator identity batch has been executed. This is an
+app workflow for resolving canonical gaps, not an
 assertion that the supplied 670 proposals are reviewed or that household
 linkage is complete.
 
@@ -284,8 +289,9 @@ above need actual curator identity decisions using the new path; 785 of 802 acti
 were unlinked at the baseline; and the supplied proposed dates/source rights
 still need actual curator review. The newly available place mapping, package
 reader and identity batch do not themselves deliver near-all profile-based coverage or
-authorize publication. Re-run the whole-cellar source mix after any linked
-migration is separately backed up, rehearsed and authorized.
+authorize publication. Now that the three linked migrations have been backed
+up, rehearsed and applied, re-run the whole-cellar source mix after actual
+curator identity decisions; migration installation alone cannot improve it.
 
 The owner has since specified a stronger release outcome: nearly all active
 wines in the real cellar must have a coherent three-date window in the
