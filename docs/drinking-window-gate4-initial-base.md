@@ -87,6 +87,63 @@ exposed an obsolete `drink_by_year` fixture column; the corrected three-year
 script passed. Seven focused Node tests and full local repository CI also
 passed. This does not approve the synthetic fallback dates or publish them.
 
+## Actual cellar coverage and profile impact — 1 November
+
+A fresh **aggregate-only, read-only** SQL Editor check on the linked project
+ran the same `get_wine_maturity` function that supplies the app, in the pilot
+owner's context. It returned 802 active wine cards and 1,272 bottles: **751
+model-estimate windows, two cellar-manual windows, and 49 unavailable**.
+All 753 available windows had three ordered years, or **93.9% of wines**;
+there were **zero active reviewed-reference windows** because the shared
+reference is not published or enabled. The old model already does nearly all
+of the current work. Simply adding nine windows to cross the 95% floor would
+not establish the intended profile-based feature.
+
+The [reproducible coverage query](../scripts/drinking_window/gate4_real_cellar_coverage.sql)
+was run transactionally on a fresh isolated 1 November restore (802 active
+wines, 1,272 bottles). It found the same 751 model / two manual / 49
+unavailable wine-card split. Among the 49 unavailable cards, 34 were tagged
+`unsupported-place-profile`, nine had no vintage, and six had an
+`appellation-color-conflict`. These are distinct repair paths: missing
+vintages cannot be invented, colour/appellation conflicts need a wine-card
+check, and unsupported places need genuinely applicable reviewed profiles.
+
+The [candidate-only profile-impact analyzer](../scripts/drinking_window/gate4_profile_impact.mjs)
+compared the 23 private JSON files with labels in the fresh isolated copy,
+using a **private, local-only producer spelling map**. By producer spelling,
+488 wine cards (845 bottles) potentially relate to the supplied profiles.
+Only 249 cards (470 bottles) also match a cuvée name or explicit alias and
+colour exactly; **183 cards (353 bottles)** additionally have an explicit
+row for the same vintage and bottle size. These are *opportunities to
+review*, not canonical matches or approved advice. The remaining cards may
+need verified name reconciliation, additional vintage/format rows, or a
+carefully scoped broader profile. The analyzer leaves wine-level data and
+the spelling map outside Git and rejects ambiguous cuvée labels rather than
+assigning them automatically.
+
+Gate 4 now has an actionable order: resolve the 49 unavailable windows
+without inventing missing vintages, then review the highest-impact exact
+profile candidates, then identify legitimate producer/appellation/region
+fallbacks for the rest. At every step, measure **total three-date coverage**
+and **reviewed-profile coverage** separately. The exact-row opportunities
+must not be counted as active shared dates before curator review and
+publication.
+
+Before any linked archive import, a fresh protected backup of `public`,
+`private`, `auth`, `storage`, and `capture_guard` was saved outside Git at
+`/private/tmp/cellarmanager-gate4-pr231-backup.F2ZCVx` (directory mode 0700,
+files mode 0600). SHA-256: schema
+`e4c01b28ddfaf37c0756deb518d8096e435d2ccb7a549b9ad45c69e2092234cf`,
+data `56aa203ae9effca865bb2db1e57b41366243bf667513b7a2d6e5b1fdd411ed64`.
+Both files restored with `ON_ERROR_STOP=1` into a new isolated database; the
+data dump disabled triggers **only in that restore session**. The resulting
+copy had 810 total wines, four households, one pre-existing research archive
+and two reference rows. The full 23-file/670-proposal import passed through
+the curator RPC inside one transaction and rolled back. Afterwards the copy
+still had one archive, two reference rows and 810 wines. The linked project
+was not changed by the rehearsal. This temporary export is sensitive
+recovery material, not a durable managed backup.
+
 ## Publication boundary and next actions
 
 1. Keep all 669 unreviewed rows, including the eight identity-ready rows,
@@ -120,9 +177,9 @@ wines in the real cellar must have a coherent three-date window in the
 official app. The working floor is 95%, with every uncovered exception
 listed, and with reviewed exact, reviewed broader, private and labelled-model
 sources counted separately. The current manifest measures proposal readiness,
-**not** wine-card coverage, so this gate is not ready to pass. Its next
-read-only measurement is a whole-cellar source-by-source baseline and a
-ranked list of uncovered wines/bottles. Editorial review should then target
+**not** wine-card coverage, so this gate is not ready to pass. The first
+whole-cellar baseline above now gives the source mix and unavailable reasons.
+Editorial review should target
 the high-impact rows and scoped fallbacks; importing 670 unreviewed proposals
 cannot satisfy the outcome by itself.
 

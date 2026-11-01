@@ -29,7 +29,8 @@ export function buildImportRehearsal(files) {
       (select count(*)::text from public.drinking_window_reference_rows), true);`,
     `select set_config('request.jwt.claim.sub',
       (select user_id::text from public.enrichment_curator_eligibilities
-       where 'drinking-window' = any(profile_scopes)), true);`,
+       where 'drinking-window' = any(profile_scopes)), true) is not null
+      as curator_context_set;`,
     'set local role authenticated;',
     ...statements,
     'reset role;',

@@ -238,6 +238,25 @@ then prioritize identity and date review by wines affected, not by JSON row
 count. Keep this work inside #231 and its app-based curation workflow; do not
 move an unbounded review backlog into Gate 5 and call it a finished base.
 
+**Gate 4 measured baseline (1 November):** a read-only linked SQL Editor
+query ran the app's maturity reader for all 802 active pilot wine cards:
+751 complete model estimates, two complete cellar-manual windows, **49 with
+no window, and zero active reviewed-reference windows**. Thus total three-date
+coverage is 753/802 (93.9%), nearly all from the legacy model. The protected
+1 November restored clone found 34 unavailable due to unsupported place profiles,
+nine without a vintage, and six with appellation/colour conflicts. A separate
+candidate-only comparison of the 23 private JSONs to the clone found 488
+wine cards with a potential producer-name correspondence and 183 with an
+explicit same-cuvée-label, colour, vintage and format row. None of those 183
+is approved by this analysis. The fresh protected 1 November backup restored
+successfully; a complete 23-file/670-proposal curator import passed on that
+isolated copy and was rolled back, leaving the reference tables unchanged.
+The linked project has had no profile import or publication from this
+rehearsal. These findings make a simple 95%
+total-coverage tick-box inadequate: the approved profile source mix must
+rise materially, and the remaining no-window cases must be explained, not
+hidden behind the old model.
+
 **Execution status (the contract defines each exit test):**
 
 **Hard PR budget:** [PR #227](https://github.com/alexv3429/cellarmanager/pull/227)
@@ -255,7 +274,7 @@ in every PR description.
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
 | 3. Complete profile exchange | #230 merged in slot 4/6; full CI green, linked migrations backed up/rehearsed/applied; signed-in owner import/preview/export checked; one Burgaud file saved privately and candidates added to Proposals, nothing published live | Preserve full-profile exchange and audited in-app curator path. |
-| 4. Prepare initial common base | Draft #231 in slot 5/6: all 23 files/670 rows audited against restored canonical data; 9 identity-ready, 1 existing reviewed draft, 669 quarantined, 0 newly approved; fallbacks unreviewed; rollback-only full 23-file curator import and exact/appellation/region real-catalogue rehearsals passed; multiple-file UI added but live import not yet done. Real-cellar source-by-source coverage is still unmeasured. | Import every supplied profile into the official curator workflow; measure active-wine coverage and rank gaps by affected wines/bottles; resolve and review enough high-impact exact rows and defensibly scoped fallbacks that Gate 5 has a credible path to near-all coverage. Do not mislabel the research bundle as approved. |
+| 4. Prepare initial common base | Draft #231 in slot 5/6: all 23 files/670 rows audited; 9 canonical identities ready, 1 existing reviewed draft, 669 quarantined, 0 newly approved. Live baseline: 753/802 complete windows (751 old model, 2 manual), 49 unavailable, 0 active shared. Private-clone candidate impact: 488 producer-name possibilities, 183 exact cuvée/vintage/format opportunities; none approved. Full import and matching rehearsals passed, but live 23-file import not yet done. | Import every supplied profile into the official curator workflow; rank missing and model-only wines by impact; resolve and review enough high-impact exact rows and defensibly scoped fallbacks that Gate 5 has a credible path to near-all coverage. Do not mislabel the research bundle as approved. |
 | 5. Release and verify | Not started | Publish the approved reference, enable it for the consenting cellar, and verify the official app on real wines. Gate 5 passes only with a complete source-by-source coverage report, at least 95% of active wines with coherent three-date windows, each exception named, and the reviewer-approved profile dates shown where applicable; then verify cross-household behavior and rollback. |
 
 **Merge/deployment rule:** Do not describe #227 as feature-complete or ask the
