@@ -224,7 +224,7 @@ publication and visibility in two cellars on disposable data. The web tests
 verify the exact-version handoff. This is not a live Burgaud publication;
 real-profile identity and date review remain Gate 4 work.
 
-**Gate 4 work in slot 5/6 (1 November, [draft PR #231](https://github.com/alexv3429/cellarmanager/pull/231); research archive populated, no dates deployed):** PR #230 is merged. The [initial-base audit](drinking-window-gate4-initial-base.md)
+**Gate 4 work in slot 5/6 (1 November, [draft PR #231](https://github.com/alexv3429/cellarmanager/pull/231); research archive populated, no dates deployed):** PR #230 is merged. The initial [base audit](drinking-window-gate4-initial-base.md)
 processed the complete 23-file, 670-row quality-audited bundle against an
 isolated restored-catalogue copy with Gate 3 schema. The per-file/per-row
 manifest finds nine unambiguous canonical identities, one Côte du Py 2022
@@ -292,10 +292,15 @@ After all PR CI checks passed, the owner authorized a fresh protected backup,
 restored-copy rehearsal and linked application of all three Gate 4 migrations
 on 1 November; the [deployment record](drinking-window-gate4-deployment.md)
 confirms zero pending migrations, seeds and roles. No real profile identity
-batch has been authorized or created. This removes a
-one-at-a-time tooling bottleneck; it does not resolve the editorial review or
-the 785 unlinked wine cards. Gate 4 remains a no-go until real reviewed
-identity/date work and whole-cellar remeasurement are done.
+batch was created by the **migration deployment**. Subsequently, the signed-in
+curator created the checked Dureuil-Janthial Les Margotés blanc 2021 / 750 ml
+cuvée and release identity through that workflow and approved its **2024 /
+2026–2034** editorial estimate into unpublished version 2. The other 28
+Dureuil rows were set aside. The draft check passed, but its read-only effect
+preview found only **one match among 804 wine cards**, and no version was
+published or enabled. This proves the app curation route, not broad reference
+coverage. Gate 4 remains a no-go until much more reviewed identity/date work,
+household linking and whole-cellar remeasurement are done.
 
 **Execution status (the contract defines each exit test):**
 
@@ -314,7 +319,7 @@ in every PR description.
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
 | 3. Complete profile exchange | #230 merged in slot 4/6; full CI green, linked migrations backed up/rehearsed/applied; signed-in owner import/preview/export checked; one Burgaud file saved privately and candidates added to Proposals, nothing published live | Preserve full-profile exchange and audited in-app curator path. |
-| 4. Prepare initial common base | Draft #231 in slot 5/6: 23 files/670 unapproved proposals saved to the linked curator archive; no dates staged or published. The real-cellar baseline remains 753/802 complete windows (751 old model, two manual), **785/802 unlinked**, zero active reviewed-profile windows. Three new migrations were backed up, rehearsed, CI-tested and applied to the linked project on 1 November; only schema and guarded RPCs changed. Curator place mappings move Chagnoleau from 0/51 to **1 ready** (2019 À la Côte) in the isolated preview, with 42 cuvée and eight release blockers; the package reader gives 10/15 package-linked wines a complete canonical context; the identity-only batch path lets a curator prepare selected missing producers/cuvées/vintages together after explicit review. An identity-matched old/new diagnostic found one comparable draft/wine pair and no five-year flag. No real identity batch has run and no date or household link has been approved by this deployment. | **No-go for merge/publication.** Use the now-deployed path to review and create genuinely missing identities, then review the proposed three-date rows and source rights, link confirmed household wines, and remeasure coverage by source. Do not equate import, identity creation, name overlap, model coverage or a discrepancy diagnostic with an approved shared match. |
+| 4. Prepare initial common base | Draft #231 in slot 5/6: 23 files/670 proposals saved to the linked curator archive. The real-cellar baseline was 753/802 complete windows (751 old model, two manual), **785/802 unlinked**, zero active reviewed-profile windows. Three new migrations were backed up, rehearsed, CI-tested and applied to the linked project on 1 November. The curator then created **one** verified Dureuil-Janthial Les Margotés 2021 identity and staged its checked **2024 / 2026–2034** editorial estimate in unpublished version 2; the other 28 Dureuil rows remained unstaged. The draft contains two approved rows including the prior Côte du Py 2022 row, passes its check and has one match among 804 wine cards in the read-only effect preview. Nothing is published or opted in. Chagnoleau remains only 1/51 ready in its isolated mapping preview; the package reader resolves 10/15 package-linked wines to complete canonical context. | **No-go for merge/publication.** Continue reviewing exact identities and dates through the app, resolve legitimate scoped fallbacks, link confirmed household wines, then remeasure coverage by source. Do not equate import, identity creation, name overlap or model coverage with an active approved shared match. |
 | 5. Release and verify | Not started | Publish the approved reference, enable it for the consenting cellar, and verify the official app on real wines. Gate 5 passes only with a complete source-by-source coverage report, at least 95% of active wines with coherent three-date windows, each exception named, and the reviewer-approved profile dates shown where applicable; then verify cross-household behavior and rollback. Report legacy-only wines and material old/new discrepancies explicitly before deciding with the owner whether the legacy bridge can be removed. Do not call a model-dominated result the completed new system. |
 
 **Merge/deployment rule:** Do not describe #227 as feature-complete or ask the

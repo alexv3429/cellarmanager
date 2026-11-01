@@ -309,3 +309,40 @@ bundle is a research package, not a pre-approved reference base. Unless
 additional curator review is completed, calling the *whole* bundle a live
 common base at Gate 5 would be incorrect. The six-PR budget is unchanged;
 do not silently redefine Gate 4 as completed or open a seventh PR.
+
+## First real curator-reviewed profile row — 1 November
+
+The owner authorized checked, exact-wine estimates to be approved as
+**CellarManager editorial estimates**, not dates published by the producer.
+Using the signed-in curator workflow in the linked Gate 4 preview, the
+reviewer selected the existing canonical Vincent Dureuil Janthial producer,
+explicitly mapped the profile's `Bourgogne — Côte Chalonnaise` to canonical
+`Bourgogne` and `Rully 1er Cru` to the `Rully` appellation, then created
+**only** the missing shared cuvée and 2021 release for Rully Premier Cru
+Les Margotés blanc / 750 ml. The UI confirmed one cuvée and one vintage
+created; no household wine was linked and no date was approved by that
+identity step. `Premier Cru` remains the classification, not a second
+appellation or a global alias.
+
+The subsequent profile preview showed **1 ready / 0 already present / 28
+set aside**. The single ready row was that exact 2021 release. The
+[vintage-specific 75 cl retailer page](https://www.lecarredesvins.com/16572-domaine-dureuil-janthial-rully-blanc-1er-cru-les-margotes-2021-6635700.html)
+identifies the producer, appellation, cuvée and format and gives `boire à
+partir` 2024 and `apogée` 2026–2034. The curator recorded that this supports
+an editorial **2024 / 2026–2034** estimate but does not attribute the
+three dates to the winery or equate optimum end with the retailer's later
+`boire avant`. Only this row was staged in **unpublished version 2**; the
+other 28 Dureuil proposals remain unstaged. The UI then showed two approved
+rows in that draft: the previously reviewed Burgaud Côte du Py 2022 and
+this Dureuil release.
+
+The draft passed its built-in checks. Its read-only impact preview reported
+**1 match among 804 wine cards**, with one card potentially displaying
+different dates and 298 cards having unconfirmed identities. The new
+Dureuil identity is not linked to an owner's wine card; the sole match is
+therefore not evidence that the Dureuil dates already appear in a cellar.
+These figures are a fresh preview, not directly comparable to the earlier
+802-active-card baseline without reconciling household scope and timing.
+**Nothing was published or opted in.** This confirms the in-app review path,
+but one checked row does not materially close the initial-base or near-all
+profile-coverage gap. Gate 4 remains open in draft PR #231.

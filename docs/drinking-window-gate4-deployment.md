@@ -68,3 +68,16 @@ identity test. The draft PR remains a **no-go for merge
 and for publication** until actual identity/date review and real-cellar
 coverage checks described in the [Gate 4 audit](drinking-window-gate4-initial-base.md)
 are done.
+
+## Subsequent curator action (not part of the migration push)
+
+Later on 1 November, the signed-in curator used the Gate 4 preview to create
+one verified shared cuvée and vintage identity for Dureuil-Janthial Rully
+Premier Cru Les Margotés blanc 2021 / 750 ml, then approved only its checked
+2024 / 2026–2034 editorial estimate into **unpublished reference version 2**.
+The draft now contains two approved rows including the previously reviewed
+Burgaud Côte du Py 2022. The other 28 Dureuil profile proposals were set
+aside. The built-in draft check passed; its read-only effect preview found
+one match among 804 wine cards. No version was published, no household
+opted in, and no cellar wine was linked by these actions. The detailed
+identity and source review is in the [Gate 4 audit](drinking-window-gate4-initial-base.md).
