@@ -6,8 +6,10 @@ import appellationTemplate from "../../../../docs/examples/appellation-profile-t
 import producerTemplate from "../../../../docs/examples/producer-research-template.json"
 import regionTemplate from "../../../../docs/examples/region-profile-template.json"
 import {
+  createProfileIdentityBatch,
   importFullProfileExchange,
   previewFullProfileExchange,
+  previewProfileIdentityBatch,
   previewProfileStaging,
   stageProfileExchange,
   type FullProfileImport,
@@ -128,5 +130,38 @@ describe("complete profile exchange", () => {
     expect(preview.items[0]?.firstTrialYear).toBe(2025)
     await expect(stageProfileExchange(imported, preview, "too brief", true, mapping))
       .rejects.toThrow(/Review the ready rows/)
+  })
+
+  it("keeps identity creation separate from drinking-date staging and rejects a changed preview", async () => {
+    const keys = ["james|2022"]
+    const preview = await previewProfileIdentityBatch(imported, {}, keys, {
+      rpc: async (name, parameters) => {
+        expect(name).toBe("preview_drinking_window_profile_identity_batch")
+        expect(parameters.p_release_keys).toEqual(keys)
+        return { data: {
+          profile_id: imported.id, plan_sha256: "b".repeat(64), status: "ready",
+          producer_name: "Example", producer_status: "existing",
+          entries: [{ key: keys[0], cuvee_id: "james", cuvee_name: "James",
+            vintage: "2022", product_status: "existing", release_status: "create",
+            source_urls: ["https://example.org/release"], reason: null }],
+        }, error: null }
+      },
+    })
+    expect(preview.entries[0]?.sourceUrls).toEqual(["https://example.org/release"])
+    await expect(createProfileIdentityBatch(imported, {}, keys,
+      { ...preview, status: "blocked" }, "I checked the release existence and identity carefully.", true))
+      .rejects.toThrow(/Review and confirm/)
+    const result = await createProfileIdentityBatch(imported, {}, keys, preview,
+      "I checked the release existence and identity carefully.", true, {
+        rpc: async (name, parameters) => {
+          expect(name).toBe("create_drinking_window_profile_identity_batch")
+          expect(parameters.p_expected_plan_sha256).toBe("b".repeat(64))
+          expect(parameters.p_confirmed).toBe(true)
+          return { data: { created_producers: 0, created_products: 0, created_releases: 1,
+            dates_staged: 0, wines_linked: 0, published: false }, error: null }
+        },
+      })
+    expect(result).toEqual({ createdProducers: 0, createdProducts: 0,
+      createdReleases: 1, datesStaged: 0, winesLinked: 0, published: false })
   })
 })

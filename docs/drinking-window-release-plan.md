@@ -224,8 +224,7 @@ publication and visibility in two cellars on disposable data. The web tests
 verify the exact-version handoff. This is not a live Burgaud publication;
 real-profile identity and date review remain Gate 4 work.
 
-**Gate 4 work in slot 5/6 (31 October, [draft PR #231](https://github.com/alexv3429/cellarmanager/pull/231); no linked write
-yet):** PR #230 is merged. The [initial-base audit](drinking-window-gate4-initial-base.md)
+**Gate 4 work in slot 5/6 (1 November, [draft PR #231](https://github.com/alexv3429/cellarmanager/pull/231); research archive populated, no dates deployed):** PR #230 is merged. The [initial-base audit](drinking-window-gate4-initial-base.md)
 processed the complete 23-file, 670-row quality-audited bundle against an
 isolated restored-catalogue copy with Gate 3 schema. The per-file/per-row
 manifest finds nine unambiguous canonical identities, one Côte du Py 2022
@@ -246,7 +245,8 @@ failures, and retains failed files for retry. No profile is approved or
 published by this batch action. A rollback-only import of **all 23 documents
 and 670 proposals** through the curator RPC passed on the disposable restored
 copy; the reference-row count stayed unchanged. The private generated SQL
-was removed afterward. The 23-file live import has not happened yet.
+was removed afterward. Since this initial audit, all 23 complete profiles
+were saved in the linked curator-only research archive, as recorded below.
 No live dates, canonical links, or reference rows changed. The six-PR budget
 remains binding. This audit reveals that a broad initial common base cannot
 be declared ready without real curator identity, date, membership and source
@@ -276,6 +276,24 @@ total-coverage tick-box inadequate: the approved profile source mix must
 rise materially, and the remaining no-window cases must be explained, not
 hidden behind the old model.
 
+**Gate 4 identity preparation added in draft #231 (1 November):** A third
+proposed migration and a separate curator UI action can prepare selected,
+explicitly reviewed producer/cuvée/vintage identities from a saved JSON
+profile in one audited batch. The preview requires a unique producer and
+place mapping, a valid vintage and format, and at least one cited release-
+existence source; a curator must inspect the exact selected entries and give
+a reason before creation. The action does **not** approve or stage drinking
+dates, link household wines, publish a reference, or change anyone's advice.
+An isolated restored database passed 17 rollback-only identity assertions,
+including multi-format source pointers, role checks, stale-preview rejection,
+and no date/cellar writes; the new client-contract test, full web suite and
+production build pass.
+The new migration has **not** been applied to the linked project and no real
+profile identity batch has been authorized or created. This removes a
+one-at-a-time tooling bottleneck; it does not resolve the editorial review or
+the 785 unlinked wine cards. Gate 4 remains a no-go until real reviewed
+identity/date work and whole-cellar remeasurement are done.
+
 **Execution status (the contract defines each exit test):**
 
 **Hard PR budget:** [PR #227](https://github.com/alexv3429/cellarmanager/pull/227)
@@ -293,7 +311,7 @@ in every PR description.
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
 | 3. Complete profile exchange | #230 merged in slot 4/6; full CI green, linked migrations backed up/rehearsed/applied; signed-in owner import/preview/export checked; one Burgaud file saved privately and candidates added to Proposals, nothing published live | Preserve full-profile exchange and audited in-app curator path. |
-| 4. Prepare initial common base | Draft #231 in slot 5/6: 23 files/670 unapproved proposals saved to the linked curator archive; no dates staged or published. The real-cellar baseline remains 753/802 complete windows (751 old model, two manual), **785/802 unlinked**, zero active reviewed-profile windows. Two new migrations are tested only on a protected isolated restore: curator place mappings move Chagnoleau from 0/51 to **1 ready** (2019 À la Côte), with 42 cuvée and eight release blockers; the package reader gives 10/15 package-linked wines a complete canonical context, while five still lack a confirmed place. An identity-matched old/new diagnostic found one comparable draft/wine pair and no five-year flag. None of this approves dates or changes the linked project. | **No-go for merge/publication.** Complete the reviewed canonical product/release and household-link path, then measure real wine-card coverage by source again. Review high-impact exact dates, source rights and defensibly scoped fallbacks. The two new migrations need backed-up linked rehearsal and explicit authorization before an app preview can exercise them. Do not equate import, name overlap, model coverage or a discrepancy diagnostic with an approved shared match. |
+| 4. Prepare initial common base | Draft #231 in slot 5/6: 23 files/670 unapproved proposals saved to the linked curator archive; no dates staged or published. The real-cellar baseline remains 753/802 complete windows (751 old model, two manual), **785/802 unlinked**, zero active reviewed-profile windows. Three new migrations are tested only on a protected isolated restore: curator place mappings move Chagnoleau from 0/51 to **1 ready** (2019 À la Côte), with 42 cuvée and eight release blockers; the package reader gives 10/15 package-linked wines a complete canonical context; the identity-only batch path lets a curator prepare selected missing producers/cuvées/vintages together after explicit review. An identity-matched old/new diagnostic found one comparable draft/wine pair and no five-year flag. None of this approves dates or changes the linked project. | **No-go for merge/publication.** Use the new path to review and create genuinely missing identities, then review the proposed three-date rows and source rights, link confirmed household wines, and remeasure coverage by source. The three new migrations need backed-up linked rehearsal and explicit authorization before an app preview can exercise them. Do not equate import, identity creation, name overlap, model coverage or a discrepancy diagnostic with an approved shared match. |
 | 5. Release and verify | Not started | Publish the approved reference, enable it for the consenting cellar, and verify the official app on real wines. Gate 5 passes only with a complete source-by-source coverage report, at least 95% of active wines with coherent three-date windows, each exception named, and the reviewer-approved profile dates shown where applicable; then verify cross-household behavior and rollback. Report legacy-only wines and material old/new discrepancies explicitly before deciding with the owner whether the legacy bridge can be removed. Do not call a model-dominated result the completed new system. |
 
 **Merge/deployment rule:** Do not describe #227 as feature-complete or ask the

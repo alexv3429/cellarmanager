@@ -8906,6 +8906,33 @@
   overflow-wrap: anywhere;
 }
 
+.drinking-window-profile-identity-choices,
+.drinking-window-profile-identity-results {
+  display: grid;
+  gap: 0.5rem;
+  max-height: 20rem;
+  overflow-y: auto;
+  min-width: 0;
+  padding: 0.65rem;
+  border: 1px solid var(--border-color, #54434a);
+  border-radius: 0.5rem;
+}
+
+.drinking-window-profile-import .drinking-window-profile-identity-choices label,
+.drinking-window-profile-import .drinking-window-profile-identity-confirm {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.drinking-window-profile-import .drinking-window-profile-identity-choices input[type="checkbox"],
+.drinking-window-profile-import .drinking-window-profile-identity-confirm input[type="checkbox"] {
+  flex: 0 0 auto;
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-top: 0.15rem;
+}
+
 .drinking-window-draft-correction {
   display: grid;
   gap: 0.7rem;

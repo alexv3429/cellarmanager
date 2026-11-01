@@ -164,7 +164,8 @@ recovery material, not a durable managed backup.
    confirm the release and format, inspect evidence for the *three proposed
    milestones*, decide source reuse, and record approval or correction. Create
    genuinely missing canonical producer/product/release identities through the
-   existing audited in-app workflow, one verified identity at a time.
+   audited, separately confirmed in-app identity workflow. A verified
+   selection can be batched; identity creation is not a date approval.
 3. Review any fallback's category and explicit membership before its dates;
    do not promote the eight broad research estimates by default.
 4. Re-run the manifest and restored-catalogue rehearsal after review. The
@@ -247,6 +248,29 @@ selected, plus `Bourgogne — Mâconnais` → `Bourgogne`, `Saint-Véran` →
 release-identity blockers**. This is an identity result, **not an approval of
 the proposed dates**. No reference row was staged or published by this test.
 
+**Further Gate 4 tooling in the same draft #231:** A third, additive migration
+and curator UI action prepare *selected* missing shared producer, cuvée and
+vintage identities directly from a saved producer JSON. The curator must
+first search/map existing producer, cuvée and place identities; a preview
+lists each chosen vintage, whether its cuvée/release exists or would be
+created, and the cited release-existence URLs (across bottle formats).
+Blocked or ambiguous entries cannot be created. The curator then records a
+reason and explicitly confirms the batch. An immutable audit row records the
+decision. No drinking dates are approved or staged, no household wine is
+linked, and nothing is published. The client displays those boundaries next
+to the action so that a successful identity batch cannot be mistaken for a
+drinking-window approval.
+
+This third migration compiled on the isolated protected restore; 17
+rollback-only database assertions passed for curator access, multi-format
+sources, missing vintages, stale previews, explicit confirmation, audit and
+zero date/cellar changes. Five focused UI tests, one client-contract test, the full 902-test web suite
+(one existing skip), and the production web build passed. The linked project
+has **not** received this migration, and no real curator identity batch has
+been executed. This is an app workflow for resolving canonical gaps, not an
+assertion that the supplied 670 proposals are reviewed or that household
+linkage is complete.
+
 The [read-only discrepancy query](../scripts/drinking_window/gate4_identity_matched_discrepancies.sql)
 compares only an unadjusted current legacy projection and an exact proposed
 row for the same confirmed release, vintage, colour, place and format. It
@@ -256,10 +280,10 @@ comparable and it had **no five-year flag**. This tiny sample is not evidence
 that the remaining 669 proposals agree with the old model.
 
 **Remaining Gate 4 blockers:** the 42 Chagnoleau cuvées and eight releases
-above need a reviewed canonical identity path; 785 of 802 active wine cards
+above need actual curator identity decisions using the new path; 785 of 802 active wine cards
 were unlinked at the baseline; and the supplied proposed dates/source rights
-still need actual curator review. The newly available place mapping and
-package reader do not themselves deliver near-all profile-based coverage or
+still need actual curator review. The newly available place mapping, package
+reader and identity batch do not themselves deliver near-all profile-based coverage or
 authorize publication. Re-run the whole-cellar source mix after any linked
 migration is separately backed up, rehearsed and authorized.
 

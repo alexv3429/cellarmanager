@@ -4,8 +4,9 @@ import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import {
+  createProfileIdentityBatch,
   exportFullProfileExchange, importFullProfileExchange, listFullProfileExchanges, previewFullProfileExchange,
-  previewProfileStaging, stageProfileExchange,
+  previewProfileIdentityBatch, previewProfileStaging, stageProfileExchange,
 } from "../data/drinkingWindowProfileExchange"
 import { searchCurationTargets } from "../data/drinkingWindowFallbackAuthoring"
 import { getReleaseWorkspace } from "../data/drinkingWindowReleaseWorkflow"
@@ -14,6 +15,7 @@ import { FullProfileExchangePanel } from "./FullProfileExchangePanel"
 vi.mock("../data/drinkingWindowProfileExchange", () => ({
   exportFullProfileExchange: vi.fn(), importFullProfileExchange: vi.fn(),
   listFullProfileExchanges: vi.fn(), previewFullProfileExchange: vi.fn(),
+  previewProfileIdentityBatch: vi.fn(), createProfileIdentityBatch: vi.fn(),
   previewProfileStaging: vi.fn(), stageProfileExchange: vi.fn(),
 }))
 vi.mock("../data/drinkingWindowReleaseWorkflow", () => ({
@@ -153,6 +155,64 @@ describe("complete profile exchange", () => {
     await act(async () => inspect?.click())
     expect(previewProfileStaging).toHaveBeenCalledWith(
       expect.anything(), "draft", { regions: { "Bourgogne — Mâconnais": "region-bourgogne" } })
+  })
+
+  it("previews a selected identity batch separately from approving drinking dates", async () => {
+    vi.mocked(previewFullProfileExchange).mockReturnValue({
+      kind: "producer", name: "Frantz Chagnoleau", datasetVersion: "1.1.0",
+      releaseCount: 2, factCount: 0, sourceCount: 0,
+      document: { producer: { name: "Frantz Chagnoleau" }, cuvees: [{
+        id: "a_la_cote", name: "À la Côte", region: "Bourgogne", appellation: "Saint-Véran",
+      }], exact_release_calibrations: [
+        { cuvee_id: "a_la_cote", vintage: 2019, format_ml: 750 },
+        { cuvee_id: "a_la_cote", vintage: 2022, format_ml: 750 },
+      ] },
+    })
+    vi.mocked(previewProfileIdentityBatch).mockResolvedValue({
+      profileId: "profile", planSha256: "a".repeat(64), status: "ready",
+      producerName: "Frantz Chagnoleau", producerStatus: "existing",
+      entries: [{ key: "a_la_cote|2019", cuveeId: "a_la_cote", cuveeName: "À la Côte",
+        vintage: 2019, productStatus: "existing", releaseStatus: "create",
+        sourceUrls: ["https://example.org/existence"], reason: null }],
+    })
+    vi.mocked(createProfileIdentityBatch).mockResolvedValue({
+      createdProducers: 0, createdProducts: 0, createdReleases: 1,
+      datesStaged: 0, winesLinked: 0, published: false,
+    })
+    await act(async () => root.render(<FullProfileExchangePanel isOnline />))
+    await act(async () => container.querySelector("summary")?.click())
+    const profile = container.querySelector("select") as HTMLSelectElement
+    await act(async () => {
+      profile.value = "profile"
+      profile.dispatchEvent(new Event("change", { bubbles: true }))
+    })
+    const identitySection = [...container.querySelectorAll("summary")]
+      .find((summary) => summary.textContent === "Prepare missing shared wine identities")
+    await act(async () => identitySection?.click())
+    const choice = container.querySelector('.drinking-window-profile-identity-choices input[type="checkbox"]') as HTMLInputElement
+    await act(async () => choice.click())
+    const preview = [...container.querySelectorAll("button")]
+      .find((button) => button.textContent === "Preview selected identities")
+    await act(async () => preview?.click())
+    expect(previewProfileIdentityBatch).toHaveBeenCalledWith(expect.anything(), {}, ["a_la_cote|2019"])
+    expect(container.textContent).toContain("Release existence sources to check")
+    const reason = container.querySelector('.drinking-window-profile-identity-confirm')
+      ?.parentElement?.querySelector("textarea") as HTMLTextAreaElement
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")?.set?.call(
+        reason, "I verified this exact synthetic wine and its cited release source.")
+      reason.dispatchEvent(new Event("input", { bubbles: true }))
+    })
+    const confirm = container.querySelector('.drinking-window-profile-identity-confirm input') as HTMLInputElement
+    await act(async () => confirm.click())
+    const create = [...container.querySelectorAll("button")]
+      .find((button) => button.textContent === "Create the reviewed shared identities")
+    await act(async () => create?.click())
+    expect(createProfileIdentityBatch).toHaveBeenCalledWith(expect.anything(), {},
+      ["a_la_cote|2019"], expect.anything(),
+      "I verified this exact synthetic wine and its cited release source.", true)
+    expect(stageProfileExchange).not.toHaveBeenCalled()
+    expect(container.textContent).toContain("No dates were approved and no cellar wine was linked")
   })
 
   it("passes the exact staged draft to the publication workflow", async () => {

@@ -64,6 +64,35 @@ export interface ProfileIdentityMap {
   appellations?: Record<string, string>
 }
 
+export interface ProfileIdentityEntry {
+  key: string
+  cuveeId: string | null
+  cuveeName: string | null
+  vintage: number | null
+  productStatus: "existing" | "create" | "blocked"
+  releaseStatus: "existing" | "create" | "blocked"
+  sourceUrls: string[]
+  reason: string | null
+}
+
+export interface ProfileIdentityBatchPreview {
+  profileId: string
+  planSha256: string
+  status: "ready" | "blocked"
+  producerName: string
+  producerStatus: "existing" | "create" | "blocked"
+  entries: ProfileIdentityEntry[]
+}
+
+export interface ProfileIdentityBatchResult {
+  createdProducers: number
+  createdProducts: number
+  createdReleases: number
+  datesStaged: 0
+  winesLinked: 0
+  published: false
+}
+
 interface RpcOptions {
   rpc?: (name: string, parameters: Record<string, unknown>) => PromiseLike<{
     data?: unknown
@@ -292,6 +321,64 @@ export async function listFullProfileExchanges(options: RpcOptions = {}): Promis
 
 export async function exportFullProfileExchange(id: string, options: RpcOptions = {}): Promise<Record<string, unknown>> {
   return object(await call("export_drinking_window_profile_exchange", { p_id: id }, options), "Profile export")
+}
+
+function identityStatus(value: unknown): "existing" | "create" | "blocked" {
+  if (value === "existing" || value === "create" || value === "blocked") return value
+  throw new Error("Invalid identity status")
+}
+
+export async function previewProfileIdentityBatch(profile: FullProfileImport, identityMap: ProfileIdentityMap,
+  releaseKeys: string[], options: RpcOptions = {}): Promise<ProfileIdentityBatchPreview> {
+  if (profile.kind !== "producer" || !releaseKeys.length || releaseKeys.length > 100) {
+    throw new Error("Select producer-profile releases for identity review")
+  }
+  const result = object(await call("preview_drinking_window_profile_identity_batch", {
+    p_id: profile.id, p_identity_map: identityMap, p_release_keys: releaseKeys,
+  }, options), "Identity batch preview")
+  const hash = string(result.plan_sha256, "Identity plan hash")
+  if (!/^[0-9a-f]{64}$/.test(hash) || !Array.isArray(result.entries)
+    || (result.status !== "ready" && result.status !== "blocked")) {
+    throw new Error("Invalid identity batch preview")
+  }
+  return {
+    profileId: string(result.profile_id, "Profile ID"), planSha256: hash,
+    status: result.status, producerName: string(result.producer_name, "Producer name"),
+    producerStatus: identityStatus(result.producer_status),
+    entries: result.entries.map((value: unknown) => {
+      const item = object(value, "Identity entry")
+      return {
+        key: string(item.key, "Release key"), cuveeId: optionalText(item.cuvee_id),
+        cuveeName: optionalText(item.cuvee_name), vintage: integer(item.vintage),
+        productStatus: identityStatus(item.product_status),
+        releaseStatus: identityStatus(item.release_status), sourceUrls: urls(item.source_urls),
+        reason: optionalText(item.reason),
+      }
+    }),
+  }
+}
+
+export async function createProfileIdentityBatch(profile: FullProfileImport, identityMap: ProfileIdentityMap,
+  releaseKeys: string[], preview: ProfileIdentityBatchPreview, reviewReason: string,
+  confirmed: boolean, options: RpcOptions = {}): Promise<ProfileIdentityBatchResult> {
+  if (profile.kind !== "producer" || preview.profileId !== profile.id || preview.status !== "ready"
+    || !confirmed || reviewReason.trim().length < 30) {
+    throw new Error("Review and confirm the selected shared wine identities")
+  }
+  const result = object(await call("create_drinking_window_profile_identity_batch", {
+    p_id: profile.id, p_identity_map: identityMap, p_release_keys: releaseKeys,
+    p_expected_plan_sha256: preview.planSha256,
+    p_review_reason: reviewReason.trim(), p_confirmed: true,
+  }, options), "Identity batch result")
+  const counts = [result.created_producers, result.created_products, result.created_releases]
+  if (!counts.every((count) => Number.isInteger(count) && (count as number) >= 0)
+    || result.dates_staged !== 0 || result.wines_linked !== 0 || result.published !== false) {
+    throw new Error("Invalid identity batch result")
+  }
+  return {
+    createdProducers: counts[0] as number, createdProducts: counts[1] as number,
+    createdReleases: counts[2] as number, datesStaged: 0, winesLinked: 0, published: false,
+  }
 }
 
 function optionalText(value: unknown): string | null {

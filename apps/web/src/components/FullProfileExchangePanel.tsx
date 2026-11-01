@@ -1,15 +1,18 @@
 import { useEffect, useState } from "react"
 
 import {
+  createProfileIdentityBatch,
   exportFullProfileExchange,
   importFullProfileExchange,
   listFullProfileExchanges,
+  previewProfileIdentityBatch,
   previewProfileStaging,
   previewFullProfileExchange,
   stageProfileExchange,
   type FullProfileImport,
   type FullProfilePreview,
   type ProfileIdentityMap,
+  type ProfileIdentityBatchPreview,
   type ProfileStagePreview,
 } from "../data/drinkingWindowProfileExchange"
 import { searchCurationTargets, type CurationTarget } from "../data/drinkingWindowFallbackAuthoring"
@@ -18,6 +21,24 @@ import { useLanguage } from "../i18n/useLanguage"
 import { Notice } from "./Notice"
 
 interface Props { isOnline: boolean; onStaged?: (versionId: string) => void }
+
+function profileReleaseChoices(document: FullProfilePreview | null) {
+  if (document?.kind !== "producer") return []
+  const cuvees = new Map(((document.document.cuvees || []) as Record<string, unknown>[])
+    .map((cuvee) => [String(cuvee.id), String(cuvee.name)]))
+  const releases = (document.document.exact_release_calibrations || []) as Record<string, unknown>[]
+  const choices = new Map<string, { key: string; label: string; formats: Set<number> }>()
+  for (const release of releases) {
+    const key = `${release.cuvee_id}|${release.vintage}`
+    const existing = choices.get(key) || {
+      key, label: `${cuvees.get(String(release.cuvee_id)) || String(release.cuvee_id)} · ${release.vintage}`,
+      formats: new Set<number>(),
+    }
+    existing.formats.add(Number(release.format_ml))
+    choices.set(key, existing)
+  }
+  return [...choices.values()].sort((a, b) => a.label.localeCompare(b.label))
+}
 
 function CanonicalMappingSearch({ kind, suggestedName, selectedId, onSelect, disabled }: {
   kind: "producer" | "product" | "region" | "appellation"; suggestedName: string; selectedId: string
@@ -60,6 +81,10 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
   const [selectedProfileId, setSelectedProfileId] = useState("")
   const [selectedDocument, setSelectedDocument] = useState<FullProfilePreview | null>(null)
   const [identityMap, setIdentityMap] = useState<ProfileIdentityMap>({})
+  const [selectedReleaseKeys, setSelectedReleaseKeys] = useState<string[]>([])
+  const [identityPreview, setIdentityPreview] = useState<ProfileIdentityBatchPreview | null>(null)
+  const [identityReason, setIdentityReason] = useState("")
+  const [identityConfirmed, setIdentityConfirmed] = useState(false)
   const [versionId, setVersionId] = useState("")
   const [stagingPreview, setStagingPreview] = useState<ProfileStagePreview | null>(null)
   const [reviewReason, setReviewReason] = useState("")
@@ -132,6 +157,8 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
         setSelectedProfileId(saved[0].profile.id)
         setSelectedDocument(saved[0].preview)
         setIdentityMap({})
+        setSelectedReleaseKeys([])
+        setIdentityPreview(null)
         setStagingPreview(null)
       }
       if (saved.length) setMessage(saved.length === 1
@@ -154,6 +181,9 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
     setSelectedProfileId(id)
     setSelectedDocument(null)
     setIdentityMap({})
+    setSelectedReleaseKeys([])
+    setIdentityPreview(null)
+    setIdentityConfirmed(false)
     setStagingPreview(null)
     if (!id) return
     setBusy(true); setError(null)
@@ -204,6 +234,38 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
     } finally { setBusy(false) }
   }
 
+  async function inspectIdentities() {
+    const profile = imports.find((item) => item.id === selectedProfileId)
+    if (!profile || !selectedReleaseKeys.length) return
+    setBusy(true); setError(null); setMessage(null); setIdentityConfirmed(false)
+    try { setIdentityPreview(await previewProfileIdentityBatch(profile, identityMap, selectedReleaseKeys)) }
+    catch (caught: unknown) {
+      setIdentityPreview(null)
+      setError(caught instanceof Error ? caught.message : "Unable to preview identities")
+    } finally { setBusy(false) }
+  }
+
+  async function createIdentities() {
+    const profile = imports.find((item) => item.id === selectedProfileId)
+    if (!profile || !identityPreview) return
+    setBusy(true); setError(null)
+    try {
+      const result = await createProfileIdentityBatch(profile, identityMap, selectedReleaseKeys,
+        identityPreview, identityReason, identityConfirmed)
+      setMessage(t("Shared identities created: {producers} producers, {cuvees} cuvées, {releases} vintages. No dates were approved and no cellar wine was linked.", {
+        producers: String(result.createdProducers), cuvees: String(result.createdProducts),
+        releases: String(result.createdReleases),
+      }))
+      setIdentityPreview(null)
+      setSelectedReleaseKeys([])
+      setIdentityConfirmed(false)
+      setIdentityReason("")
+      setStagingPreview(null)
+    } catch (caught: unknown) {
+      setError(caught instanceof Error ? caught.message : "Unable to create identities")
+    } finally { setBusy(false) }
+  }
+
   async function stage() {
     const profile = imports.find((item) => item.id === selectedProfileId)
     if (!profile || !stagingPreview) return
@@ -231,6 +293,14 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
     ? selectedDocument.document.cuvees as Record<string, unknown>[] : []
   const profileRegions = [...new Set(profileCuvees.map((cuvee) => String(cuvee.region)))].sort()
   const profileAppellations = [...new Set(profileCuvees.map((cuvee) => String(cuvee.appellation)))].sort()
+  const releaseChoices = profileReleaseChoices(selectedDocument)
+
+  function updateIdentityMap(update: (current: ProfileIdentityMap) => ProfileIdentityMap) {
+    setIdentityMap(update)
+    setIdentityPreview(null)
+    setIdentityConfirmed(false)
+    setStagingPreview(null)
+  }
 
   return <details className="research-inbox drinking-window-profile-import">
     <summary><strong>{t("Complete profile exchange")}</strong></summary>
@@ -276,7 +346,7 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
         <CanonicalMappingSearch key={selectedProfileId + ":producer"} kind="producer"
           suggestedName={String((selectedDocument.document.producer as Record<string, unknown>).name)}
           selectedId={identityMap.producer_id || ""} disabled={busy || !isOnline}
-          onSelect={(id) => { setIdentityMap((current) => ({ ...current, producer_id: id })); setStagingPreview(null) }} />
+          onSelect={(id) => updateIdentityMap((current) => ({ ...current, producer_id: id }))} />
         <h5>{t("Places named in this profile")}</h5>
         <p>{t("A place mapping is a curator decision for this import only. It does not rename a region or change another cellar.")}</p>
         {profileRegions.map((name) => <div key={`region:${name}`}>
@@ -284,8 +354,7 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
           <CanonicalMappingSearch key={`${selectedProfileId}:region:${name}`} kind="region" suggestedName={name}
             selectedId={identityMap.regions?.[name] || ""} disabled={busy || !isOnline}
             onSelect={(id) => {
-              setIdentityMap((current) => ({ ...current, regions: { ...current.regions, [name]: id } }))
-              setStagingPreview(null)
+              updateIdentityMap((current) => ({ ...current, regions: { ...current.regions, [name]: id } }))
             }} />
         </div>)}
         {profileAppellations.map((name) => <div key={`appellation:${name}`}>
@@ -293,8 +362,7 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
           <CanonicalMappingSearch key={`${selectedProfileId}:appellation:${name}`} kind="appellation" suggestedName={name}
             selectedId={identityMap.appellations?.[name] || ""} disabled={busy || !isOnline}
             onSelect={(id) => {
-              setIdentityMap((current) => ({ ...current, appellations: { ...current.appellations, [name]: id } }))
-              setStagingPreview(null)
+              updateIdentityMap((current) => ({ ...current, appellations: { ...current.appellations, [name]: id } }))
             }} />
         </div>)}
         <h5>{t("Cuvées named in this profile")}</h5>
@@ -303,11 +371,58 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
           <CanonicalMappingSearch key={selectedProfileId + ":" + String(cuvee.id)} kind="product" suggestedName={String(cuvee.name)}
             selectedId={identityMap.cuvees?.[String(cuvee.id)] || ""} disabled={busy || !isOnline}
             onSelect={(id) => {
-              setIdentityMap((current) => ({ ...current,
+              updateIdentityMap((current) => ({ ...current,
                 cuvees: { ...current.cuvees, [String(cuvee.id)]: id } }))
-              setStagingPreview(null)
             }} />
         </div>)}
+      </details> : null}
+      {selectedDocument?.kind === "producer" ? <details>
+        <summary>{t("Prepare missing shared wine identities")}</summary>
+        <p>{t("Choose only releases whose producer, cuvée, place and vintage you have checked. This creates shared identities, not drinking dates, and does not link any cellar wine.")}</p>
+        <p>{t("Search for an existing shared producer or cuvée in the mapping section first. If the profile names a place differently, map it there before previewing.")}</p>
+        <div className="drinking-window-profile-identity-choices">
+          {releaseChoices.map((choice) => <label key={choice.key}>
+            <input type="checkbox" disabled={busy || !isOnline}
+              checked={selectedReleaseKeys.includes(choice.key)}
+              onChange={(event) => {
+                setSelectedReleaseKeys((current) => event.target.checked
+                  ? [...current, choice.key] : current.filter((key) => key !== choice.key))
+                setIdentityPreview(null); setIdentityConfirmed(false)
+              }} />
+            {choice.label} · {[...choice.formats].sort((a, b) => a - b).join(" / ")} ml
+          </label>)}
+        </div>
+        <button type="button" disabled={busy || !isOnline || !releaseChoices.length}
+          onClick={() => {
+            setSelectedReleaseKeys(releaseChoices.map((choice) => choice.key))
+            setIdentityPreview(null); setIdentityConfirmed(false)
+          }}>{t("Select all for identity review (not approval)")}</button>
+        <button type="button" disabled={busy || !isOnline || !selectedReleaseKeys.length}
+          onClick={() => void inspectIdentities()}>{t("Preview selected identities")}</button>
+        {identityPreview ? <div>
+          <p>{identityPreview.entries.length} {t("selected releases")} · {t(identityPreview.status)}</p>
+          <p>{identityPreview.producerName} · {t(identityPreview.producerStatus)}</p>
+          <ul className="drinking-window-profile-identity-results">{identityPreview.entries.map((entry) => <li key={entry.key}>
+            <strong>{entry.cuveeName || entry.key} · {entry.vintage || "?"}</strong>
+            {entry.reason ? <> · {t(entry.reason)}</> : <> · {t("Cuvée")}: {t(entry.productStatus)} · {t("Vintage")}: {t(entry.releaseStatus)}</>}
+            {entry.sourceUrls.length ? <details><summary>{t("Release existence sources to check")}</summary>
+              <ul>{entry.sourceUrls.map((url) => <li key={url}>
+                <a href={url} target="_blank" rel="noopener noreferrer">{url}</a>
+              </li>)}</ul>
+            </details> : null}
+          </li>)}</ul>
+          {identityPreview.status === "ready" ? <div>
+            <label>{t("Why these shared wine identities are correct")}
+              <textarea minLength={30} maxLength={1000} value={identityReason}
+                onChange={(event) => setIdentityReason(event.target.value)} />
+            </label>
+            <label className="drinking-window-profile-identity-confirm"><input type="checkbox" checked={identityConfirmed}
+              onChange={(event) => setIdentityConfirmed(event.target.checked)} />
+              {t("I checked these identities and their existence sources; I understand this does not approve drinking dates")}</label>
+            <button type="button" disabled={busy || !isOnline || !identityConfirmed || identityReason.trim().length < 30}
+              onClick={() => void createIdentities()}>{t("Create the reviewed shared identities")}</button>
+          </div> : <p>{t("Resolve the blocked entries or select a smaller batch, then preview again.")}</p>}
+        </div> : null}
       </details> : null}
       <label>{t("Unpublished reference draft")}
         <select value={versionId} disabled={!isOnline || busy}
