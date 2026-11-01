@@ -230,6 +230,7 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
   return <details className="research-inbox drinking-window-profile-import">
     <summary><strong>{t("Complete profile exchange")}</strong></summary>
     <p>{t("Import a complete producer, appellation or region JSON profile for curator review. History, grapes, style, service, pairings and source pointers are retained. This does not approve or publish any dates.")}</p>
+    <p>{t("Saving a profile does not match it to wines already in a cellar. Shared wine identities and proposed dates require separate review.")}</p>
     {error ? <Notice role="alert" tone="warning">{error}</Notice> : null}
     {message ? <Notice role="status" tone="success">{message}</Notice> : null}
     <label>{t("Choose complete JSON profiles")}

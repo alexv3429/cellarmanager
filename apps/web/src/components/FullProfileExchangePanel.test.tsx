@@ -76,6 +76,8 @@ describe("complete profile exchange", () => {
         releaseCount: 1, submittedAt: "2026-10-31" })
     await act(async () => root.render(<FullProfileExchangePanel isOnline />))
     await act(async () => container.querySelector("summary")?.click())
+    expect(container.textContent).toContain(
+      "Saving a profile does not match it to wines already in a cellar.")
     const input = container.querySelector('input[type="file"]') as HTMLInputElement
     expect(input.multiple).toBe(true)
     Object.defineProperty(input, "files", { configurable: true, value: [

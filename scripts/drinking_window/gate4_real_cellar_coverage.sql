@@ -75,6 +75,20 @@ from classified
 group by source
 order by wines desc;
 
+-- A complete model estimate is not a shared-reference match. Count the
+-- actual household-to-shared identity links independently of date coverage.
+select coalesce(w.wine_reference_type, 'unlinked') as shared_identity_type,
+    count(*) as wines, sum(coalesce(h.qty, 0)) as bottles
+from public.wines w
+left join (
+    select household_id, wine_id, sum(quantity) as qty
+    from public.holdings group by household_id, wine_id
+) h on h.household_id = w.household_id and h.wine_id = w.id
+where w.household_id = :'pilot_household_id'::uuid
+  and w.merged_into_wine_id is null
+group by 1
+order by wines desc;
+
 with unavailable as materialized (
     select coalesce(h.qty, 0) as bottles,
         public.get_wine_maturity(w.id) as advice,

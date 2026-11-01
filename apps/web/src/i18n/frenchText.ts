@@ -58,6 +58,7 @@ export const frenchText: Readonly<Record<string, string>> = {
   "appellation": "appellation",
   "region": "région",
   "Import a complete producer, appellation or region JSON profile for curator review. History, grapes, style, service, pairings and source pointers are retained. This does not approve or publish any dates.": "Importer un profil JSON complet de producteur, d’appellation ou de région pour révision. L’histoire, les cépages, le style, le service, les accords et les sources sont conservés. Aucune date n’est approuvée ni publiée.",
+  "Saving a profile does not match it to wines already in a cellar. Shared wine identities and proposed dates require separate review.": "Enregistrer un profil ne le relie pas aux vins déjà présents dans une cave. Les identités des vins dans la base commune et les dates proposées doivent être révisées séparément.",
   "Choose a complete JSON profile": "Choisir un profil JSON complet",
   "Choose complete JSON profiles": "Choisir un ou plusieurs profils JSON complets",
   "Choose at most 30 profile files at a time.": "Choisissez au maximum 30 profils à la fois.",

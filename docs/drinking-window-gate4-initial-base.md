@@ -27,8 +27,9 @@ publish drinking advice.
   transaction on that disposable copy. It verified that the reference-row
   count stayed unchanged. The generated SQL was removed immediately after
   the successful run; the linked project was not touched.
-- [Explicit identity triage decisions](drinking-window-gate4-identity-decisions.json)
-  are local to this audit. They are neither global aliases nor permission to
+- [Identity triage hypotheses](drinking-window-gate4-identity-decisions.json)
+  are local analyst inputs to this audit, **not owner or curator decisions**.
+  They are neither global aliases nor permission to
   create or attach a canonical release. In particular, a classification or
   hierarchical region label is not silently collapsed into a public name.
 - The [coverage manifest](drinking-window-gate4-coverage.json) records **each
@@ -44,7 +45,7 @@ publish drinking advice.
 | Measure | Count | Meaning |
 | --- | ---: | --- |
 | Producer files / proposed rows | 23 / 670 | Complete bundle audited, not staged or published. |
-| Rows with unambiguous producer, cuvée, release and place identities | 9 | Identity is a prerequisite, not a date/source approval. |
+| Rows locally resolvable with analyst-supplied identity hypotheses | 9 | This is a private triage result, **not** nine app-ready or curator-approved matches. |
 | Existing separately reviewed draft with the same release, format and three dates | 1 | Burgaud Côte du Py 2022 / 750 ml; already present in version 2, not imported again. |
 | Quarantined bundle rows | 669 | Every row has a recorded reason; **zero newly approved** for publication. |
 
@@ -55,7 +56,7 @@ necessary editorial review of dates and source rights. Canonical coverage is
 small because the shared identity catalogue is still sparse, **not** because
 the other 661 wines are known not to exist.
 
-The eight other identity-ready rows are Burgaud James 2008 and 2022; Barraud
+The eight other *locally resolvable under those triage hypotheses* rows are Burgaud James 2008 and 2022; Barraud
 En Buland 2021 and Sur La Roche 2023; Chagnoleau À la Côte 2019; Boillot
 Gevrey Evocelles 2021 and Moulin-à-Vent Plantier Favre 2022; and Langoureau
 Bas de Vermarain 2018. They remain quarantined for editorial/source review.
@@ -107,6 +108,16 @@ unavailable wine-card split. Among the 49 unavailable cards, 34 were tagged
 `appellation-color-conflict`. These are distinct repair paths: missing
 vintages cannot be invented, colour/appellation conflicts need a wine-card
 check, and unsupported places need genuinely applicable reviewed profiles.
+
+The same restored-copy query found a separate, more important linkage gap:
+**785 of the 802 active wine cards had no shared wine identity link**; 15
+linked to a package, one to a product and one to a release. Thus the 753
+complete windows above must not be described as evidence of shared-profile
+matching. The current reference reader does not derive producer or cuvée
+identity from the household's free-text labels. It can use a reviewed
+appellation/region fallback where the place is unambiguous, but an exact
+producer/cuvée window requires a reviewed canonical link. This is a Gate 4
+release blocker, not a defect in the owner's cellar entries.
 
 The [candidate-only profile-impact analyzer](../scripts/drinking_window/gate4_profile_impact.mjs)
 compared the 23 private JSON files with labels in the fresh isolated copy,
@@ -198,6 +209,18 @@ parent region, but that proposal is not a linked curator selection or an
 approved date. Gate 4 needs an explicit, validated region mapping and a path
 to review the remaining canonical product/release identities; no approximate
 match may silently become a reference row.
+
+The restored cellar itself has `Chagnoleau · A la Cote` in **2019, 2021 and
+2022**. The 2019 wine is linked to a shared 750 ml **package** and its 2019
+release. The 2021 and 2022 wines have no shared-reference link. The JSON
+proposes À la Côte dates for 2019 and 2022, but **not 2021**. This distinction
+was missing from the first linked preview explanation: an existing household
+wine is not itself a canonical shared release, and lack of a shared release
+does not imply that the wine is absent from the cellar. The current active
+reference selector also accepts `product` and `release` links but not
+`package` links, so even the existing 2019 package link needs a verified
+reader fix before this profile can appear on that wine card. Keep the draft
+unpublished until these paths are tested end to end.
 
 The owner has since specified a stronger release outcome: nearly all active
 wines in the real cellar must have a coherent three-date window in the
