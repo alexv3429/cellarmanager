@@ -428,9 +428,12 @@ The follow-up Gate 4 migration retains the oldest producer ID, reparents the
 other two cuvées and any household preference to it, and refuses to proceed
 if an unreviewed alias, window, evidence row or other reference points to a
 retired ID. It intentionally does not make canonical names globally unique:
-different real producers may share a name. CI, fresh backup, restored-copy
-rehearsal and linked deployment are required before this correction is live;
-none of this approves or publishes a drinking window.
+different real producers may share a name. CI, fresh backup and restored-copy
+rehearsal passed; the single migration was applied to the linked project on
+2 November, followed by a dry run with no pending migration. The two
+duplicate producer rows were removed, while their cuvées and releases retain
+their IDs. This correction does not approve or publish a drinking window;
+Gate 4 remains a draft no-go for full rollout.
 
 **Execution status (the contract defines each exit test):**
 
