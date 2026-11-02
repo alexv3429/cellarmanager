@@ -118,4 +118,6 @@ preview app loaded for the signed-in owner and displayed the new cuvée and
 region/appellation panels after its service-worker update. This verifies
 availability, not a completed cellar mapping or a published date. No live
 aggregate postflight query was run, so unchanged live counts are not claimed
-as independently measured.
+as independently measured. The disposable 2 November rehearsal database was
+dropped after these checks; the protected temporary export was retained for
+deliberate recovery only.
