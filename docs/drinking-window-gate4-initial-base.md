@@ -155,7 +155,7 @@ the preview and review the real candidates.
 **Correction of the reconciliation unit, 2 November:** The first preview
 looked for an existing *release for every wine card*. It therefore missed
 the reusable household decision the owner intended. A subsequent draft
-migration in this same PR adds one owner-confirmed producer/cuvée mapping
+migration (the fifth Gate 4 migration) in this same PR adds one owner-confirmed producer/cuvée mapping
 with appellation, colour and non-overlapping vintage bounds. The shared
 reference reader consults that mapping dynamically after an explicit wine
 link and before its producer-only fallback; future vintages can benefit
@@ -172,7 +172,7 @@ shared identities exist and the owner has confirmed group mappings.
 
 **Geographic-name correction in the same draft, 2 November:** Producer and
 cuvée links alone could still leave a wine blocked because its local region
-or appellation spelling did not match the shared place catalogue. A fifth,
+or appellation spelling did not match the shared place catalogue. A sixth,
 **not deployed** migration adds owner-only, audited household links for
 region/subregion names and for appellations within the linked region. The
 shared-window reader now resolves those local names before matching a
