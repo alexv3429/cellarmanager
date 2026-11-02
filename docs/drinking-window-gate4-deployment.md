@@ -247,4 +247,21 @@ users, 31 shared producers, 28 products, 19 LWIN7 identifiers, and zero
 normalized duplicate-producer-name groups. A rollback-only check confirmed
 that the resolver returns the existing unique Alvina Pernot ID and does not
 add a row. The disposable database was then dropped; the export remains.
-No linked migration has been applied as of this record.
+After the owner's explicit authorization and a second all-green CI run, the
+linked push applied **only** this migration using `--skip-vault`. A new linked
+dry run reported zero pending migrations, seeds or roles. Aggregate linked
+postflight counts match the preflight: 810 wines, 31 producers, 28 products,
+19 LWIN7 identifiers, zero normalized duplicate-name groups and one Alvina
+Pernot producer. The resolver function is installed. No wine, stock, date,
+publication or cellar rollout was modified by the migration.
+
+The next read-only largest-household audit found 802 active wine cards:
+300 have an effective shared producer link, 17 reach a cuvée and 16 reach a
+vintage; 502 lack a shared producer link. These are identity counts, **not**
+profile-backed drinking-window counts. Among the highest-impact unresolved
+local names, `Clos Marie` (23 cards) and `Alvina Pernot` (eight cards) each
+have one exact shared producer candidate, while shorthand labels such as
+`Clavelier` (25) and `Castagnier` (23) need explicit household-to-shared
+review. No local preference was written by this audit. These numbers set a
+bounded producer-name review batch; they do not justify automatic fuzzy
+linking or declaring Gate 4 complete.
