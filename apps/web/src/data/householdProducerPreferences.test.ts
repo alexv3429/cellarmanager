@@ -5,6 +5,7 @@ import {
   manageHouseholdProducerPreference,
   parseProducerReferences,
   parseProducerSources,
+  partitionProducerReferences,
   searchHouseholdReferenceProducers,
 } from "./householdProducerPreferences"
 
@@ -33,6 +34,18 @@ describe("household producer preferences", () => {
     expect(rpc).toHaveBeenCalledWith("search_household_reference_producers", { p_household_id: "household", p_query: "Barthod" })
     await expect(searchHouseholdReferenceProducers("household", " ", { rpc })).rejects.toThrow()
     expect(() => parseProducerReferences({ id: "producer" })).toThrow()
+  })
+
+  it("does not offer indistinguishable producer IDs as separate choices", () => {
+    expect(partitionProducerReferences([
+      { id: "one", canonicalName: "Alvina Pernot" },
+      { id: "two", canonicalName: "Alvina Pernot" },
+      { id: "three", canonicalName: "Alvina Pernot" },
+      { id: "four", canonicalName: "Ghislaine Barthod" },
+    ])).toEqual({
+      choices: [{ id: "four", canonicalName: "Ghislaine Barthod" }],
+      ambiguousNames: ["Alvina Pernot"],
+    })
   })
 
   it("submits an explicit local choice with optimistic concurrency", async () => {

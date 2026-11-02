@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react"
 import {
   getHouseholdProducerSources,
   manageHouseholdProducerPreference,
+  partitionProducerReferences,
   searchHouseholdReferenceProducers,
   type ProducerReference,
   type ProducerSource,
@@ -38,6 +39,9 @@ export function ProducerPreferencesPanel({ householdId, isOnline }: Props) {
       (source.canonicalName?.toLocaleLowerCase().includes(term) ?? false),
     )
   }, [sources, sourceFilter])
+  const { choices: unambiguousResults, ambiguousNames } = useMemo(
+    () => partitionProducerReferences(results), [results],
+  )
 
   useEffect(() => {
     if (!open || !isOnline) return
@@ -136,8 +140,11 @@ export function ProducerPreferencesPanel({ householdId, isOnline }: Props) {
                 </label>
                 {searching ? <p>{t("Searching…")}</p> : null}
                 {query.trim().length >= 2 && !searching && results.length === 0 ? <p>{t("No shared producer found. If a JSON profile exists, its producer identity still needs to be added to the shared base by a curator.")}</p> : null}
+                {ambiguousNames.length > 0 ? <Notice tone="warning">
+                  <strong>{ambiguousNames.join(", ")}</strong> — {t("Several shared producer identities have the same name. They must be reconciled or distinguished before you can choose one.")}
+                </Notice> : null}
                 <div className="producer-preferences__results" role="group" aria-label={t("Shared producers")}>
-                  {results.map((producer) => (
+                  {unambiguousResults.map((producer) => (
                     <button
                       aria-pressed={choice?.id === producer.id}
                       className={choice?.id === producer.id ? "is-selected" : ""}

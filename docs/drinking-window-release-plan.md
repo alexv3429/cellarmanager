@@ -411,6 +411,18 @@ backup, restored-copy rehearsal, and the linked migration push passed; the
 linked dry run reports zero pending changes. Signed-in owner confirmation in
 the preview is still needed before calling this a completed name link.
 
+**Gate 4 duplicate-identity safety check (2 November):** The owner then found
+several visually identical `Alvina Pernot` search choices. A fresh read-only
+linked public-data snapshot contains three distinct shared producer IDs with
+that exact name, each holding a different cuvée (Clos de la Garenne, Le
+Cailleret, Les Pucelles). A fourth visible occurrence can be the separate
+current-link label; the source list itself has three IDs. The preview now
+suppresses indistinguishable choices and asks for curator reconciliation,
+so the owner cannot accidentally link all local Alvina Pernot wines to only
+one of those partial identities. No producer identity or date has been
+merged or deleted. A verified, backed-up consolidation of these exact IDs
+requires the owner's explicit approval and a separate dependency check.
+
 **Execution status (the contract defines each exit test):**
 
 **Hard PR budget:** [PR #227](https://github.com/alexv3429/cellarmanager/pull/227)

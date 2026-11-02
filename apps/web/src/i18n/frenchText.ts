@@ -487,6 +487,7 @@ export const frenchText: Readonly<Record<string, string>> = {
   "Search shared producer profiles": "Chercher dans les fiches producteurs communes",
   "Searching…": "Recherche…",
   "No shared producer found. If a JSON profile exists, its producer identity still needs to be added to the shared base by a curator.": "Aucun producteur commun trouvé. Si un profil JSON existe, une personne habilitée doit encore ajouter l'identité du producteur à la base commune.",
+  "Several shared producer identities have the same name. They must be reconciled or distinguished before you can choose one.": "Plusieurs fiches communes portent le même nom. Elles doivent être réunies ou distinguées avant de pouvoir en choisir une.",
   "Shared producers": "Producteurs communs",
   "Selected shared producer": "Producteur commun sélectionné",
   "Save for this household": "Enregistrer pour ce foyer",

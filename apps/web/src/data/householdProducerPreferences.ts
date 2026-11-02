@@ -60,6 +60,29 @@ export function parseProducerReferences(value: unknown): ProducerReference[] {
   })
 }
 
+// An identical display name is not enough to choose between distinct shared
+// identities. Keep those results visible as an ambiguity, not clickable IDs.
+export function partitionProducerReferences(references: ProducerReference[]): {
+  choices: ProducerReference[]
+  ambiguousNames: string[]
+} {
+  const key = (name: string) => name.normalize("NFKD").replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase().replace(/\s+/g, " ").trim()
+  const grouped = new Map<string, ProducerReference[]>()
+  for (const reference of references) {
+    const normalized = key(reference.canonicalName)
+    grouped.set(normalized, [...(grouped.get(normalized) ?? []), reference])
+  }
+  const ambiguousKeys = new Set([...grouped].filter(([, entries]) =>
+    new Set(entries.map((entry) => entry.id)).size > 1,
+  ).map(([normalized]) => normalized))
+  return {
+    choices: references.filter((reference) => !ambiguousKeys.has(key(reference.canonicalName))),
+    ambiguousNames: [...grouped].filter(([normalized]) => ambiguousKeys.has(normalized))
+      .map(([, entries]) => entries[0].canonicalName),
+  }
+}
+
 async function call(name: string, parameters: Record<string, unknown>, options: Options): Promise<unknown> {
   let rpc = options.rpc
   if (!rpc) {
