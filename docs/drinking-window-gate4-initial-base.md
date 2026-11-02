@@ -170,6 +170,23 @@ baseline for explicit per-wine links, not a valid measure of effective
 group-based identity coverage. That coverage must be remeasured after the
 shared identities exist and the owner has confirmed group mappings.
 
+**Geographic-name correction in the same draft, 2 November:** Producer and
+cuvée links alone could still leave a wine blocked because its local region
+or appellation spelling did not match the shared place catalogue. A fifth,
+**not deployed** migration adds owner-only, audited household links for
+region/subregion names and for appellations within the linked region. The
+shared-window reader now resolves those local names before matching a
+profile. The Cellar setup panel asks for region first, then searches only
+appellations within that region; an incompatible pair is rejected. No global
+alias or wine text is changed. On the disposable restored database, 25
+rollback-only SQL assertions passed, including owner/member isolation,
+cross-household isolation, reuse across vintages, stale-decision protection,
+removal and the region/appellation hierarchy. The web test suite and build passed.
+This is the missing **mechanism**, not a claim that 23 profiles now cover
+the cellar: household links still need owner confirmation, and the shared
+products/releases and reviewed date rows must exist. Effective identity and
+date coverage must be measured afterwards.
+
 The [candidate-only profile-impact analyzer](../scripts/drinking_window/gate4_profile_impact.mjs)
 compared the 23 private JSON files with labels in the fresh isolated copy,
 using a **private, local-only producer spelling map**. By producer spelling,

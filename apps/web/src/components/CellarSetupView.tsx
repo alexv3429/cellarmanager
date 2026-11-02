@@ -36,6 +36,7 @@ import { Notice } from "./Notice"
 import { LocationQrLabel } from "./LocationQrLabel"
 import { ProducerPreferencesPanel } from "./ProducerPreferencesPanel"
 import { CuveeIdentityLinksPanel } from "./CuveeIdentityLinksPanel"
+import { PlaceIdentityLinksPanel } from "./PlaceIdentityLinksPanel"
 import { useLanguage } from "../i18n/useLanguage"
 import { formatLocalizedNumber } from "../i18n/formatting"
 
@@ -1054,6 +1055,7 @@ function OwnerCellarSetupView({
       ) : null}
       <ProducerPreferencesPanel householdId={householdId} isOnline={isOnline} />
       <CuveeIdentityLinksPanel householdId={householdId} isOnline={isOnline} />
+      <PlaceIdentityLinksPanel householdId={householdId} isOnline={isOnline} />
     </main>
   )
 }

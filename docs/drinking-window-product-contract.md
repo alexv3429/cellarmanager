@@ -124,6 +124,15 @@ must be processed through this same hierarchy; each missing shared identity
 or unresolved name stays visible in a coverage report rather than becoming
 an inferred match.
 
+The same distinction applies to geography. A cellar's region spelling can
+be linked once to a shared region or subregion; its appellation spelling can
+be linked within that region to a shared appellation. These links belong to
+the household, are auditable and reusable across vintages, and do not edit
+wine descriptions or create global aliases. An appellation outside the
+chosen region is invalid. The shared-window reader uses the confirmed local
+place links for the same wine, but a place link never approves or invents a
+drinking-window row. The owner must be able to remove or correct a link.
+
 At appellation and region scope, a reviewed ageing category or an explicit
 all-wines applicability statement is required where wines have materially
 different ageing styles. Membership is reviewed, not inferred from price,
