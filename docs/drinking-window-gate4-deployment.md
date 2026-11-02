@@ -227,3 +227,24 @@ research assertions, and 32 existing LWIN matching assertions passed. No
 local database change persisted. Before any linked application: require green
 fresh CI, protected backup, restored-copy migration rehearsal, and a linked
 dry run showing only this migration. Publication and cellar opt-in remain off.
+
+The fresh PR #231 CI run for commit `2baf859` passed all checks, including the
+Supabase database suite. The linked dry run listed exactly this migration,
+with zero seeds or roles. A new protected export of `public`, `private`,
+`auth`, `storage`, and `capture_guard` was retained outside Git at
+`/private/tmp/cellarmanager-gate4-lwin-fkNnyz` (directory mode 0700; both
+files mode 0600). SHA-256: `a649ad432c16a80ff235b2d489254389368d18b9980f6104c28691ea734c4ba3`
+for `schema.sql` and `22d0a9e107e1309533054eceac65382d0acb423e3fea3b43d008a0bead2ca8c4`
+for `data.sql`. This is sensitive temporary recovery material, not a durable
+managed backup. It must not be committed or restored over later live changes
+automatically.
+
+The complete export restored with `ON_ERROR_STOP=1` into isolated local
+database `cm_gate4_lwin_20261103` using `supabase_admin`; circular FK checks
+were disabled only in the data-restore session. The exact migration applied
+there without error. Before and after it: 810 wines, four households, six
+users, 31 shared producers, 28 products, 19 LWIN7 identifiers, and zero
+normalized duplicate-producer-name groups. A rollback-only check confirmed
+that the resolver returns the existing unique Alvina Pernot ID and does not
+add a row. The disposable database was then dropped; the export remains.
+No linked migration has been applied as of this record.
