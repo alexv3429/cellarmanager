@@ -423,6 +423,15 @@ one of those partial identities. No producer identity or date has been
 merged or deleted. A verified, backed-up consolidation of these exact IDs
 requires the owner's explicit approval and a separate dependency check.
 
+The owner authorized that specific Alvina Pernot consolidation on 2 November.
+The follow-up Gate 4 migration retains the oldest producer ID, reparents the
+other two cuvées and any household preference to it, and refuses to proceed
+if an unreviewed alias, window, evidence row or other reference points to a
+retired ID. It intentionally does not make canonical names globally unique:
+different real producers may share a name. CI, fresh backup, restored-copy
+rehearsal and linked deployment are required before this correction is live;
+none of this approves or publishes a drinking window.
+
 **Execution status (the contract defines each exit test):**
 
 **Hard PR budget:** [PR #227](https://github.com/alexv3429/cellarmanager/pull/227)
