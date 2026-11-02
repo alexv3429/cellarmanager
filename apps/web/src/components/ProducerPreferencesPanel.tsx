@@ -97,7 +97,7 @@ export function ProducerPreferencesPanel({ householdId, isOnline }: Props) {
     }}>
       <summary>{t("Producer names for this household")}</summary>
       <div className="producer-preferences__body">
-        <p>{t("Link a producer name in your catalogue to a shared producer profile. This choice applies only to this household; it does not rename your wines or change other cellars.")}</p>
+        <p>{t("Link a name in your catalogue to a producer already in the shared base. A saved JSON profile may still be awaiting review and will not appear here yet. This choice affects only this household; it does not rename wines or change other cellars.")}</p>
         {!isOnline ? <Notice tone="warning">{t("Reconnect to review producer names.")}</Notice> : null}
         {error ? <Notice role="alert" tone="error">{error}</Notice> : null}
         {message ? <Notice role="status" tone="success">{message}</Notice> : null}
@@ -135,7 +135,7 @@ export function ProducerPreferencesPanel({ householdId, isOnline }: Props) {
                   }} />
                 </label>
                 {searching ? <p>{t("Searching…")}</p> : null}
-                {query.trim().length >= 2 && !searching && results.length === 0 ? <p>{t("No shared producer found. This screen does not create a new shared profile.")}</p> : null}
+                {query.trim().length >= 2 && !searching && results.length === 0 ? <p>{t("No shared producer found. If a JSON profile exists, its producer identity still needs to be added to the shared base by a curator.")}</p> : null}
                 <div className="producer-preferences__results" role="group" aria-label={t("Shared producers")}>
                   {results.map((producer) => (
                     <button
