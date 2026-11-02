@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(11);
+select plan(13);
 
 select ok(
     to_regprocedure(
@@ -172,6 +172,13 @@ where subscription.exemplar_wine_id =
 
 grant select on table pending_identity_case to authenticated;
 
+-- A curator/import path may have already established the producer. LWIN
+-- research confirmation must link to that same ID, not create another row.
+insert into public.wine_reference_entities(id, entity_type)
+values ('00000000-0000-4000-8000-0000000008f1', 'producer');
+insert into public.wine_reference_producers(id, canonical_name)
+values ('00000000-0000-4000-8000-0000000008f1', 'de Cazeneuve');
+
 -- Reproduce a real correction made after the request was created: the case
 -- snapshot still says "Cazeneuve", while the wine now carries the full name.
 update public.wines wine
@@ -245,6 +252,20 @@ select is(
 );
 
 reset role;
+
+select is(
+    (select count(*)::integer from public.wine_reference_producers producer
+     where private.normalize_wine_reference_text(producer.canonical_name) = 'de cazeneuve'),
+    1,
+    'Research confirmation does not duplicate an existing canonical producer'
+);
+select is(
+    (select producer_id::text from public.wine_reference_household_producer_preferences
+     where household_id = '00000000-0000-4000-8000-000000000100'
+       and source_producer_normalized = 'chateau de cazeneuve'),
+    '00000000-0000-4000-8000-0000000008f1',
+    'The local producer name points to the preexisting shared identity'
+);
 
 select is(
     (

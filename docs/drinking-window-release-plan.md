@@ -435,6 +435,34 @@ duplicate producer rows were removed, while their cuvées and releases retain
 their IDs. This correction does not approve or publish a drinking window;
 Gate 4 remains a draft no-go for full rollout.
 
+**Gate 4 identity-path cleanup in draft #231 (3 November; code not yet
+deployed):** The owner correctly identified that the canonical producer graph
+had several creation routes. The LWIN match-confirmation route could create a
+new producer for every newly promoted LWIN7 even when an exact canonical
+producer already existed; the LWIN research-confirmation route chose the first
+same-name producer on ambiguity. A new migration makes both routes resolve a
+single normalized canonical name under a lock shared with the curator profile
+batch. A unique existing producer is reused; no existing producer means one
+new producer; multiple same-name producers or a missing source producer name
+block without promoting the product. The local `Pernot` text remains in the
+household and its explicit mapping points **toward** the shared ID. LWIN is
+still an optional external product identifier, not the identity authority for
+the producer JSON. Rollback-only local tests cover two Alvina Pernot cuvées,
+ambiguity, missing name, existing LWIN matching, and research reuse. This is
+not a live-data merge, a date approval, or a claim of full profile coverage.
+
+**Finite Gate 4 exit check:** Keep this correction inside #231, not a new PR.
+After CI, back up and rehearse the single new migration, apply it only with
+owner authorization, then verify one producer/cuvée link in the signed-in
+preview and remeasure duplicate-name and source-by-source window counts. A
+bounded exception list must identify any identity still needing owner review;
+no fuzzy match may be auto-accepted. Gate 4 may then hand the measured,
+unpublished base to Gate 5. Gate 5 remains responsible for the promised
+near-all-wines profile-backed coverage, publication and official-app
+verification; the 95% criterion is not waived or replaced by legacy-model
+dates. If the measured gap makes that impossible within the remaining PR
+slot, report it before claiming either gate complete.
+
 **Execution status (the contract defines each exit test):**
 
 **Hard PR budget:** [PR #227](https://github.com/alexv3429/cellarmanager/pull/227)
@@ -452,7 +480,7 @@ in every PR description.
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
 | 3. Complete profile exchange | #230 merged in slot 4/6; full CI green, linked migrations backed up/rehearsed/applied; signed-in owner import/preview/export checked; one Burgaud file saved privately and candidates added to Proposals, nothing published live | Preserve full-profile exchange and audited in-app curator path. |
-| 4. Prepare initial common base | Draft #231 in slot 5/6: 23 files/670 proposals saved to the linked curator archive. The prior cellar baseline was 753/802 complete windows (751 old model, two manual), **785/802 without an explicit per-wine link**, zero active reviewed-profile windows. All six Gate 4 migrations have now been backed up, rehearsed, CI-tested and applied to the linked project; the last three add per-wine reconciliation and household producer/cuvée/region/appellation links, without creating any links automatically. One Dureuil-Janthial identity and its **2024 / 2026–2034** editorial estimate were previously staged in unpublished version 2; the fresh predeployment backup contained three reference rows. Nothing was published or opted in by these migrations. The restored-copy identity reader found 201 ready contexts among 804 active cards, but this is **not** a profile-backed window count. | **No-go for merge/publication.** Create/review missing canonical producer, cuvée and release identities from the 23 profiles; confirm household name links, continue editorial date and scoped-fallback review, then remeasure effective shared identity and three-date coverage by source. Do not use the old model's 751 rows as proof of profile coverage. |
+| 4. Prepare initial common base | Draft #231 in slot 5/6: 23 files/670 proposals saved to the linked curator archive. The prior cellar baseline was 753/802 complete windows (751 old model, two manual), **785/802 without an explicit per-wine link**, zero active reviewed-profile windows. Six earlier Gate 4 migrations were backed up, rehearsed, CI-tested and applied to the linked project; a seventh, fixing LWIN identity paths, is now proposed but **not** applied. One Dureuil-Janthial identity and its **2024 / 2026–2034** editorial estimate were staged in unpublished version 2. Nothing was published or opted in by these migrations. The restored-copy identity reader found 201 ready contexts among 804 active cards, but this is **not** a profile-backed window count. | **No-go for merge/publication.** Finish the bounded identity-path fix and its deployment checks; confirm representative household-to-shared name links and remeasure duplicates and window coverage by source. Hand the measured exception list to Gate 5 rather than opening another identity PR. Do not use old-model dates as proof of profile coverage. |
 | 5. Release and verify | Not started | Publish the approved reference, enable it for the consenting cellar, and verify the official app on real wines. Gate 5 passes only with a complete source-by-source coverage report, at least 95% of active wines with coherent three-date windows, each exception named, and the reviewer-approved profile dates shown where applicable; then verify cross-household behavior and rollback. Report legacy-only wines and material old/new discrepancies explicitly before deciding with the owner whether the legacy bridge can be removed. Do not call a model-dominated result the completed new system. |
 
 **Merge/deployment rule:** Do not describe #227 as feature-complete or ask the

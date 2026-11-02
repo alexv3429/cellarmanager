@@ -205,3 +205,25 @@ No drinking window was approved or published, no cellar was opted in, and the
 Gate 4 PR remains a draft no-go for merge and rollout.
 The disposable restored database was dropped after the checks; the protected
 temporary export remains available for deliberate recovery.
+
+## Pending LWIN producer-path correction — 3 November
+
+Migration `20261103100000_gate4_lwin_producer_identity_resolution.sql` is
+proposed in the same draft PR and has **not** been applied to the linked
+project. It changes only two owner-confirmed LWIN paths: when an LWIN product
+is promoted or a LWIN-backed research producer is confirmed, they reuse one
+unambiguous canonical producer. Multiple exact normalized producer rows and
+missing LWIN producer names stop without creating a new product or link. The
+existing household label remains local; its remembered choice points to the
+shared producer. The curator profile batch and these paths serialize producer
+resolution with the same advisory lock.
+
+The local Supabase instance is older than this PR (migration ledger ends at
+`20261022110000`), so a whole-suite run against it fails on absent later
+functions and is not valid CI evidence. We did **not** reset that instance.
+Instead, this migration and the three directly affected SQL tests were run
+in separate rollback-only transactions on it: 9 new path assertions, 13
+research assertions, and 32 existing LWIN matching assertions passed. No
+local database change persisted. Before any linked application: require green
+fresh CI, protected backup, restored-copy migration rehearsal, and a linked
+dry run showing only this migration. Publication and cellar opt-in remain off.
