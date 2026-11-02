@@ -152,6 +152,24 @@ profile-based coverage. The remaining work is to curate and add verified
 producer/cuvée/release identities from the supplied profiles, then rerun
 the preview and review the real candidates.
 
+**Correction of the reconciliation unit, 2 November:** The first preview
+looked for an existing *release for every wine card*. It therefore missed
+the reusable household decision the owner intended. A subsequent draft
+migration in this same PR adds one owner-confirmed producer/cuvée mapping
+with appellation, colour and non-overlapping vintage bounds. The shared
+reference reader consults that mapping dynamically after an explicit wine
+link and before its producer-only fallback; future vintages can benefit
+without changing any local wine text. The owner interface places cuvée
+mapping immediately after producer mapping in Cellar setup. A local
+disposable-restore test covers owner-only access, a shorter local Boillot
+label → longer canonical Caillerets label, two rename eras, exact-release
+resolution, and isolation from another household. This implementation is
+**not deployed** and does not create canonical products, approve dates or
+publish a profile. The earlier 785-card `wine_reference_id` count is a
+baseline for explicit per-wine links, not a valid measure of effective
+group-based identity coverage. That coverage must be remeasured after the
+shared identities exist and the owner has confirmed group mappings.
+
 The [candidate-only profile-impact analyzer](../scripts/drinking_window/gate4_profile_impact.mjs)
 compared the 23 private JSON files with labels in the fresh isolated copy,
 using a **private, local-only producer spelling map**. By producer spelling,

@@ -351,6 +351,23 @@ the supplied profiles must populate the common graph before the cellar-wide
 reconciler can provide meaningful coverage. Do not present the six as
 confirmed matches or count them toward published-window coverage.
 
+**Gate 4 group-level correction, 2 November (still draft #231):** The owner
+clarified that matching is primarily producer spelling once, then cuvée
+spelling within that producer (using appellation and colour), then vintage.
+The previous release-per-wine preview remains useful for exceptions but is
+not the primary coverage mechanism. A new unpublished migration and Cellar
+setup panel implement owner-confirmed, cellar-only cuvée links with bounded
+vintage eras, after the existing owner producer preference. The shared
+reader resolves an exact release only if it is unambiguous; otherwise the
+product or confirmed producer can support an appropriately scoped fallback.
+The local disposable-restore SQL regression passed 17 assertions, and the
+focused client tests and web build pass. Neither this migration nor these
+group decisions have been applied to the linked project. The 23 JSONs still
+need canonical product/release creation and editorial date review; a name
+link alone cannot make a missing three-date row appear. Re-measure effective
+identity and shared-date coverage after those steps, not just non-null
+`wine_reference_id` counts. Gate 4 remains **no-go**.
+
 **Execution status (the contract defines each exit test):**
 
 **Hard PR budget:** [PR #227](https://github.com/alexv3429/cellarmanager/pull/227)
@@ -368,7 +385,7 @@ in every PR description.
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
 | 3. Complete profile exchange | #230 merged in slot 4/6; full CI green, linked migrations backed up/rehearsed/applied; signed-in owner import/preview/export checked; one Burgaud file saved privately and candidates added to Proposals, nothing published live | Preserve full-profile exchange and audited in-app curator path. |
-| 4. Prepare initial common base | Draft #231 in slot 5/6: 23 files/670 proposals saved to the linked curator archive. The real-cellar baseline was 753/802 complete windows (751 old model, two manual), **785/802 unlinked**, zero active reviewed-profile windows. Three new migrations were backed up, rehearsed, CI-tested and applied to the linked project on 1 November. The curator then created **one** verified Dureuil-Janthial Les Margotés 2021 identity and staged its checked **2024 / 2026–2034** editorial estimate in unpublished version 2; the other 28 Dureuil rows remained unstaged. The draft contains two approved rows including the prior Côte du Py 2022 row, passes its check and has one match among 804 wine cards in the read-only effect preview. Nothing is published or opted in. Chagnoleau remains only 1/51 ready in its isolated mapping preview; the package reader resolves 10/15 package-linked wines to complete canonical context. The current cellar identity UI remains one wine at a time. | **No-go for merge/publication.** Implement audited cellar-to-shared identity reconciliation in this same PR: link only unique, consistent matches; queue ambiguous/missing matches for focused review; preserve local descriptions. Continue editorial date and scoped-fallback review, then remeasure confirmed links and three-date coverage by source. |
+| 4. Prepare initial common base | Draft #231 in slot 5/6: 23 files/670 proposals saved to the linked curator archive. The real-cellar baseline was 753/802 complete windows (751 old model, two manual), **785/802 without an explicit per-wine link**, zero active reviewed-profile windows. Three earlier Gate 4 migrations were backed up, rehearsed, CI-tested and applied to the linked project on 1 November. One Dureuil-Janthial identity and its **2024 / 2026–2034** editorial estimate were staged in unpublished version 2; the draft has two approved rows including Côte du Py 2022 and one read-only effect match among 804 wine cards. Nothing is published or opted in. A fourth, **not deployed** migration now adds household producer/cuvée mapping across vintages with rename-era bounds; local SQL and web tests pass. | **No-go for merge/publication.** Create/review the missing canonical producer, cuvée and release identities from all 23 profiles; get owner confirmation of local name links, continue editorial date and scoped-fallback review, then remeasure effective shared identity and three-date coverage by source. Do not use the old model's 751 rows as proof of profile coverage. |
 | 5. Release and verify | Not started | Publish the approved reference, enable it for the consenting cellar, and verify the official app on real wines. Gate 5 passes only with a complete source-by-source coverage report, at least 95% of active wines with coherent three-date windows, each exception named, and the reviewer-approved profile dates shown where applicable; then verify cross-household behavior and rollback. Report legacy-only wines and material old/new discrepancies explicitly before deciding with the owner whether the legacy bridge can be removed. Do not call a model-dominated result the completed new system. |
 
 **Merge/deployment rule:** Do not describe #227 as feature-complete or ask the

@@ -106,6 +106,24 @@ a global alias. Gate 4 must measure confirmed links, suggested matches and
 unresolved wines separately; the current one-by-one identity review panel is
 not sufficient evidence of this contract at cellar scale.
 
+**Reusable household identity decisions (owner clarification, 2 November
+2026).** Reconcile in this order, once per local naming pattern rather than
+once per bottle: (1) the household's producer spelling → canonical producer;
+(2) that producer's local cuvée spelling, with appellation and colour as
+discriminators → canonical cuvée; (3) its vintage → the canonical release, if
+that release exists and is unambiguous. A cuvée decision normally covers all
+vintages. A documented rename or change of identity requires separate,
+non-overlapping vintage ranges (for example Burgaud's Les Charmes/Ruyère
+era); the app must never apply a timeless alias across such a boundary by
+default. An explicit wine-card identity remains a higher-priority exception.
+Producer-only reference rows may use the confirmed producer even when the
+cuvée has no canonical product yet. Exact-release rows require the product
+and release and all applicable place, colour and format checks. These are
+identity decisions, **not** approval of the dates. The 23 supplied profiles
+must be processed through this same hierarchy; each missing shared identity
+or unresolved name stays visible in a coverage report rather than becoming
+an inferred match.
+
 At appellation and region scope, a reviewed ageing category or an explicit
 all-wines applicability statement is required where wines have materially
 different ageing styles. Membership is reviewed, not inferred from price,
