@@ -155,25 +155,28 @@ the preview and review the real candidates.
 **Correction of the reconciliation unit, 2 November:** The first preview
 looked for an existing *release for every wine card*. It therefore missed
 the reusable household decision the owner intended. A subsequent draft
-migration (the fifth Gate 4 migration) in this same PR adds one owner-confirmed producer/cuvée mapping
-with appellation, colour and non-overlapping vintage bounds. The shared
+migration (the fifth Gate 4 migration) in this same PR adds one
+owner-confirmed producer/cuvée mapping with appellation, colour and
+non-overlapping vintage bounds. The shared
 reference reader consults that mapping dynamically after an explicit wine
 link and before its producer-only fallback; future vintages can benefit
 without changing any local wine text. The owner interface places cuvée
 mapping immediately after producer mapping in Cellar setup. A local
 disposable-restore test covers owner-only access, a shorter local Boillot
 label → longer canonical Caillerets label, two rename eras, exact-release
-resolution, and isolation from another household. This implementation is
-**not deployed** and does not create canonical products, approve dates or
-publish a profile. The earlier 785-card `wine_reference_id` count is a
+resolution, and isolation from another household. At that stage, this
+implementation was **not deployed**; its later deployment is recorded below.
+It does not create canonical products, approve dates or publish a profile.
+The earlier 785-card `wine_reference_id` count is a
 baseline for explicit per-wine links, not a valid measure of effective
 group-based identity coverage. That coverage must be remeasured after the
 shared identities exist and the owner has confirmed group mappings.
 
 **Geographic-name correction in the same draft, 2 November:** Producer and
 cuvée links alone could still leave a wine blocked because its local region
-or appellation spelling did not match the shared place catalogue. A sixth,
-**not deployed** migration adds owner-only, audited household links for
+or appellation spelling did not match the shared place catalogue. A sixth
+migration, **not deployed at the time of this initial audit**, adds
+owner-only, audited household links for
 region/subregion names and for appellations within the linked region. The
 shared-window reader now resolves those local names before matching a
 profile. The Cellar setup panel asks for region first, then searches only
