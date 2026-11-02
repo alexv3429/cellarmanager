@@ -395,8 +395,8 @@ canonical identities, confirm the local correspondences, and remeasure
 actual reviewed-profile three-date coverage. The full deployment record is
 [here](drinking-window-gate4-deployment.md); Gate 4 remains **no-go**.
 
-**Gate 4 producer-name correction in draft #231 (2 November, not yet
-database-deployed):** The owner found that local `Chaland` returned no shared
+**Gate 4 producer-name correction in draft #231 (2 November, deployed to the
+linked database):** The owner found that local `Chaland` returned no shared
 producer even though the audited JSON archive contains `Domaine Sainte-Barbe
 — Jean-Marie Chaland`. The archive is a review queue, whereas the household
 search reads only canonical producer identities. A comparison of all 23
@@ -406,9 +406,10 @@ to the common base. It does **not** create global shorthand aliases, link any
 household catalogue, create cuvées/releases, stage or publish dates, or imply
 that all 23 producer profiles have been activated. The owner must still choose
 the now-searchable shared producer for local `Chaland`. The UI also explains
-this distinction when an archived JSON profile is not yet searchable. CI and
-linked-database deployment/postflight remain required before claiming that
-the correction is available in the preview.
+this distinction when an archived JSON profile is not yet searchable. CI,
+backup, restored-copy rehearsal, and the linked migration push passed; the
+linked dry run reports zero pending changes. Signed-in owner confirmation in
+the preview is still needed before calling this a completed name link.
 
 **Execution status (the contract defines each exit test):**
 

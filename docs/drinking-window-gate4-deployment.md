@@ -121,3 +121,42 @@ aggregate postflight query was run, so unchanged live counts are not claimed
 as independently measured. The disposable 2 November rehearsal database was
 dropped after these checks; the protected temporary export was retained for
 deliberate recovery only.
+
+## Missing profile producer identities — 2 November
+
+The owner reported that `Chaland` was absent from the household name-link
+search despite its audited JSON profile being saved. That search reads
+`wine_reference_producers`; a private JSON review archive does not create a
+common producer identity. A comparison with the predeployment canonical
+snapshot identified nine missing producer names across the 23 archived
+profiles. Migration `20261102130000_gate4_profile_producer_identities.sql`
+adds only those nine producer entities. It creates no cuvées, releases,
+global shorthand aliases, household links, windows, or approvals.
+
+All PR #231 CI checks passed. The linked dry run named exactly this migration,
+zero seeds and zero roles. A fresh protected schema/data export of `public`,
+`private`, `auth`, `storage`, and `capture_guard` is retained outside Git at
+`/private/tmp/cellarmanager-gate4-chaland-backup.aLGQga` (directory 0700,
+files 0600). SHA-256: `cde844fa396f56d0f64e4ee2cd1fa194a6a8061f407eb789e8e384babc185033`
+for `schema.sql` and `e5f729b3f13f54c23602478042d62d3ad2736e742d9652804e727496f56d91a4`
+for `data.sql`. This is sensitive temporary recovery material, not a durable
+managed backup; do not commit it or restore it over subsequent live changes.
+
+The completed export restored into isolated local database
+`cm_gate4_chaland_20261102` with `ON_ERROR_STOP=1`; trigger checks were
+disabled only in that data-restore connection. Before migration it contained
+810 wines, four households, six users, 24 shared producers, and no producer
+whose normalized name contains `chaland`. The exact migration applied there
+without error. Afterward it still contained 810 wines, four households and
+six users, with 33 shared producers, one Chaland producer and zero products
+for that producer. The local fixture's six SQL regression assertions and the
+web checks passed. The isolated restore is disposable; the protected backup
+is retained for deliberate recovery only.
+
+The linked push reported exactly this migration. A fresh linked dry run shows
+zero pending migrations, seeds or roles. No live aggregate query or signed-in
+owner name-link test has yet been run, so the restored-copy counts should not
+be presented as live postflight results. The owner still needs to select the
+now-searchable shared producer for local `Chaland`; the migration does not
+do that automatically. This is a name-link correction, not completion of the
+Gate 4 drinking-window base or authorization to merge/publish.
