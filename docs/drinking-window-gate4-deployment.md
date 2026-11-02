@@ -81,3 +81,41 @@ aside. The built-in draft check passed; its read-only effect preview found
 one match among 804 wine cards. No version was published, no household
 opted in, and no cellar wine was linked by these actions. The detailed
 identity and source review is in the [Gate 4 audit](drinking-window-gate4-initial-base.md).
+
+## Household-name tooling extension — 2 November
+
+After the owner asked to finish the local-name reconciliation mechanism, three
+more Gate 4 migrations were installed on the same linked project, in order:
+`20261102100000_household_wine_identity_reconciliation.sql`,
+`20261102110000_household_cuvee_identity_links.sql`, and
+`20261102120000_household_place_identity_links.sql`. These add a bounded
+per-wine candidate preview, reusable owner-confirmed cuvée links and
+household-only region/appellation links. They do not create a link, approve a
+date or publish a profile by themselves.
+
+Before this push, the draft PR's database, web, audit, Worker and CI-gate
+checks all passed. The linked dry run listed exactly those three migrations,
+zero seeds and zero roles. A fresh protected schema/data backup of `public`,
+`private`, `auth`, `storage` and `capture_guard` was saved outside Git at
+`/private/tmp/cellarmanager-gate4-links-backup.mlJh9D` (directory 0700,
+files 0600), with SHA-256 `0daecd725808254d9469d45b298c3b9b99241415fb68330dba33c8b777faf2e3`
+for `schema.sql` and `87dacaea8e62ef97a91a4415ecf5123d7bf2f7e5a978f5728f9501f4bcf67337`
+for `data.sql`. This is sensitive, temporary recovery material, not a durable
+managed backup. The export restored into a separate local database with
+trigger checks disabled **only during that local data-restore session**.
+Its preflight counts were 810 wines, four households, six users, 23 saved
+profiles and three reference rows.
+
+All three migrations applied successfully on that fresh clone. The cuvée
+and geographic regression tests passed in rollback transactions (17 and 25
+assertions respectively); the earlier per-wine test uses a seeded household
+fixture absent from the restored live copy, but passed in the PR's fresh
+Supabase CI. The clone retained the five preflight counts above, and the
+new household cuvée, region and appellation link tables remained empty.
+The linked push then reported exactly the three migrations, and a fresh
+linked dry run showed **zero pending migrations, seeds or roles**. The
+preview app loaded for the signed-in owner and displayed the new cuvée and
+region/appellation panels after its service-worker update. This verifies
+availability, not a completed cellar mapping or a published date. No live
+aggregate postflight query was run, so unchanged live counts are not claimed
+as independently measured.

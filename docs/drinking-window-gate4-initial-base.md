@@ -187,6 +187,20 @@ the cellar: household links still need owner confirmation, and the shared
 products/releases and reviewed date rows must exist. Effective identity and
 date coverage must be measured afterwards.
 
+**Deployment update, 2 November:** After a fresh protected backup, restored-
+copy rehearsal and green PR CI, the three pending reconciliation migrations
+were applied to linked `cellarmanager-v02-dev`. The linked dry run is now
+empty. No household naming link was created by migration, and no profile
+date was published or enabled. The preview app shows the new owner panels.
+On the fresh restored copy, before owner decisions, the shared-context
+reader classified 804 active wine cards as 201 `ready`, 305 producer/cuvée
+unlinked, 213 appellation unconfirmed, 75 region unconfirmed and 10 lacking
+the required place/colour/vintage fields. `ready` means identity context is
+usable, **not** that a reviewed shared three-date window is available. The
+23-profile coverage remains to be measured after canonical identities and
+owner mappings are actually confirmed. See the
+[deployment record](drinking-window-gate4-deployment.md).
+
 The [candidate-only profile-impact analyzer](../scripts/drinking_window/gate4_profile_impact.mjs)
 compared the 23 private JSON files with labels in the fresh isolated copy,
 using a **private, local-only producer spelling map**. By producer spelling,

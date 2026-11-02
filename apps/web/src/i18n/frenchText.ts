@@ -524,6 +524,7 @@ export const frenchText: Readonly<Record<string, string>> = {
   "Cellar appellations": "Appellations de la cave",
   "Showing the first 50 places. Search to narrow the list.": "Les 50 premiers lieux sont affichés. Affinez la recherche pour voir les autres.",
   "Region and appellation disagree": "Région et appellation incompatibles",
+  "Link the region first": "Région à associer d’abord",
   "Current shared place": "Lieu commun actuel",
   "Household choice": "Choix de ce foyer",
   "Recognised common name": "Nom commun reconnu",

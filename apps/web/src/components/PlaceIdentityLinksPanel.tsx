@@ -127,7 +127,9 @@ export function PlaceIdentityLinksPanel({ householdId, isOnline }: Props) {
           {filtered.appellations.slice(0, 50).map((group) => <button className={selectedKey === key(group) ? "is-selected" : ""}
             key={key(group)} onClick={() => select(group)} type="button">
             <strong>{group.sourceAppellation}</strong><span>{group.sourceArea} · {group.wineCount} {t("wines")}</span>
-            <span>{!group.valid ? t("Region and appellation disagree") : group.resolvedName ?? t("No local match yet")}</span>
+            <span>{!group.regionId ? t("Link the region first")
+              : !group.valid ? t("Region and appellation disagree")
+                : group.resolvedName ?? t("No local match yet")}</span>
           </button>)}
           {filtered.appellations.length > 50 ? <p>{t("Showing the first 50 places. Search to narrow the list.")}</p> : null}
         </div>
