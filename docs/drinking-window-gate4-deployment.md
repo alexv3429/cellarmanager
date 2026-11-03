@@ -266,7 +266,7 @@ review. No local preference was written by this audit. These numbers set a
 bounded producer-name review batch; they do not justify automatic fuzzy
 linking or declaring Gate 4 complete.
 
-## Producer-name suggestion rehearsal — not linked-deployed
+## Producer-name suggestion deployment — linked, no mappings saved
 
 The next proposed migration, `20261103110000_gate4_household_producer_suggestions.sql`,
 adds owner-only suggestions to the existing producer-name review response. It
@@ -290,6 +290,25 @@ producer (seven exact, 15 similar), affecting 248 active cards; zero have
 multiple suggestions and 114 have none. These are **candidate groups, not
 confirmed identities or active profile windows**. The rehearsal wrote no
 household mapping; its disposable database was dropped after the audit.
-The migration has not been pushed to the linked
-project; a fresh backup, rehearsal, green CI and separate owner authorization
-are required before that step.
+After the owner authorized deployment conditional on green CI and rehearsal,
+all PR #231 checks passed for commit `f699c9e`. A fresh export of `public`,
+`private`, `auth`, `storage` and `capture_guard` was retained outside Git at
+`/private/tmp/cellarmanager-gate4-producer-suggestions.VKNsYC` (directory
+mode 0700, files 0600). SHA-256: `0e539d53fbd1bd0712b6c3a16aea48d2cacd67984e70fd8878241446c2008993`
+for `schema.sql` and `ac79cdca55d4d5a2e7a7ef60abdad2163d0e19fd285c30202fd2cba9d84a8f03`
+for `data.sql`. This is sensitive temporary recovery material, not a durable
+managed backup; never commit it or automatically restore it over subsequent
+live changes.
+
+The fresh export restored with `ON_ERROR_STOP=1` into isolated local database
+`cm_gate4_suggestions_fresh_20261103` with the standard extension
+prerequisites. The exact migration applied without error. Before and after:
+810 wine rows, 31 shared producers, 11 household producer-name preferences,
+and 28 shared products. The owner-only read-only RPC returned 22 single
+candidate groups affecting 248 active cards, without saving a preference.
+The linked dry run listed exactly `20261103110000` and no seeds or roles.
+The owner-authorized linked push applied only that migration; the subsequent
+linked dry run reported zero pending migrations, seeds or roles. This
+deployment did not write a household mapping, change any wine or stock, or
+approve or publish a drinking window. The preview owner walkthrough and
+source-by-source coverage audit are still required before Gate 4 can close.
