@@ -206,7 +206,7 @@ Gate 4 PR remains a draft no-go for merge and rollout.
 The disposable restored database was dropped after the checks; the protected
 temporary export remains available for deliberate recovery.
 
-## Pending LWIN producer-path correction — 3 November
+## LWIN producer-path correction — deployed 3 November
 
 Migration `20261103100000_gate4_lwin_producer_identity_resolution.sql` is
 proposed in the same draft PR and has **not** been applied to the linked
@@ -265,3 +265,31 @@ have one exact shared producer candidate, while shorthand labels such as
 review. No local preference was written by this audit. These numbers set a
 bounded producer-name review batch; they do not justify automatic fuzzy
 linking or declaring Gate 4 complete.
+
+## Producer-name suggestion rehearsal — not linked-deployed
+
+The next proposed migration, `20261103110000_gate4_household_producer_suggestions.sql`,
+adds owner-only suggestions to the existing producer-name review response. It
+looks only at active wines and shared canonical names or curated aliases.
+An exact name, a curated alias and a substring resemblance have different
+labels; none is saved automatically. A separate UI checklist requires the
+owner to select each household-specific mapping explicitly. The curator
+profile workflow can narrow an identity-only batch to unblocked releases and
+re-preview before confirming; it does not approve dates.
+
+The protected 3 November snapshot above was restored again into a new,
+isolated local database `cm_gate4_suggestions_20261103`. An initial restore
+attempt failed on a missing local `unaccent` extension; that disposable
+database was dropped and recreated with the same extension prerequisites as
+local Supabase. The complete schema and data then restored with
+`ON_ERROR_STOP=1`; the proposed suggestion migration applied cleanly. Under
+the pilot owner's read-only RPC context, the copy has 802 active wine cards
+under 147 normalized producer names. Eleven names already have household
+mappings. Of the 136 unmapped groups, 22 have one suggested canonical
+producer (seven exact, 15 similar), affecting 248 active cards; zero have
+multiple suggestions and 114 have none. These are **candidate groups, not
+confirmed identities or active profile windows**. The rehearsal wrote no
+household mapping; its disposable database was dropped after the audit.
+The migration has not been pushed to the linked
+project; a fresh backup, rehearsal, green CI and separate owner authorization
+are required before that step.

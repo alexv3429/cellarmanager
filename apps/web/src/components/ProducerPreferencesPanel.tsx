@@ -25,6 +25,7 @@ export function ProducerPreferencesPanel({ householdId, isOnline }: Props) {
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<ProducerReference[]>([])
   const [choice, setChoice] = useState<ProducerReference | null>(null)
+  const [batchSelection, setBatchSelection] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [searching, setSearching] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -42,6 +43,14 @@ export function ProducerPreferencesPanel({ householdId, isOnline }: Props) {
   const { choices: unambiguousResults, ambiguousNames } = useMemo(
     () => partitionProducerReferences(results), [results],
   )
+  const { choices: suggestedChoices, ambiguousNames: ambiguousSuggestions } = useMemo(
+    () => partitionProducerReferences(selected?.suggestions ?? []), [selected],
+  )
+  const remainingNames = sources.filter((source) => !source.producerId).length
+  const batchCandidates = useMemo(() => sources.filter((source) =>
+    !source.producerId && source.suggestions.length === 1,
+  ).sort((a, b) => b.wineCount - a.wineCount || a.sourceText.localeCompare(b.sourceText)), [sources])
+  const batchWineCount = batchCandidates.reduce((count, source) => count + source.wineCount, 0)
 
   useEffect(() => {
     if (!open || !isOnline) return
@@ -84,6 +93,7 @@ export function ProducerPreferencesPanel({ householdId, isOnline }: Props) {
       await manageHouseholdProducerPreference(householdId, selected, action, choice?.id ?? null)
       const next = await getHouseholdProducerSources(householdId)
       setSources(next)
+      setBatchSelection([])
       setChoice(null)
       setMessage(t("Producer preference saved for this household only."))
     } catch (cause) {
@@ -93,8 +103,38 @@ export function ProducerPreferencesPanel({ householdId, isOnline }: Props) {
     }
   }
 
+  async function saveBatch() {
+    if (!isOnline || saving || !batchSelection.length) return
+    setSaving(true)
+    setError(null)
+    setMessage(null)
+    let saved = 0
+    const failed: string[] = []
+    for (const key of batchSelection) {
+      const source = batchCandidates.find((candidate) => candidate.normalized === key)
+      if (!source) continue
+      try {
+        await manageHouseholdProducerPreference(householdId, source, "set", source.suggestions[0].id)
+        saved++
+      } catch (cause) {
+        failed.push(`${source.sourceText}: ${String(cause)}`)
+      }
+    }
+    try {
+      setSources(await getHouseholdProducerSources(householdId))
+      setBatchSelection([])
+      if (saved) setMessage(t("{count} producer name matches saved for this household only.", { count: String(saved) }))
+      if (failed.length) setError(t("Some producer names could not be linked; refresh and check them again.") + " " + failed.join(" · "))
+    } catch (cause) {
+      setError(String(cause))
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <details className="producer-preferences" open={open} onToggle={(event) => {
+      if (event.target !== event.currentTarget) return
       const nextOpen = event.currentTarget.open
       setOpen(nextOpen)
       if (nextOpen) { setLoading(isOnline); setError(null) }
@@ -108,6 +148,27 @@ export function ProducerPreferencesPanel({ householdId, isOnline }: Props) {
         {loading ? <p>{t("Loading producer names…")}</p> : null}
         {isOnline && !loading ? (
           <>
+            <p>{t("{count} local producer names still need a household match.", { count: String(remainingNames) })}</p>
+            {batchCandidates.length ? <details className="producer-preferences__batch">
+              <summary>{t("Review {count} possible producer links affecting {wines} wines", {
+                count: String(batchCandidates.length), wines: String(batchWineCount),
+              })}</summary>
+              <p>{t("Select only the name pairs you recognize. Nothing is linked until you save; local wine names stay unchanged.")}</p>
+              <div className="producer-preferences__batch-list">
+                {batchCandidates.map((source) => <label key={source.normalized}>
+                  <input type="checkbox" disabled={saving}
+                    checked={batchSelection.includes(source.normalized)}
+                    onChange={(event) => setBatchSelection((current) => event.target.checked
+                      ? [...current, source.normalized] : current.filter((key) => key !== source.normalized))} />
+                  <span><strong>{source.sourceText}</strong> → {source.suggestions[0].canonicalName}
+                    {" · "}{source.wineCount} {source.wineCount === 1 ? t("wine") : t("wines")}
+                    {" · "}{t(source.suggestions[0].matchKind === "exact" ? "Exact name"
+                      : source.suggestions[0].matchKind === "alias" ? "Shared alias" : "Similar name — verify")}</span>
+                </label>)}
+              </div>
+              <button type="button" disabled={saving || !batchSelection.length}
+                onClick={() => void saveBatch()}>{t("Save selected producer links for this household")}</button>
+            </details> : null}
             <label>{t("Find a name in your catalogue")}
               <input value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)} />
             </label>
@@ -130,6 +191,22 @@ export function ProducerPreferencesPanel({ householdId, isOnline }: Props) {
               <div className="producer-preferences__editor">
                 <h3>{selected.sourceText}</h3>
                 <p>{t("Current shared producer")}: {selected.canonicalName ?? t("None")}</p>
+                {suggestedChoices.length || ambiguousSuggestions.length ? <div>
+                  <h4>{t("Possible shared producers — check before saving")}</h4>
+                  <p>{t("These are name suggestions, not confirmed links or drinking dates.")}</p>
+                  {ambiguousSuggestions.length ? <Notice tone="warning">
+                    <strong>{ambiguousSuggestions.join(", ")}</strong> — {t("Several shared producer identities have the same name. They must be reconciled or distinguished before you can choose one.")}
+                  </Notice> : null}
+                  <div className="producer-preferences__results" role="group" aria-label={t("Suggested shared producers")}>
+                    {suggestedChoices.map((producer) => <button
+                      aria-pressed={choice?.id === producer.id}
+                      className={choice?.id === producer.id ? "is-selected" : ""}
+                      key={producer.id}
+                      onClick={() => setChoice(producer)}
+                      type="button"
+                    >{producer.canonicalName} · {t(producer.matchKind === "exact" ? "Exact name" : producer.matchKind === "alias" ? "Shared alias" : "Similar name — verify")}</button>)}
+                  </div>
+                </div> : null}
                 <label>{t("Search shared producer profiles")}
                   <input value={query} onChange={(event) => {
                     setQuery(event.target.value)
@@ -139,7 +216,7 @@ export function ProducerPreferencesPanel({ householdId, isOnline }: Props) {
                   }} />
                 </label>
                 {searching ? <p>{t("Searching…")}</p> : null}
-                {query.trim().length >= 2 && !searching && results.length === 0 ? <p>{t("No shared producer found. If a JSON profile exists, its producer identity still needs to be added to the shared base by a curator.")}</p> : null}
+                {query.trim().length >= 2 && !searching && results.length === 0 && !suggestedChoices.length ? <p>{t("No shared producer found. If a JSON profile exists, its producer identity still needs to be added to the shared base by a curator.")}</p> : null}
                 {ambiguousNames.length > 0 ? <Notice tone="warning">
                   <strong>{ambiguousNames.join(", ")}</strong> — {t("Several shared producer identities have the same name. They must be reconciled or distinguished before you can choose one.")}
                 </Notice> : null}

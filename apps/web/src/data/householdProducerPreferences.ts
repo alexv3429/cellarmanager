@@ -4,11 +4,16 @@ export interface ProducerSource {
   wineCount: number
   producerId: string | null
   canonicalName: string | null
+  suggestions: ProducerSuggestion[]
 }
 
 export interface ProducerReference {
   id: string
   canonicalName: string
+}
+
+export interface ProducerSuggestion extends ProducerReference {
+  matchKind: "exact" | "alias" | "similar"
 }
 
 interface Options {
@@ -41,9 +46,19 @@ export function parseProducerSources(value: unknown, householdId: string): Produ
     const producerId = nullableText(row.producer_id)
     const canonicalName = nullableText(row.canonical_name)
     if ((producerId === null) !== (canonicalName === null)) throw new Error("Invalid producer mapping")
+    const suggestions = row.suggestions === undefined ? [] : row.suggestions
+    if (!Array.isArray(suggestions) || suggestions.length > 5) throw new Error("Invalid producer suggestions")
     return {
       sourceText: nonempty(row.source_text), normalized: nonempty(row.normalized),
       wineCount, producerId, canonicalName,
+      suggestions: suggestions.map((item): ProducerSuggestion => {
+        const candidate = object(item)
+        if (candidate.match_kind !== "exact" && candidate.match_kind !== "alias" && candidate.match_kind !== "similar") {
+          throw new Error("Invalid producer suggestion")
+        }
+        return { id: nonempty(candidate.id), canonicalName: nonempty(candidate.canonical_name),
+          matchKind: candidate.match_kind }
+      }),
     }
   })
   if (new Set(sources.map((source) => source.normalized)).size !== sources.length) {
@@ -62,13 +77,13 @@ export function parseProducerReferences(value: unknown): ProducerReference[] {
 
 // An identical display name is not enough to choose between distinct shared
 // identities. Keep those results visible as an ambiguity, not clickable IDs.
-export function partitionProducerReferences(references: ProducerReference[]): {
-  choices: ProducerReference[]
+export function partitionProducerReferences<T extends ProducerReference>(references: T[]): {
+  choices: T[]
   ambiguousNames: string[]
 } {
   const key = (name: string) => name.normalize("NFKD").replace(/[\u0300-\u036f]/g, "")
     .toLocaleLowerCase().replace(/\s+/g, " ").trim()
-  const grouped = new Map<string, ProducerReference[]>()
+  const grouped = new Map<string, T[]>()
   for (const reference of references) {
     const normalized = key(reference.canonicalName)
     grouped.set(normalized, [...(grouped.get(normalized) ?? []), reference])

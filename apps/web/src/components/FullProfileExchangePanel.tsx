@@ -402,6 +402,12 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
         {identityPreview ? <div>
           <p>{identityPreview.entries.length} {t("selected releases")} · {t(identityPreview.status)}</p>
           <p>{identityPreview.producerName} · {t(identityPreview.producerStatus)}</p>
+          {identityPreview.status === "blocked" && identityPreview.entries.some((entry) => !entry.reason)
+            ? <button type="button" disabled={busy || !isOnline} onClick={() => {
+              setSelectedReleaseKeys(identityPreview.entries.filter((entry) => !entry.reason).map((entry) => entry.key))
+              setIdentityPreview(null)
+              setIdentityConfirmed(false)
+            }}>{t("Keep only unblocked identities, then preview again")}</button> : null}
           <ul className="drinking-window-profile-identity-results">{identityPreview.entries.map((entry) => <li key={entry.key}>
             <strong>{entry.cuveeName || entry.key} · {entry.vintage || "?"}</strong>
             {entry.reason ? <> · {t(entry.reason)}</> : <> · {t("Cuvée")}: {t(entry.productStatus)} · {t("Vintage")}: {t(entry.releaseStatus)}</>}

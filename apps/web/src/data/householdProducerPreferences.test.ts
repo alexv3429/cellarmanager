@@ -11,7 +11,7 @@ import {
 
 const source = {
   sourceText: "Barthod", normalized: "barthod", wineCount: 3,
-  producerId: null, canonicalName: null,
+  producerId: null, canonicalName: null, suggestions: [],
 }
 const wire = {
   household_id: "household",
@@ -26,6 +26,14 @@ describe("household producer preferences", () => {
     expect(() => parseProducerSources({ ...wire, household_id: "other" }, "household")).toThrow()
     expect(() => parseProducerSources({ ...wire, sources: [wire.sources[0], wire.sources[0]] }, "household")).toThrow()
     expect(() => parseProducerSources({ ...wire, sources: [{ ...wire.sources[0], canonical_name: "Ghislaine Barthod" }] }, "household")).toThrow()
+    expect(parseProducerSources({ ...wire, sources: [{ ...wire.sources[0], suggestions: [
+      { id: "producer", canonical_name: "Ghislaine Barthod", match_kind: "similar" },
+    ] }] }, "household")[0].suggestions).toEqual([
+      { id: "producer", canonicalName: "Ghislaine Barthod", matchKind: "similar" },
+    ])
+    expect(() => parseProducerSources({ ...wire, sources: [{ ...wire.sources[0], suggestions: [
+      { id: "producer", canonical_name: "Ghislaine Barthod", match_kind: "approved" },
+    ] }] }, "household")).toThrow()
   })
 
   it("searches existing shared identities but rejects blank searches", async () => {

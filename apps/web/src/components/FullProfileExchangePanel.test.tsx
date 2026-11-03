@@ -255,4 +255,56 @@ describe("complete profile exchange", () => {
     expect(stageProfileExchange).toHaveBeenCalledOnce()
     expect(onStaged).toHaveBeenCalledWith("draft")
   })
+
+  it("lets a curator narrow a blocked identity batch without approving dates", async () => {
+    vi.mocked(previewFullProfileExchange).mockReturnValue({
+      kind: "producer", name: "Frantz Chagnoleau", datasetVersion: "1.1.0",
+      releaseCount: 2, factCount: 0, sourceCount: 0,
+      document: { producer: { name: "Frantz Chagnoleau" },
+        cuvees: [{ id: "a_la_cote", name: "À la Côte", region: "Bourgogne", appellation: "Saint-Véran" }],
+        exact_release_calibrations: [
+          { cuvee_id: "a_la_cote", vintage: 2019, format_ml: 750 },
+          { cuvee_id: "a_la_cote", vintage: 2022, format_ml: 750 },
+        ] },
+    })
+    vi.mocked(previewProfileIdentityBatch).mockResolvedValueOnce({
+      profileId: "profile", planSha256: "a".repeat(64), status: "blocked",
+      producerName: "Frantz Chagnoleau", producerStatus: "existing",
+      entries: [
+        { key: "a_la_cote|2019", cuveeId: "a_la_cote", cuveeName: "À la Côte", vintage: 2019,
+          productStatus: "existing", releaseStatus: "existing", sourceUrls: [], reason: null },
+        { key: "a_la_cote|2022", cuveeId: "a_la_cote", cuveeName: "À la Côte", vintage: 2022,
+          productStatus: "blocked", releaseStatus: "blocked", sourceUrls: [],
+          reason: "Release existence needs a source pointer" },
+      ],
+    }).mockResolvedValueOnce({
+      profileId: "profile", planSha256: "b".repeat(64), status: "ready",
+      producerName: "Frantz Chagnoleau", producerStatus: "existing",
+      entries: [{ key: "a_la_cote|2019", cuveeId: "a_la_cote", cuveeName: "À la Côte", vintage: 2019,
+        productStatus: "existing", releaseStatus: "existing", sourceUrls: [], reason: null }],
+    })
+    await act(async () => root.render(<FullProfileExchangePanel isOnline />))
+    await act(async () => container.querySelector("summary")?.click())
+    const profile = container.querySelector("select") as HTMLSelectElement
+    await act(async () => {
+      profile.value = "profile"
+      profile.dispatchEvent(new Event("change", { bubbles: true }))
+    })
+    const identitySection = [...container.querySelectorAll("summary")]
+      .find((summary) => summary.textContent === "Prepare missing shared wine identities")
+    await act(async () => identitySection?.click())
+    const selectAll = [...container.querySelectorAll("button")]
+      .find((button) => button.textContent === "Select all for identity review (not approval)")
+    await act(async () => selectAll?.click())
+    const preview = [...container.querySelectorAll("button")]
+      .find((button) => button.textContent === "Preview selected identities")
+    await act(async () => preview?.click())
+    const narrow = [...container.querySelectorAll("button")]
+      .find((button) => button.textContent === "Keep only unblocked identities, then preview again")
+    expect(narrow).toBeTruthy()
+    await act(async () => narrow?.click())
+    await act(async () => preview?.click())
+    expect(previewProfileIdentityBatch).toHaveBeenNthCalledWith(2, expect.anything(), {}, ["a_la_cote|2019"])
+    expect(stageProfileExchange).not.toHaveBeenCalled()
+  })
 })

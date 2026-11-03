@@ -471,6 +471,28 @@ verification; the 95% criterion is not waived or replaced by legacy-model
 dates. If the measured gap makes that impossible within the remaining PR
 slot, report it before claiming either gate complete.
 
+**Gate 4 continuation, 3 November (still draft #231):** The owner correctly
+objected that installing the LWIN correction did not finish Gate 4. The same
+PR now proposes an owner-only, read-only producer-name suggestion list drawn
+from canonical names and curated aliases. Exact, alias and similar-name
+suggestions are visibly distinguished. A separate, explicit checklist lets
+the owner save selected household links in a batch; no choice is preselected,
+and similar names never become global aliases. Opening that nested checklist
+no longer resets the producer panel. The curator profile-identity preview also
+offers a way to discard blocked entries and re-preview only the unblocked
+subset; that remains identity-only, never date approval. The migration and
+23 rollback-only local SQL assertions, focused UI tests, the full web
+suite and build passed. On an isolated restored copy of the pilot cellar,
+**22 of 136 unmapped local producer-name groups have exactly one suggested
+canonical producer, affecting 248 of 802 active wine cards**. Seven of the 22 are exact
+names and the other 15 are name-containment candidates that need the owner's
+review; these are not 248 confirmed links or active profile windows. The other
+114 groups have no candidate in the present canonical graph. This migration
+has **not** been applied to the linked project. Gate 4 remains open until
+name decisions, cuvée/release identities and reviewed date rows yield a
+measured, usable initial base; the legacy model still dominates current
+coverage.
+
 **Execution status (the contract defines each exit test):**
 
 **Hard PR budget:** [PR #227](https://github.com/alexv3429/cellarmanager/pull/227)
@@ -488,7 +510,7 @@ in every PR description.
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
 | 3. Complete profile exchange | #230 merged in slot 4/6; full CI green, linked migrations backed up/rehearsed/applied; signed-in owner import/preview/export checked; one Burgaud file saved privately and candidates added to Proposals, nothing published live | Preserve full-profile exchange and audited in-app curator path. |
-| 4. Prepare initial common base | Draft #231 in slot 5/6: 23 files/670 proposals saved to the linked curator archive. The prior cellar baseline was 753/802 complete windows (751 old model, two manual), **785/802 without an explicit per-wine link**, zero active reviewed-profile windows. All seven Gate 4 migrations, including the LWIN identity-path correction, were backed up, rehearsed, CI-tested and applied to the linked project. One Dureuil-Janthial identity and its **2024 / 2026–2034** editorial estimate were staged in unpublished version 2. Nothing was published or opted in by these migrations. The fresh effective-link audit of 802 active cards found 300 producer, 17 cuvée, 16 vintage and 502 without any shared producer link. These are **not** profile-backed window counts. | **No-go for merge/publication.** Review household-to-shared producer names in bounded groups, then cuvée/vintage identities and the corresponding dates; remeasure window coverage by source. Hand a measured exception list to Gate 5 rather than opening another identity PR. Do not use old-model dates as proof of profile coverage. |
+| 4. Prepare initial common base | Draft #231 in slot 5/6: 23 files/670 proposals saved to the linked curator archive. The prior cellar baseline was 753/802 complete windows (751 old model, two manual), **785/802 without an explicit per-wine link**, zero active reviewed-profile windows. All seven deployed Gate 4 migrations, including the LWIN identity-path correction, were backed up, rehearsed, CI-tested and applied to the linked project. One Dureuil-Janthial identity and its **2024 / 2026–2034** editorial estimate were staged in unpublished version 2. Nothing was published or opted in by these migrations. The fresh effective-link audit of 802 active cards found 300 producer, 17 cuvée, 16 vintage and 502 without any shared producer link. A further candidate-review migration is in PR #231 but not linked-deployed: on a restored copy it suggests 22 local name groups / 248 active wines, with no automatic link. These are **not** profile-backed window counts. | **No-go for merge/publication.** Obtain explicit owner decisions on household producer names, then cuvée/vintage identities and reviewed dates; remeasure window coverage by source. Hand a measured exception list to Gate 5 rather than opening another identity PR. Do not use old-model dates as proof of profile coverage. |
 | 5. Release and verify | Not started | Publish the approved reference, enable it for the consenting cellar, and verify the official app on real wines. Gate 5 passes only with a complete source-by-source coverage report, at least 95% of active wines with coherent three-date windows, each exception named, and the reviewer-approved profile dates shown where applicable; then verify cross-household behavior and rollback. Report legacy-only wines and material old/new discrepancies explicitly before deciding with the owner whether the legacy bridge can be removed. Do not call a model-dominated result the completed new system. |
 
 **Merge/deployment rule:** Do not describe #227 as feature-complete or ask the
