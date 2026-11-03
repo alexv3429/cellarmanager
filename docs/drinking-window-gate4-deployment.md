@@ -312,3 +312,16 @@ linked dry run reported zero pending migrations, seeds or roles. This
 deployment did not write a household mapping, change any wine or stock, or
 approve or publish a drinking window. The preview owner walkthrough and
 source-by-source coverage audit are still required before Gate 4 can close.
+
+The same fresh snapshot gives the remaining scale of work, not a completion
+claim: 31 shared producers, 28 shared cuvées/products, 23 releases, three
+reference date rows across versions, and **zero rows in an active reference
+version**. The 22 suggested local-name groups are only a subset of the 136
+unmapped groups; 114 have no candidate in the present canonical graph.
+Matching those 22 would not create a cuvée/release or make a date row active.
+The supplied 23 JSON profiles cover a different editorial task: their 670
+proposed dates must be resolved against canonical releases and reviewed as
+shared estimates before publication. The separate 23-profile impact analysis
+found 488 potential pilot wine cards by producer spelling; therefore the
+other wines also need genuine appellation/region fallback coverage, not
+invented producer matches.
