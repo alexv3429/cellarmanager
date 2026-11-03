@@ -325,3 +325,33 @@ shared estimates before publication. The separate 23-profile impact analysis
 found 488 potential pilot wine cards by producer spelling; therefore the
 other wines also need genuine appellation/region fallback coverage, not
 invented producer matches.
+
+## Owner review follow-up and Bernardins correction — proposed, not linked
+
+After the owner reviewed the producer suggestions, a fresh protected linked
+export of `public`, `private`, `auth`, `storage` and `capture_guard` was saved at
+`/private/tmp/cellarmanager-gate4-after-links.7YvyLp` (directory mode 0700;
+files mode 0600). SHA-256: `869f387372e0daacdc6deeb47c94e9f8d1e8ceb692cb1ab4e90050b18504e7e5`
+for `schema.sql` and `13a25c2c3ca6cda8020af4f6e73674b5bbbec9f7bbcba9551edb6c6642f74da6`
+for `data.sql`. This sensitive temporary recovery material must not be
+committed or automatically restored over later live changes.
+
+The complete export restored into isolated local database
+`cm_gate4_afterlinks_20261104`. Its 802 active pilot cards now have 32 mapped
+local producer-name groups (21 more than before): 538 effective shared
+producer links, 17 cuvée links, and 16 release links. Of 147 local producer
+name groups, 114 have no suggestion in the current 31-producer graph. The
+only unaccepted candidate is `Bernardins` → `de Bernardins`. The source
+spelling comes from LWIN; the [winery](https://www.domaine-des-bernardins.com/les-bernardins/)
+uses *Domaine des Bernardins*.
+
+Migration `20261104100000_gate4_correct_bernardins_identity.sql` was applied
+successfully **only to that restored copy**. It renamed the one canonical
+producer while preserving its UUID, existing product, and linked cellar wine;
+the old LWIN spelling resolves through a curated source alias. Aggregate
+counts remained 31 producers, 32 household preferences, 804 active wines
+across households, and three reference date rows. It writes no household
+mapping or drinking window. CI and a separate owner authorization are still
+required before applying this new migration to the linked project. This
+correction does not fill the remaining cuvée/release and date-coverage gaps,
+and Gate 4 is not complete.

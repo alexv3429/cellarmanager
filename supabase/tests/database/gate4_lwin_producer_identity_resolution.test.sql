@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(9);
+select plan(12);
 
 select ok(
     not has_function_privilege(
@@ -8,6 +8,12 @@ select ok(
     ),
     'Browser clients cannot create shared producer identities directly'
 );
+
+-- Isolate the fixture even when running this rollback-only suite against a
+-- restored project that already has an active LWIN snapshot.
+update public.wine_reference_lwin_snapshots
+set import_status = 'superseded'
+where source_key = 'liv-ex-lwin' and import_status = 'active';
 
 insert into public.wine_reference_lwin_snapshots(
     id, source_key, content_sha256, source_file_name, source_retrieved_at,
@@ -116,6 +122,44 @@ select throws_ok(
     '22023',
     'LWIN producer name is missing; choose a reviewed shared identity',
     'Missing producer names cannot all collapse into one Unknown producer'
+);
+
+-- A reviewed shared alias keeps a corrected producer name stable when an old
+-- LWIN record still supplies the previous spelling.
+insert into public.wine_reference_entities(id, entity_type)
+values ('00000000-0000-4000-8000-000000009721', 'producer'),
+       ('00000000-0000-4000-8000-000000009722', 'producer');
+insert into public.wine_reference_producers(id, canonical_name)
+values ('00000000-0000-4000-8000-000000009721', 'Domaine des Test Bernardins'),
+       ('00000000-0000-4000-8000-000000009722', 'Another Test Domaine');
+insert into public.wine_reference_aliases(
+    entity_id, entity_type, alias_value, normalized_value, source_name
+) values (
+    '00000000-0000-4000-8000-000000009721', 'producer', 'de Test Bernardins',
+    private.normalize_wine_reference_text('de Test Bernardins'), 'test-lwin'
+);
+select is(
+    private.resolve_lwin_reference_producer('de Test Bernardins'),
+    '00000000-0000-4000-8000-000000009721'::uuid,
+    'A curated old LWIN spelling resolves to the existing corrected producer'
+);
+select is(
+    (select count(*)::integer from public.wine_reference_producers
+     where canonical_name = 'de Test Bernardins'),
+    0,
+    'Alias resolution does not create a second producer under the old spelling'
+);
+insert into public.wine_reference_aliases(
+    entity_id, entity_type, alias_value, normalized_value, source_name
+) values (
+    '00000000-0000-4000-8000-000000009722', 'producer', 'de Test Bernardins',
+    private.normalize_wine_reference_text('de Test Bernardins'), 'test-ambiguous'
+);
+select throws_ok(
+    $$select private.resolve_lwin_reference_producer('de Test Bernardins')$$,
+    '21000',
+    'Shared producer alias is ambiguous; curator reconciliation is required',
+    'Ambiguous shared aliases block LWIN promotion instead of choosing one'
 );
 
 select * from finish();
