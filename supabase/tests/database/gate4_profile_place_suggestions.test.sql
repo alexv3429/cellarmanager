@@ -10,6 +10,15 @@ insert into public.enrichment_curator_eligibilities
     (user_id, display_name, profile_scopes, rationale, granted_by)
 values ('fd100000-0000-4000-8000-000000000001', 'Synthetic place reviewer',
     array['drinking-window'], 'Tests read-only profile place suggestions.', 'database-test');
+insert into public.enrichment_places (id, place_type, canonical_name, country_code) values
+    ('fd100000-0000-4000-8000-000000000101', 'region', 'Synthetic Region', 'FR');
+insert into public.enrichment_places (id, parent_id, place_type, canonical_name, country_code) values
+    ('fd100000-0000-4000-8000-000000000102',
+     'fd100000-0000-4000-8000-000000000101', 'appellation',
+     'Synthetic Premier Cru', 'FR');
+insert into public.enrichment_place_aliases (place_id, alias_value) values
+    ('fd100000-0000-4000-8000-000000000101', 'Pays de Test'),
+    ('fd100000-0000-4000-8000-000000000102', 'Synthetic 1C');
 set local request.jwt.claim.sub = 'fd100000-0000-4000-8000-000000000001';
 select set_config('app.place_suggestion_profile',
     (public.import_drinking_window_profile_exchange($profile$
@@ -20,16 +29,16 @@ select set_config('app.place_suggestion_profile',
       "status":"draft_for_curator_review",
       "producer":{"name":"Synthetic place producer"},
       "cuvees":[
-        {"id":"first","name":"First wine","region":"Bourgogne — Mâconnais",
-         "appellation":"Puligny-Montrachet 1er Cru","color":"white"},
-        {"id":"second","name":"Second wine","region":"Beaujolais",
-         "appellation":"Morgon","color":"red"},
+        {"id":"first","name":"First wine","region":"Synthetic Region — East",
+         "appellation":"Synthetic 1er Cru","color":"white"},
+        {"id":"second","name":"Second wine","region":"Synthetic Region",
+         "appellation":"Synthetic Premier Cru","color":"red"},
         {"id":"third","name":"Third wine","region":"Roussillon",
          "appellation":"à vérifier","color":"red"},
-        {"id":"fourth","name":"Fourth wine","region":"Piémont",
-         "appellation":"Barolo","color":"red"},
-        {"id":"fifth","name":"Fifth wine","region":"Bourgogne",
-         "appellation":"Puligny-Montrachet 1C","color":"white"}
+        {"id":"fourth","name":"Fourth wine","region":"Pays de Test",
+         "appellation":"Synthetic Premier Cru","color":"red"},
+        {"id":"fifth","name":"Fifth wine","region":"Synthetic Region",
+         "appellation":"Synthetic 1C","color":"white"}
       ],
       "sources":[{"id":"pointer","url":"https://example.org/synthetic-place"}],
       "exact_release_calibrations":[],
@@ -42,20 +51,20 @@ select is(jsonb_array_length(public.suggest_drinking_window_profile_places(
     'A composite name and a preexisting unique alias have suggestions');
 select is(public.suggest_drinking_window_profile_places(
     current_setting('app.place_suggestion_profile')::uuid)->'regions'->0->>'target_name',
-    'Bourgogne','A composite local description suggests the canonical parent region');
+    'Synthetic Region','A composite local description suggests the canonical parent region');
 select is((select count(*) from jsonb_array_elements(public.suggest_drinking_window_profile_places(
     current_setting('app.place_suggestion_profile')::uuid)->'regions') x
-    where x->>'source_name'='Piémont' and x->>'target_name'='Piemonte'),1::bigint,
+    where x->>'source_name'='Pays de Test' and x->>'target_name'='Synthetic Region'),1::bigint,
     'A preexisting place alias suggests the unique canonical region');
 select is(jsonb_array_length(public.suggest_drinking_window_profile_places(
     current_setting('app.place_suggestion_profile')::uuid)->'appellations'),2,
     'A unique Premier Cru spelling and a unique alias are both suggested');
 select is((select count(*) from jsonb_array_elements(public.suggest_drinking_window_profile_places(
     current_setting('app.place_suggestion_profile')::uuid)->'appellations') x
-    where x->>'target_name'='Puligny-Montrachet Premier Cru'),2::bigint,
+    where x->>'target_name'='Synthetic Premier Cru'),2::bigint,
     'Both appellation suggestions keep the Premier Cru classification');
 select is((select count(*) from public.wine_reference_aliases
-    where alias_value in ('Bourgogne — Mâconnais','Puligny-Montrachet 1er Cru')),0::bigint,
+    where alias_value in ('Synthetic Region — East','Synthetic 1er Cru')),0::bigint,
     'A suggestion does not create a global alias');
 select is((select count(*) from private.drinking_window_profile_identity_batches
     where exchange_id=current_setting('app.place_suggestion_profile')::uuid),0::bigint,
