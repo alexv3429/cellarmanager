@@ -469,3 +469,41 @@ These counts prioritize research, not a promise that a new JSON will cover
 every listed release. Exact cuvée/vintage/format rows and reviewed evidence
 remain necessary. Keep this work in draft PR #231 (Gate 4, slot 5/6); do not
 open another PR or count the old model as profile coverage.
+
+### Second owner bundle: 19 profiles plus Alvina Pernot — 4 November
+
+The owner then supplied `CellarManager_19_profils_v1.1_2026-11-04.zip`
+(SHA-256 `e418fab228d494b5de245a12f9392894f62dd8529567dd43442144a68f5f0f1d`)
+and a separate Alvina Pernot JSON
+(SHA-256 `0a3f54b0ded10a212e4e4f775c73089600e69c8564c774599233b56d520dadc4`).
+The ZIP contains 19 producer files, an index and a README. None duplicates
+the 23 profiles already in the private curator archive. The 20 new files
+describe 84 cuvées and 101 exact-release *proposals*.
+
+Read-only candidate matching against the protected pilot copy found 113
+active cards / 182 bottles under those local producer names, 111 / 180 with
+one exact cuvée label and colour, and **101 / 165** also matching an explicit
+vintage and format row. The strongest exact-row opportunities are Alvina
+Pernot 11 cards / 15 bottles (from 23 / 32 producer candidates), Thomas Morey
+8 / 18, Boxler 10 / 17, Darnaud 8 / 16, Conterno Fantino 4 / 14, Giovanni
+Almondo 6 / 13 and Giuseppe Cortese 5 / 8. These are *name overlaps only*;
+they neither establish canonical identity nor provide a published window.
+
+All 20 files **fail** the agreed v1.1 validator. Across 101 proposed rows,
+zero assert a named-vintage release confirmed by a cited source. Eleven of
+the 20 profiles have no source entries at all. Many optional grape fields are
+empty strings. The ZIP README explicitly describes the dates as model-based
+estimates and says cuvée/vintage membership came from the owner's personal
+CSV rather than necessarily from an independent release record. This is
+valuable triage, but does not justify turning private inventory observations
+into shared release facts or declaring model years independently sourced.
+Do not fill empty source IDs with invented references or silently change the
+release-existence status. These 20 files were **not imported, staged,
+approved or published**; the original files remain unchanged.
+
+The bounded route within Gate 4 is to verify canonical producer/cuvée and
+named-release identities for the highest-impact rows, record genuine source
+pointers and provenance, then present the three model-based years honestly
+as editorial estimates for curator review. Rows without that evidence stay
+quarantined. Re-measure actual profile-backed coverage after publication;
+the 101 candidate matches must not be counted toward the 95% release goal.

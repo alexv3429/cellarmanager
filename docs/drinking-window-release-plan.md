@@ -522,12 +522,26 @@ wine cards holding 35 bottles, subject to canonical identity and evidence
 review. They are not yet imported or published: nine empty optional
 descriptions fail the v1.1 schema, and both files carry a copied Carillon
 identity-policy sentence. The files need those narrow corrections before
-curator archival. The next highest-impact missing producer profile is Alvina
+curator archival. At that point, the highest-impact missing producer profile was Alvina
 Pernot (23 cards / 32 bottles across two already owner-linked local labels),
 then Thomas Morey (8 / 18), Boxler (10 / 17) and Darnaud (8 / 16); Giuseppe
-Cortese is 5 / 8. See the [Gate 4 deployment audit](drinking-window-gate4-deployment.md)
+Cortese was 5 / 8. See the [Gate 4 deployment audit](drinking-window-gate4-deployment.md)
 for the full priority table. This intake does not relax the Gate 4 exit test
 or add another PR slot.
+
+**Gate 4 additional owner bundle (4 November; still #231):** The owner has
+now supplied 19 more producer research files plus Alvina Pernot. Their 101
+explicit cuvée/vintage/format rows overlap with 101 active pilot wine cards
+holding 165 bottles, by local names only. This is an opportunity queue, **not
+active coverage**. All 20 files fail the agreed exchange validator: none of
+their 101 release rows supplies a confirmed named-vintage source, and eleven
+profiles have no sources at all. The ZIP explicitly calls its dates
+model-based estimates drawn partly from the owner's private CSV. The new
+files therefore remain outside the curator archive and publication until
+identity and provenance are checked; do not fabricate source pointers or
+weaken the published-data boundary to improve a coverage statistic. Keep
+verification and any narrow intake correction in #231, then remeasure real
+profile-backed coverage for Gate 5. No seventh PR is authorized.
 
 **Execution status (the contract defines each exit test):**
 
@@ -546,7 +560,7 @@ in every PR description.
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
 | 3. Complete profile exchange | #230 merged in slot 4/6; full CI green, linked migrations backed up/rehearsed/applied; signed-in owner import/preview/export checked; one Burgaud file saved privately and candidates added to Proposals, nothing published live | Preserve full-profile exchange and audited in-app curator path. |
-| 4. Prepare initial common base | Draft #231 in slot 5/6: 23 files/670 proposals saved to the linked curator archive. The prior cellar baseline was 753/802 complete windows (751 old model, two manual), **785/802 without an explicit per-wine link**, zero active reviewed-profile windows. Nine Gate 4 migrations are deployed, including the targeted Bernardins identity correction after owner authorization, green CI, fresh backup and rehearsal. One Dureuil-Janthial identity and its **2024 / 2026–2034** editorial estimate were staged in unpublished version 2. The owner has saved 21 additional household producer-name links: the latest 802-card effective-link audit finds **538 producer, 17 cuvée and 16 vintage/release** links. The only remaining suggested local-name group is Bernardins, now correctly labelled *Domaine des Bernardins* in the shared graph; 114 groups have no candidate in the present 31-producer graph. These are **not** profile-backed window counts. | **No-go for merge/publication.** Reconcile cuvée/vintage identities and reviewed dates; remeasure window coverage by source. Hand a measured exception list to Gate 5 rather than opening another identity PR. Do not use old-model dates as proof of profile coverage. |
+| 4. Prepare initial common base | Draft #231 in slot 5/6: 23 files/670 proposals saved to the linked curator archive. Another 20 owner files/101 proposed rows were audited but rejected by the exchange validator; 101 cards/165 bottles are only candidate overlaps, not active windows. The prior cellar baseline was 753/802 complete windows (751 old model, two manual), **785/802 without an explicit per-wine link**, zero active reviewed-profile windows. Nine Gate 4 migrations are deployed, including the targeted Bernardins identity correction after owner authorization, green CI, fresh backup and rehearsal. One Dureuil-Janthial identity and its **2024 / 2026–2034** editorial estimate were staged in unpublished version 2. The owner has saved 21 additional household producer-name links: the latest 802-card effective-link audit finds **538 producer, 17 cuvée and 16 vintage/release** links. The only remaining suggested local-name group is Bernardins, now correctly labelled *Domaine des Bernardins* in the shared graph; 114 groups have no candidate in the present 31-producer graph. These are **not** profile-backed window counts. | **No-go for merge/publication.** Reconcile cuvée/vintage identities and reviewed dates; remeasure window coverage by source. Hand a measured exception list to Gate 5 rather than opening another identity PR. Do not use old-model dates as proof of profile coverage. |
 | 5. Release and verify | Not started | Publish the approved reference, enable it for the consenting cellar, and verify the official app on real wines. Gate 5 passes only with a complete source-by-source coverage report, at least 95% of active wines with coherent three-date windows, each exception named, and the reviewer-approved profile dates shown where applicable; then verify cross-household behavior and rollback. Report legacy-only wines and material old/new discrepancies explicitly before deciding with the owner whether the legacy bridge can be removed. Do not call a model-dominated result the completed new system. |
 
 **Merge/deployment rule:** Do not describe #227 as feature-complete or ask the
