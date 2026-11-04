@@ -412,3 +412,20 @@ the 2026 snapshot; treat that as an owner-data exception to check, not a
 valid release to create automatically or a value to silently correct. The
 first batch should review the obvious named cuvées and their actual vintages
 before the broad or ambiguous labels.
+
+An **identity-only, read-only** rehearsal selected the exact local-name,
+colour and vintage intersections for four red Mas Jullien cuvées:
+`Autour de Jonquières` (2014, 2015, 2016, 2018, 2020, 2021, 2022), `Carlan`
+(2009, 2010, 2013, 2014, 2015, 2016, 2018, 2019, 2022), `La Brune` (2018),
+and `Lous Rougeos` (2018). The existing curator plan reported **18 ready
+release identities under four new cuvées**, with the existing Mas Jullien
+producer and canonical Languedoc/Terrasses du Larzac places; it did not
+create anything. The supplied profile points to named-vintage retailer
+records such as [Autour de Jonquières 2022](https://www.mesvendanges.com/fr/boutique/vins/autour-de-jonquieres-mas-jullien-2022-75cl/)
+and [Carlan 2022](https://www.lecarredesvins.com/16722-mas-jullien-carlan-2022-6716200.html).
+The [iDealwine Carlan page](https://www.idealwine.com/fr/prix-vin/113121-2019-Bouteille-Languedoc-Terrasses-du-Larzac-Carlan-Mas-Jullien-rouge)
+is for 2019 but includes a selector naming older vintages; it is a less
+precise pointer for those entries than a direct vintage page. Existence
+pointers do **not** establish any of the three proposed drinking-window
+years. No shared identity, cellar link, date, or publication was written by
+this rehearsal; the batch awaits explicit curator action after source review.
