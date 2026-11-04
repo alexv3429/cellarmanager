@@ -24,6 +24,25 @@ export interface CuveeProduct {
   name: string
 }
 
+export interface ExactCuveeCandidate {
+  sourceProducer: string
+  sourceCuvee: string
+  sourceAppellation: string
+  sourceColor: string
+  firstVintage: number
+  lastVintage: number
+  productId: string
+  productName: string
+  wineCount: number
+}
+
+export interface ExactCuveePlan {
+  planSha256: string
+  candidateGroups: number
+  wineCount: number
+  candidates: ExactCuveeCandidate[]
+}
+
 interface Options {
   rpc?: (name: string, parameters: Record<string, unknown>) => PromiseLike<{ data?: unknown; error: { message: string } | null }>
 }
@@ -100,6 +119,59 @@ export function parseCuveeProducts(value: unknown): CuveeProduct[] {
 
 export async function getHouseholdCuveeGroups(householdId: string, options: Options = {}): Promise<CuveeIdentityGroup[]> {
   return parseCuveeGroups(await call("get_household_cuvee_identity_groups", { p_household_id: id(householdId) }, options))
+}
+
+export function parseExactCuveePlan(value: unknown): ExactCuveePlan {
+  const row = record(value)
+  if (!Array.isArray(row.candidates) || typeof row.plan_sha256 !== "string" ||
+      !/^[0-9a-f]{64}$/.test(row.plan_sha256)) throw new Error("Invalid exact cuvée plan")
+  const candidateGroups = Number(row.candidate_groups)
+  const wineCount = Number(row.wine_count)
+  if (!Number.isSafeInteger(candidateGroups) || candidateGroups < 0 ||
+      !Number.isSafeInteger(wineCount) || wineCount < 0 ||
+      candidateGroups !== row.candidates.length) throw new Error("Invalid exact cuvée totals")
+  return {
+    planSha256: row.plan_sha256, candidateGroups, wineCount,
+    candidates: row.candidates.map((item): ExactCuveeCandidate => {
+      const candidate = record(item)
+      const firstVintage = year(candidate.first_vintage)
+      const lastVintage = year(candidate.last_vintage)
+      const count = Number(candidate.wine_count)
+      if (firstVintage > lastVintage || !Number.isSafeInteger(count) || count < 1) {
+        throw new Error("Invalid exact cuvée candidate")
+      }
+      return {
+        sourceProducer: id(candidate.source_producer), sourceCuvee: id(candidate.source_cuvee),
+        sourceAppellation: string(candidate.source_appellation), sourceColor: id(candidate.source_color),
+        firstVintage, lastVintage, productId: id(candidate.product_id),
+        productName: id(candidate.product_name), wineCount: count,
+      }
+    }),
+  }
+}
+
+export async function previewHouseholdExactCuveeLinks(
+  householdId: string, options: Options = {},
+): Promise<ExactCuveePlan> {
+  return parseExactCuveePlan(await call("preview_household_exact_cuvee_links", {
+    p_household_id: id(householdId),
+  }, options))
+}
+
+export async function applyHouseholdExactCuveeLinks(
+  householdId: string, planSha256: string, options: Options = {},
+): Promise<number> {
+  if (!/^[0-9a-f]{64}$/.test(planSha256)) throw new Error("Invalid exact cuvée plan")
+  const response = record(await call("apply_household_exact_cuvee_links", {
+    p_household_id: id(householdId), p_expected_plan_sha256: planSha256,
+    p_confirmed: true,
+  }, options))
+  const linked = Number(response.linked_groups)
+  if (response.household_id !== householdId || !Number.isSafeInteger(linked) || linked < 0 ||
+      response.published !== false || response.dates_approved !== false) {
+    throw new Error("Exact cuvée links could not be confirmed")
+  }
+  return linked
 }
 
 export async function searchHouseholdCuveeProducts(

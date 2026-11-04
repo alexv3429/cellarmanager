@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react"
 
 import {
-  getHouseholdCuveeGroups, manageHouseholdCuveeLink, searchHouseholdCuveeProducts,
-  type CuveeIdentityGroup, type CuveeProduct,
+  applyHouseholdExactCuveeLinks, getHouseholdCuveeGroups, manageHouseholdCuveeLink,
+  previewHouseholdExactCuveeLinks, searchHouseholdCuveeProducts,
+  type CuveeIdentityGroup, type CuveeProduct, type ExactCuveePlan,
 } from "../data/householdCuveeIdentities"
 import { useLanguage } from "../i18n/useLanguage"
 import { Notice } from "./Notice"
@@ -32,6 +33,8 @@ export function CuveeIdentityLinksPanel({ householdId, isOnline }: Props) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
+  const [exactPlan, setExactPlan] = useState<ExactCuveePlan | null>(null)
+  const [exactBusy, setExactBusy] = useState(false)
 
   const selected = groups.find((group) => key(group) === selectedKey) ?? null
   const filtered = useMemo(() => {
@@ -84,6 +87,7 @@ export function CuveeIdentityLinksPanel({ householdId, isOnline }: Props) {
     try {
       await manageHouseholdCuveeLink(householdId, selected, action, first, last, productId, expected)
       setGroups(await getHouseholdCuveeGroups(householdId))
+      setExactPlan(null)
       setChoice(null)
       setMessage(t("Cuvée link saved for this household only."))
     } catch (cause) {
@@ -97,6 +101,39 @@ export function CuveeIdentityLinksPanel({ householdId, isOnline }: Props) {
   const last = Number(lastVintage)
   const validRange = Number.isInteger(first) && Number.isInteger(last) && first >= 1800 && last <= 2200 && first <= last
   const existingAtStart = selected?.links.find((link) => link.firstVintage === first) ?? null
+
+  async function previewExact() {
+    if (!isOnline || exactBusy) return
+    setExactBusy(true)
+    setError(null)
+    setMessage(null)
+    try {
+      setExactPlan(await previewHouseholdExactCuveeLinks(householdId))
+    } catch (cause) {
+      setExactPlan(null)
+      setError(String(cause))
+    } finally {
+      setExactBusy(false)
+    }
+  }
+
+  async function applyExact() {
+    if (!isOnline || exactBusy || !exactPlan || exactPlan.candidateGroups === 0) return
+    setExactBusy(true)
+    setError(null)
+    setMessage(null)
+    try {
+      const linked = await applyHouseholdExactCuveeLinks(householdId, exactPlan.planSha256)
+      setGroups(await getHouseholdCuveeGroups(householdId))
+      setExactPlan(null)
+      setMessage(`${linked} ${t("exact cuvée names linked for this household; no dates approved.")}`)
+    } catch (cause) {
+      setExactPlan(null)
+      setError(String(cause))
+    } finally {
+      setExactBusy(false)
+    }
+  }
 
   return (
     <details className="producer-preferences" onToggle={(event) => {
@@ -112,6 +149,27 @@ export function CuveeIdentityLinksPanel({ householdId, isOnline }: Props) {
         {message ? <Notice role="status" tone="success">{message}</Notice> : null}
         {loading ? <p>{t("Loading cuvée names…")}</p> : null}
         {isOnline && !loading ? <>
+          <section className="producer-preferences__editor">
+            <h3>{t("Match identical cuvée names")}</h3>
+            <p>{t("Find only unique, identical names under a producer already linked for this household. Similar names, renamed cuvées and ambiguous matches stay for individual review. This does not approve drinking dates.")}</p>
+            <button type="button" disabled={exactBusy} onClick={() => void previewExact()}>
+              {exactBusy ? t("Loading…") : t("Find exact matches")}
+            </button>
+            {exactPlan ? <>
+              <p role="status">{exactPlan.candidateGroups} {t("cuvée names")} · {exactPlan.wineCount} {t("wines")}</p>
+              {exactPlan.candidates.length > 0 ? <>
+                <div className="producer-preferences__sources" role="group" aria-label={t("Exact shared cuvée matches")}>{exactPlan.candidates.map((candidate) => <div
+                  key={[candidate.sourceProducer, candidate.sourceCuvee, candidate.sourceAppellation, candidate.sourceColor].join("\u0000")}
+                >
+                  <strong>{candidate.sourceProducer} · {candidate.sourceCuvee}</strong>
+                  <span> → {candidate.productName} · {candidate.firstVintage}–{candidate.lastVintage} · {candidate.wineCount} {t("wines")}</span>
+                </div>)}</div>
+                <button type="button" disabled={exactBusy} onClick={() => void applyExact()}>
+                  {t("Confirm these exact links for my household")}
+                </button>
+              </> : <p>{t("No safe exact matches are available yet.")}</p>}
+            </> : null}
+          </section>
           <label>{t("Find a cuvée in your catalogue")}
             <input value={filter} onChange={(event) => setFilter(event.target.value)} />
           </label>

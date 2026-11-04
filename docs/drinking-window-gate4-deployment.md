@@ -507,3 +507,36 @@ pointers and provenance, then present the three model-based years honestly
 as editorial estimates for curator review. Rows without that evidence stay
 quarantined. Re-measure actual profile-backed coverage after publication;
 the 101 candidate matches must not be counted toward the 95% release goal.
+
+## Exact-name cuvée reconciliation rehearsal (4 November 2026)
+
+Draft #231 now includes a bounded cellar-only batch for unique, identical
+canonical cuvée names under an owner-confirmed producer. Similar names and
+profile aliases are **not** auto-linked; an owner can inspect the complete
+plan before explicitly applying it. The immutable decision log records
+`exact_canonical_name`, and the operation has no authority to approve dates.
+The new migration is local-only; no linked deployment has been attempted.
+
+On disposable database `cm_gate4_autoexact_test`, copied from protected
+restored snapshot `cm_gate4_bernardins_fresh_20261104`, the migration applied
+and 18 rollback-only database assertions passed. The 46 exchange JSONs from
+the owner's 4 November ZIP were then imported into this disposable clone
+only, leaving 69 archived profiles / 1,131 proposals there. The existing
+curator identity-batch RPC created four Mas Jullien products and 20 release
+identities for unblocked rows, with `dates_staged=0` and `published=false`.
+The exact-name owner batch linked 5 local naming groups / 27 wine cards:
+26 Mas Jullien and one Cal Demoura. The resulting lineage has 538 producer,
+44 product and 28 release identities across 802 active pilot cards, compared
+with 538/17/16 before this rehearsal. Twelve of the 27 newly product-linked
+cards reach a unique release; the others have no corresponding canonical
+release yet. **No shared-profile dates were published**, so the effective
+source remains the old model or a local/manual choice. All live cellar and
+linked-project counts remain unchanged by this experiment.
+
+Identity previews for the 46 newer profiles show that most remaining release
+keys are blocked by unresolved region/appellation names in the shared place
+graph, not by failed JSON validation. Resolve those place identities
+explicitly, create verified producer/cuvée/release identities in bounded
+curator batches, and only then stage checked three-date proposals. Measure
+actual wine-card sources after each batch; do not count JSON rows or textual
+overlaps as live coverage.

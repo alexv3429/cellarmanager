@@ -565,6 +565,29 @@ staged, approved, published or enabled**. The [intake audit](drinking-window-fin
 records the supersession and coverage risks. Gate 4 remains open and the 95%
 Gate 5 target remains unchanged; no additional PR is authorized.
 
+**Gate 4 exact-name reconciliation in draft #231 (4 November; local rehearsal
+only):** A new owner-scoped preview/apply batch links only a unique canonical
+cuvée whose normalized name is identical to the cellar spelling under an
+already-confirmed producer. It skips similar names, aliases, ambiguous
+products, groups with existing links and groups containing explicitly linked
+wines. Applying records an auditable cellar-only identity decision; it never
+creates a global alias, approves a date or publishes a reference. Eighteen
+rollback-only database assertions, the focused web tests and a production
+build passed. On a disposable restored clone with the current 28 shared
+products, only **one** active card qualifies; this is deliberately not a
+claim of useful drinking-window coverage. All 46 newer JSONs were then
+archived **in that clone only**. Using the existing curator identity-batch RPC,
+20 unblocked Mas Jullien release identities (four cuvées) were rehearsed,
+without staging dates. The exact-name batch then linked four Mas Jullien
+naming groups / 26 cards plus the existing one-card Cal Demoura opportunity:
+the clone's effective product/release identities rose from 17/16 to 44/28
+of 802 cards. **Published shared-profile windows remain zero.** The other
+profile identity plans are predominantly blocked on canonical region or
+appellation reconciliation; these are the next concrete Gate 4 data decisions,
+not a reason to substitute old-model dates. No clone operation touched the
+linked project or the owner's live cellar. This new migration is not applied
+to the linked project and Gate 4 remains **no-go**.
+
 **Execution status (the contract defines each exit test):**
 
 **Hard PR budget:** [PR #227](https://github.com/alexv3429/cellarmanager/pull/227)
