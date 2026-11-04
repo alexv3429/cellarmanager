@@ -588,6 +588,22 @@ not a reason to substitute old-model dates. No clone operation touched the
 linked project or the owner's live cellar. This new migration is not applied
 to the linked project and Gate 4 remains **no-go**.
 
+**Gate 4 place reconciliation in the same draft #231 (4 November; local
+rehearsal only):** The curator can now request import-scoped, read-only
+suggestions where a composite region begins with one existing canonical
+parent, or `1er Cru` spelling uniquely matches an existing `Premier Cru`
+appellation. Nothing is selected until the curator checks and accepts the
+displayed list; the server still rejects inconsistent region/appellation
+pairs. On the disposable clone containing the 46 final owner profiles, this
+found 35 region and nine appellation suggestions across files. For their 460
+distinct cuvée/vintage keys, identity previews rose from **28 unblocked with
+no mapping** to **225 unblocked if every suggestion is reviewed and accepted**.
+This is potential identity work, not 225 approved dates or cellar windows;
+35 keys still lack a region and 200 lack an appellation after the suggested
+maps. No linked data or official-app date changed. The remaining geography,
+source review, release matching and cellar coverage are still Gate 4 work;
+do not treat this as Gate 4 completion or start another PR.
+
 **Execution status (the contract defines each exit test):**
 
 **Hard PR budget:** [PR #227](https://github.com/alexv3429/cellarmanager/pull/227)

@@ -7,6 +7,7 @@ import {
   createProfileIdentityBatch,
   exportFullProfileExchange, importFullProfileExchange, listFullProfileExchanges, previewFullProfileExchange,
   previewProfileIdentityBatch, previewProfileStaging, stageProfileExchange,
+  suggestProfilePlaces,
 } from "../data/drinkingWindowProfileExchange"
 import { searchCurationTargets } from "../data/drinkingWindowFallbackAuthoring"
 import { getReleaseWorkspace } from "../data/drinkingWindowReleaseWorkflow"
@@ -17,6 +18,7 @@ vi.mock("../data/drinkingWindowProfileExchange", () => ({
   listFullProfileExchanges: vi.fn(), previewFullProfileExchange: vi.fn(),
   previewProfileIdentityBatch: vi.fn(), createProfileIdentityBatch: vi.fn(),
   previewProfileStaging: vi.fn(), stageProfileExchange: vi.fn(),
+  suggestProfilePlaces: vi.fn(),
 }))
 vi.mock("../data/drinkingWindowReleaseWorkflow", () => ({
   createWorkingDraft: vi.fn(), getReleaseWorkspace: vi.fn(),
@@ -68,6 +70,44 @@ afterEach(async () => {
 })
 
 describe("complete profile exchange", () => {
+  it("requires an explicit click before a proposed place mapping reaches the preview", async () => {
+    vi.mocked(previewFullProfileExchange).mockReturnValue({
+      kind: "producer", name: "Frantz Chagnoleau", datasetVersion: "1.1.0",
+      releaseCount: 1, factCount: 0, sourceCount: 0,
+      document: { producer: { name: "Frantz Chagnoleau" }, cuvees: [{
+        id: "a_la_cote", name: "À la Côte", region: "Bourgogne — Mâconnais",
+        appellation: "Saint-Véran",
+      }] },
+    })
+    vi.mocked(suggestProfilePlaces).mockResolvedValue({ regions: [{
+      kind: "region", sourceName: "Bourgogne — Mâconnais", targetId: "region-bourgogne",
+      targetName: "Bourgogne", reason: "parent_region_prefix",
+    }], appellations: [] })
+    await act(async () => root.render(<FullProfileExchangePanel isOnline />))
+    await act(async () => container.querySelector("summary")?.click())
+    const profile = container.querySelector("select") as HTMLSelectElement
+    await act(async () => {
+      profile.value = "profile"
+      profile.dispatchEvent(new Event("change", { bubbles: true }))
+    })
+    const mapping = [...container.querySelectorAll("summary")]
+      .find((summary) => summary.textContent === "Map profile names to shared wine identities")
+    await act(async () => mapping?.click())
+    const suggest = [...container.querySelectorAll("button")]
+      .find((button) => button.textContent === "Find unambiguous place suggestions")
+    await act(async () => suggest?.click())
+    expect(container.textContent).toContain("Bourgogne — Mâconnais → Bourgogne")
+    const inspect = [...container.querySelectorAll("button")]
+      .find((button) => button.textContent === "Preview mapping and changes")
+    await act(async () => inspect?.click())
+    expect(previewProfileStaging).toHaveBeenLastCalledWith(expect.anything(), "draft", {})
+    const accept = [...container.querySelectorAll("button")]
+      .find((button) => button.textContent === "Use these checked correspondences for this import")
+    await act(async () => accept?.click())
+    await act(async () => inspect?.click())
+    expect(previewProfileStaging).toHaveBeenLastCalledWith(expect.anything(), "draft",
+      { regions: { "Bourgogne — Mâconnais": "region-bourgogne" } })
+  })
   it("accepts multiple profiles and retains failed imports for an explicit retry", async () => {
     vi.mocked(importFullProfileExchange)
       .mockResolvedValueOnce({ id: "first", documentSha256: "hash-first", kind: "producer",

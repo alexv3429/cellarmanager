@@ -11,6 +11,7 @@ import {
   previewFullProfileExchange,
   previewProfileIdentityBatch,
   previewProfileStaging,
+  suggestProfilePlaces,
   stageProfileExchange,
   type FullProfileImport,
 } from "./drinkingWindowProfileExchange"
@@ -23,6 +24,21 @@ const imported: FullProfileImport = {
 }
 
 describe("complete profile exchange", () => {
+  it("parses read-only place suggestions without treating them as a mapping decision", async () => {
+    const result = await suggestProfilePlaces(imported, {
+      rpc: async (name, parameters) => {
+        expect(name).toBe("suggest_drinking_window_profile_places")
+        expect(parameters).toEqual({ p_id: imported.id })
+        return { data: { regions: [{ kind: "region", source_name: "Bourgogne — Mâconnais",
+          target_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", target_name: "Bourgogne",
+          reason: "parent_region_prefix" }], appellations: [] }, error: null }
+      },
+    })
+    expect(result.regions).toEqual([{ kind: "region", sourceName: "Bourgogne — Mâconnais",
+      targetId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", targetName: "Bourgogne",
+      reason: "parent_region_prefix" }])
+    expect(result.appellations).toEqual([])
+  })
   it.skipIf(!process.env.CELLARMANAGER_PROFILE_AUDIT_DIR)("accepts every supplied audited producer profile", () => {
     const directory = process.env.CELLARMANAGER_PROFILE_AUDIT_DIR!
     const files = readdirSync(directory).filter((name) => name.endsWith(".json"))

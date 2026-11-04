@@ -64,6 +64,19 @@ export interface ProfileIdentityMap {
   appellations?: Record<string, string>
 }
 
+export interface ProfilePlaceSuggestion {
+  kind: "region" | "appellation"
+  sourceName: string
+  targetId: string
+  targetName: string
+  reason: "parent_region_prefix" | "premier_cru_spelling"
+}
+
+export interface ProfilePlaceSuggestions {
+  regions: ProfilePlaceSuggestion[]
+  appellations: ProfilePlaceSuggestion[]
+}
+
 export interface ProfileIdentityEntry {
   key: string
   cuveeId: string | null
@@ -341,6 +354,29 @@ export async function listFullProfileExchanges(options: RpcOptions = {}): Promis
 
 export async function exportFullProfileExchange(id: string, options: RpcOptions = {}): Promise<Record<string, unknown>> {
   return object(await call("export_drinking_window_profile_exchange", { p_id: id }, options), "Profile export")
+}
+
+export async function suggestProfilePlaces(profile: FullProfileImport,
+  options: RpcOptions = {}): Promise<ProfilePlaceSuggestions> {
+  if (profile.kind !== "producer") throw new Error("Choose a producer profile")
+  const result = object(await call("suggest_drinking_window_profile_places", {
+    p_id: profile.id,
+  }, options), "Place suggestions")
+  function parse(items: unknown, kind: "region" | "appellation"): ProfilePlaceSuggestion[] {
+    if (!Array.isArray(items)) throw new Error("Invalid place suggestions")
+    return items.map((value: unknown) => {
+      const item = object(value, "Place suggestion")
+      if (item.kind !== kind || (item.reason !== "parent_region_prefix"
+        && item.reason !== "premier_cru_spelling")) throw new Error("Invalid place suggestion")
+      return {
+        kind, sourceName: string(item.source_name, "Source place"),
+        targetId: string(item.target_id, "Shared place ID"),
+        targetName: string(item.target_name, "Shared place"), reason: item.reason,
+      }
+    })
+  }
+  return { regions: parse(result.regions, "region"),
+    appellations: parse(result.appellations, "appellation") }
 }
 
 function identityStatus(value: unknown): "existing" | "create" | "blocked" {

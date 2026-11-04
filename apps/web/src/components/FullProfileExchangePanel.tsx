@@ -8,10 +8,12 @@ import {
   previewProfileIdentityBatch,
   previewProfileStaging,
   previewFullProfileExchange,
+  suggestProfilePlaces,
   stageProfileExchange,
   type FullProfileImport,
   type FullProfilePreview,
   type ProfileIdentityMap,
+  type ProfilePlaceSuggestions,
   type ProfileIdentityBatchPreview,
   type ProfileStagePreview,
 } from "../data/drinkingWindowProfileExchange"
@@ -81,6 +83,7 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
   const [selectedProfileId, setSelectedProfileId] = useState("")
   const [selectedDocument, setSelectedDocument] = useState<FullProfilePreview | null>(null)
   const [identityMap, setIdentityMap] = useState<ProfileIdentityMap>({})
+  const [placeSuggestions, setPlaceSuggestions] = useState<ProfilePlaceSuggestions | null>(null)
   const [selectedReleaseKeys, setSelectedReleaseKeys] = useState<string[]>([])
   const [identityPreview, setIdentityPreview] = useState<ProfileIdentityBatchPreview | null>(null)
   const [identityReason, setIdentityReason] = useState("")
@@ -157,6 +160,7 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
         setSelectedProfileId(saved[0].profile.id)
         setSelectedDocument(saved[0].preview)
         setIdentityMap({})
+        setPlaceSuggestions(null)
         setSelectedReleaseKeys([])
         setIdentityPreview(null)
         setStagingPreview(null)
@@ -181,6 +185,7 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
     setSelectedProfileId(id)
     setSelectedDocument(null)
     setIdentityMap({})
+    setPlaceSuggestions(null)
     setSelectedReleaseKeys([])
     setIdentityPreview(null)
     setIdentityConfirmed(false)
@@ -243,6 +248,33 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
       setIdentityPreview(null)
       setError(caught instanceof Error ? caught.message : "Unable to preview identities")
     } finally { setBusy(false) }
+  }
+
+  async function inspectPlaceSuggestions() {
+    const profile = imports.find((item) => item.id === selectedProfileId)
+    if (!profile || profile.kind !== "producer") return
+    setBusy(true); setError(null)
+    try { setPlaceSuggestions(await suggestProfilePlaces(profile)) }
+    catch (caught: unknown) {
+      setPlaceSuggestions(null)
+      setError(caught instanceof Error ? caught.message : "Unable to suggest places")
+    } finally { setBusy(false) }
+  }
+
+  function acceptPlaceSuggestions() {
+    if (!placeSuggestions) return
+    updateIdentityMap((current) => ({
+      ...current,
+      ...(placeSuggestions.regions.length ? { regions: {
+        ...Object.fromEntries(placeSuggestions.regions.map((item) => [item.sourceName, item.targetId])),
+        ...current.regions,
+      } } : {}),
+      ...(placeSuggestions.appellations.length ? { appellations: {
+        ...Object.fromEntries(placeSuggestions.appellations.map((item) => [item.sourceName, item.targetId])),
+        ...current.appellations,
+      } } : {}),
+    }))
+    setPlaceSuggestions(null)
   }
 
   async function createIdentities() {
@@ -349,6 +381,19 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
           onSelect={(id) => updateIdentityMap((current) => ({ ...current, producer_id: id }))} />
         <h5>{t("Places named in this profile")}</h5>
         <p>{t("A place mapping is a curator decision for this import only. It does not rename a region or change another cellar.")}</p>
+        <button type="button" disabled={busy || !isOnline} onClick={() => void inspectPlaceSuggestions()}>
+          {t("Find unambiguous place suggestions")}
+        </button>
+        {placeSuggestions ? <div>
+          <p>{t("Check these proposed correspondences before using them. Other place names still need individual review.")}</p>
+          <ul>{[...placeSuggestions.regions, ...placeSuggestions.appellations].map((item) => <li key={`${item.kind}:${item.sourceName}`}>
+            {item.sourceName} → {item.targetName} · {t(item.kind)}
+          </li>)}</ul>
+          {placeSuggestions.regions.length + placeSuggestions.appellations.length ?
+            <button type="button" disabled={busy || !isOnline} onClick={acceptPlaceSuggestions}>
+              {t("Use these checked correspondences for this import")}
+            </button> : <p>{t("No unambiguous place-name suggestions were found.")}</p>}
+        </div> : null}
         {profileRegions.map((name) => <div key={`region:${name}`}>
           <strong>{name}</strong>
           <CanonicalMappingSearch key={`${selectedProfileId}:region:${name}`} kind="region" suggestedName={name}
