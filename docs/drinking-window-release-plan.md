@@ -604,6 +604,13 @@ This is potential identity work, not 235 approved dates or cellar windows;
 maps. No linked data or official-app date changed. The remaining geography,
 source review, release matching and cellar coverage are still Gate 4 work;
 do not treat this as Gate 4 completion or start another PR.
+On 5 November, fresh CI passed and a linked dry run named only the two
+pending identity-tooling migrations. A fresh protected export was restored
+to an isolated local database, both migrations applied there, and 26
+rollback-only assertions passed; the baseline wine/profile/reference counts
+were unchanged. This is preflight evidence, **not** linked deployment or
+permission to publish. The [deployment record](drinking-window-gate4-deployment.md)
+contains the backup and restored-copy details.
 
 **Execution status (the contract defines each exit test):**
 

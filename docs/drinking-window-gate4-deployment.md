@@ -552,7 +552,7 @@ place alias applies (for example `Piémont` → `Piemonte`), or when changing
 does **not** create aliases, places, cellar links or dates. The curator must
 read the displayed source→target list and explicitly use it for this one
 import; the existing server previews still validate the parent/appellation
-relationship. `Roussillon`, `Piémont` and uncertain or generic appellations
+relationship. `Roussillon`, `Rhône septentrional` and uncertain or generic appellations
 are deliberately not guessed by this rule.
 
 On disposable clone `cm_gate4_autoexact_test` with the 46 final owner profiles
@@ -567,3 +567,32 @@ unique suggestions, absent/uncertain places, ordinary-user denial and no
 identity/alias writes. The linked project has not received this migration or
 the 46-profile import. Gate 4 remains a no-go until the remaining identity,
 evidence, date and actual-cellar coverage checks are completed.
+
+## Two pending identity-tooling migrations — 5 November preflight
+
+Fresh CI on commit `da3262a` passed its web, Supabase database, dependency,
+Worker and aggregate checks. A linked dry run named **only**
+`20261104110000_gate4_exact_household_cuvee_batch.sql` and
+`20261104120000_gate4_profile_place_suggestions.sql`, with zero seeds or
+roles. No linked push has been performed at this point.
+
+A fresh protected export of `public`, `private`, `auth`, `storage` and
+`capture_guard` is retained outside Git at
+`/private/tmp/cellarmanager-gate4-place-backup.8bxUyT` (directory mode 0700,
+files 0600). Its SHA-256 values are
+`7699860cb8c103916bf0c39d1a545a0fdcf03859c8f157c0d63f94b8640620be`
+for `schema.sql` and
+`71b9f1862e66f6550ed14c7b65d3110e1cc6ce98f000ae2ca65bd15784faf7f2`
+for `data.sql`. This is sensitive temporary recovery material, not a durable
+managed backup; do not commit it or restore it over later live changes
+automatically.
+
+The export restored with `ON_ERROR_STOP=1` into new isolated local database
+`cm_gate4_place_20261105`. Circular FK checks were disabled **only for the
+data-restore session**. The complete baseline contained 810 wines, six users,
+23 archived profiles and three reference rows. Both exact migrations applied
+there without error. The 18 exact-cuvée and eight place-suggestion assertions
+passed in rollback-only transactions. Postflight counts remained 810 / 6 /
+23 / 3, with zero exact-name batch decisions. This rehearsal neither links
+a cellar wine nor approves or publishes any date. Linked application remains
+subject to explicit authorization; the draft PR remains no-go for merge.
