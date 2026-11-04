@@ -326,7 +326,7 @@ found 488 potential pilot wine cards by producer spelling; therefore the
 other wines also need genuine appellation/region fallback coverage, not
 invented producer matches.
 
-## Owner review follow-up and Bernardins correction — proposed, not linked
+## Owner review follow-up and Bernardins correction — linked
 
 After the owner reviewed the producer suggestions, a fresh protected linked
 export of `public`, `private`, `auth`, `storage` and `capture_guard` was saved at
@@ -346,12 +346,30 @@ spelling comes from LWIN; the [winery](https://www.domaine-des-bernardins.com/le
 uses *Domaine des Bernardins*.
 
 Migration `20261104100000_gate4_correct_bernardins_identity.sql` was applied
-successfully **only to that restored copy**. It renamed the one canonical
+successfully to that restored copy. It renamed the one canonical
 producer while preserving its UUID, existing product, and linked cellar wine;
 the old LWIN spelling resolves through a curated source alias. Aggregate
 counts remained 31 producers, 32 household preferences, 804 active wines
 across households, and three reference date rows. It writes no household
-mapping or drinking window. CI and a separate owner authorization are still
-required before applying this new migration to the linked project. This
-correction does not fill the remaining cuvée/release and date-coverage gaps,
-and Gate 4 is not complete.
+mapping or drinking window. All PR CI checks passed. The owner then explicitly
+authorized applying this single migration to the linked project.
+
+A fresh protected linked export was saved at
+`/private/tmp/cellarmanager-gate4-bernardins.zzamcg` (directory mode 0700;
+schema/data files mode 0600). SHA-256: `869f387372e0daacdc6deeb47c94e9f8d1e8ceb692cb1ab4e90050b18504e7e5`
+for `schema.sql` and `b07e995a9774d498d1933e32293d0a1c0045d05321c9aa1603514b06bbbb5146`
+for `data.sql`. It is sensitive temporary recovery material; do not commit it
+or restore it automatically over later live activity. The fresh export
+restored with `ON_ERROR_STOP=1` to an isolated database
+`cm_gate4_bernardins_fresh_20261104`; circular FK checks were bypassed **only
+for that data-restore session**. The exact migration applied there without
+error. Before and after: the producer UUID stayed
+`b111b472-b3fc-41dd-a3c2-b2732b4f892e`, with one linked shared product,
+32 household producer-name preferences and three reference date rows. The
+old LWIN spelling resolves to the same UUID and no second `de Bernardins`
+producer is created. The linked dry run then listed **only** this migration,
+no seed or role changes. The authorized push applied it, and the linked
+postflight dry run found zero pending migrations, seeds or roles.
+
+This correction does not fill the remaining cuvée/release and date-coverage
+gaps, and Gate 4 is not complete.
