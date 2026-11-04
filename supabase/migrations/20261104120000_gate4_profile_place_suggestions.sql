@@ -1,6 +1,7 @@
 begin;
 
--- Read-only, import-scoped suggestions. These are never aliases or decisions:
+-- Read-only, import-scoped suggestions from unique existing places/aliases.
+-- These never create an alias or make a mapping decision:
 -- the curator must explicitly accept them, and the existing identity/staging
 -- previews still validate every region/appellation relationship.
 create function public.suggest_drinking_window_profile_places(p_id uuid)
@@ -25,10 +26,16 @@ begin
         select n.source_name, p.id, p.canonical_name,
             count(p.id) over (partition by n.source_name) as candidate_count
         from names n
-        join public.enrichment_places p on p.place_type = 'region'
-          and pg_catalog.strpos(n.source_name, ' — ') > 0
-          and p.normalized_name = private.normalize_wine_reference_text(
-              pg_catalog.split_part(n.source_name, ' — ', 1))
+        join lateral (
+            select distinct p.id, p.canonical_name
+            from public.enrichment_places p
+            left join public.enrichment_place_aliases a on a.place_id = p.id
+            where p.place_type = 'region'
+              and (p.normalized_name = private.normalize_wine_reference_text(
+                  pg_catalog.split_part(n.source_name, ' — ', 1))
+                or a.normalized_value = private.normalize_wine_reference_text(
+                  pg_catalog.split_part(n.source_name, ' — ', 1)))
+        ) p on true
         where not exists (
             select 1 from public.enrichment_places exact_place
             where exact_place.place_type in ('region','subregion')
@@ -37,7 +44,9 @@ begin
     )
     select coalesce(pg_catalog.jsonb_agg(pg_catalog.jsonb_build_object(
         'source_name',source_name,'target_id',id,'target_name',canonical_name,
-        'kind','region','reason','parent_region_prefix') order by source_name), '[]'::jsonb)
+        'kind','region','reason',case when pg_catalog.strpos(source_name,' — ') > 0
+            then 'parent_region_prefix' else 'existing_place_alias' end)
+            order by source_name), '[]'::jsonb)
     into v_regions from matches where candidate_count = 1;
 
     with names as (
@@ -47,11 +56,17 @@ begin
         select n.source_name, p.id, p.canonical_name,
             count(p.id) over (partition by n.source_name) as candidate_count
         from names n
-        join public.enrichment_places p on p.place_type = 'appellation'
-          and n.source_name ~* '1er[[:space:]]+cru'
-          and p.normalized_name = private.normalize_wine_reference_text(
-              pg_catalog.regexp_replace(n.source_name,
-                  '1er[[:space:]]+cru','Premier Cru','gi'))
+        join lateral (
+            select distinct p.id, p.canonical_name
+            from public.enrichment_places p
+            left join public.enrichment_place_aliases a on a.place_id = p.id
+            where p.place_type = 'appellation'
+              and ((n.source_name ~* '1er[[:space:]]+cru'
+                and p.normalized_name = private.normalize_wine_reference_text(
+                  pg_catalog.regexp_replace(n.source_name,
+                      '1er[[:space:]]+cru','Premier Cru','gi')))
+                or a.normalized_value = private.normalize_wine_reference_text(n.source_name))
+        ) p on true
         where not exists (
             select 1 from public.enrichment_places exact_place
             where exact_place.place_type = 'appellation'
@@ -60,7 +75,9 @@ begin
     )
     select coalesce(pg_catalog.jsonb_agg(pg_catalog.jsonb_build_object(
         'source_name',source_name,'target_id',id,'target_name',canonical_name,
-        'kind','appellation','reason','premier_cru_spelling') order by source_name), '[]'::jsonb)
+        'kind','appellation','reason',case when source_name ~* '1er[[:space:]]+cru'
+            then 'premier_cru_spelling' else 'existing_place_alias' end)
+            order by source_name), '[]'::jsonb)
     into v_appellations from matches where candidate_count = 1;
 
     return pg_catalog.jsonb_build_object('regions',v_regions,'appellations',v_appellations);

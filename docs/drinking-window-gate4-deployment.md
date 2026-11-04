@@ -546,8 +546,9 @@ overlaps as live coverage.
 The same draft PR now offers a curator-only, read-only suggestion step for
 places named in a saved producer profile. It proposes a parent region only
 when a composite name starts with one uniquely existing canonical region
-(for example `Bourgogne — Mâconnais` → `Bourgogne`), and an appellation only
-when changing `1er Cru` to `Premier Cru` yields one existing identity. It
+(for example `Bourgogne — Mâconnais` → `Bourgogne`), when a unique existing
+place alias applies (for example `Piémont` → `Piemonte`), or when changing
+`1er Cru` to `Premier Cru` yields one existing appellation. It
 does **not** create aliases, places, cellar links or dates. The curator must
 read the displayed source→target list and explicitly use it for this one
 import; the existing server previews still validate the parent/appellation
@@ -555,13 +556,13 @@ relationship. `Roussillon`, `Piémont` and uncertain or generic appellations
 are deliberately not guessed by this rule.
 
 On disposable clone `cm_gate4_autoexact_test` with the 46 final owner profiles
-(dataset version 11.0.0), this generated 35 region and nine appellation
+(dataset version 11.0.0), this generated 41 region and 12 appellation
 suggestions across the files. A read-only identity-plan comparison for their
 460 distinct cuvée/vintage keys found **28 unblocked with no mappings** and
-**225 unblocked if every suggestion were explicitly accepted**. The latter
-is only an upper-bound rehearsal, not 225 reviewed identities or published
-windows; 35 keys still fail region identity and 200 fail appellation identity
-after these suggestions. Seven rollback-only database assertions passed for
+**235 unblocked if every suggestion were explicitly accepted**. The latter
+is only an upper-bound rehearsal, not 235 reviewed identities or published
+windows; 15 keys still fail region identity and 210 fail appellation identity
+after these suggestions. Eight rollback-only database assertions passed for
 unique suggestions, absent/uncertain places, ordinary-user denial and no
 identity/alias writes. The linked project has not received this migration or
 the 46-profile import. Gate 4 remains a no-go until the remaining identity,

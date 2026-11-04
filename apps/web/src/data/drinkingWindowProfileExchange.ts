@@ -69,7 +69,7 @@ export interface ProfilePlaceSuggestion {
   sourceName: string
   targetId: string
   targetName: string
-  reason: "parent_region_prefix" | "premier_cru_spelling"
+  reason: "parent_region_prefix" | "premier_cru_spelling" | "existing_place_alias"
 }
 
 export interface ProfilePlaceSuggestions {
@@ -367,7 +367,8 @@ export async function suggestProfilePlaces(profile: FullProfileImport,
     return items.map((value: unknown) => {
       const item = object(value, "Place suggestion")
       if (item.kind !== kind || (item.reason !== "parent_region_prefix"
-        && item.reason !== "premier_cru_spelling")) throw new Error("Invalid place suggestion")
+        && item.reason !== "premier_cru_spelling"
+        && item.reason !== "existing_place_alias")) throw new Error("Invalid place suggestion")
       return {
         kind, sourceName: string(item.source_name, "Source place"),
         targetId: string(item.target_id, "Shared place ID"),
