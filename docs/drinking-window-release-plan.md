@@ -515,6 +515,20 @@ was applied to the linked project; the postflight dry run is clean. No date
 is approved or published by this correction. Gate 4 remains **no-go** until cuvée/release reconciliation,
 reviewed profile dates, and source-by-source coverage are measured.
 
+**Gate 4 new-profile intake audit (4 November; same draft #231):** The owner
+supplied Vajra and Roulot research files. Their 28 proposed exact releases
+line up by local cuvée alias, vintage and 750 ml format with 28 active pilot
+wine cards holding 35 bottles, subject to canonical identity and evidence
+review. They are not yet imported or published: nine empty optional
+descriptions fail the v1.1 schema, and both files carry a copied Carillon
+identity-policy sentence. The files need those narrow corrections before
+curator archival. The next highest-impact missing producer profile is Alvina
+Pernot (23 cards / 32 bottles across two already owner-linked local labels),
+then Thomas Morey (8 / 18), Boxler (10 / 17) and Darnaud (8 / 16); Giuseppe
+Cortese is 5 / 8. See the [Gate 4 deployment audit](drinking-window-gate4-deployment.md)
+for the full priority table. This intake does not relax the Gate 4 exit test
+or add another PR slot.
+
 **Execution status (the contract defines each exit test):**
 
 **Hard PR budget:** [PR #227](https://github.com/alexv3429/cellarmanager/pull/227)

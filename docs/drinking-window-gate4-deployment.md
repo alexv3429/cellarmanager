@@ -429,3 +429,43 @@ precise pointer for those entries than a direct vintage page. Existence
 pointers do **not** establish any of the three proposed drinking-window
 years. No shared identity, cellar link, date, or publication was written by
 this rehearsal; the batch awaits explicit curator action after source review.
+
+### New owner research files and next producer priorities — 4 November
+
+The owner supplied new v1.1 research files for G.D. Vajra (seven cuvées,
+15 exact-release proposals) and Jean-Marc Roulot (six cuvées, 13 proposals).
+On the protected pilot snapshot, local `Vajra` has 15 active wine cards / 21
+bottles and `Roulot` has 13 / 14. Each local cuvée, vintage and 750 ml format
+has a corresponding *candidate* release in the respective file, including
+the documented short local aliases. This is 28 cards / 35 bottles of potential
+exact-release review, **not** 28 approved or displayed windows. In particular,
+Vajra's local `Dragon` must be checked against the file's Luigi Baudana
+identity before any canonical link is accepted.
+
+Neither attached JSON currently passes the agreed v1.1 validator unchanged:
+four Vajra and five Roulot cuvées have an empty optional `site_description`.
+Removing those empty optional properties in memory makes both files validate,
+including their cross-references and three-year ordering. Both files also
+contain a copied Carillon-specific sentence in `import_policy.identity_links`;
+that sentence is unrelated to either producer and must be corrected before
+curator archival. The original owner files have not been edited, archived or
+published. No household link, shared identity or drinking window was changed.
+
+The same snapshot ranks *additional producer profiles not in the 23 archived
+files*, by current bottles, with local producer labels shown as such:
+
+| Local producer label | Active wine cards | Bottles | Identity note |
+| --- | ---: | ---: | --- |
+| `Pernot` + `Alvina Pernot` | 23 | 32 | Both owner-linked to shared Alvina Pernot; no supplied profile yet. |
+| `Thomas Morey` | 8 | 18 | Shared producer identity and cuvées require review. |
+| `Boxler` | 10 | 17 | No shared producer candidate yet; confirm full domain identity. |
+| `Darnaud` | 8 | 16 | No shared producer candidate yet. |
+| `Conterno Fantino` | 4 | 14 | No shared producer candidate yet. |
+| `Vaillé` | 7 | 13 | No shared producer candidate yet. |
+| `Giovanni Almondo` | 6 | 13 | No shared producer candidate yet. |
+| `Giuseppe Cortese` | 5 | 8 | No shared producer candidate yet; do not conflate with other Cortese producers. |
+
+These counts prioritize research, not a promise that a new JSON will cover
+every listed release. Exact cuvée/vintage/format rows and reviewed evidence
+remain necessary. Keep this work in draft PR #231 (Gate 4, slot 5/6); do not
+open another PR or count the old model as profile coverage.
