@@ -149,6 +149,25 @@ function schemaError(label: string, errors: typeof validateProducer.errors) {
   return new Error(`${label}: ${first?.instancePath || "$"}${field ? `/${field}` : ""} ${first?.message || "is invalid"}`)
 }
 
+// An omitted optional description and an empty one mean the same thing in an
+// exchange file. Keep the strict schema for non-empty values, but do not make
+// a whole research package unusable because an optional field was left blank.
+// Never repair identity, source, release or date fields here.
+function omitEmptyOptionalProducerDescriptions(document: Record<string, unknown>): Record<string, unknown> {
+  if (!Array.isArray(document.cuvees)) return document
+  return {
+    ...document,
+    cuvees: document.cuvees.map((value) => {
+      if (!value || typeof value !== "object" || Array.isArray(value)) return value
+      const cuvee = { ...value } as Record<string, unknown>
+      for (const field of ["site_description", "style_summary", "grape"]) {
+        if (cuvee[field] === "") delete cuvee[field]
+      }
+      return cuvee
+    }),
+  }
+}
+
 function validateProducerCrossReferences(document: Record<string, unknown>): FullProfilePreview {
   const producer = object(document.producer, "Producer")
   const cuvees = array(document.cuvees, "Cuvées").map((value) => object(value, "Cuvée"))
@@ -268,8 +287,9 @@ function validatePlaceCrossReferences(document: Record<string, unknown>): FullPr
 export function previewFullProfileExchange(input: unknown): FullProfilePreview {
   const document = object(input, "Profile")
   if (document.format === "cellarmanager.producer_research") {
-    if (!validateProducer(document)) throw schemaError("Producer profile", validateProducer.errors)
-    return validateProducerCrossReferences(document)
+    const normalized = omitEmptyOptionalProducerDescriptions(document)
+    if (!validateProducer(normalized)) throw schemaError("Producer profile", validateProducer.errors)
+    return validateProducerCrossReferences(normalized)
   }
   if (document.format === "cellarmanager.place_profile") {
     if (!validatePlace(document)) throw schemaError("Place profile", validatePlace.errors)

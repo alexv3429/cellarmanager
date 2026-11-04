@@ -543,6 +543,20 @@ weaken the published-data boundary to improve a coverage statistic. Keep
 verification and any narrow intake correction in #231, then remeasure real
 profile-backed coverage for Gate 5. No seventh PR is authorized.
 
+**Gate 4 consolidated producer-base intake (4 November; still draft #231):**
+The owner supplied a newer 46-producer, 598-cuvée research ZIP with 461
+three-date candidates. After a narrowly scoped normalization of blank
+optional cuvée descriptions, **46/46 exchange JSONs pass the native
+validators**. This is intake validity, not source/date approval. A comparison
+with the 23 already archived profiles found 323 unchanged rows, two changed
+rows and 345 older rows absent from the new lot. A read-only protected-pilot
+check found only 67/802 active cards with a textual exact cuvée/vintage/format
+overlap; none of those overlaps proves a canonical match or an active window.
+The lot has no appellation or region fallback profiles. It was **not imported,
+staged, approved, published or enabled**. The [intake audit](drinking-window-final-producer-base-intake-2026-11-04.md)
+records the supersession and coverage risks. Gate 4 remains open and the 95%
+Gate 5 target remains unchanged; no additional PR is authorized.
+
 **Execution status (the contract defines each exit test):**
 
 **Hard PR budget:** [PR #227](https://github.com/alexv3429/cellarmanager/pull/227)
@@ -1026,6 +1040,7 @@ meaningful. At minimum, each update must:
 
 | Date / change | Gate and decision | Evidence / remaining risk |
 | --- | --- | --- |
+| 2026-11-04 · draft PR #231 consolidated-base intake | Gate 4 format validation and source comparison only. Optional blank descriptions are normalized for validation and import; no linked database, permission, date, publication or household state changed. | [Intake audit](drinking-window-final-producer-base-intake-2026-11-04.md): 46/46 native validation, 345 prior rows absent, two changed, and 67/802 textual exact pilot overlaps. Curator evidence/identity review, appellation/region profiles and actual window coverage remain open. |
 | 2026-10-22 · PR #201 | Establish this tracked release plan and CI update guard. All delivery gates remain open. No live advice or database state changes. | Existing merged implementation and draft are described above; CI proves a plan update accompanies future relevant PRs, but cannot judge its quality. |
 | 2026-10-22 · PR #202 | Gate 0 moved to In progress after read-only linked migration/status checks and static review. No live advice, permission, or database change. | [Audit](drinking-window-gate0-audit.md) records 13 pending migrations, seed conflicts to preflight, and reader compatibility risk. Private rehearsal, backup/restore, active deployment hash, and owner authorization remain open. |
 | 2026-10-23 · PR #202 update | Gate 0 aggregate linked preflight completed read-only; no live advice, permission, or database change. | Reference-version count 0; checked Beaujolais/Morgon/Burgaud/Barraud identity counts 1 each; six other producer names 0 exact normalized matches. Cloudflare version 420 deployed at 20:53:20Z on 22 October, but its commit remains unverified. Private rehearsal and restore evidence remain open. |

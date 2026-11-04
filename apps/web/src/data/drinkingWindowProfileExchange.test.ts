@@ -26,7 +26,7 @@ describe("complete profile exchange", () => {
   it.skipIf(!process.env.CELLARMANAGER_PROFILE_AUDIT_DIR)("accepts every supplied audited producer profile", () => {
     const directory = process.env.CELLARMANAGER_PROFILE_AUDIT_DIR!
     const files = readdirSync(directory).filter((name) => name.endsWith(".json"))
-    expect(files).toHaveLength(23)
+    expect(files.length).toBeGreaterThan(0)
     const failures: string[] = []
     for (const file of files) {
       try {
@@ -42,6 +42,18 @@ describe("complete profile exchange", () => {
     expect(previewFullProfileExchange(producerTemplate).kind).toBe("producer")
     expect(previewFullProfileExchange(appellationTemplate).kind).toBe("appellation")
     expect(previewFullProfileExchange(regionTemplate).kind).toBe("region")
+  })
+
+  it("treats blank optional cuvée descriptions as absent without changing the uploaded file", () => {
+    const document = structuredClone(producerTemplate) as unknown as Record<string, unknown>
+    const cuvee = (document.cuvees as Record<string, unknown>[])[0]
+    Object.assign(cuvee, { site_description: "", style_summary: "", grape: "" })
+    const preview = previewFullProfileExchange(document)
+    const normalizedCuvee = (preview.document.cuvees as Record<string, unknown>[])[0]
+    expect(normalizedCuvee).not.toHaveProperty("site_description")
+    expect(normalizedCuvee).not.toHaveProperty("style_summary")
+    expect(normalizedCuvee).not.toHaveProperty("grape")
+    expect(cuvee.site_description).toBe("")
   })
 
   it("rejects unsupported fields instead of silently discarding them", () => {
