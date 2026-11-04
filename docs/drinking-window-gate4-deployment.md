@@ -373,3 +373,42 @@ postflight dry run found zero pending migrations, seeds or roles.
 
 This correction does not fill the remaining cuvée/release and date-coverage
 gaps, and Gate 4 is not complete.
+
+### Next reviewed identity batch, measured on the fresh pilot copy
+
+The 538 producer-linked pilot wine cards are the practical starting point
+for the 23 saved profiles; their producer links do **not** imply an exact
+cuvée, release or approved drinking window. Highest-impact shared producers:
+
+| Current shared producer label | Pilot cards linked to producer | Cards reaching cuvée | Cards reaching release |
+| --- | ---: | ---: | ---: |
+| Mas Jullien | 49 | 0 | 0 |
+| Vincent Dureuil Janthial | 45 | 1 | 1 |
+| Sylvain Langoureau | 35 | 1 | 1 |
+| Louis Boillot | 33 | 2 | 2 |
+| Jean-Marc Burgaud | 33 | 3 | 3 |
+| Frantz Chagnoleau | 31 | 2 | 2 |
+| de Cazeneuve | 31 | 0 | 0 |
+| Bruno Clavelier | 25 | 0 | 0 |
+| Clos Marie | 24 | 0 | 0 |
+| Alvina Pernot | 23 | 3 | 3 |
+
+Start with the high-impact profiles above: map each saved JSON producer to
+the existing shared identity, explicitly review distinct cuvée and vintage
+release identities (including documented renamings), then offer bounded
+household cuvée-name links. Re-measure *actual* card matches after each
+batch. This is a priority queue, **not** permission to create or approve all
+the JSON entries wholesale. The other 264 pilot cards still lack a shared
+producer link, so reviewed appellation/region fallbacks and further canonical
+producer intake remain necessary for near-all-wines coverage. No old-model
+estimate counts as a reviewed profile window.
+
+For a bounded first example, the 49 Mas Jullien cards span local cuvée names
+including `Autour de Jonquieres` (10), `Carlan` (nine), `Mas Jullien` (eight),
+`La Brune` (four), `Rosé` (four), and smaller groups. The JSON has distinct
+historic and current cuvées, so `Mas Jullien` and `Rosé` must not be linked by
+name alone. One local `Mas Jullien · Rosé` card carries vintage **2028** in
+the 2026 snapshot; treat that as an owner-data exception to check, not a
+valid release to create automatically or a value to silently correct. The
+first batch should review the obvious named cuvées and their actual vintages
+before the broad or ambiguous labels.
