@@ -34,16 +34,33 @@ passed. These tests do not constitute curator review.
 
 ## Supersession is not automatic
 
-All 23 producer names from the previously archived bundle occur in this
-46-profile lot. Comparing those 23 saved profiles' 670 release proposals by
-normalized cuvée/alias, vintage and bottle format gives **323 unchanged**
-three-date rows, **two changed** rows and **345 prior rows absent** from the
-new lot. The two changes are Bret Brothers Mâcon-Igé Les Vernayes:
+All 23 producer IDs from the previously archived bundle occur in this
+46-profile lot. A reproducible, read-only comparison by producer ID, cuvée
+ID, vintage and bottle format accounts for all 670 archived proposals:
+**323 unchanged**, **two changed**, and **345 absent** from the new lot.
+The supplied audit CSV accounts for every absence: 340 are marked as lacking
+a named-vintage source URL, four cite a named-vintage page for **another
+cuvée**, and one cites a page that does not name the cuvée. These are the
+new bundle's stated reasons, not independent adjudication of every source.
+The 340 remain research candidates in the older archive; the five cuvée
+identity problems must not be promoted without corrected evidence. The new
+bundle adds one release to those same 23 profiles and 135 releases under its
+23 additional producers. The two changed dates are Bret Brothers Mâcon-Igé
+Les Vernayes:
 
 | Vintage | Earlier proposal | New proposal |
 | --- | --- | --- |
 | 2022 | 2023 / 2025–2027 | 2023 / 2024–2027 |
 | 2024 | 2025 / 2026–2028 | 2025 / 2026–2029 |
+
+The [cited 2022 retailer page](https://www.lecarredesvins.com/16368-bret-brothers-macon-ige-les-vernayes-2022-6604700.html)
+was checked independently: it identifies the 2022/75 cl release and states
+`boire à partir` 2023 and `apogée` 2024–2027. That supports the *new 2022
+candidate* more directly than the old modelled 2025 optimum start, but it is
+retailer advice, not a producer guarantee, and reuse approval remains open.
+The [cited 2024 retailer page](https://www.lecarredesvins.com/19557-bret-brothers-macon-ige-les-vernayes-2024-7317100.html)
+could not be retrieved in this check; the 2024 change therefore remains
+unresolved. Neither change has been applied to a shared window.
 
 An absent prior row is **not automatically invalid**, and a new date is not
 automatically better. The archives remain separate versions until a curator
@@ -56,25 +73,43 @@ fresh publication decisions.
 ## Real-cellar opportunity, not delivered coverage
 
 A read-only comparison against the protected restored pilot snapshot counted
-802 active wine cards and 1,272 bottles. Producer labels/aliases in this new
-lot overlap 355 cards (602 bottles). Exact local cuvée label plus colour
-overlaps 263 cards (455 bottles). Adding vintage and format leaves only
-**67 cards / 126 bottles**. These are *textual candidates*, not confirmed
-canonical identities or effective published windows. For comparison, the
-previous 23-file research lot produced 183 exact local-name candidates / 353
-bottles under the same style of check. The new lot's source-led omission of
-uncertain vintages improves discipline but reduces this narrow opportunity
-count. It does not contain appellation or region exchange profiles, so it
-cannot by itself deliver the required fallback coverage or the 95% target.
+802 active wine cards and 1,272 bottles. With the owner's previously reviewed
+local producer labels for the first 23 profiles, plus exact name/alias matches
+for the 23 new profiles, the new lot has **97 textual exact
+cuvée/vintage/format candidates (180 bottles)**. The older 23-profile lot has
+183 (353 bottles), of which **104 cards / 195 bottles** correspond only to
+the 345 now-absent rows. The union of old and new exact candidates is 201
+cards / 375 bottles. The previous 67-card figure in this audit used an
+incomplete producer-name map; it was **incorrect and is superseded** by this
+reconciled calculation. These are opportunities for review, not confirmed
+canonical identities, approved dates, or a coverage percentage.
+
+The absent-row opportunities most relevant to the pilot are Chagnoleau
+(21 cards / 46 bottles), Burgaud (13 / 41), Langoureau (15 / 27), Clos Marie
+(11 / 17), and Cazeneuve (5 / 13). Do not restore those dates en masse;
+check the release identities and source basis first. The new lot has no
+appellation or region exchange profiles, so exact-release candidates alone
+cannot deliver the required fallbacks or the 95% target.
+
+The **actual effective advice** on that restored snapshot is much more
+limited: 751 cards / 1,201 bottles use the existing model, two cards / two
+bottles use manual dates, 49 cards / 69 bottles have no usable dates, and
+**zero** use a published shared profile. The 23 archived JSONs and the new
+ZIP are not active recommendations. This is a local restored-copy
+measurement, not an assertion about a later live-cellar snapshot.
 
 ## Decision boundary and next action in the same six-PR plan
 
 No new profile from this ZIP was imported into the linked project, staged,
 approved, published or enabled for a household by this intake. The existing
 23 archived profiles and approved-but-unpublished rows remain as they were.
-The curator must first compare the 345 missing prior rows and two changed
-dates, then resolve producer/cuvée/release identities and check evidence for
-bounded high-impact batches. Appellation and region fallbacks must be
+The 345 omissions are now classified; the five wrong/insufficient cuvée
+pointers stay quarantined and the 340 source gaps remain in the older research
+archive. The 2022 Bret change has a directly checked retailer page, while
+the 2024 change still needs an accessible, checked page. Next, resolve
+producer/cuvée/release identities and check date evidence for bounded
+high-impact batches, starting with the absent rows affecting actual bottles.
+Appellation and region fallbacks must be
 prepared and reviewed separately. After each batch, report real profile-backed
 card counts by source, not JSON or textual-overlap counts. Keep this work in
 Gate 4 PR #231; Gate 5 remains the official rollout slot, and no seventh PR

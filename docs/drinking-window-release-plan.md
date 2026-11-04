@@ -549,9 +549,17 @@ three-date candidates. After a narrowly scoped normalization of blank
 optional cuvée descriptions, **46/46 exchange JSONs pass the native
 validators**. This is intake validity, not source/date approval. A comparison
 with the 23 already archived profiles found 323 unchanged rows, two changed
-rows and 345 older rows absent from the new lot. A read-only protected-pilot
-check found only 67/802 active cards with a textual exact cuvée/vintage/format
-overlap; none of those overlaps proves a canonical match or an active window.
+rows and 345 older rows absent from the new lot. The supplied audit classifies
+all 345: 340 lack a named-vintage URL, four point to another cuvée, and one
+does not name the cuvée. The 2022 Bret Brothers changed dates agree with a
+checked retailer page; its 2024 page could not be retrieved, so that change
+remains unresolved. A corrected read-only pilot measurement, using the
+owner-reviewed producer labels, finds 97/802 cards with a textual exact
+cuvée/vintage/format overlap in the new lot, **not** the previously reported
+67; 104 cards overlap only the older omitted rows. None of these overlaps
+proves a canonical match or active window. The protected restored copy's
+actual effective sources are 751 model, two manual, 49 unavailable and
+**zero published shared profile** cards.
 The lot has no appellation or region fallback profiles. It was **not imported,
 staged, approved, published or enabled**. The [intake audit](drinking-window-final-producer-base-intake-2026-11-04.md)
 records the supersession and coverage risks. Gate 4 remains open and the 95%
@@ -1040,7 +1048,7 @@ meaningful. At minimum, each update must:
 
 | Date / change | Gate and decision | Evidence / remaining risk |
 | --- | --- | --- |
-| 2026-11-04 · draft PR #231 consolidated-base intake | Gate 4 format validation and source comparison only. Optional blank descriptions are normalized for validation and import; no linked database, permission, date, publication or household state changed. | [Intake audit](drinking-window-final-producer-base-intake-2026-11-04.md): 46/46 native validation, 345 prior rows absent, two changed, and 67/802 textual exact pilot overlaps. Curator evidence/identity review, appellation/region profiles and actual window coverage remain open. |
+| 2026-11-04 · draft PR #231 consolidated-base intake and reconciliation | Gate 4 format validation, complete old-row audit reconciliation and protected-copy coverage measurement. Optional blank descriptions are normalized for validation and import; no linked database, permission, date, publication or household state changed. | [Intake audit](drinking-window-final-producer-base-intake-2026-11-04.md): 46/46 native validation; all 345 omissions classified; 2022 Bret dates independently supported by retailer, 2024 unresolved; corrected 97/802 new textual exact candidates and 104 older-only candidates. Actual shared-profile coverage remains zero; curator evidence/identity review and appellation/region profiles remain open. |
 | 2026-10-22 · PR #201 | Establish this tracked release plan and CI update guard. All delivery gates remain open. No live advice or database state changes. | Existing merged implementation and draft are described above; CI proves a plan update accompanies future relevant PRs, but cannot judge its quality. |
 | 2026-10-22 · PR #202 | Gate 0 moved to In progress after read-only linked migration/status checks and static review. No live advice, permission, or database change. | [Audit](drinking-window-gate0-audit.md) records 13 pending migrations, seed conflicts to preflight, and reader compatibility risk. Private rehearsal, backup/restore, active deployment hash, and owner authorization remain open. |
 | 2026-10-23 · PR #202 update | Gate 0 aggregate linked preflight completed read-only; no live advice, permission, or database change. | Reference-version count 0; checked Beaujolais/Morgon/Burgaud/Barraud identity counts 1 each; six other producer names 0 exact normalized matches. Cloudflare version 420 deployed at 20:53:20Z on 22 October, but its commit remains unverified. Private rehearsal and restore evidence remain open. |
