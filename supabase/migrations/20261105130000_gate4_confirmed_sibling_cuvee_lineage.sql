@@ -1,9 +1,17 @@
 begin;
 
+create index if not exists wines_confirmed_sibling_name_idx on public.wines (
+    household_id,
+    private.normalize_wine_reference_text(producer),
+    private.normalize_wine_reference_text(cuvee),
+    private.normalize_wine_reference_text(appellation),
+    private.canonical_enrichment_wine_color(color)
+) where merged_into_wine_id is null and wine_reference_id is not null;
+
 -- One owner-confirmed reference link can identify the same local cuvée in
 -- other vintages. This is a read-time inference, not a new household or
 -- global alias. A conflicting confirmed product makes the inference empty.
-create function private.drinking_window_confirmed_sibling_cuvee_lineage(p_wine public.wines)
+create or replace function private.drinking_window_confirmed_sibling_cuvee_lineage(p_wine public.wines)
 returns table (producer_id uuid, product_id uuid, release_id uuid)
 language sql stable set search_path = '' as $$
     with sibling_products as (
@@ -44,6 +52,7 @@ language sql stable set search_path = '' as $$
         where sibling.household_id = p_wine.household_id
           and sibling.id <> p_wine.id
           and sibling.merged_into_wine_id is null
+          and sibling.wine_reference_id is not null
           and private.normalize_wine_reference_text(sibling.producer)
               = private.normalize_wine_reference_text(p_wine.producer)
           and private.normalize_wine_reference_text(sibling.cuvee)
