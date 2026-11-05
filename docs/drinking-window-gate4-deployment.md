@@ -564,8 +564,9 @@ is only an upper-bound rehearsal, not 235 reviewed identities or published
 windows; 15 keys still fail region identity and 210 fail appellation identity
 after these suggestions. Eight rollback-only database assertions passed for
 unique suggestions, absent/uncertain places, ordinary-user denial and no
-identity/alias writes. The linked project has not received this migration or
-the 46-profile import. Gate 4 remains a no-go until the remaining identity,
+identity/alias writes. At this rehearsal point, the linked project had not
+received this migration; its later application is recorded below. The
+46-profile import has not been applied. Gate 4 remains a no-go until the remaining identity,
 evidence, date and actual-cellar coverage checks are completed.
 
 ## Two pending identity-tooling migrations — 5 November preflight
@@ -594,5 +595,24 @@ data-restore session**. The complete baseline contained 810 wines, six users,
 there without error. The 18 exact-cuvée and eight place-suggestion assertions
 passed in rollback-only transactions. Postflight counts remained 810 / 6 /
 23 / 3, with zero exact-name batch decisions. This rehearsal neither links
-a cellar wine nor approves or publishes any date. Linked application remains
-subject to explicit authorization; the draft PR remains no-go for merge.
+a cellar wine nor approves or publishes any date. Linked application was
+subsequently authorized and is recorded below; the draft PR remains no-go
+for merge.
+
+## Authorized linked application — 5 November postflight
+
+The owner explicitly authorized applying the migrations. Immediately before
+the push, the working tree was clean, all PR #231 checks had passed, the
+protected backup still matched the SHA-256 values above, and a fresh linked
+dry run again named only `20261104110000_gate4_exact_household_cuvee_batch.sql`
+and `20261104120000_gate4_profile_place_suggestions.sql`, with zero seeds and
+roles. `supabase db push --linked --skip-vault` applied both without error to
+`cellarmanager-v02-dev`. A fresh linked dry run returned `upToDate: true` and
+zero pending migrations, seeds or roles. No live aggregate query or signed-in
+app smoke test was performed as part of this postflight; the restored-copy
+counts above must not be represented as live postflight counts.
+
+These migrations add exact-name cellar reconciliation and import-scoped place
+suggestions. The push did not import the 46 profiles, execute a household
+mapping batch, review or publish shared dates, or enable advice. The PR and
+Gate 4 remain draft/no-go pending the documented data and coverage work.

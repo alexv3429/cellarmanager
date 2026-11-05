@@ -585,8 +585,8 @@ of 802 cards. **Published shared-profile windows remain zero.** The other
 profile identity plans are predominantly blocked on canonical region or
 appellation reconciliation; these are the next concrete Gate 4 data decisions,
 not a reason to substitute old-model dates. No clone operation touched the
-linked project or the owner's live cellar. This new migration is not applied
-to the linked project and Gate 4 remains **no-go**.
+linked project or the owner's live cellar. The later authorized schema
+application is recorded below; Gate 4 remains **no-go**.
 
 **Gate 4 place reconciliation in the same draft #231 (4 November; local
 rehearsal only):** The curator can now request import-scoped, read-only
@@ -608,9 +608,15 @@ On 5 November, fresh CI passed and a linked dry run named only the two
 pending identity-tooling migrations. A fresh protected export was restored
 to an isolated local database, both migrations applied there, and 26
 rollback-only assertions passed; the baseline wine/profile/reference counts
-were unchanged. This is preflight evidence, **not** linked deployment or
-permission to publish. The [deployment record](drinking-window-gate4-deployment.md)
-contains the backup and restored-copy details.
+were unchanged. This preflight was not permission to publish. The owner then
+explicitly authorized linked application. Both exact migrations applied
+successfully to `cellarmanager-v02-dev`; a fresh linked dry run found zero
+pending migrations, seeds or roles. No live profile import, household mapping
+batch, date approval/publication, or advice activation occurred, and no live
+aggregate or signed-in smoke test is claimed. The [deployment
+record](drinking-window-gate4-deployment.md) contains the backup,
+restored-copy and postflight details. Gate 4 remains draft/no-go while
+canonical identities, evidence and actual profile-backed coverage are resolved.
 
 **Execution status (the contract defines each exit test):**
 
