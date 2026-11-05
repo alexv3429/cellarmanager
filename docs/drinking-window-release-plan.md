@@ -75,6 +75,10 @@ backup/restore rehearsal in the same draft PR, preserving the shared ID and
 the two owner-approved household choices while keeping the old LWIN spelling
 as an alias. It was applied to the linked project, and postflight found zero
 pending migrations. It is not a drinking-window approval.
+On the newer restored snapshot, incorporating this correction and 29
+existing household producer-name decisions, the explicit-release candidate
+overlap is **97 of 799 active pilot wine cards** (179 of 1,271 bottles).
+This remains candidate matching, not published profile-backed coverage.
 
 ## Current delivery checkpoint — 31 October 2026
 

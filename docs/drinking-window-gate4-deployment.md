@@ -748,3 +748,15 @@ applied to `cellarmanager-v02-dev` without error. The postflight linked dry
 run returned `upToDate: true` with zero migrations, seeds or roles pending.
 No live aggregate or signed-in curator UI smoke test was performed after
 this correction, so the restored-copy counts are not claimed as live counts.
+
+The newer protected restore contains 799 active pilot cards / 1,271 bottles
+(one fewer bottle than the earlier independent snapshot). Re-running the
+conservative 46-profile overlap after the Cazeneuve correction, using 29 of
+the 32 already-approved producer-name choices whose shared canonical name
+matches a final profile name/alias, yields 627 producer cards / 1,061 bottles,
+378 exact cuvée-and-colour cards / 672 bottles, and **97 explicit
+cuvée/vintage/format candidate cards / 179 bottles**. The three unmatched
+choices are Montcalmès, Di Meo and Sauska, which have no corresponding final
+JSON in this 46-file package. The one-bottle difference is between two backup
+snapshots, not a claimed effect of the identity migration. None of these 97
+candidates is counted as an approved, active shared window.
