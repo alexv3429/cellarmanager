@@ -915,7 +915,7 @@ it must not silently apply a village window to a classified wine. The more
 fundamental bottleneck remains canonical cuvée/release creation and checked
 date approval from the producer profiles.
 
-## Curator-reviewed release names can now reconcile a local cuvée — pending CI
+## Curator-reviewed release names can now reconcile a local cuvée — deployed
 
 The next Gate 4 migration adds a private, read-only lookup derived **only**
 from curator-confirmed producer-profile identity batches. Each anchor records
@@ -928,11 +928,47 @@ household producer mapping and a single matching release; conflicting
 candidates, different appellations, colours, vintages or sizes fail closed.
 No cellar wine, global alias or drinking date is written by this lookup.
 
-The migration rehearsed successfully on the fresh isolated copy and
+The migration rehearsed successfully on a fresh isolated restore and
 backfilled one previously curator-confirmed identity batch; exact versus
-wrong-colour/wrong-appellation read checks passed. The local Supabase test
-container is behind this branch's migrations, so its full database test run
-is not a valid verdict on the new SQL; a clean CI database run is required.
+wrong-colour/wrong-appellation read checks passed. Clean CI passed all four
+jobs at commit `9b45069`. A preflight named only
+`20261105140000_gate4_reviewed_profile_release_anchors.sql` and zero seeds
+or roles. The linked push applied only that migration; a following dry run
+reported zero pending. This deployment did not stage or publish a date or
+rewrite a cellar wine. No signed-in app smoke test or live aggregate read is
+claimed. The local Supabase test container is behind this branch's migrations;
+its failing full run is not a verdict on the CI-green SQL.
+
+An immediate postflight query on the restored copy exposed a deployment
+permission gap that clean CI did not reproduce: the long-standing wine-context
+function is owned by `postgres`, whereas the newly created helper/table were
+owned by `supabase_admin` on the linked-project restore. The context could
+therefore fail with `permission denied for function
+drinking_window_unique_reviewed_release`. The narrow follow-up migration
+`20261105150000_gate4_release_anchor_reader_privileges.sql` grants only
+`postgres` the required private-function execution and anchor-table read;
+browser roles remain denied. It was rehearsed on the exact restored copy, and
+the previously failing context query then completed across all 804 unmerged
+wine cards. The first migration's linked ledger success **did not** by itself
+prove the reader was operational; this follow-up must be applied before the
+feature is considered restored. No date or cellar record is changed by the
+permission grant.
+
+Before the push, a fresh protected schema/data backup of `public`, `private`,
+`auth`, `storage` and `capture_guard` was saved outside Git at
+`/private/tmp/cellarmanager-gate4-anchor-backup.iViaLZ` (directory mode 0700,
+files mode 0600). SHA-256: `b8eb5e01c623ca901f5005f9cbf78b09a43a6b023dae738d42145be41d3c66f3`
+for `schema.sql` and
+`845fad2758b3834187c5b8aa123a2a822e73a7d43b9b751c4940a74e26b4ed2f`
+for `data.sql`. This is sensitive temporary recovery material, not a durable
+managed backup; do not commit it or restore it over later live changes. Both
+files restored with `ON_ERROR_STOP=1` into the empty isolated local database
+`cm_gate4_anchor_fresh_20261105`; triggers were disabled only in its data
+restore session for known circular foreign keys. Its preflight counts were
+810 wines, four households, six auth users, 69 private profile archives,
+two reference versions and one confirmed identity batch. After applying the
+exact migration, these counts were unchanged; one identity anchor existed,
+and publications remained zero.
 This is **not** a claim of broad coverage: most supplied profile releases
 still need curator identity batches and evidence/date review, and local `1C`
 appellations remain unresolved until their classification-safe mapping is

@@ -706,13 +706,19 @@ The [Gate 4 deployment record](drinking-window-gate4-deployment.md) records
 the evidence and test boundary. This is still **no-go** for Gate 4 exit and
 profile publication.
 
-**Gate 4 exact-release reconciliation (5 November, same draft #231; pending
-clean CI):** A reviewed identity batch now supplies private, release-specific
+**Gate 4 exact-release reconciliation (5 November, same draft #231; linked
+migration deployed):** A reviewed identity batch now supplies private, release-specific
 name anchors. A local shorthand such as `Caillerets` can resolve a reviewed
 `Volnay 1er cru Les Caillerets` only after the household producer choice and
 appellation, colour, vintage and format also agree, with exactly one release
 left. No wine link, global alias or date is written. The migration passed on
-the isolated restored copy; the clean CI suite and deployment are outstanding.
+a fresh isolated restore, all four clean CI jobs passed, and the single
+migration was applied to the linked project after protected backup; its
+postflight ledger initially had zero pending migrations. A restored-copy
+postflight then exposed a `postgres` internal-reader permission gap that
+clean CI missed because of different migration ownership. The narrow grant
+follow-up is rehearsed and remains required before declaring this slice
+operational; see the Gate 4 deployment record.
 The local Supabase test instance is behind current migrations, so its failing
 full run is not treated as a code verdict. Only one previously reviewed batch
 exists in the restored copy; this change alone does **not** materially raise

@@ -3,6 +3,15 @@ create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions, pg_catalog;
 select no_plan();
 
+select ok(has_function_privilege('postgres',
+    'private.drinking_window_unique_reviewed_release(public.wines,uuid,uuid,uuid,text)',
+    'EXECUTE')
+    and has_table_privilege('postgres',
+        'private.drinking_window_reviewed_release_anchors','SELECT')
+    and not has_table_privilege('authenticated',
+        'private.drinking_window_reviewed_release_anchors','SELECT'),
+    'The internal wine reader can use anchors without exposing them to clients');
+
 insert into auth.users (id,email,raw_user_meta_data) values
     ('fd000000-0000-4000-8000-000000000001','identity-reviewer@example.test','{}'::jsonb),
     ('fd000000-0000-4000-8000-000000000002','ordinary-user@example.test','{}'::jsonb);
