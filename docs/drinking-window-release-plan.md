@@ -78,7 +78,7 @@ pending migrations. It is not a drinking-window approval.
 On the newer restored snapshot, incorporating this correction and 29
 existing household producer-name decisions, the explicit-release candidate
 overlap is **97 of 799 active pilot wine cards** (179 of 1,271 bottles).
-**Gate 4 name-resolution correction proposed in draft #231, 5 November:**
+**Gate 4 name-resolution correction in draft #231, 5 November:**
 The owner confirmed that exact producer/cuvée/appellation/vintage matches
 must not require a household confirmation. A new read-only curator resolver
 uses the supplied profile's exact aliases and full producer/appellation/cuvée
@@ -89,16 +89,27 @@ Boillot resolves its producer but not the still-absent `Caillerets` product;
 two `Evocelles` identities remain ambiguous. Appellation errors, producer
 exceptions, missing canonical releases and genuinely generic cuvée labels
 remain distinct tasks; this resolver alone does not activate any window.
-The migration and UI change are **not yet deployed or merged**. See the
-[deployment audit](drinking-window-gate4-deployment.md#exact-profile-name-resolution-proposed-in-the-same-draft--5-november).
-The next proposed Gate 4 reader change also reuses a **current,
+After green CI, fresh protected backup and restored-copy rehearsal, both
+this migration and the confirmed-sibling reader migration were applied to
+the linked project; the PR remains **unmerged**. See the
+[deployment audit](drinking-window-gate4-deployment.md#exact-profile-name-resolution-in-the-same-draft--5-november).
+The Gate 4 reader also reuses a **current,
 owner-confirmed** reference link from another vintage of exactly the same
 household producer/cuvée/appellation/colour group, without a second owner
 decision or a local wine edit. Its restored-copy test derives Chagnoleau
 `À la Côte` 2021/2022 from the confirmed 2019 package, but correctly leaves
 the mismatched `Raspilleres 2022` appellation and all missing shared releases
-open. It is not yet deployed; no new three-date advice is activated.
+open. Deployment alone activates no new three-date advice.
 This remains candidate matching, not published profile-backed coverage.
+
+The owner supplied a later-use Bourgogne place-profile package on 5 November:
+one regional and 11 appellation documents. All 12 pass the app's native
+read-only full-profile parser. They contain 485 candidate three-date windows
+across 25 groups, all editorial estimates with low
+confidence and unreviewed source reuse rights. It is **not imported or
+approved**. It can support reviewed appellation/region fallbacks once the
+producer identity path is reconciled, but cannot be counted as current
+coverage or replace a specific producer/cuvée row.
 
 ## Current delivery checkpoint — 31 October 2026
 

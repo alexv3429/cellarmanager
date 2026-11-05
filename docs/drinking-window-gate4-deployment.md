@@ -796,7 +796,7 @@ from a live post-import aggregate query. No assertion of 95% profile-backed
 coverage follows from these archived JSONs; the final package contains no
 appellation or region fallback profile documents.
 
-## Exact profile-name resolution proposed in the same draft — 5 November
+## Exact profile-name resolution in the same draft — 5 November
 
 After the owner distinguished obvious names from actual cellar corrections,
 draft #231 gained one **read-only, curator-only** suggestion function. It
@@ -806,8 +806,8 @@ complete `producer + appellation + cuvée` wording against existing products.
 Only one unique shared identity is returned; missing and multiple matches
 remain unresolved. The UI preselects those safe identities for the profile
 import. It neither creates a global alias, changes a household wine, approves
-a date nor publishes a reference. This is still a proposal in draft #231,
-**not a linked migration or a deployed app change**.
+a date nor publishes a reference. The migration is now applied to the linked
+project; the draft PR remains unmerged and this did not approve any dates.
 
 The new SQL test passed twelve rollback-only assertions on the disposable
 restored copy, including ambiguity, missing products, curator access and no
@@ -823,9 +823,9 @@ the producer resolved but `Caillerets` had no existing shared product; two
 different `Evocelles` products made that cuvée ambiguous and were correctly
 left unresolved. The next Gate 4 work is curator creation of missing
 canonical cuvées/releases and a separate, safe local-label reconciliation.
-Neither test changed the linked Supabase project or its cellars.
+Neither test changed a cellar or a reference row.
 
-## Confirmed sibling cuvée lineage proposed — 5 November
+## Confirmed sibling cuvée lineage — 5 November
 
 The owner also clarified that a household should not reconfirm an exact
 producer/cuvée/appellation/colour identity for every vintage. A second new
@@ -846,6 +846,48 @@ release yet exists, so this does **not** produce a three-date window. The
 confirmed 2020/2021 `Les Raspilleres` cards are `Viré-Clessé`. Seven
 rollback-only SQL assertions passed for inference, missing release,
 appellation mismatch, household isolation, later release creation,
-conflicting confirmations and no local write. This migration has **not**
-been applied to the linked project; the result is a restored-copy rehearsal
-and code proposal in draft #231 only.
+conflicting confirmations and no local write. The migration is now applied
+to the linked project; it cannot produce a window where the exact release or
+approved profile dates are still missing.
+
+## Two identity migrations deployed — 5 November
+
+The PR #231 CI was green at `c1f27ed`. The linked dry run listed exactly
+`20261105120000_gate4_profile_identity_suggestions.sql` and
+`20261105130000_gate4_confirmed_sibling_cuvee_lineage.sql`, with zero seeds
+and roles. Before the push, a fresh protected schema/data export of `public`,
+`private`, `auth`, `storage` and `capture_guard` was saved outside Git at
+`/private/tmp/cellarmanager-gate4-identity-backup.gUf7jq` (directory mode
+0700, files mode 0600). SHA-256: `5c56ef650ce3e0215b516831fcdc569e2d2c3f9a5ba5c034a3a00319570c1ced`
+for `schema.sql` and `4e0343a5690c55b3c39e256be7b568144de348a8f21cae109b911e861a4ae5f3`
+for `data.sql`. This is sensitive temporary recovery material, not a durable
+managed backup; do not commit it or automatically restore it over later live
+changes.
+
+The complete export restored with `ON_ERROR_STOP=1` into the new isolated
+local database `cm_gate4_identity_fresh_20261105`. Trigger checks were
+disabled only during that local data-restore transaction to accommodate
+circular FKs. Its baseline was 810 wines, four households, six auth users,
+69 private profile archives and two reference versions. Both exact migrations
+applied on the copy. Their 12 and seven rollback-only assertions passed, and
+the five baseline counts were unchanged afterward. The linked push then
+applied only those two migrations using `--skip-vault`; a fresh linked dry run
+reported zero pending migrations, seeds or roles. No live aggregate or
+signed-in end-to-end smoke check has been run, so the restored-copy counts
+must not be presented as live postflight measurements. No dates were staged,
+approved, published or opted in by the migration push. Gate 4 is still
+**no-go for merge/publication** until the remaining identity and date review.
+
+## Bourgogne place-profile package received for later fallback work
+
+The owner supplied `CellarManager_Bourgogne_12_profils_2026-11-05.zip` as a
+future input: one Bourgogne region and 11 appellation profiles in the native
+`cellarmanager.place_profile` format. The ZIP passed its container integrity
+check. The app's native full-profile parser accepted all 12 JSONs in a local,
+read-only check and counted 485 candidate windows across 25 ageing groups
+and 2005–2024. These are **low-confidence editorial estimates**, not exact
+producer/cuvée evidence or approved shared dates. The package's own audit
+says source reuse rights remain unreviewed. The package was not imported, staged or
+published during this identity migration deployment. It is reserved for
+reviewed appellation/region fallback work after the producer identities are
+reconciled; it must not be used to inflate current profile-backed coverage.
