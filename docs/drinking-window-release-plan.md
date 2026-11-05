@@ -706,6 +706,19 @@ The [Gate 4 deployment record](drinking-window-gate4-deployment.md) records
 the evidence and test boundary. This is still **no-go** for Gate 4 exit and
 profile publication.
 
+**Gate 4 exact-release reconciliation (5 November, same draft #231; pending
+clean CI):** A reviewed identity batch now supplies private, release-specific
+name anchors. A local shorthand such as `Caillerets` can resolve a reviewed
+`Volnay 1er cru Les Caillerets` only after the household producer choice and
+appellation, colour, vintage and format also agree, with exactly one release
+left. No wine link, global alias or date is written. The migration passed on
+the isolated restored copy; the clean CI suite and deployment are outstanding.
+The local Supabase test instance is behind current migrations, so its failing
+full run is not treated as a code verdict. Only one previously reviewed batch
+exists in the restored copy; this change alone does **not** materially raise
+profile-backed date coverage. Producer-profile batches, date review, safe
+`1C` classification and measured coverage remain Gate 4 exit work.
+
 **Execution status (the contract defines each exit test):**
 
 **Hard PR budget:** [PR #227](https://github.com/alexv3429/cellarmanager/pull/227)

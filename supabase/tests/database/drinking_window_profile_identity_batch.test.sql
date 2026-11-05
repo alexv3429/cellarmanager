@@ -26,6 +26,7 @@ select set_config('app.identity_batch_profile',
       "status":"draft_for_curator_review",
       "producer":{"name":"Jean-Marc Burgaud"},
       "cuvees":[{"id":"synthetic_reserve","name":"Synthetic Reserve",
+        "aliases":["Morgon Reserve"],
         "region":"Beaujolais","appellation":"Morgon","color":"red"}],
       "sources":[{"id":"existence","url":"https://example.org/synthetic-release"},
         {"id":"large-format","url":"https://example.org/synthetic-magnum"}],
@@ -149,6 +150,53 @@ select is((select count(*) from public.wines w
 select is((select count(*) from private.drinking_window_profile_identity_batches
     where exchange_id=current_setting('app.identity_batch_profile')::uuid),1::bigint,
     'The curator decision is retained in an immutable audit record');
+select is((select count(*) from private.drinking_window_reviewed_release_anchors a
+    join private.drinking_window_profile_identity_batches b on b.id=a.batch_id
+    where b.exchange_id=current_setting('app.identity_batch_profile')::uuid),3::bigint,
+    'Confirmed releases produce separate 750 and 1500 ml identity anchors, not dates');
+select ok('reserve' = any(private.drinking_window_profile_cuvee_name_keys(
+    'Morgon Reserve','[]'::jsonb,'Morgon')),
+    'A confirmed appellation prefix can be omitted from the cellar cuvée name');
+insert into public.wine_reference_household_producer_preferences (
+    household_id,source_producer_normalized,source_producer_text,producer_id,decided_by)
+values ('00000000-0000-4000-8000-000000000100',
+    'local synthetic','Local Synthetic',
+    current_setting('app.identity_batch_producer')::uuid,
+    'fd000000-0000-4000-8000-000000000001');
+insert into public.wines (
+    id,household_id,producer,cuvee,vintage,color,appellation,area,format_ml)
+values ('fd000000-0000-4000-8000-000000000003',
+    '00000000-0000-4000-8000-000000000100',
+    'Local Synthetic','Reserve',2022,'red','Morgon','Beaujolais',750);
+select is((private.drinking_window_wine_context(
+    'fd000000-0000-4000-8000-000000000003')->>'release_id')::uuid,
+    (select r.id from public.wine_reference_releases r
+     join public.wine_reference_products p on p.id=r.product_id
+     where p.canonical_name='Synthetic Reserve' and r.vintage_year=2022),
+    'An exact reviewed release resolves a local cuvée after the owner links its producer');
+select is((select wine_reference_id from public.wines
+    where id='fd000000-0000-4000-8000-000000000003'),null::uuid,
+    'The read-time inference never rewrites the household wine');
+update public.wines set vintage=2024
+where id='fd000000-0000-4000-8000-000000000003';
+select is(private.drinking_window_wine_context(
+    'fd000000-0000-4000-8000-000000000003')->>'release_id',null::text,
+    'An unreviewed vintage is never inferred from a neighbouring year');
+update public.wines set vintage=2022, appellation='Beaujolais-Villages'
+where id='fd000000-0000-4000-8000-000000000003';
+select is(private.drinking_window_wine_context(
+    'fd000000-0000-4000-8000-000000000003')->>'release_id',null::text,
+    'A matching name under the wrong appellation does not gain the reviewed release');
+update public.wines set appellation='Morgon', color='white'
+where id='fd000000-0000-4000-8000-000000000003';
+select is(private.drinking_window_wine_context(
+    'fd000000-0000-4000-8000-000000000003')->>'release_id',null::text,
+    'A different colour does not gain the reviewed release');
+update public.wines set color='red', format_ml=500
+where id='fd000000-0000-4000-8000-000000000003';
+select is(private.drinking_window_wine_context(
+    'fd000000-0000-4000-8000-000000000003')->>'release_id',null::text,
+    'A different bottle size does not gain a 750 ml identity');
 select is((public.preview_drinking_window_profile_identity_batch(
     current_setting('app.identity_batch_profile')::uuid,
     current_setting('app.identity_batch_map')::jsonb,

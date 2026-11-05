@@ -914,3 +914,26 @@ Cru parentage and preserve classification for later ageing-group selection;
 it must not silently apply a village window to a classified wine. The more
 fundamental bottleneck remains canonical cuvée/release creation and checked
 date approval from the producer profiles.
+
+## Curator-reviewed release names can now reconcile a local cuvée — pending CI
+
+The next Gate 4 migration adds a private, read-only lookup derived **only**
+from curator-confirmed producer-profile identity batches. Each anchor records
+the exact release, appellation, region, colour, vintage and bottle size, plus
+the profile's cuvée name and aliases. It accepts a shorter local name when the
+reviewed profile name starts with that same appellation (for example,
+`Volnay 1er cru Les Caillerets` → `Caillerets`). It requires an existing
+household producer mapping and a single matching release; conflicting
+candidates, different appellations, colours, vintages or sizes fail closed.
+No cellar wine, global alias or drinking date is written by this lookup.
+
+The migration rehearsed successfully on the fresh isolated copy and
+backfilled one previously curator-confirmed identity batch; exact versus
+wrong-colour/wrong-appellation read checks passed. The local Supabase test
+container is behind this branch's migrations, so its full database test run
+is not a valid verdict on the new SQL; a clean CI database run is required.
+This is **not** a claim of broad coverage: most supplied profile releases
+still need curator identity batches and evidence/date review, and local `1C`
+appellations remain unresolved until their classification-safe mapping is
+implemented. The Bourgogne place-profile package remains reserved for later
+fallback review, not producer matching.
