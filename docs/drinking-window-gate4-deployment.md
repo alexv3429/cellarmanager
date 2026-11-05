@@ -566,7 +566,7 @@ after these suggestions. Eight rollback-only database assertions passed for
 unique suggestions, absent/uncertain places, ordinary-user denial and no
 identity/alias writes. At this rehearsal point, the linked project had not
 received this migration; its later application is recorded below. The
-46-profile import has not been applied. Gate 4 remains a no-go until the remaining identity,
+46-profile import had not yet been applied. Gate 4 remains a no-go until the remaining identity,
 evidence, date and actual-cellar coverage checks are completed.
 
 ## Two pending identity-tooling migrations — 5 November preflight
@@ -760,3 +760,38 @@ choices are Montcalmès, Di Meo and Sauska, which have no corresponding final
 JSON in this 46-file package. The one-bottle difference is between two backup
 snapshots, not a claimed effect of the identity migration. None of these 97
 candidates is counted as an approved, active shared window.
+
+## Final owner-profile archive and signed-in preview — 5 November
+
+In the linked Gate 4 preview, a signed-in account with the drinking-window
+curator workspace used **Profils → Échange de profils complets** to save all
+46 JSONs from the owner's final 4 November package in three batches (1, 15,
+30). Each batch passed the browser's native full-exchange validation. The UI
+confirmed successful saves and explicitly reported that no dates were
+published; no import error appeared. The curator-only selector then showed
+**69 saved exchange versions**: the prior 23 plus these 46. This is a global,
+curator-private archive, not an import into the currently selected test
+household, and does not change any cellar or activate a date. Older versions
+remain archived for comparison; they were not silently superseded or deleted.
+
+As a concrete read-only check, selecting final `Domaine Frantz Chagnoleau`
+11.0.0 and previewing unpublished reference version 2 first gave **0 ready,
+18 quarantined** because its displayed producer name is not the shared
+canonical `Frantz Chagnoleau`. The JSON explicitly includes that exact
+canonical name among its producer aliases. Selecting the existing canonical
+producer *for this import* moved all 18 to the next blocker: no unique shared
+cuvée identity. In the missing-identity batch, `À la Côte` 2022 initially
+failed on the profile region `Bourgogne — Mâconnais`. The unique suggested
+parent `Bourgogne` was explicitly selected for this import; the subsequent
+read-only preview showed **one release identity ready to create** (the
+producer already existed, the cuvée and vintage did not). The UI still
+requires source verification, a reason and explicit confirmation before
+creating those shared identities. We did **not** confirm that step, create
+the cuvée/release, stage the three dates, or publish anything. This confirms
+the complete path and the actual remaining identity/evidence work, without
+counting a preview as a deployed profile window.
+
+The reviewed candidate-overlap figures above are from a restored copy, not
+from a live post-import aggregate query. No assertion of 95% profile-backed
+coverage follows from these archived JSONs; the final package contains no
+appellation or region fallback profile documents.
