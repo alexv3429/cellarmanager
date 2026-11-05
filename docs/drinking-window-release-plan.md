@@ -717,8 +717,9 @@ migration was applied to the linked project after protected backup; its
 postflight ledger initially had zero pending migrations. A restored-copy
 postflight then exposed a `postgres` internal-reader permission gap that
 clean CI missed because of different migration ownership. The narrow grant
-follow-up is rehearsed and remains required before declaring this slice
-operational; see the Gate 4 deployment record.
+follow-up was rehearsed and linked-deployed, with zero pending migrations
+postflight. The restored-copy context sweep now passes; a signed-in live app
+smoke check remains open. See the Gate 4 deployment record.
 The local Supabase test instance is behind current migrations, so its failing
 full run is not treated as a code verdict. Only one previously reviewed batch
 exists in the restored copy; this change alone does **not** materially raise

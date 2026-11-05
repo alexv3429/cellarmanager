@@ -950,9 +950,12 @@ drinking_window_unique_reviewed_release`. The narrow follow-up migration
 browser roles remain denied. It was rehearsed on the exact restored copy, and
 the previously failing context query then completed across all 804 unmerged
 wine cards. The first migration's linked ledger success **did not** by itself
-prove the reader was operational; this follow-up must be applied before the
-feature is considered restored. No date or cellar record is changed by the
-permission grant.
+prove the reader was operational; the follow-up was therefore applied before
+calling this identity reader repaired. No date or cellar record is changed by the
+permission grant. The linked dry run named only that grant migration and zero
+seeds/roles; it was then applied, and a following dry run found zero pending.
+The restored-copy wine-context sweep is the functional postflight evidence;
+no live signed-in app test or direct live aggregate read is claimed.
 
 Before the push, a fresh protected schema/data backup of `public`, `private`,
 `auth`, `storage` and `capture_guard` was saved outside Git at
