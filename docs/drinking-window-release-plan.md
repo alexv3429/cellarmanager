@@ -630,6 +630,11 @@ passed on the disposable clone. Separately, 59 proposals say `appellation à
 préciser`; 38 are Mas Cal Demoura rows spanning years before the standalone
 Terrasses du Larzac AOC. They remain blocked pending release-specific place
 verification, rather than being mapped wholesale to today's appellation.
+All PR checks passed, and a fresh protected linked backup was restored into
+another isolated copy before repeating the migration and ten assertions.
+That copy's wine, account, archive, reference and cellar-link counts stayed
+unchanged. The linked dry run names only the new suggestion migration;
+application to the linked project still requires the owner's separate answer.
 The [Gate 4 deployment record](drinking-window-gate4-deployment.md) records
 the evidence and test boundary. This is still **no-go** for Gate 4 exit and
 profile publication.

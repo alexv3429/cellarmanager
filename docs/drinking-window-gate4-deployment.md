@@ -640,6 +640,23 @@ profile, alias, wine or date at this stage. The restored clone accepted the
 function replacement; ten rollback-only SQL assertions, 17 focused web tests
 (one skipped), and the web production build passed.
 
+All PR #231 checks then passed on commit `a87fede`. A fresh linked dry run
+named **only** `20261105100000_gate4_classification_parent_suggestions.sql`,
+with zero seeds and roles. A new protected export is retained outside Git at
+`/private/tmp/cellarmanager-gate4-classification-backup.gLg48P` (directory
+0700, files 0600), with schema SHA-256
+`9c985490d064ceeea82dd0305e84ced5637a1e22fc5d5d4166ca4a530cda7c55`
+and data SHA-256
+`d1612375ee81a62bd92c3a8b800a5730ed1e830264244b2e61418948a48a030c`.
+The export restored with `ON_ERROR_STOP=1` into the new isolated local
+database `cm_gate4_classification_20261105`; `session_replication_role=replica`
+was set only for the data-restore session to accommodate circular FKs. Its
+baseline was 810 wines, six
+users, 23 archived profiles, three reference rows and zero cellar cuvée
+links. The migration applied there and all ten rollback-only assertions
+passed. The same five counts were unchanged after the rehearsal. This is
+preflight only, not linked application or date publication.
+
 One high-impact exception must remain quarantined: 38 of the 59 uncertain
 rows are Mas Cal Demoura's Terres de Jonquières, Feu Sacré and Fragments.
 The [producer's wine list](https://www.caldemoura.com/les-vins) calls the
