@@ -724,5 +724,27 @@ Migration `20261105110000` preserves that ID, changes only its canonical
 name, and retains `de Cazeneuve` as an LWIN-source alias. It refuses a
 competing producer or alias rather than merging. Applied on the isolated
 restored `cm_gate4_classification_20261105` copy, it kept the same producer
-UUID, both household choices and the old LWIN resolver result. It has **not
-yet been applied to the linked project**; CI and fresh preflight are required.
+UUID, both household choices and the old LWIN resolver result.
+
+The correction then passed full repository CI and all PR #231 checks. A
+fresh protected linked export was saved outside Git at
+`/private/tmp/cellarmanager-gate4-cazeneuve-backup.C3AmcA` (directory 0700,
+files 0600), with schema SHA-256
+`5c56ef650ce3e0215b516831fcdc569e2d2c3f9a5ba5c034a3a00319570c1ced`
+and data SHA-256
+`5e727ce049e0131e9ed593ae0ff56ae603092631886606f26e3596759e01c775`.
+It restored with `ON_ERROR_STOP=1` into a new isolated database; triggers
+were disabled only for the data restore session to accommodate circular FKs.
+Before the migration the copy had 810 wines, six users, 23 profile archives,
+three reference rows, two Cazeneuve household choices and canonical name
+`de Cazeneuve`. After the rehearsal, those counts and the shared UUID were
+unchanged, the name was `Château de Cazeneuve`, one historical alias existed,
+and LWIN lookup of `de Cazeneuve` returned that same UUID.
+
+With the backup hashes rechecked and the working tree clean, a linked dry
+run showed exactly this one migration, zero seeds and zero roles. The owner
+had asked to apply the Gate 4 migrations and continue; the migration was
+applied to `cellarmanager-v02-dev` without error. The postflight linked dry
+run returned `upToDate: true` with zero migrations, seeds or roles pending.
+No live aggregate or signed-in curator UI smoke test was performed after
+this correction, so the restored-copy counts are not claimed as live counts.

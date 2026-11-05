@@ -70,10 +70,11 @@ The additional classification-parent suggestion migration passed CI and
 restored-copy rehearsal, was applied to the linked project after a protected
 backup, and returned zero pending migrations in postflight. It enables
 individual curator review of suggestions; it approves no identity or date.
-An additional Cazeneuve canonical-name correction is rehearsed on an
-isolated copy in the same draft PR, preserving the shared ID and the two
-owner-approved household choices while keeping the old LWIN spelling as an
-alias. It is not yet linked-deployed or a drinking-window approval.
+An additional Cazeneuve canonical-name correction passed CI and a fresh
+backup/restore rehearsal in the same draft PR, preserving the shared ID and
+the two owner-approved household choices while keeping the old LWIN spelling
+as an alias. It was applied to the linked project, and postflight found zero
+pending migrations. It is not a drinking-window approval.
 
 ## Current delivery checkpoint — 31 October 2026
 
