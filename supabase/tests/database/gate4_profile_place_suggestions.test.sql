@@ -15,7 +15,16 @@ insert into public.enrichment_places (id, place_type, canonical_name, country_co
 insert into public.enrichment_places (id, parent_id, place_type, canonical_name, country_code) values
     ('fd100000-0000-4000-8000-000000000102',
      'fd100000-0000-4000-8000-000000000101', 'appellation',
-     'Synthetic Premier Cru', 'FR');
+     'Synthetic Premier Cru', 'FR'),
+    ('fd100000-0000-4000-8000-000000000103',
+     'fd100000-0000-4000-8000-000000000101', 'appellation',
+     'Synthetic Parent', 'FR'),
+    ('fd100000-0000-4000-8000-000000000104',
+     'fd100000-0000-4000-8000-000000000103', 'classification',
+     'Synthetic Parent Premier Cru', 'FR'),
+    ('fd100000-0000-4000-8000-000000000105',
+     'fd100000-0000-4000-8000-000000000101', 'classification',
+     'Synthetic Orphan Premier Cru', 'FR');
 insert into public.enrichment_place_aliases (place_id, alias_value) values
     ('fd100000-0000-4000-8000-000000000101', 'Pays de Test'),
     ('fd100000-0000-4000-8000-000000000102', 'Synthetic 1C');
@@ -38,7 +47,11 @@ select set_config('app.place_suggestion_profile',
         {"id":"fourth","name":"Fourth wine","region":"Pays de Test",
          "appellation":"Synthetic Premier Cru","color":"red"},
         {"id":"fifth","name":"Fifth wine","region":"Synthetic Region",
-         "appellation":"Synthetic 1C","color":"white"}
+         "appellation":"Synthetic 1C","color":"white"},
+        {"id":"sixth","name":"Sixth wine","region":"Synthetic Region",
+         "appellation":"Synthetic Parent 1er Cru","color":"white"},
+        {"id":"seventh","name":"Seventh wine","region":"Synthetic Region",
+         "appellation":"Synthetic Orphan 1er Cru","color":"white"}
       ],
       "sources":[{"id":"pointer","url":"https://example.org/synthetic-place"}],
       "exact_release_calibrations":[],
@@ -57,12 +70,22 @@ select is((select count(*) from jsonb_array_elements(public.suggest_drinking_win
     where x->>'source_name'='Pays de Test' and x->>'target_name'='Synthetic Region'),1::bigint,
     'A preexisting place alias suggests the unique canonical region');
 select is(jsonb_array_length(public.suggest_drinking_window_profile_places(
-    current_setting('app.place_suggestion_profile')::uuid)->'appellations'),2,
-    'A unique Premier Cru spelling and a unique alias are both suggested');
+    current_setting('app.place_suggestion_profile')::uuid)->'appellations'),3,
+    'An appellation spelling, a unique alias and a classified parent are suggested');
 select is((select count(*) from jsonb_array_elements(public.suggest_drinking_window_profile_places(
     current_setting('app.place_suggestion_profile')::uuid)->'appellations') x
     where x->>'target_name'='Synthetic Premier Cru'),2::bigint,
     'Both appellation suggestions keep the Premier Cru classification');
+select is((select count(*) from jsonb_array_elements(public.suggest_drinking_window_profile_places(
+    current_setting('app.place_suggestion_profile')::uuid)->'appellations') x
+    where x->>'source_name'='Synthetic Parent 1er Cru'
+      and x->>'target_name'='Synthetic Parent'
+      and x->>'reason'='classification_parent_appellation'),1::bigint,
+    'An exact classification suggests its existing appellation parent, with its reason exposed');
+select is((select count(*) from jsonb_array_elements(public.suggest_drinking_window_profile_places(
+    current_setting('app.place_suggestion_profile')::uuid)->'appellations') x
+    where x->>'source_name'='Synthetic Orphan 1er Cru'),0::bigint,
+    'A classification without an appellation parent is not collapsed to a region');
 select is((select count(*) from public.wine_reference_aliases
     where alias_value in ('Synthetic Region — East','Synthetic 1er Cru')),0::bigint,
     'A suggestion does not create a global alias');

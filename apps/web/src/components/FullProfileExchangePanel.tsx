@@ -84,6 +84,7 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
   const [selectedDocument, setSelectedDocument] = useState<FullProfilePreview | null>(null)
   const [identityMap, setIdentityMap] = useState<ProfileIdentityMap>({})
   const [placeSuggestions, setPlaceSuggestions] = useState<ProfilePlaceSuggestions | null>(null)
+  const [selectedPlaceSuggestions, setSelectedPlaceSuggestions] = useState<string[]>([])
   const [selectedReleaseKeys, setSelectedReleaseKeys] = useState<string[]>([])
   const [identityPreview, setIdentityPreview] = useState<ProfileIdentityBatchPreview | null>(null)
   const [identityReason, setIdentityReason] = useState("")
@@ -161,6 +162,7 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
         setSelectedDocument(saved[0].preview)
         setIdentityMap({})
         setPlaceSuggestions(null)
+        setSelectedPlaceSuggestions([])
         setSelectedReleaseKeys([])
         setIdentityPreview(null)
         setStagingPreview(null)
@@ -186,6 +188,7 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
     setSelectedDocument(null)
     setIdentityMap({})
     setPlaceSuggestions(null)
+    setSelectedPlaceSuggestions([])
     setSelectedReleaseKeys([])
     setIdentityPreview(null)
     setIdentityConfirmed(false)
@@ -254,27 +257,36 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
     const profile = imports.find((item) => item.id === selectedProfileId)
     if (!profile || profile.kind !== "producer") return
     setBusy(true); setError(null)
-    try { setPlaceSuggestions(await suggestProfilePlaces(profile)) }
+    try {
+      setPlaceSuggestions(await suggestProfilePlaces(profile))
+      setSelectedPlaceSuggestions([])
+    }
     catch (caught: unknown) {
       setPlaceSuggestions(null)
+      setSelectedPlaceSuggestions([])
       setError(caught instanceof Error ? caught.message : "Unable to suggest places")
     } finally { setBusy(false) }
   }
 
   function acceptPlaceSuggestions() {
-    if (!placeSuggestions) return
+    if (!placeSuggestions || !selectedPlaceSuggestions.length) return
+    const chosenRegions = placeSuggestions.regions.filter((item) =>
+      selectedPlaceSuggestions.includes(`${item.kind}:${item.sourceName}`))
+    const chosenAppellations = placeSuggestions.appellations.filter((item) =>
+      selectedPlaceSuggestions.includes(`${item.kind}:${item.sourceName}`))
     updateIdentityMap((current) => ({
       ...current,
-      ...(placeSuggestions.regions.length ? { regions: {
-        ...Object.fromEntries(placeSuggestions.regions.map((item) => [item.sourceName, item.targetId])),
+      ...(chosenRegions.length ? { regions: {
+        ...Object.fromEntries(chosenRegions.map((item) => [item.sourceName, item.targetId])),
         ...current.regions,
       } } : {}),
-      ...(placeSuggestions.appellations.length ? { appellations: {
-        ...Object.fromEntries(placeSuggestions.appellations.map((item) => [item.sourceName, item.targetId])),
+      ...(chosenAppellations.length ? { appellations: {
+        ...Object.fromEntries(chosenAppellations.map((item) => [item.sourceName, item.targetId])),
         ...current.appellations,
       } } : {}),
     }))
     setPlaceSuggestions(null)
+    setSelectedPlaceSuggestions([])
   }
 
   async function createIdentities() {
@@ -387,11 +399,17 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
         {placeSuggestions ? <div>
           <p>{t("Check these proposed correspondences before using them. Other place names still need individual review.")}</p>
           <ul>{[...placeSuggestions.regions, ...placeSuggestions.appellations].map((item) => <li key={`${item.kind}:${item.sourceName}`}>
-            {item.sourceName} → {item.targetName} · {t(item.kind)}
+            <label><input type="checkbox" checked={selectedPlaceSuggestions.includes(`${item.kind}:${item.sourceName}`)}
+              onChange={(event) => setSelectedPlaceSuggestions((current) => event.target.checked
+                ? [...current, `${item.kind}:${item.sourceName}`]
+                : current.filter((key) => key !== `${item.kind}:${item.sourceName}`))} />
+              {item.sourceName} → {item.targetName} · {t(item.kind)}</label>
+            {item.reason === "classification_parent_appellation" ?
+              ` · ${t("The profile names a classification; this suggestion uses its parent appellation. Check the classification and vintage before accepting.")}` : null}
           </li>)}</ul>
           {placeSuggestions.regions.length + placeSuggestions.appellations.length ?
-            <button type="button" disabled={busy || !isOnline} onClick={acceptPlaceSuggestions}>
-              {t("Use these checked correspondences for this import")}
+            <button type="button" disabled={busy || !isOnline || !selectedPlaceSuggestions.length} onClick={acceptPlaceSuggestions}>
+              {t("Use selected correspondences for this import")}
             </button> : <p>{t("No unambiguous place-name suggestions were found.")}</p>}
         </div> : null}
         {profileRegions.map((name) => <div key={`region:${name}`}>

@@ -616,3 +616,36 @@ These migrations add exact-name cellar reconciliation and import-scoped place
 suggestions. The push did not import the 46 profiles, execute a household
 mapping batch, review or publish shared dates, or enable advice. The PR and
 Gate 4 remain draft/no-go pending the documented data and coverage work.
+
+## Classified appellations and unresolved source names — 5 November rehearsal
+
+On disposable clone `cm_gate4_autoexact_test`, all 46 final producer profiles
+contain 598 cuvée descriptions and 461 proposed three-date rows. A read-only
+place audit found 40 proposed rows whose profile appellation string matches
+an existing `Premier Cru` classification with a unique **appellation** parent
+(for example `Meursault 1er Cru` → classification `Meursault Premier Cru` →
+appellation `Meursault`). The same audit found 59 proposed rows whose field
+literally says `appellation à préciser`; those are **not** place mappings.
+
+Draft migration `20261105100000` extends only the curator's import-scoped
+suggestions to expose the unique classification-parent case, with its reason.
+The actual clone RPC returned 21 such name suggestions across 14 profiles;
+the 40-row figure counts affected proposals, not accepted mappings.
+The UI now starts with every suggested correspondence unchecked, so the
+curator can accept only the individually reviewed names; no all-or-nothing
+bulk selection is imposed. The identity/staging preview
+checks the region/appellation relationship. A classification whose parent is
+only a region is never collapsed. The migration changed no live project,
+profile, alias, wine or date at this stage. The restored clone accepted the
+function replacement; ten rollback-only SQL assertions, 17 focused web tests
+(one skipped), and the web production build passed.
+
+One high-impact exception must remain quarantined: 38 of the 59 uncertain
+rows are Mas Cal Demoura's Terres de Jonquières, Feu Sacré and Fragments.
+The [producer's wine list](https://www.caldemoura.com/les-vins) calls the
+current wines Terrasses du Larzac, but the [INAO history](https://www.inao.gouv.fr/produit/terrasses-du-larzac-12972)
+dates the standalone AOC to October 2014. The JSON includes 2007–2013
+vintages; mapping every vintage of a cuvée to today's appellation could
+misstate their historical identity. Verify release-specific labels before
+creating those identities. This is a data and exchange-format limitation,
+not a reason to guess or publish the 38 rows.

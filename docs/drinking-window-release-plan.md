@@ -618,6 +618,22 @@ record](drinking-window-gate4-deployment.md) contains the backup,
 restored-copy and postflight details. Gate 4 remains draft/no-go while
 canonical identities, evidence and actual profile-backed coverage are resolved.
 
+**Gate 4 classified-appellation continuation (5 November, same draft #231):**
+The final 46-profile clone revealed 40 proposed rows where a `1er Cru` string
+can be traced through a unique existing classification to its appellation
+parent (21 distinct suggestions across 14 profiles). A new, read-only curator
+suggestion exposes that relationship for
+individual, initially unchecked review; it does not flatten the
+classification into a global alias
+or approve a window. Ten rollback-only SQL assertions and focused web tests
+passed on the disposable clone. Separately, 59 proposals say `appellation à
+préciser`; 38 are Mas Cal Demoura rows spanning years before the standalone
+Terrasses du Larzac AOC. They remain blocked pending release-specific place
+verification, rather than being mapped wholesale to today's appellation.
+The [Gate 4 deployment record](drinking-window-gate4-deployment.md) records
+the evidence and test boundary. This is still **no-go** for Gate 4 exit and
+profile publication.
+
 **Execution status (the contract defines each exit test):**
 
 **Hard PR budget:** [PR #227](https://github.com/alexv3429/cellarmanager/pull/227)

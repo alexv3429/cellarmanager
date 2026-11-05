@@ -77,12 +77,15 @@ describe("complete profile exchange", () => {
       document: { producer: { name: "Frantz Chagnoleau" }, cuvees: [{
         id: "a_la_cote", name: "À la Côte", region: "Bourgogne — Mâconnais",
         appellation: "Saint-Véran",
-      }] },
+      }, { id: "premier_cru", name: "A classified wine", region: "Bourgogne — Côte de Beaune",
+        appellation: "Meursault 1er Cru" }] },
     })
     vi.mocked(suggestProfilePlaces).mockResolvedValue({ regions: [{
       kind: "region", sourceName: "Bourgogne — Mâconnais", targetId: "region-bourgogne",
       targetName: "Bourgogne", reason: "parent_region_prefix",
-    }], appellations: [] })
+    }], appellations: [{ kind: "appellation", sourceName: "Meursault 1er Cru",
+      targetId: "appellation-meursault", targetName: "Meursault",
+      reason: "classification_parent_appellation" }] })
     await act(async () => root.render(<FullProfileExchangePanel isOnline />))
     await act(async () => container.querySelector("summary")?.click())
     const profile = container.querySelector("select") as HTMLSelectElement
@@ -97,16 +100,33 @@ describe("complete profile exchange", () => {
       .find((button) => button.textContent === "Find unambiguous place suggestions")
     await act(async () => suggest?.click())
     expect(container.textContent).toContain("Bourgogne — Mâconnais → Bourgogne")
+    expect(container.textContent).toContain("Meursault 1er Cru → Meursault")
+    expect(container.textContent).toContain("Check the classification and vintage")
     const inspect = [...container.querySelectorAll("button")]
       .find((button) => button.textContent === "Preview mapping and changes")
     await act(async () => inspect?.click())
     expect(previewProfileStaging).toHaveBeenLastCalledWith(expect.anything(), "draft", {})
     const accept = [...container.querySelectorAll("button")]
-      .find((button) => button.textContent === "Use these checked correspondences for this import")
+      .find((button) => button.textContent === "Use selected correspondences for this import")
+    expect(accept?.disabled).toBe(true)
+    const regionChoice = [...container.querySelectorAll("li label")]
+      .find((label) => label.textContent?.includes("Bourgogne — Mâconnais → Bourgogne"))
+    await act(async () => regionChoice?.querySelector("input")?.click())
     await act(async () => accept?.click())
     await act(async () => inspect?.click())
     expect(previewProfileStaging).toHaveBeenLastCalledWith(expect.anything(), "draft",
       { regions: { "Bourgogne — Mâconnais": "region-bourgogne" } })
+    await act(async () => suggest?.click())
+    const appellationChoice = [...container.querySelectorAll("li label")]
+      .find((label) => label.textContent?.includes("Meursault 1er Cru → Meursault"))
+    await act(async () => appellationChoice?.querySelector("input")?.click())
+    const acceptAppellation = [...container.querySelectorAll("button")]
+      .find((button) => button.textContent === "Use selected correspondences for this import")
+    await act(async () => acceptAppellation?.click())
+    await act(async () => inspect?.click())
+    expect(previewProfileStaging).toHaveBeenLastCalledWith(expect.anything(), "draft",
+      { regions: { "Bourgogne — Mâconnais": "region-bourgogne" },
+        appellations: { "Meursault 1er Cru": "appellation-meursault" } })
   })
   it("accepts multiple profiles and retains failed imports for an explicit retry", async () => {
     vi.mocked(importFullProfileExchange)

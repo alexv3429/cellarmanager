@@ -33,7 +33,9 @@ describe("complete profile exchange", () => {
           target_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", target_name: "Bourgogne",
           reason: "parent_region_prefix" }, { kind: "region", source_name: "Piémont",
           target_id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc", target_name: "Piemonte",
-          reason: "existing_place_alias" }], appellations: [] }, error: null }
+          reason: "existing_place_alias" }], appellations: [{ kind: "appellation",
+          source_name: "Meursault 1er Cru", target_id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd", target_name: "Meursault",
+          reason: "classification_parent_appellation" }] }, error: null }
       },
     })
     expect(result.regions).toEqual([{ kind: "region", sourceName: "Bourgogne — Mâconnais",
@@ -41,7 +43,9 @@ describe("complete profile exchange", () => {
       reason: "parent_region_prefix" }, { kind: "region", sourceName: "Piémont",
       targetId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc", targetName: "Piemonte",
       reason: "existing_place_alias" }])
-    expect(result.appellations).toEqual([])
+    expect(result.appellations).toEqual([{ kind: "appellation", sourceName: "Meursault 1er Cru",
+      targetId: "dddddddd-dddd-4ddd-8ddd-dddddddddddd", targetName: "Meursault",
+      reason: "classification_parent_appellation" }])
   })
   it.skipIf(!process.env.CELLARMANAGER_PROFILE_AUDIT_DIR)("accepts every supplied audited producer profile", () => {
     const directory = process.env.CELLARMANAGER_PROFILE_AUDIT_DIR!
