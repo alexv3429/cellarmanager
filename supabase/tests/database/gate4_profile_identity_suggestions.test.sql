@@ -78,6 +78,22 @@ select is((public.suggest_drinking_window_profile_identities(
     current_setting('app.identity_suggestion_profile')::uuid)->>'published')::boolean,
     false, 'Name suggestions do not publish drinking dates');
 
+select set_config('app.identity_suggestion_overlap',
+    (public.import_drinking_window_profile_exchange(pg_catalog.jsonb_set(
+        (select document from private.drinking_window_profile_exchanges
+         where id = current_setting('app.identity_suggestion_profile')::uuid),
+        '{cuvees}',
+        (select document -> 'cuvees' from private.drinking_window_profile_exchanges
+         where id = current_setting('app.identity_suggestion_profile')::uuid)
+        || '{"id":"same_cote","name":"Same Côte","aliases":["A la Cote"],
+             "region":"Bourgogne","appellation":"Saint-Véran","color":"white"}'::jsonb)))->>'id',true);
+select is((public.suggest_drinking_window_profile_identities(
+    current_setting('app.identity_suggestion_overlap')::uuid)#>>'{cuvees,cote}'),
+    null, 'Two profile cuvées cannot silently collapse to one shared product');
+select is((public.suggest_drinking_window_profile_identities(
+    current_setting('app.identity_suggestion_overlap')::uuid)->'ambiguous_cuvees') ? 'same_cote',
+    true, 'Overlapping profile alias is left for curator review');
+
 insert into public.wine_reference_entities(id,entity_type) values
     ('fd120000-0000-4000-8000-000000000102','producer');
 insert into public.wine_reference_producers(id,canonical_name) values

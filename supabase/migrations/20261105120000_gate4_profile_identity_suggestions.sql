@@ -2,7 +2,7 @@ begin;
 
 -- Resolve only identities already present in the shared graph. Profile aliases
 -- are lookup hints for this import, never new global aliases or approvals.
-create function public.suggest_drinking_window_profile_identities(p_id uuid)
+create or replace function public.suggest_drinking_window_profile_identities(p_id uuid)
 returns jsonb language plpgsql stable security definer set search_path = '' as $$
 declare
     v_document jsonb;
@@ -14,6 +14,8 @@ declare
     v_composite_names text[];
     v_product_id uuid;
     v_product_count integer;
+    v_duplicate_product text;
+    v_duplicate_cuvee text;
     v_cuvees jsonb := '{}'::jsonb;
     v_ambiguous jsonb := '[]'::jsonb;
 begin
@@ -83,6 +85,20 @@ begin
             elsif v_product_count > 1 then
                 v_ambiguous := v_ambiguous || pg_catalog.jsonb_build_array(v_cuvee ->> 'id');
             end if;
+        end loop;
+        -- Two different profile cuvées must not silently collapse onto one
+        -- shared product, even if their aliases overlap or describe rename eras.
+        for v_duplicate_product in
+            select target.value from pg_catalog.jsonb_each_text(v_cuvees) target
+            group by target.value having count(*) > 1
+        loop
+            for v_duplicate_cuvee in
+                select target.key from pg_catalog.jsonb_each_text(v_cuvees) target
+                where target.value = v_duplicate_product
+            loop
+                v_cuvees := v_cuvees - v_duplicate_cuvee;
+                v_ambiguous := v_ambiguous || pg_catalog.jsonb_build_array(v_duplicate_cuvee);
+            end loop;
         end loop;
     end if;
     return pg_catalog.jsonb_build_object('profile_id', p_id,

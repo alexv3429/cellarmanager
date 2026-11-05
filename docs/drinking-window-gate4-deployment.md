@@ -809,7 +809,7 @@ import. It neither creates a global alias, changes a household wine, approves
 a date nor publishes a reference. This is still a proposal in draft #231,
 **not a linked migration or a deployed app change**.
 
-The new SQL test passed ten rollback-only assertions on the disposable
+The new SQL test passed twelve rollback-only assertions on the disposable
 restored copy, including ambiguity, missing products, curator access and no
 alias/date writes. The web component/data tests and production build passed.
 The 46 final JSONs were also imported into that **disposable copy only**
