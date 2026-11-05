@@ -26,15 +26,10 @@ on private.drinking_window_reviewed_release_anchors
 -- calls it "Caillerets". Remove only its *confirmed* appellation prefix and
 -- optional article; geography is independently required at lookup time.
 create function private.drinking_window_profile_cuvee_name_keys(
-    p_name text, p_aliases jsonb, p_appellation text
+    p_name text, p_appellation text
 ) returns text[] language sql immutable set search_path = '' as $$
     with source_name as (
         select private.normalize_wine_reference_text(p_name) name
-        union
-        select private.normalize_wine_reference_text(value)
-        from pg_catalog.jsonb_array_elements_text(
-            case when pg_catalog.jsonb_typeof(p_aliases) = 'array'
-                then p_aliases else '[]'::jsonb end) value
     ), prefix as (
         select private.normalize_wine_reference_text(p_appellation) name
     ), variants as (
@@ -56,7 +51,7 @@ create function private.drinking_window_profile_cuvee_name_keys(
     select pg_catalog.array_agg(distinct name order by name)
     from variants where length(name) >= 3;
 $$;
-revoke all on function private.drinking_window_profile_cuvee_name_keys(text,jsonb,text)
+revoke all on function private.drinking_window_profile_cuvee_name_keys(text,text)
 from public, anon, authenticated, powersync_role, service_role;
 
 create function private.record_drinking_window_reviewed_release_anchors(p_batch_id uuid)
@@ -86,7 +81,7 @@ begin
         from pg_catalog.jsonb_array_elements(v_document -> 'cuvees') c
         where c.value ->> 'id' = v_entry ->> 'cuvee_id';
         v_names := private.drinking_window_profile_cuvee_name_keys(
-            v_cuvee ->> 'name', v_cuvee -> 'aliases', v_cuvee ->> 'appellation');
+            v_cuvee ->> 'name', v_cuvee ->> 'appellation');
         if pg_catalog.cardinality(v_names) is null then
             raise exception 'Reviewed cuvée has no usable name';
         end if;

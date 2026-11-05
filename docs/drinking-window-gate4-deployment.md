@@ -920,7 +920,8 @@ date approval from the producer profiles.
 The next Gate 4 migration adds a private, read-only lookup derived **only**
 from curator-confirmed producer-profile identity batches. Each anchor records
 the exact release, appellation, region, colour, vintage and bottle size, plus
-the profile's cuvée name and aliases. It accepts a shorter local name when the
+the reviewed cuvée name. An unreviewed alias or rename is not auto-linked. It
+accepts a shorter local name when the
 reviewed profile name starts with that same appellation (for example,
 `Volnay 1er cru Les Caillerets` → `Caillerets`). It requires an existing
 household producer mapping and a single matching release; conflicting
