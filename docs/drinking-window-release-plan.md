@@ -102,6 +102,17 @@ the mismatched `Raspilleres 2022` appellation and all missing shared releases
 open. Deployment alone activates no new three-date advice.
 This remains candidate matching, not published profile-backed coverage.
 
+On the fresh restored pilot data, 799 active cards have positive holdings:
+376 reach a resolved producer context, only 22 a shared cuvée, and 11 an
+exact shared release. A further 212 are blocked by appellation identity,
+74 by region identity, 128 by producer identity after place resolution, and
+nine by absent required fields. This is why migration deployment cannot be
+mistaken for date coverage. Of the appellation blockers, 106 have a unique
+geographically valid `1C` parent candidate; those can be handled only while
+retaining Premier Cru classification, not by a blanket village fallback.
+The [identity bottleneck audit](drinking-window-gate4-deployment.md#restored-pilot-cellar-identity-bottleneck--5-november)
+records the exact boundaries.
+
 The owner supplied a later-use Bourgogne place-profile package on 5 November:
 one regional and 11 appellation documents. All 12 pass the app's native
 read-only full-profile parser. They contain 485 candidate three-date windows

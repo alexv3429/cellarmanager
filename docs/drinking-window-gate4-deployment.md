@@ -891,3 +891,26 @@ says source reuse rights remain unreviewed. The package was not imported, staged
 published during this identity migration deployment. It is reserved for
 reviewed appellation/region fallback work after the producer identities are
 reconciled; it must not be used to inflate current profile-backed coverage.
+
+## Restored pilot-cellar identity bottleneck — 5 November
+
+On the same fresh isolated restore, a read-only count of the 799 unmerged
+pilot wine cards with positive holdings shows the effect and the remaining
+work: 376 currently have a resolved producer context, but only 22 have a
+shared cuvée and 11 an exact shared release. Another 128 reach a valid
+region/appellation context but lack a producer identity; 212 stop on an
+unresolved appellation, 74 on a region, and nine lack a required region,
+colour or vintage. These groups sum to 799. They are **identity readiness**,
+not published-window coverage. The migrations did not alter these wine rows.
+
+Of the 212 unresolved appellations, 106 cards use a local `1C` abbreviation
+whose base appellation has exactly one canonical match under the resolved
+region in this snapshot (for example, 23 `Rully 1C` and 22 `Saint-Aubin 1C`).
+Two further `Chablis 1er cru` cards and one `Savigny-les-Beaune 1C` card have
+no such canonical parent here. `GC` was **not** treated as interchangeable
+with a village appellation: Grand Cru can be a separate AOC. The next
+identity-path change should handle only unique, geographically valid Premier
+Cru parentage and preserve classification for later ageing-group selection;
+it must not silently apply a village window to a classified wine. The more
+fundamental bottleneck remains canonical cuvée/release creation and checked
+date approval from the producer profiles.
