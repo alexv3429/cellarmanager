@@ -91,6 +91,13 @@ exceptions, missing canonical releases and genuinely generic cuvée labels
 remain distinct tasks; this resolver alone does not activate any window.
 The migration and UI change are **not yet deployed or merged**. See the
 [deployment audit](drinking-window-gate4-deployment.md#exact-profile-name-resolution-proposed-in-the-same-draft--5-november).
+The next proposed Gate 4 reader change also reuses a **current,
+owner-confirmed** reference link from another vintage of exactly the same
+household producer/cuvée/appellation/colour group, without a second owner
+decision or a local wine edit. Its restored-copy test derives Chagnoleau
+`À la Côte` 2021/2022 from the confirmed 2019 package, but correctly leaves
+the mismatched `Raspilleres 2022` appellation and all missing shared releases
+open. It is not yet deployed; no new three-date advice is activated.
 This remains candidate matching, not published profile-backed coverage.
 
 ## Current delivery checkpoint — 31 October 2026

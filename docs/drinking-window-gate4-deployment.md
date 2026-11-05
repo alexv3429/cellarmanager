@@ -824,3 +824,28 @@ different `Evocelles` products made that cuvée ambiguous and were correctly
 left unresolved. The next Gate 4 work is curator creation of missing
 canonical cuvées/releases and a separate, safe local-label reconciliation.
 Neither test changed the linked Supabase project or its cellars.
+
+## Confirmed sibling cuvée lineage proposed — 5 November
+
+The owner also clarified that a household should not reconfirm an exact
+producer/cuvée/appellation/colour identity for every vintage. A second new
+Gate 4 migration therefore lets the drinking-window reader infer a product
+from an **existing owner-confirmed reference decision on another wine in the
+same household**, but only when all four local fields normalize identically,
+the producer's household choice agrees, the source's current direct link
+still agrees with its decision, and every eligible sibling points to the
+same shared product. A conflicting product or an appellation mismatch
+prevents inference. It never writes a cellar link or creates a release; an
+explicit wine link or household cuvée rule still takes precedence.
+
+On the disposable restored pilot copy, `Chagnoleau · A la Cote` 2019 has a
+confirmed 750 ml package link. The new reader derives the same existing
+shared cuvée for the unlinked 2021 and 2022 local cards, but no shared 2022
+release yet exists, so this does **not** produce a three-date window. The
+`Raspilleres 2022` card labelled `Saint-Véran` remains unlinked while the
+confirmed 2020/2021 `Les Raspilleres` cards are `Viré-Clessé`. Seven
+rollback-only SQL assertions passed for inference, missing release,
+appellation mismatch, household isolation, later release creation,
+conflicting confirmations and no local write. This migration has **not**
+been applied to the linked project; the result is a restored-copy rehearsal
+and code proposal in draft #231 only.
