@@ -57,9 +57,11 @@ another PR or declaring the end state delivered.
 
 **Gate 4 reality check, 5 November:** The final 46 owner profiles contain
 461 proposed exact-release date rows, but a conservative read-only match to
-the restored active cellar finds only 67 wine cards / 126 bottles with an
-explicit producer, cuvée, colour, vintage and format overlap. This is not
-approved or live profile coverage. See the
+the restored active pilot cellar finds only 67 wine cards / 126 bottles with
+an explicit producer, cuvée, colour, vintage and format overlap. Applying
+only already-approved household producer-name choices raises that candidate
+overlap to 91 wine cards / 165 bottles, still far from broad profile-backed
+coverage. This is not approved or live profile coverage. See the
 [deployment audit](drinking-window-gate4-deployment.md#final-46-profile-candidate-overlap--5-november).
 The remaining work must include verified local-to-shared identities and
 reviewed broader profiles; counting imports or old-model windows would not
@@ -68,6 +70,10 @@ The additional classification-parent suggestion migration passed CI and
 restored-copy rehearsal, was applied to the linked project after a protected
 backup, and returned zero pending migrations in postflight. It enables
 individual curator review of suggestions; it approves no identity or date.
+An additional Cazeneuve canonical-name correction is rehearsed on an
+isolated copy in the same draft PR, preserving the shared ID and the two
+owner-approved household choices while keeping the old LWIN spelling as an
+alias. It is not yet linked-deployed or a drinking-window approval.
 
 ## Current delivery checkpoint — 31 October 2026
 

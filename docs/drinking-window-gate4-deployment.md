@@ -680,16 +680,24 @@ not a reason to guess or publish the 38 rows.
 
 ## Final 46-profile candidate overlap — 5 November
 
-A read-only comparison of the owner's final 46 JSON profiles with active
-holdings in the isolated `cm_gate4_autoexact_test` copy found 801 wine cards
-and 1,276 bottles. Matching **only** a profile's explicit producer name or
-alias (no fuzzy inference) finds 342 cards / 585 bottles. Requiring an exact
+A read-only comparison of the owner's final 46 JSON profiles with **only the
+pilot household's** active holdings in the isolated `cm_gate4_autoexact_test`
+copy found 799 wine cards and 1,272 bottles. The two active cards / four
+bottles in a separate test household were excluded. Matching **only** a
+profile's explicit producer name or alias (no fuzzy inference) finds 342
+cards / 585 bottles. Requiring an exact
 cuvée name or declared alias **and colour** leaves 252 cards / 440 bottles.
 Requiring an explicit row for that cuvée, vintage and bottle size leaves just
-**67 cards / 126 bottles**. These are candidate overlaps, not accepted
-canonical identities, reviewed sources, published windows or app coverage.
-Some legitimate cellar abbreviations are absent from the producer aliases,
-so this is a conservative name-match analysis, not an upper bound.
+**67 cards / 126 bottles**. Adding only the 27 existing household producer
+choices whose shared canonical name exactly matches a final profile name or
+declared alias increases the candidate counts to 600 producer cards / 998
+bottles, 354 cuvée-and-colour cards / 615 bottles, and **91 exact-release
+cards / 165 bottles**. The other five choices were not guessed: two use the
+legacy shared name `de Cazeneuve`, and three concern producers without a
+corresponding final JSON. These remain candidate overlaps, not accepted
+release identities, reviewed sources, published windows or app coverage.
+Legitimate cellar abbreviations may still be absent, so neither count is an
+upper bound.
 
 The result also prevents a misleading conclusion from the 461 proposed rows:
 the newer, wider collection does not by itself provide three-date advice to
@@ -699,3 +707,22 @@ exact-release cards and Mas Jullien 12. Gate 4 must reconcile identities and
 identify applicable *reviewed* broader producer, appellation and region rows.
 Gate 5 cannot claim 95% profile-backed coverage from archive size or the
 legacy model's existing estimates.
+
+## Château de Cazeneuve shared identity correction — 5 November rehearsal
+
+The pilot household explicitly maps both `Cazeneuve` and `Chateau de
+Cazeneuve` to one LWIN-derived shared producer ID whose canonical label was
+`de Cazeneuve`. The final owner profile calls the same producer `Château de
+Cazeneuve`; the [winery's own site](https://www.chateaucazeneuve.com/) and
+the [Pic Saint-Loup producer listing](https://www.pic-saint-loup.com/domaine/chateau-de-cazeneuve/)
+support that name. The disposable copy has exactly one `de Cazeneuve`
+producer, no competing `Château de Cazeneuve` producer or alias, and two
+household decisions on the former ID. This is an identity-label correction,
+not a date decision or a fuzzy producer merge.
+
+Migration `20261105110000` preserves that ID, changes only its canonical
+name, and retains `de Cazeneuve` as an LWIN-source alias. It refuses a
+competing producer or alias rather than merging. Applied on the isolated
+restored `cm_gate4_classification_20261105` copy, it kept the same producer
+UUID, both household choices and the old LWIN resolver result. It has **not
+yet been applied to the linked project**; CI and fresh preflight are required.
