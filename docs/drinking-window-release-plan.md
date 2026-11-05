@@ -55,6 +55,16 @@ this work in the remaining Gate 4/5 PR slots; if it cannot be done safely
 within the six-PR budget, report that explicitly rather than silently adding
 another PR or declaring the end state delivered.
 
+**Gate 4 reality check, 5 November:** The final 46 owner profiles contain
+461 proposed exact-release date rows, but a conservative read-only match to
+the restored active cellar finds only 67 wine cards / 126 bottles with an
+explicit producer, cuvée, colour, vintage and format overlap. This is not
+approved or live profile coverage. See the
+[deployment audit](drinking-window-gate4-deployment.md#final-46-profile-candidate-overlap--5-november).
+The remaining work must include verified local-to-shared identities and
+reviewed broader profiles; counting imports or old-model windows would not
+satisfy the agreed 6/6 outcome.
+
 ## Current delivery checkpoint — 31 October 2026
 
 The [PR #227](https://github.com/alexv3429/cellarmanager/pull/227) is

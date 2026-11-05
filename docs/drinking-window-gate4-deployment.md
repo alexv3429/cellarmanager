@@ -666,3 +666,25 @@ vintages; mapping every vintage of a cuvée to today's appellation could
 misstate their historical identity. Verify release-specific labels before
 creating those identities. This is a data and exchange-format limitation,
 not a reason to guess or publish the 38 rows.
+
+## Final 46-profile candidate overlap — 5 November
+
+A read-only comparison of the owner's final 46 JSON profiles with active
+holdings in the isolated `cm_gate4_autoexact_test` copy found 801 wine cards
+and 1,276 bottles. Matching **only** a profile's explicit producer name or
+alias (no fuzzy inference) finds 342 cards / 585 bottles. Requiring an exact
+cuvée name or declared alias **and colour** leaves 252 cards / 440 bottles.
+Requiring an explicit row for that cuvée, vintage and bottle size leaves just
+**67 cards / 126 bottles**. These are candidate overlaps, not accepted
+canonical identities, reviewed sources, published windows or app coverage.
+Some legitimate cellar abbreviations are absent from the producer aliases,
+so this is a conservative name-match analysis, not an upper bound.
+
+The result also prevents a misleading conclusion from the 461 proposed rows:
+the newer, wider collection does not by itself provide three-date advice to
+most of this cellar. For example, the final Chagnoleau profile overlaps 29
+cards by cuvée and colour but only one by exact release; Daumas Gassac has 16
+exact-release cards and Mas Jullien 12. Gate 4 must reconcile identities and
+identify applicable *reviewed* broader producer, appellation and region rows.
+Gate 5 cannot claim 95% profile-backed coverage from archive size or the
+legacy model's existing estimates.
