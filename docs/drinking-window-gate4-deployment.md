@@ -657,6 +657,17 @@ links. The migration applied there and all ten rollback-only assertions
 passed. The same five counts were unchanged after the rehearsal. This is
 preflight only, not linked application or date publication.
 
+After the latest PR #231 CI Gate passed, the protected export hashes above
+were rechecked, the worktree was clean, and a fresh linked dry run named
+**only** `20261105100000_gate4_classification_parent_suggestions.sql` with no
+seeds or roles. The owner's instruction to apply the migrations and continue
+was followed: `supabase db push --linked --skip-vault` applied that one
+migration to `cellarmanager-v02-dev` without error. The linked postflight dry
+run returned `upToDate: true` and no migrations, seeds or roles pending. This
+is a schema/function deployment, not acceptance of any suggested mapping or
+publication of a date. No live aggregate or signed-in curator UI smoke test
+was performed as part of this postflight.
+
 One high-impact exception must remain quarantined: 38 of the 59 uncertain
 rows are Mas Cal Demoura's Terres de Jonquières, Feu Sacré and Fragments.
 The [producer's wine list](https://www.caldemoura.com/les-vins) calls the

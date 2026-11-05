@@ -64,6 +64,10 @@ approved or live profile coverage. See the
 The remaining work must include verified local-to-shared identities and
 reviewed broader profiles; counting imports or old-model windows would not
 satisfy the agreed 6/6 outcome.
+The additional classification-parent suggestion migration passed CI and
+restored-copy rehearsal, was applied to the linked project after a protected
+backup, and returned zero pending migrations in postflight. It enables
+individual curator review of suggestions; it approves no identity or date.
 
 ## Current delivery checkpoint — 31 October 2026
 
