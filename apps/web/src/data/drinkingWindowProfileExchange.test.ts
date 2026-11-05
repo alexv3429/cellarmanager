@@ -11,6 +11,7 @@ import {
   previewFullProfileExchange,
   previewProfileIdentityBatch,
   previewProfileStaging,
+  suggestProfileIdentities,
   suggestProfilePlaces,
   stageProfileExchange,
   type FullProfileImport,
@@ -24,6 +25,22 @@ const imported: FullProfileImport = {
 }
 
 describe("complete profile exchange", () => {
+  it("accepts only read-only unique producer and cuvée suggestions", async () => {
+    const result = await suggestProfileIdentities(imported, { rpc: async (name, parameters) => {
+      expect(name).toBe("suggest_drinking_window_profile_identities")
+      expect(parameters).toEqual({ p_id: imported.id })
+      return { data: { profile_id: imported.id, producer_id: "shared-producer",
+        producer_matches: 1, cuvees: { cote: "shared-product" },
+        ambiguous_cuvees: ["rose"], published: false, wines_linked: 0 }, error: null }
+    } })
+    expect(result).toEqual({ map: { producer_id: "shared-producer",
+      cuvees: { cote: "shared-product" } }, producerMatches: 1, ambiguousCuvees: ["rose"] })
+    await expect(suggestProfileIdentities(imported, { rpc: async () => ({
+      data: { profile_id: imported.id, producer_id: null, producer_matches: 0,
+        cuvees: { cote: "shared-product" }, ambiguous_cuvees: [], published: false,
+        wines_linked: 0 }, error: null,
+    }) })).rejects.toThrow("Invalid producer suggestions")
+  })
   it("parses read-only place suggestions without treating them as a mapping decision", async () => {
     const result = await suggestProfilePlaces(imported, {
       rpc: async (name, parameters) => {

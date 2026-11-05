@@ -64,6 +64,12 @@ export interface ProfileIdentityMap {
   appellations?: Record<string, string>
 }
 
+export interface ProfileIdentitySuggestions {
+  map: ProfileIdentityMap
+  producerMatches: number
+  ambiguousCuvees: string[]
+}
+
 export interface ProfilePlaceSuggestion {
   kind: "region" | "appellation"
   sourceName: string
@@ -355,6 +361,30 @@ export async function listFullProfileExchanges(options: RpcOptions = {}): Promis
 
 export async function exportFullProfileExchange(id: string, options: RpcOptions = {}): Promise<Record<string, unknown>> {
   return object(await call("export_drinking_window_profile_exchange", { p_id: id }, options), "Profile export")
+}
+
+export async function suggestProfileIdentities(profile: FullProfileImport,
+  options: RpcOptions = {}): Promise<ProfileIdentitySuggestions> {
+  if (profile.kind !== "producer") throw new Error("Choose a producer profile")
+  const result = object(await call("suggest_drinking_window_profile_identities", {
+    p_id: profile.id,
+  }, options), "Identity suggestions")
+  if (result.profile_id !== profile.id || result.published !== false || result.wines_linked !== 0 ||
+      !Number.isInteger(result.producer_matches) || (result.producer_matches as number) < 0 ||
+      !Array.isArray(result.ambiguous_cuvees)) throw new Error("Invalid identity suggestions")
+  const cuvees = object(result.cuvees, "Cuvée suggestions")
+  const mapped = Object.fromEntries(Object.entries(cuvees).map(([source, target]) => [
+    string(source, "Profile cuvée ID"), string(target, "Shared cuvée ID"),
+  ]))
+  const producerId = result.producer_id === null ? undefined : string(result.producer_id, "Shared producer ID")
+  if ((result.producer_matches === 1) !== Boolean(producerId) || (!producerId && Object.keys(mapped).length)) {
+    throw new Error("Invalid producer suggestions")
+  }
+  return { map: { ...(producerId ? { producer_id: producerId } : {}),
+    ...(Object.keys(mapped).length ? { cuvees: mapped } : {}) },
+    producerMatches: result.producer_matches as number,
+    ambiguousCuvees: result.ambiguous_cuvees.map((value) => string(value, "Ambiguous cuvée")),
+  }
 }
 
 export async function suggestProfilePlaces(profile: FullProfileImport,

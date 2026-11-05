@@ -7,7 +7,7 @@ import {
   createProfileIdentityBatch,
   exportFullProfileExchange, importFullProfileExchange, listFullProfileExchanges, previewFullProfileExchange,
   previewProfileIdentityBatch, previewProfileStaging, stageProfileExchange,
-  suggestProfilePlaces,
+  suggestProfileIdentities, suggestProfilePlaces,
 } from "../data/drinkingWindowProfileExchange"
 import { searchCurationTargets } from "../data/drinkingWindowFallbackAuthoring"
 import { getReleaseWorkspace } from "../data/drinkingWindowReleaseWorkflow"
@@ -18,7 +18,7 @@ vi.mock("../data/drinkingWindowProfileExchange", () => ({
   listFullProfileExchanges: vi.fn(), previewFullProfileExchange: vi.fn(),
   previewProfileIdentityBatch: vi.fn(), createProfileIdentityBatch: vi.fn(),
   previewProfileStaging: vi.fn(), stageProfileExchange: vi.fn(),
-  suggestProfilePlaces: vi.fn(),
+  suggestProfileIdentities: vi.fn(), suggestProfilePlaces: vi.fn(),
 }))
 vi.mock("../data/drinkingWindowReleaseWorkflow", () => ({
   createWorkingDraft: vi.fn(), getReleaseWorkspace: vi.fn(),
@@ -57,6 +57,8 @@ beforeEach(() => {
       sourceUrls: [], children: [],
     })),
   })
+  vi.mocked(suggestProfileIdentities).mockResolvedValue({ map: {}, producerMatches: 0,
+    ambiguousCuvees: [] })
   container = document.createElement("div")
   document.body.append(container)
   root = createRoot(container)
@@ -70,6 +72,29 @@ afterEach(async () => {
 })
 
 describe("complete profile exchange", () => {
+  it("uses only unique existing identity suggestions without an extra owner decision", async () => {
+    vi.mocked(suggestProfileIdentities).mockResolvedValue({
+      map: { producer_id: "shared-chagnoleau", cuvees: { a_la_cote: "shared-cote" } },
+      producerMatches: 1, ambiguousCuvees: ["generic_rose"],
+    })
+    await act(async () => root.render(<FullProfileExchangePanel isOnline />))
+    await act(async () => container.querySelector("summary")?.click())
+    const profile = container.querySelector("select") as HTMLSelectElement
+    await act(async () => {
+      profile.value = "profile"
+      profile.dispatchEvent(new Event("change", { bubbles: true }))
+    })
+    const mapping = [...container.querySelectorAll("summary")]
+      .find((summary) => summary.textContent === "Map profile names to shared wine identities")
+    await act(async () => mapping?.click())
+    expect(container.textContent).toContain("1 existing cuvées matched")
+    expect(container.textContent).toContain("1 ambiguous cuvées left for review")
+    const inspect = [...container.querySelectorAll("button")]
+      .find((button) => button.textContent === "Preview mapping and changes")
+    await act(async () => inspect?.click())
+    expect(previewProfileStaging).toHaveBeenLastCalledWith(expect.anything(), "draft",
+      { producer_id: "shared-chagnoleau", cuvees: { a_la_cote: "shared-cote" } })
+  })
   it("requires an explicit click before a proposed place mapping reaches the preview", async () => {
     vi.mocked(previewFullProfileExchange).mockReturnValue({
       kind: "producer", name: "Frantz Chagnoleau", datasetVersion: "1.1.0",

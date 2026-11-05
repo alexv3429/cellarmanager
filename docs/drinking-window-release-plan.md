@@ -78,6 +78,19 @@ pending migrations. It is not a drinking-window approval.
 On the newer restored snapshot, incorporating this correction and 29
 existing household producer-name decisions, the explicit-release candidate
 overlap is **97 of 799 active pilot wine cards** (179 of 1,271 bottles).
+**Gate 4 name-resolution correction proposed in draft #231, 5 November:**
+The owner confirmed that exact producer/cuvée/appellation/vintage matches
+must not require a household confirmation. A new read-only curator resolver
+uses the supplied profile's exact aliases and full producer/appellation/cuvée
+wording to preselect **unique existing** shared identities. In an isolated
+restored-copy check, final Chagnoleau 11.0.0 now resolves its producer plus
+`À la Côte` and `Les Raspillères` products without a name-choice click.
+Boillot resolves its producer but not the still-absent `Caillerets` product;
+two `Evocelles` identities remain ambiguous. Appellation errors, producer
+exceptions, missing canonical releases and genuinely generic cuvée labels
+remain distinct tasks; this resolver alone does not activate any window.
+The migration and UI change are **not yet deployed or merged**. See the
+[deployment audit](drinking-window-gate4-deployment.md#exact-profile-name-resolution-proposed-in-the-same-draft--5-november).
 This remains candidate matching, not published profile-backed coverage.
 
 ## Current delivery checkpoint — 31 October 2026

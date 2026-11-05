@@ -8,11 +8,13 @@ import {
   previewProfileIdentityBatch,
   previewProfileStaging,
   previewFullProfileExchange,
+  suggestProfileIdentities,
   suggestProfilePlaces,
   stageProfileExchange,
   type FullProfileImport,
   type FullProfilePreview,
   type ProfileIdentityMap,
+  type ProfileIdentitySuggestions,
   type ProfilePlaceSuggestions,
   type ProfileIdentityBatchPreview,
   type ProfileStagePreview,
@@ -83,6 +85,7 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
   const [selectedProfileId, setSelectedProfileId] = useState("")
   const [selectedDocument, setSelectedDocument] = useState<FullProfilePreview | null>(null)
   const [identityMap, setIdentityMap] = useState<ProfileIdentityMap>({})
+  const [identitySuggestions, setIdentitySuggestions] = useState<ProfileIdentitySuggestions | null>(null)
   const [placeSuggestions, setPlaceSuggestions] = useState<ProfilePlaceSuggestions | null>(null)
   const [selectedPlaceSuggestions, setSelectedPlaceSuggestions] = useState<string[]>([])
   const [selectedReleaseKeys, setSelectedReleaseKeys] = useState<string[]>([])
@@ -144,6 +147,7 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
       const saved: { profile: FullProfileImport; preview: FullProfilePreview }[] = []
       const failed: { fileName: string; preview: FullProfilePreview }[] = []
       const errors: string[] = []
+      let suggestionError = ""
       for (const entry of pendingProfiles) {
         try {
           saved.push({ profile: await importFullProfileExchange(entry.preview.document),
@@ -161,22 +165,33 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
         setSelectedProfileId(saved[0].profile.id)
         setSelectedDocument(saved[0].preview)
         setIdentityMap({})
+        setIdentitySuggestions(null)
         setPlaceSuggestions(null)
         setSelectedPlaceSuggestions([])
         setSelectedReleaseKeys([])
         setIdentityPreview(null)
         setStagingPreview(null)
+        if (saved[0].profile.kind === "producer") {
+          try {
+            const suggestions = await suggestProfileIdentities(saved[0].profile)
+            setIdentityMap(suggestions.map)
+            setIdentitySuggestions(suggestions)
+          } catch (caught) {
+            suggestionError = caught instanceof Error ? caught.message : String(caught)
+          }
+        }
       }
       if (saved.length) setMessage(saved.length === 1
         ? t("Complete profile saved for review. No dates were published.")
         : t("{count} complete profiles saved for review. No dates were published.",
           { count: String(saved.length) }))
-      if (errors.length || refreshError) setError([
+      if (errors.length || refreshError || suggestionError) setError([
         ...(errors.length ? [(errors.length === 1
           ? t("One profile could not be saved. It remains selected for retry:")
           : t("{count} profiles could not be saved. They remain selected for retry:",
             { count: String(errors.length) })) + " " + errors.join(" · ")] : []),
         ...(refreshError ? [`${t("Unable to refresh saved profiles.")} ${refreshError}`] : []),
+        ...(suggestionError ? [`${t("Profile saved, but identity suggestions could not be loaded.")} ${suggestionError}`] : []),
       ].join(" · "))
     } catch (caught: unknown) {
       setError(caught instanceof Error ? caught.message : "Unable to save profile")
@@ -187,6 +202,7 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
     setSelectedProfileId(id)
     setSelectedDocument(null)
     setIdentityMap({})
+    setIdentitySuggestions(null)
     setPlaceSuggestions(null)
     setSelectedPlaceSuggestions([])
     setSelectedReleaseKeys([])
@@ -195,7 +211,15 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
     setStagingPreview(null)
     if (!id) return
     setBusy(true); setError(null)
-    try { setSelectedDocument(previewFullProfileExchange(await exportFullProfileExchange(id))) }
+    try {
+      setSelectedDocument(previewFullProfileExchange(await exportFullProfileExchange(id)))
+      const profile = imports.find((item) => item.id === id)
+      if (profile?.kind === "producer") {
+        const suggestions = await suggestProfileIdentities(profile)
+        setIdentityMap(suggestions.map)
+        setIdentitySuggestions(suggestions)
+      }
+    }
     catch (caught: unknown) { setError(caught instanceof Error ? caught.message : "Unable to read profile") }
     finally { setBusy(false) }
   }
@@ -385,7 +409,9 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
       </label>
       {selectedDocument?.kind === "producer" ? <details>
         <summary>{t("Map profile names to shared wine identities")}</summary>
-        <p>{t("Exact names are matched automatically. For names that differ, select the existing shared producer, cuvée, region and appellation; the vintage and place relationship are checked before any window can be staged.")}</p>
+        <p>{t("Unique existing producer and cuvée identities are suggested from exact profile names and aliases. Missing and ambiguous identities remain for curator review; no wine or date is changed.")}</p>
+        {identitySuggestions ? <p role="status">{Object.keys(identitySuggestions.map.cuvees || {}).length} {t("existing cuvées matched")}
+          {identitySuggestions.ambiguousCuvees.length ? ` · ${identitySuggestions.ambiguousCuvees.length} ${t("ambiguous cuvées left for review")}` : ""}</p> : null}
         <p>{String((selectedDocument.document.producer as Record<string, unknown>).name)}</p>
         <CanonicalMappingSearch key={selectedProfileId + ":producer"} kind="producer"
           suggestedName={String((selectedDocument.document.producer as Record<string, unknown>).name)}

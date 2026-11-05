@@ -795,3 +795,32 @@ The reviewed candidate-overlap figures above are from a restored copy, not
 from a live post-import aggregate query. No assertion of 95% profile-backed
 coverage follows from these archived JSONs; the final package contains no
 appellation or region fallback profile documents.
+
+## Exact profile-name resolution proposed in the same draft — 5 November
+
+After the owner distinguished obvious names from actual cellar corrections,
+draft #231 gained one **read-only, curator-only** suggestion function. It
+checks the profile producer name and its explicit aliases against the existing
+shared producer graph, then checks each cuvée's exact name/aliases or the
+complete `producer + appellation + cuvée` wording against existing products.
+Only one unique shared identity is returned; missing and multiple matches
+remain unresolved. The UI preselects those safe identities for the profile
+import. It neither creates a global alias, changes a household wine, approves
+a date nor publishes a reference. This is still a proposal in draft #231,
+**not a linked migration or a deployed app change**.
+
+The new SQL test passed ten rollback-only assertions on the disposable
+restored copy, including ambiguity, missing products, curator access and no
+alias/date writes. The web component/data tests and production build passed.
+The 46 final JSONs were also imported into that **disposable copy only**
+(69 total archived versions there). On the actual final Chagnoleau 11.0.0
+profile, the resolver found the unique existing shared `Frantz Chagnoleau`
+producer and two existing cuvées (`À la Côte`, `Les Raspillères`) without a
+manual name selection. The latter does **not** resolve the cellar's
+`Raspilleres 2022` appellation conflict: local `Saint-Véran` versus profile
+`Viré-Clessé` still needs a targeted correction. On final Boillot 11.0.0,
+the producer resolved but `Caillerets` had no existing shared product; two
+different `Evocelles` products made that cuvée ambiguous and were correctly
+left unresolved. The next Gate 4 work is curator creation of missing
+canonical cuvées/releases and a separate, safe local-label reconciliation.
+Neither test changed the linked Supabase project or its cellars.
