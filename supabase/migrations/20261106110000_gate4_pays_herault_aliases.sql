@@ -24,7 +24,9 @@ begin
     end if;
     select count(*) into v_count from public.enrichment_places p
     where p.place_type='appellation' and p.normalized_name='igp herault';
-    if v_count = 0 then
+    if v_count > 1 then
+        raise exception 'IGP Herault must not have multiple shared identities';
+    elsif v_count = 0 then
         insert into public.enrichment_places(id,parent_id,place_type,canonical_name,country_code)
         values(private.enrichment_seed_uuid('place:igp-herault'),v_region_id,
             'appellation','IGP Herault','FR');
