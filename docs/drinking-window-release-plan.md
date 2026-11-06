@@ -749,6 +749,42 @@ No live signed-in smoke test is claimed. Remaining work includes profile identit
 batches, reviewed dates, other appellation/region fallbacks and actual
 coverage against the gate's exit test.
 
+**Chagnoleau identity rehearsal (6 November):** For the latest archived
+producer profile, the existing identity planner accepts 17 of 18 candidate
+release identities when using unique producer/cuvée suggestions and the
+Bourgogne parent for Mâconnais; one appellation remains unresolved. This is
+an identity preview, not a review of 17 windows. The cited merchant pages for
+À la Côte 2018 and 2022 identify the producer, Saint-Véran, white wine and
+750 ml format. On an isolated restore, the regular curator batch operation
+created these two release identities inside a transaction, after which the
+cellar's À la Côte 2022 resolved to the shared release. The transaction was
+rolled back and no dates were staged. In the profile, the 2022 dates
+2024 / 2027–2036 are an editorial proposal; the 2022 merchant page mentions
+an optimum from 2026, not all three proposed years. A real curator-authenticated
+workflow remains necessary to record reviewed identities and publish dates.
+Source pointers: [2018 release](https://www.vinsetmillesimes.com/fr/frantz-chagnoleau/118788-frantz-chagnoleau-saint-veran-a-la-cote-2018.html),
+[2022 release](https://www.oenovinia.com/bourgogne/8160-saint-veran-a-la-cote-2022-domaine-frantz-chagnoleau.html).
+
+Across all 46 latest archived profiles, a read-only identity-plan rehearsal
+with the current unique identity/place suggestions returned 275 technically
+ready release candidates, 171 blocked by appellation and 15 by region. This
+does not establish that sources or proposed dates have been reviewed, and
+does not authorize blindly creating or publishing the candidates. The same
+isolated, rolled-back curator workflow was exercised end-to-end for the two
+Chagnoleau releases: two identities were created and two three-date proposals
+were staged in a draft, with the other 16 quarantined. Nothing from that
+rehearsal persisted or became visible to cellar users.
+
+**Real precedence rehearsal:** The supplied Saint-Véran place JSON was
+imported and staged in the same rolled-back isolated transaction as the two
+Chagnoleau identities and dates. Its village-white group supplied 20
+candidate vintages. For the cellar's `À la Côte`, the draft selector returned
+2019: 2020 / 2023–2029 (appellation), 2021: 2022 / 2025–2031
+(appellation), and 2022: 2024 / 2027–2036 (producer/cuvée/vintage). This
+demonstrates precedence with real submitted data; it is not publication or
+evidence that these estimates are official producer dates. The Saint-Véran
+profile, the two identities and all staged rows were rolled back.
+
 **Execution status (the contract defines each exit test):**
 
 **Hard PR budget:** [PR #227](https://github.com/alexv3429/cellarmanager/pull/227)
