@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import {
   createProfileIdentityBatch,
+  getReviewedReleaseAppellations,
   exportFullProfileExchange, importFullProfileExchange, listFullProfileExchanges, previewFullProfileExchange,
   previewProfileIdentityBatch, previewProfileStaging, stageProfileExchange,
   suggestProfileIdentities, suggestProfilePlaces,
@@ -15,6 +16,7 @@ import { FullProfileExchangePanel } from "./FullProfileExchangePanel"
 
 vi.mock("../data/drinkingWindowProfileExchange", () => ({
   exportFullProfileExchange: vi.fn(), importFullProfileExchange: vi.fn(),
+  getReviewedReleaseAppellations: vi.fn(),
   listFullProfileExchanges: vi.fn(), previewFullProfileExchange: vi.fn(),
   previewProfileIdentityBatch: vi.fn(), createProfileIdentityBatch: vi.fn(),
   previewProfileStaging: vi.fn(), stageProfileExchange: vi.fn(),
@@ -59,6 +61,7 @@ beforeEach(() => {
   })
   vi.mocked(suggestProfileIdentities).mockResolvedValue({ map: {}, producerMatches: 0,
     ambiguousCuvees: [] })
+  vi.mocked(getReviewedReleaseAppellations).mockResolvedValue({})
   container = document.createElement("div")
   document.body.append(container)
   root = createRoot(container)
@@ -343,6 +346,16 @@ describe("complete profile exchange", () => {
     await act(async () => [...(vintageDetails?.parentElement?.querySelectorAll("button") || [])]
       .find((button) => button.textContent?.includes("IGP Hérault"))?.click())
     await act(async () => preview?.click())
+    expect(previewProfileIdentityBatch).toHaveBeenLastCalledWith(expect.anything(),
+      { release_appellations: { "red|2002": "appellation-2002" } }, ["red|2002"])
+    vi.mocked(getReviewedReleaseAppellations).mockResolvedValue({ "red|2002": "appellation-2002" })
+    await act(async () => { profile.value = ""; profile.dispatchEvent(new Event("change", { bubbles: true })) })
+    await act(async () => { profile.value = "profile"; profile.dispatchEvent(new Event("change", { bubbles: true })) })
+    const restoredChoice = container.querySelector('.drinking-window-profile-identity-choices input') as HTMLInputElement
+    await act(async () => restoredChoice.click())
+    const restoredPreview = [...container.querySelectorAll("button")]
+      .find((button) => button.textContent === "Preview selected identities")
+    await act(async () => restoredPreview?.click())
     expect(previewProfileIdentityBatch).toHaveBeenLastCalledWith(expect.anything(),
       { release_appellations: { "red|2002": "appellation-2002" } }, ["red|2002"])
   })

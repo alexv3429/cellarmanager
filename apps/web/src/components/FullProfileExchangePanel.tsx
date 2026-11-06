@@ -3,6 +3,7 @@ import { useEffect, useState } from "react"
 import {
   createProfileIdentityBatch,
   exportFullProfileExchange,
+  getReviewedReleaseAppellations,
   importFullProfileExchange,
   listFullProfileExchanges,
   previewProfileIdentityBatch,
@@ -173,8 +174,11 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
         setStagingPreview(null)
         if (saved[0].profile.kind === "producer") {
           try {
-            const suggestions = await suggestProfileIdentities(saved[0].profile)
-            setIdentityMap(suggestions.map)
+            const [suggestions, releaseAppellations] = await Promise.all([
+              suggestProfileIdentities(saved[0].profile), getReviewedReleaseAppellations(saved[0].profile),
+            ])
+            setIdentityMap({ ...suggestions.map,
+              ...(Object.keys(releaseAppellations).length ? { release_appellations: releaseAppellations } : {}) })
             setIdentitySuggestions(suggestions)
           } catch (caught) {
             suggestionError = caught instanceof Error ? caught.message : String(caught)
@@ -215,8 +219,11 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
       setSelectedDocument(previewFullProfileExchange(await exportFullProfileExchange(id)))
       const profile = imports.find((item) => item.id === id)
       if (profile?.kind === "producer") {
-        const suggestions = await suggestProfileIdentities(profile)
-        setIdentityMap(suggestions.map)
+        const [suggestions, releaseAppellations] = await Promise.all([
+          suggestProfileIdentities(profile), getReviewedReleaseAppellations(profile),
+        ])
+        setIdentityMap({ ...suggestions.map,
+          ...(Object.keys(releaseAppellations).length ? { release_appellations: releaseAppellations } : {}) })
         setIdentitySuggestions(suggestions)
       }
     }

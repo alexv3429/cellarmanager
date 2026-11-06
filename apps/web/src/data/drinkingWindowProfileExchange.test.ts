@@ -7,6 +7,7 @@ import producerTemplate from "../../../../docs/examples/producer-research-templa
 import regionTemplate from "../../../../docs/examples/region-profile-template.json"
 import {
   createProfileIdentityBatch,
+  getReviewedReleaseAppellations,
   importFullProfileExchange,
   previewFullProfileExchange,
   previewProfileIdentityBatch,
@@ -25,6 +26,14 @@ const imported: FullProfileImport = {
 }
 
 describe("complete profile exchange", () => {
+  it("loads curator-reviewed appellations for specific releases", async () => {
+    const result = await getReviewedReleaseAppellations(imported, { rpc: async (name, parameters) => {
+      expect(name).toBe("get_reviewed_profile_release_appellations")
+      expect(parameters).toEqual({ p_id: imported.id })
+      return { data: { "red|2002": "shared-appellation" }, error: null }
+    } })
+    expect(result).toEqual({ "red|2002": "shared-appellation" })
+  })
   it("accepts only read-only unique producer and cuvée suggestions", async () => {
     const result = await suggestProfileIdentities(imported, { rpc: async (name, parameters) => {
       expect(name).toBe("suggest_drinking_window_profile_identities")

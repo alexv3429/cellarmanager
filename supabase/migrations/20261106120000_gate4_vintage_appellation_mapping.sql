@@ -459,4 +459,36 @@ begin
 end;
 $$;
 
+-- A database sequence preserves decision order even when two batches are
+-- confirmed in the same transaction and therefore share a timestamp.
+alter table private.drinking_window_profile_identity_batches
+    add column if not exists sequence_no bigint generated always as identity;
+
+-- Restore only choices that were actually included in a confirmed identity
+-- batch. A later batch for the same release supersedes an earlier choice.
+create or replace function public.get_reviewed_profile_release_appellations(p_id uuid)
+returns jsonb language plpgsql stable security definer set search_path = '' as $$
+declare v_result jsonb;
+begin
+    perform private.require_enrichment_curator(auth.uid(), 'drinking-window');
+    if not exists (select 1 from private.drinking_window_profile_exchanges e
+        where e.id=p_id and e.profile_kind='producer') then
+        raise exception using errcode='22023', message='Choose an imported producer profile';
+    end if;
+    with latest as (
+        select distinct on (release_key) release_key,
+            batch.identity_map #>> array['release_appellations',release_key] target_id
+        from private.drinking_window_profile_identity_batches batch
+        cross join lateral pg_catalog.unnest(batch.selected_release_keys) release_key
+        where batch.exchange_id=p_id
+        order by release_key,batch.created_at desc,batch.sequence_no desc
+    )
+    select coalesce(pg_catalog.jsonb_object_agg(release_key,target_id)
+        filter (where target_id is not null),'{}'::jsonb) into v_result from latest;
+    return v_result;
+end;
+$$;
+revoke all on function public.get_reviewed_profile_release_appellations(uuid) from public, anon;
+grant execute on function public.get_reviewed_profile_release_appellations(uuid) to authenticated;
+
 commit;

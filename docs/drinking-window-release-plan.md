@@ -810,7 +810,9 @@ appellations. The profile's other unmatched 2018 red remained quarantined.
 The cellar's 2018 white currently says `Pays Herault`, so it must not be
 silently attached to the 2018 Saint-Guilhem identity. If reviewed anchors
 disagree about one shared release's appellation or colour, automatic cellar
-matching now stops for that release until the conflict is resolved. The targeted database
+matching now stops for that release until the conflict is resolved. A
+confirmed vintage-specific choice is restored when a curator reopens the
+profile; unconfirmed choices are not persisted as approvals. The targeted database
 checks, curator-interface test and web build passed; clean CI and linked
 deployment remain pending. These checks do not approve or publish dates.
 

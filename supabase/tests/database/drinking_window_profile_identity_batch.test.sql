@@ -254,11 +254,31 @@ select public.create_drinking_window_profile_identity_batch(
       current_setting('app.identity_batch_profile')::uuid,current_setting('app.vintage_identity_map')::jsonb,
       array['synthetic_reserve|2022'])->>'plan_sha256',
     'Synthetic test of a conflicting vintage appellation; no date is approved.',true);
+select is(public.get_reviewed_profile_release_appellations(
+    current_setting('app.identity_batch_profile')::uuid)->>'synthetic_reserve|2022',
+    'fd000000-0000-4000-8000-000000000004',
+    'A confirmed vintage-specific appellation is available when the profile is reopened');
+select set_config('request.jwt.claim.sub','fd000000-0000-4000-8000-000000000002',true);
+select throws_ok($test$
+    select public.get_reviewed_profile_release_appellations(
+      current_setting('app.identity_batch_profile')::uuid)
+$test$,'42501','An active curator grant for this profile type is required',
+    'An ordinary user cannot read curator identity decisions');
+select set_config('request.jwt.claim.sub','fd000000-0000-4000-8000-000000000001',true);
 update public.wines set color='red',format_ml=750,appellation='Morgon'
 where id='fd000000-0000-4000-8000-000000000003';
 select is(private.drinking_window_wine_context(
     'fd000000-0000-4000-8000-000000000003')->>'release_id',null::text,
     'Conflicting reviewed appellations cannot silently identify the same release');
+select public.create_drinking_window_profile_identity_batch(
+    current_setting('app.identity_batch_profile')::uuid,current_setting('app.identity_batch_map')::jsonb,
+    array['synthetic_reserve|2022'],public.preview_drinking_window_profile_identity_batch(
+      current_setting('app.identity_batch_profile')::uuid,current_setting('app.identity_batch_map')::jsonb,
+      array['synthetic_reserve|2022'])->>'plan_sha256',
+    'Synthetic test returning this vintage to the profile-wide appellation.',true);
+select is(public.get_reviewed_profile_release_appellations(
+    current_setting('app.identity_batch_profile')::uuid)->>'synthetic_reserve|2022',null::text,
+    'A later confirmed batch can clear a vintage-specific choice, even in one transaction');
 select throws_ok($test$
     select public.create_drinking_window_profile_identity_batch(
       current_setting('app.identity_batch_profile')::uuid,

@@ -71,6 +71,17 @@ export interface ProfileIdentitySuggestions {
   ambiguousCuvees: string[]
 }
 
+export async function getReviewedReleaseAppellations(profile: FullProfileImport,
+  options: RpcOptions = {}): Promise<Record<string, string>> {
+  if (profile.kind !== "producer") throw new Error("Choose a producer profile")
+  const result = object(await call("get_reviewed_profile_release_appellations", {
+    p_id: profile.id,
+  }, options), "Reviewed release appellations")
+  return Object.fromEntries(Object.entries(result).map(([key, value]) => [
+    string(key, "Profile release key"), string(value, "Shared appellation ID"),
+  ]))
+}
+
 export interface ProfilePlaceSuggestion {
   kind: "region" | "appellation"
   sourceName: string
