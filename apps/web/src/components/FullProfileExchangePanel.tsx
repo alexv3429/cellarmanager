@@ -3,7 +3,7 @@ import { useEffect, useState } from "react"
 import {
   createProfileIdentityBatch,
   exportFullProfileExchange,
-  getReviewedReleaseAppellations,
+  getReviewedProfileMappings,
   importFullProfileExchange,
   listFullProfileExchanges,
   previewProfileIdentityBatch,
@@ -26,6 +26,11 @@ import { useLanguage } from "../i18n/useLanguage"
 import { Notice } from "./Notice"
 
 interface Props { isOnline: boolean; onStaged?: (versionId: string) => void }
+
+function mergeReviewedMappings(suggested: ProfileIdentityMap, reviewed: ProfileIdentityMap): ProfileIdentityMap {
+  return { ...suggested, ...reviewed,
+    ...((suggested.cuvees || reviewed.cuvees) ? { cuvees: { ...suggested.cuvees, ...reviewed.cuvees } } : {}) }
+}
 
 function profileReleaseChoices(document: FullProfilePreview | null) {
   if (document?.kind !== "producer") return []
@@ -174,11 +179,10 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
         setStagingPreview(null)
         if (saved[0].profile.kind === "producer") {
           try {
-            const [suggestions, releaseAppellations] = await Promise.all([
-              suggestProfileIdentities(saved[0].profile), getReviewedReleaseAppellations(saved[0].profile),
+            const [suggestions, reviewed] = await Promise.all([
+              suggestProfileIdentities(saved[0].profile), getReviewedProfileMappings(saved[0].profile),
             ])
-            setIdentityMap({ ...suggestions.map,
-              ...(Object.keys(releaseAppellations).length ? { release_appellations: releaseAppellations } : {}) })
+            setIdentityMap(mergeReviewedMappings(suggestions.map, reviewed))
             setIdentitySuggestions(suggestions)
           } catch (caught) {
             suggestionError = caught instanceof Error ? caught.message : String(caught)
@@ -219,11 +223,10 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
       setSelectedDocument(previewFullProfileExchange(await exportFullProfileExchange(id)))
       const profile = imports.find((item) => item.id === id)
       if (profile?.kind === "producer") {
-        const [suggestions, releaseAppellations] = await Promise.all([
-          suggestProfileIdentities(profile), getReviewedReleaseAppellations(profile),
+        const [suggestions, reviewed] = await Promise.all([
+          suggestProfileIdentities(profile), getReviewedProfileMappings(profile),
         ])
-        setIdentityMap({ ...suggestions.map,
-          ...(Object.keys(releaseAppellations).length ? { release_appellations: releaseAppellations } : {}) })
+        setIdentityMap(mergeReviewedMappings(suggestions.map, reviewed))
         setIdentitySuggestions(suggestions)
       }
     }

@@ -71,15 +71,20 @@ export interface ProfileIdentitySuggestions {
   ambiguousCuvees: string[]
 }
 
-export async function getReviewedReleaseAppellations(profile: FullProfileImport,
-  options: RpcOptions = {}): Promise<Record<string, string>> {
+export async function getReviewedProfileMappings(profile: FullProfileImport,
+  options: RpcOptions = {}): Promise<ProfileIdentityMap> {
   if (profile.kind !== "producer") throw new Error("Choose a producer profile")
-  const result = object(await call("get_reviewed_profile_release_appellations", {
+  const result = object(await call("get_reviewed_profile_identity_mappings", {
     p_id: profile.id,
-  }, options), "Reviewed release appellations")
-  return Object.fromEntries(Object.entries(result).map(([key, value]) => [
-    string(key, "Profile release key"), string(value, "Shared appellation ID"),
-  ]))
+  }, options), "Reviewed profile mappings")
+  const mappings: ProfileIdentityMap = {}
+  if (result.producer_id !== undefined) mappings.producer_id = string(result.producer_id, "Shared producer ID")
+  for (const key of ["cuvees", "regions", "appellations", "release_appellations"] as const) {
+    if (result[key] === undefined) continue
+    mappings[key] = Object.fromEntries(Object.entries(object(result[key], "Reviewed mappings"))
+      .map(([source, target]) => [string(source, "Profile identity"), string(target, "Shared identity")]))
+  }
+  return mappings
 }
 
 export interface ProfilePlaceSuggestion {

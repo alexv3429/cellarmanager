@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import {
   createProfileIdentityBatch,
-  getReviewedReleaseAppellations,
+  getReviewedProfileMappings,
   exportFullProfileExchange, importFullProfileExchange, listFullProfileExchanges, previewFullProfileExchange,
   previewProfileIdentityBatch, previewProfileStaging, stageProfileExchange,
   suggestProfileIdentities, suggestProfilePlaces,
@@ -16,7 +16,7 @@ import { FullProfileExchangePanel } from "./FullProfileExchangePanel"
 
 vi.mock("../data/drinkingWindowProfileExchange", () => ({
   exportFullProfileExchange: vi.fn(), importFullProfileExchange: vi.fn(),
-  getReviewedReleaseAppellations: vi.fn(),
+  getReviewedProfileMappings: vi.fn(),
   listFullProfileExchanges: vi.fn(), previewFullProfileExchange: vi.fn(),
   previewProfileIdentityBatch: vi.fn(), createProfileIdentityBatch: vi.fn(),
   previewProfileStaging: vi.fn(), stageProfileExchange: vi.fn(),
@@ -61,7 +61,7 @@ beforeEach(() => {
   })
   vi.mocked(suggestProfileIdentities).mockResolvedValue({ map: {}, producerMatches: 0,
     ambiguousCuvees: [] })
-  vi.mocked(getReviewedReleaseAppellations).mockResolvedValue({})
+  vi.mocked(getReviewedProfileMappings).mockResolvedValue({})
   container = document.createElement("div")
   document.body.append(container)
   root = createRoot(container)
@@ -348,7 +348,10 @@ describe("complete profile exchange", () => {
     await act(async () => preview?.click())
     expect(previewProfileIdentityBatch).toHaveBeenLastCalledWith(expect.anything(),
       { release_appellations: { "red|2002": "appellation-2002" } }, ["red|2002"])
-    vi.mocked(getReviewedReleaseAppellations).mockResolvedValue({ "red|2002": "appellation-2002" })
+    vi.mocked(getReviewedProfileMappings).mockResolvedValue({
+      release_appellations: { "red|2002": "appellation-2002" },
+      regions: { Languedoc: "shared-region" },
+    })
     await act(async () => { profile.value = ""; profile.dispatchEvent(new Event("change", { bubbles: true })) })
     await act(async () => { profile.value = "profile"; profile.dispatchEvent(new Event("change", { bubbles: true })) })
     const restoredChoice = container.querySelector('.drinking-window-profile-identity-choices input') as HTMLInputElement
@@ -357,7 +360,8 @@ describe("complete profile exchange", () => {
       .find((button) => button.textContent === "Preview selected identities")
     await act(async () => restoredPreview?.click())
     expect(previewProfileIdentityBatch).toHaveBeenLastCalledWith(expect.anything(),
-      { release_appellations: { "red|2002": "appellation-2002" } }, ["red|2002"])
+      { release_appellations: { "red|2002": "appellation-2002" },
+        regions: { Languedoc: "shared-region" } }, ["red|2002"])
   })
 
   it("passes the exact staged draft to the publication workflow", async () => {

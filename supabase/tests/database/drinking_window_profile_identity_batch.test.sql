@@ -279,6 +279,40 @@ select public.create_drinking_window_profile_identity_batch(
 select is(public.get_reviewed_profile_release_appellations(
     current_setting('app.identity_batch_profile')::uuid)->>'synthetic_reserve|2022',null::text,
     'A later confirmed batch can clear a vintage-specific choice, even in one transaction');
+select set_config('app.reviewed_profile_map',jsonb_build_object(
+    'producer_id',current_setting('app.identity_batch_producer'),
+    'cuvees',jsonb_build_object('synthetic_reserve',(select id from public.wine_reference_products
+        where canonical_name='Morgon Synthetic Reserve'
+          and producer_id=current_setting('app.identity_batch_producer')::uuid)),
+    'regions',jsonb_build_object('Beaujolais',(select id from public.enrichment_places
+        where normalized_name='beaujolais' and place_type='region')),
+    'release_appellations',jsonb_build_object('synthetic_reserve|2022',
+        'fd000000-0000-4000-8000-000000000004'))::text,true);
+select public.create_drinking_window_profile_identity_batch(
+    current_setting('app.identity_batch_profile')::uuid,current_setting('app.reviewed_profile_map')::jsonb,
+    array['synthetic_reserve|2023'],public.preview_drinking_window_profile_identity_batch(
+      current_setting('app.identity_batch_profile')::uuid,current_setting('app.reviewed_profile_map')::jsonb,
+      array['synthetic_reserve|2023'])->>'plan_sha256',
+    'Synthetic test of profile mappings used by a confirmed vintage.',true);
+select is(public.get_reviewed_profile_identity_mappings(
+    current_setting('app.identity_batch_profile')::uuid)#>>'{regions,Beaujolais}',
+    (select id::text from public.enrichment_places where normalized_name='beaujolais' and place_type='region'),
+    'A confirmed profile region mapping is restored when reopening the profile');
+select is(public.get_reviewed_profile_identity_mappings(
+    current_setting('app.identity_batch_profile')::uuid)#>>'{cuvees,synthetic_reserve}',
+    (select id::text from public.wine_reference_products where canonical_name='Morgon Synthetic Reserve'
+        and producer_id=current_setting('app.identity_batch_producer')::uuid),
+    'A confirmed cuvée mapping is restored when reopening the profile');
+select is(public.get_reviewed_profile_identity_mappings(
+    current_setting('app.identity_batch_profile')::uuid)#>>'{release_appellations,synthetic_reserve|2022}',
+    null::text,'A mapping for an unselected vintage is not treated as a confirmed decision');
+select set_config('request.jwt.claim.sub','fd000000-0000-4000-8000-000000000002',true);
+select throws_ok($test$
+    select public.get_reviewed_profile_identity_mappings(
+      current_setting('app.identity_batch_profile')::uuid)
+$test$,'42501','An active curator grant for this profile type is required',
+    'An ordinary user cannot read reviewed producer-profile mappings');
+select set_config('request.jwt.claim.sub','fd000000-0000-4000-8000-000000000001',true);
 select throws_ok($test$
     select public.create_drinking_window_profile_identity_batch(
       current_setting('app.identity_batch_profile')::uuid,

@@ -827,6 +827,15 @@ data SHA-256 `906d4cb3d1db989e1da46ed34d8a1fe1581394c4b7315c940f7e7d6474ab8615`.
 The application interface remains in the PR preview until merge; no signed-in
 live smoke test is claimed. These checks do not approve or publish dates.
 
+**Reuse reviewed profile mappings:** The next proposed change restores
+producer, cuvée, region and appellation choices actually used in a confirmed
+identity batch when a curator reopens that profile. Vintage-specific choices
+are restored only for vintages included in a confirmed batch. A choice merely
+present for some other, unselected vintage is not converted into an approval.
+The isolated curator tests and web tests pass; clean CI and deployment remain
+pending. This removes repeated mapping work but does not itself import or
+publish producer windows.
+
 **Real precedence rehearsal:** The supplied Saint-Véran place JSON was
 imported and staged in the same rolled-back isolated transaction as the two
 Chagnoleau identities and dates. Its village-white group supplied 20
