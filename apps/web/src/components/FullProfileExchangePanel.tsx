@@ -28,8 +28,12 @@ import { Notice } from "./Notice"
 interface Props { isOnline: boolean; onStaged?: (versionId: string) => void }
 
 function mergeReviewedMappings(suggested: ProfileIdentityMap, reviewed: ProfileIdentityMap): ProfileIdentityMap {
-  return { ...suggested, ...reviewed,
-    ...((suggested.cuvees || reviewed.cuvees) ? { cuvees: { ...suggested.cuvees, ...reviewed.cuvees } } : {}) }
+  const suggestedCuvees = reviewed.producer_id && reviewed.producer_id !== suggested.producer_id
+    ? undefined : suggested.cuvees
+  const result = { ...suggested, ...reviewed }
+  delete result.cuvees
+  if (suggestedCuvees || reviewed.cuvees) result.cuvees = { ...suggestedCuvees, ...reviewed.cuvees }
+  return result
 }
 
 function profileReleaseChoices(document: FullProfilePreview | null) {

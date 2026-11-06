@@ -348,7 +348,12 @@ describe("complete profile exchange", () => {
     await act(async () => preview?.click())
     expect(previewProfileIdentityBatch).toHaveBeenLastCalledWith(expect.anything(),
       { release_appellations: { "red|2002": "appellation-2002" } }, ["red|2002"])
+    vi.mocked(suggestProfileIdentities).mockResolvedValue({
+      map: { producer_id: "other-producer", cuvees: { legacy: "other-producer-cuvee" } },
+      producerMatches: 1, ambiguousCuvees: [],
+    })
     vi.mocked(getReviewedProfileMappings).mockResolvedValue({
+      producer_id: "reviewed-producer", cuvees: { red: "reviewed-cuvee" },
       release_appellations: { "red|2002": "appellation-2002" },
       regions: { Languedoc: "shared-region" },
     })
@@ -360,7 +365,8 @@ describe("complete profile exchange", () => {
       .find((button) => button.textContent === "Preview selected identities")
     await act(async () => restoredPreview?.click())
     expect(previewProfileIdentityBatch).toHaveBeenLastCalledWith(expect.anything(),
-      { release_appellations: { "red|2002": "appellation-2002" },
+      { producer_id: "reviewed-producer", cuvees: { red: "reviewed-cuvee" },
+        release_appellations: { "red|2002": "appellation-2002" },
         regions: { Languedoc: "shared-region" } }, ["red|2002"])
   })
 

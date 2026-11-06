@@ -834,7 +834,8 @@ are restored only for vintages included in a confirmed batch. A choice merely
 present for some other, unselected vintage is not converted into an approval.
 The isolated curator tests and web tests pass; clean CI and deployment remain
 pending. This removes repeated mapping work but does not itself import or
-publish producer windows.
+publish producer windows. Restoring a reviewed producer also discards any
+automatic cuvée suggestions belonging to a different producer.
 
 **Real precedence rehearsal:** The supplied Saint-Véran place JSON was
 imported and staged in the same rolled-back isolated transaction as the two
