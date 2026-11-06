@@ -481,7 +481,7 @@ begin
         from private.drinking_window_profile_identity_batches batch
         cross join lateral pg_catalog.unnest(batch.selected_release_keys) release_key
         where batch.exchange_id=p_id
-        order by release_key,batch.created_at desc,batch.sequence_no desc
+        order by release_key,batch.sequence_no desc
     )
     select coalesce(pg_catalog.jsonb_object_agg(release_key,target_id)
         filter (where target_id is not null),'{}'::jsonb) into v_result from latest;
