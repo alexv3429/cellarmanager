@@ -726,6 +726,21 @@ exists in the restored copy; this change alone does **not** materially raise
 profile-backed date coverage. Producer-profile batches, date review, safe
 `1C` classification and measured coverage remain Gate 4 exit work.
 
+**Gate 4 Premier Cru identity matching (6 November, same draft #231):**
+The proposed reader resolves a local `1C`, `1er cru` or `premier cru` suffix
+to the unique parent appellation in the cellar's resolved region. The local
+label remains unchanged. A Grand Cru is not reduced to a village, and broad
+unclassified windows are excluded for wines explicitly marked Premier Cru;
+exact-release and eligible group rows may still apply. On an isolated restore,
+the 804 unmerged cards changed from 213 to 107 unresolved appellations: 100
+more cards now have a producer context and six reach the producer-link step.
+The number with a resolved product rose from 22 to 28, and exact releases
+from 11 to 13. These are identity counts, not published-window coverage.
+The migration and eight targeted tests passed on that copy; CI and linked
+deployment are still pending. Remaining work includes profile identity
+batches, reviewed dates, other appellation/region fallbacks and actual
+coverage against the gate's exit test.
+
 **Execution status (the contract defines each exit test):**
 
 **Hard PR budget:** [PR #227](https://github.com/alexv3429/cellarmanager/pull/227)
