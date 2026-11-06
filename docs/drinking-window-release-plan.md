@@ -793,7 +793,10 @@ preflight backup is at `/private/tmp/cellarmanager-gate4-igp-backup.7MyUBH`
 (0700/0600); SHA-256 schema
 `6018f7f8e2a8c48a1866c25cd31a755deefe1cd5620fecf1ee4de8cd4692a6b3`,
 data `ac98db1a30135a66e31405e3f3ed8e278ea6c2bf90395b056061e103c9e069c9`.
-The linked reader returned 477 ready, 107 appellation-unresolved, 75
+After the alias change, the same isolated planning exercise returned 295 of
+461 releases technically ready, with 151 blocked by appellation and 15 by
+region. These counts do not imply source review or publication. The linked
+reader returned 477 ready, 107 appellation-unresolved, 75
 region-unresolved, 135 producer-unlinked and 10 missing region/colour/vintage
 among 804 unmerged cards; 28 have a product and 13 a release. These remain
 identity counts, not published-window coverage.
@@ -812,9 +815,17 @@ silently attached to the 2018 Saint-Guilhem identity. If reviewed anchors
 disagree about one shared release's appellation or colour, automatic cellar
 matching now stops for that release until the conflict is resolved. A
 confirmed vintage-specific choice is restored when a curator reopens the
-profile; unconfirmed choices are not persisted as approvals. The targeted database
-checks, curator-interface test and web build passed; clean CI and linked
-deployment remain pending. These checks do not approve or publish dates.
+profile; unconfirmed choices are not persisted as approvals. The targeted
+database checks, curator-interface tests, web build and all clean CI jobs
+passed at `847c1f8`. After a protected schema/data backup and successful fresh
+restore, the linked dry run named only the vintage-specific migration; it was
+applied and postflight reports no pending migrations. The linked RPC permissions
+and a read-only sweep of the wine reader also passed. The protected backup is
+`/private/tmp/cellarmanager-gate4-vintage-backup.gZkJ2a` (0700/0600), schema
+SHA-256 `6018f7f8e2a8c48a1866c25cd31a755deefe1cd5620fecf1ee4de8cd4692a6b3`,
+data SHA-256 `906d4cb3d1db989e1da46ed34d8a1fe1581394c4b7315c940f7e7d6474ab8615`.
+The application interface remains in the PR preview until merge; no signed-in
+live smoke test is claimed. These checks do not approve or publish dates.
 
 **Real precedence rehearsal:** The supplied Saint-Véran place JSON was
 imported and staged in the same rolled-back isolated transaction as the two
