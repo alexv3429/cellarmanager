@@ -500,6 +500,20 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
           <ul className="drinking-window-profile-identity-results">{identityPreview.entries.map((entry) => <li key={entry.key}>
             <strong>{entry.cuveeName || entry.key} · {entry.vintage || "?"}</strong>
             {entry.reason ? <> · {t(entry.reason)}</> : <> · {t("Cuvée")}: {t(entry.productStatus)} · {t("Vintage")}: {t(entry.releaseStatus)}</>}
+            <details>
+              <summary>{t("Choose the appellation for this vintage")}</summary>
+              <p>{t("Use this when the appellation changed between vintages. This choice applies only to this cuvée and vintage.")}</p>
+              <CanonicalMappingSearch kind="appellation" suggestedName=""
+                selectedId={identityMap.release_appellations?.[entry.key] || ""} disabled={busy || !isOnline}
+                onSelect={(id) => updateIdentityMap((current) => ({ ...current,
+                  release_appellations: { ...current.release_appellations, [entry.key]: id } }))} />
+              {identityMap.release_appellations?.[entry.key] ? <button type="button" disabled={busy || !isOnline}
+                onClick={() => updateIdentityMap((current) => {
+                  const releaseAppellations = { ...current.release_appellations }
+                  delete releaseAppellations[entry.key]
+                  return { ...current, release_appellations: releaseAppellations }
+                })}>{t("Remove this vintage-specific choice")}</button> : null}
+            </details>
             {entry.sourceUrls.length ? <details><summary>{t("Release existence sources to check")}</summary>
               <ul>{entry.sourceUrls.map((url) => <li key={url}>
                 <a href={url} target="_blank" rel="noopener noreferrer">{url}</a>

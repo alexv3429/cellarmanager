@@ -300,6 +300,53 @@ describe("complete profile exchange", () => {
     expect(container.textContent).toContain("No dates were approved and no cellar wine was linked")
   })
 
+  it("keeps an appellation choice specific to the selected vintage", async () => {
+    vi.mocked(previewFullProfileExchange).mockReturnValue({
+      kind: "producer", name: "Example producer", datasetVersion: "1.1.0",
+      releaseCount: 2, factCount: 0, sourceCount: 0,
+      document: { producer: { name: "Example producer" }, cuvees: [{ id: "red", name: "Rouge" }],
+        exact_release_calibrations: [
+          { cuvee_id: "red", vintage: 2002, format_ml: 750 },
+          { cuvee_id: "red", vintage: 2018, format_ml: 750 },
+        ] },
+    })
+    vi.mocked(previewProfileIdentityBatch).mockResolvedValue({
+      profileId: "profile", planSha256: "a".repeat(64), status: "blocked",
+      producerName: "Example producer", producerStatus: "existing",
+      entries: [{ key: "red|2002", cuveeId: "red", cuveeName: "Rouge", vintage: 2002,
+        productStatus: "existing", releaseStatus: "blocked", sourceUrls: [],
+        reason: "Appellation has no unique canonical identity in this region" }],
+    })
+    vi.mocked(searchCurationTargets).mockResolvedValue([
+      { id: "appellation-2002", label: "IGP Hérault", detail: "Languedoc" },
+    ])
+    await act(async () => root.render(<FullProfileExchangePanel isOnline />))
+    await act(async () => container.querySelector("summary")?.click())
+    const profile = container.querySelector("select") as HTMLSelectElement
+    await act(async () => { profile.value = "profile"; profile.dispatchEvent(new Event("change", { bubbles: true })) })
+    await act(async () => [...container.querySelectorAll("summary")]
+      .find((summary) => summary.textContent === "Prepare missing shared wine identities")?.click())
+    await act(async () => (container.querySelector('.drinking-window-profile-identity-choices input') as HTMLInputElement).click())
+    const preview = [...container.querySelectorAll("button")]
+      .find((button) => button.textContent === "Preview selected identities")
+    await act(async () => preview?.click())
+    const vintageDetails = [...container.querySelectorAll("summary")]
+      .find((summary) => summary.textContent === "Choose the appellation for this vintage")
+    await act(async () => vintageDetails?.click())
+    const search = vintageDetails?.parentElement?.querySelector("input") as HTMLInputElement
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(search, "Hérault")
+      search.dispatchEvent(new Event("input", { bubbles: true }))
+    })
+    await act(async () => [...(vintageDetails?.parentElement?.querySelectorAll("button") || [])]
+      .find((button) => button.textContent === "Search canonical identities")?.click())
+    await act(async () => [...(vintageDetails?.parentElement?.querySelectorAll("button") || [])]
+      .find((button) => button.textContent?.includes("IGP Hérault"))?.click())
+    await act(async () => preview?.click())
+    expect(previewProfileIdentityBatch).toHaveBeenLastCalledWith(expect.anything(),
+      { release_appellations: { "red|2002": "appellation-2002" } }, ["red|2002"])
+  })
+
   it("passes the exact staged draft to the publication workflow", async () => {
     const onStaged = vi.fn()
     vi.mocked(previewProfileStaging).mockResolvedValue({

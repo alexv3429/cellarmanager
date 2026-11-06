@@ -216,6 +216,49 @@ select is((public.preview_drinking_window_profile_identity_batch(
     current_setting('app.identity_batch_map')::jsonb,
     array['synthetic_reserve|2022','synthetic_reserve|2023'])->'entries'->0->>'release_status'),
     'existing','A fresh preview recognizes the newly created release');
+insert into public.enrichment_places(id,parent_id,place_type,canonical_name)
+select 'fd000000-0000-4000-8000-000000000004',id,'appellation','Synthetic Alternative Appellation'
+from public.enrichment_places where place_type='region' and normalized_name='beaujolais';
+insert into public.enrichment_places(id,place_type,canonical_name) values
+ ('fd000000-0000-4000-8000-000000000005','region','Synthetic Other Region');
+insert into public.enrichment_places(id,parent_id,place_type,canonical_name) values
+ ('fd000000-0000-4000-8000-000000000006','fd000000-0000-4000-8000-000000000005',
+  'appellation','Synthetic Other Appellation');
+select set_config('app.vintage_identity_map',
+ (current_setting('app.identity_batch_map')::jsonb || jsonb_build_object('release_appellations',
+   jsonb_build_object('synthetic_reserve|2022','fd000000-0000-4000-8000-000000000004')))::text,true);
+select is((public.preview_drinking_window_profile_identity_batch(
+    current_setting('app.identity_batch_profile')::uuid,current_setting('app.vintage_identity_map')::jsonb,
+    array['synthetic_reserve|2022'])->'entries'->0->>'appellation_id'),
+    'fd000000-0000-4000-8000-000000000004','Identity preview uses the selected appellation for this vintage');
+select isnt((public.preview_drinking_window_profile_identity_batch(
+    current_setting('app.identity_batch_profile')::uuid,current_setting('app.vintage_identity_map')::jsonb,
+    array['synthetic_reserve|2023'])->'entries'->0->>'appellation_id'),
+    'fd000000-0000-4000-8000-000000000004','The vintage choice does not affect another year');
+insert into public.drinking_window_reference_versions(id,version_number) values
+ ('fd000000-0000-4000-8000-000000000007',998762);
+select is((select row->>'appellation_id' from jsonb_array_elements(
+    public.preview_drinking_window_profile_exchange(current_setting('app.identity_batch_profile')::uuid,
+    'fd000000-0000-4000-8000-000000000007',current_setting('app.vintage_identity_map')::jsonb)->'rows') row
+    where row->>'vintage'='2022' limit 1),
+    'fd000000-0000-4000-8000-000000000004','Window staging preview preserves the same vintage-specific choice');
+select is((public.preview_drinking_window_profile_identity_batch(
+    current_setting('app.identity_batch_profile')::uuid,
+    current_setting('app.identity_batch_map')::jsonb || jsonb_build_object('release_appellations',
+      jsonb_build_object('synthetic_reserve|2022','fd000000-0000-4000-8000-000000000006')),
+    array['synthetic_reserve|2022'])->'entries'->0->>'reason'),
+    'Appellation has no unique canonical identity in this region','A vintage choice outside the region is rejected');
+select public.create_drinking_window_profile_identity_batch(
+    current_setting('app.identity_batch_profile')::uuid,current_setting('app.vintage_identity_map')::jsonb,
+    array['synthetic_reserve|2022'],public.preview_drinking_window_profile_identity_batch(
+      current_setting('app.identity_batch_profile')::uuid,current_setting('app.vintage_identity_map')::jsonb,
+      array['synthetic_reserve|2022'])->>'plan_sha256',
+    'Synthetic test of a conflicting vintage appellation; no date is approved.',true);
+update public.wines set color='red',format_ml=750,appellation='Morgon'
+where id='fd000000-0000-4000-8000-000000000003';
+select is(private.drinking_window_wine_context(
+    'fd000000-0000-4000-8000-000000000003')->>'release_id',null::text,
+    'Conflicting reviewed appellations cannot silently identify the same release');
 select throws_ok($test$
     select public.create_drinking_window_profile_identity_batch(
       current_setting('app.identity_batch_profile')::uuid,

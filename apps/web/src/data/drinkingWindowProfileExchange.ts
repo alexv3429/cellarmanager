@@ -62,6 +62,7 @@ export interface ProfileIdentityMap {
   cuvees?: Record<string, string>
   regions?: Record<string, string>
   appellations?: Record<string, string>
+  release_appellations?: Record<string, string>
 }
 
 export interface ProfileIdentitySuggestions {

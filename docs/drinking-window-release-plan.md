@@ -785,7 +785,34 @@ copy these resolve profile-place suggestions for La Grange des Pères and Mas
 Jullien; they do not automatically create releases or approve dates. Composite
 historical names mixing Saint-Guilhem-le-Désert and Hérault remain separate
 because their correct identity can depend on the vintage. The migration and
-three targeted checks passed locally; CI and linked deployment remain open.
+three targeted checks passed on a fresh isolated restore, including under the
+internal reader role. All CI checks passed at `76bd424`; the linked dry run
+named only this migration, it was applied, and postflight found no pending
+migrations. Both aliases were read back from the linked project. The protected
+preflight backup is at `/private/tmp/cellarmanager-gate4-igp-backup.7MyUBH`
+(0700/0600); SHA-256 schema
+`6018f7f8e2a8c48a1866c25cd31a755deefe1cd5620fecf1ee4de8cd4692a6b3`,
+data `ac98db1a30135a66e31405e3f3ed8e278ea6c2bf90395b056061e103c9e069c9`.
+The linked reader returned 477 ready, 107 appellation-unresolved, 75
+region-unresolved, 135 producer-unlinked and 10 missing region/colour/vintage
+among 804 unmerged cards; 28 have a product and 13 a release. These remain
+identity counts, not published-window coverage.
+
+**Appellations that change with the vintage (6 November):** The official
+Daumas Gassac producer records identify the [2002 red](https://www.daumas-gassac.com/fr/millesime/mas-de-daumas-gassac-rouge-2002/)
+as Vin de Pays de l’Hérault and the [2018 white](https://www.daumas-gassac.com/fr/millesime/mas-de-daumas-gassac-blanc-2018/)
+as IGP Saint-Guilhem-le-Désert – Cité d’Aniane. The proposed curator workflow
+accepts an appellation for one cuvée and vintage, validates it against the
+region, and applies the same choice to identity creation and date staging;
+other vintages do not inherit it. On a rolled-back fresh restore, both
+identities and their matching draft previews resolved to their respective
+appellations. The profile's other unmatched 2018 red remained quarantined.
+The cellar's 2018 white currently says `Pays Herault`, so it must not be
+silently attached to the 2018 Saint-Guilhem identity. If reviewed anchors
+disagree about one shared release's appellation or colour, automatic cellar
+matching now stops for that release until the conflict is resolved. The targeted database
+checks, curator-interface test and web build passed; clean CI and linked
+deployment remain pending. These checks do not approve or publish dates.
 
 **Real precedence rehearsal:** The supplied Saint-Véran place JSON was
 imported and staged in the same rolled-back isolated transaction as the two
