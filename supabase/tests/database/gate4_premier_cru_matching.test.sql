@@ -52,6 +52,30 @@ select is((select status from private.drinking_window_preview_draft_match_for_wi
  null,null,null,'fa600000-0000-4000-8000-000000000004',
  'fa600000-0000-4000-8000-000000000002','red',2022,null)),
  'draft_match','The same village window remains available for an unclassified wine');
+insert into public.drinking_window_ageing_groups
+ (id,version_id,scope,region_id,appellation_id,wine_color,group_key,definition)
+values ('fa600000-0000-4000-8000-000000000013','fa600000-0000-4000-8000-000000000007',
+ 'appellation','fa600000-0000-4000-8000-000000000002','fa600000-0000-4000-8000-000000000004',
+ 'red','village','Synthetic broad village ageing group');
+insert into public.drinking_window_ageing_group_memberships
+ (id,version_id,group_id,member_kind,member_place_id,rationale)
+values ('fa600000-0000-4000-8000-000000000014','fa600000-0000-4000-8000-000000000007',
+ 'fa600000-0000-4000-8000-000000000013','place','fa600000-0000-4000-8000-000000000004',
+ 'Synthetic parent-place membership for a village group');
+insert into public.drinking_window_reference_rows
+ (id,version_id,scope,appellation_id,region_id,wine_color,vintage_year,ageing_group_id,
+  all_at_scope,first_trial_year,best_start_year,best_end_year,rationale)
+values ('fa600000-0000-4000-8000-000000000015','fa600000-0000-4000-8000-000000000007',
+ 'appellation','fa600000-0000-4000-8000-000000000004','fa600000-0000-4000-8000-000000000002',
+ 'red',2022,'fa600000-0000-4000-8000-000000000013',false,2024,2026,2030,
+ 'Synthetic village-group estimate');
+update public.wines set appellation='Premier Test Village 1C'
+where id='fa600000-0000-4000-8000-000000000006';
+select is((select status from private.drinking_window_preview_draft_match_for_wine(
+ 'fa600000-0000-4000-8000-000000000006','fa600000-0000-4000-8000-000000000007',
+ null,null,null,'fa600000-0000-4000-8000-000000000004',
+ 'fa600000-0000-4000-8000-000000000002','red',2022,null)),
+ 'no_match','A parent-place group does not silently classify a Premier Cru as village');
 insert into public.wine_reference_entities(id,entity_type) values
  ('fa600000-0000-4000-8000-000000000009','producer'),
  ('fa600000-0000-4000-8000-000000000010','product'),
@@ -80,5 +104,17 @@ select is((select matched_scope from private.drinking_window_preview_draft_match
  'fa600000-0000-4000-8000-000000000011','fa600000-0000-4000-8000-000000000004',
  'fa600000-0000-4000-8000-000000000002','red',2022,null)),
  'release','A reviewed exact-release window remains eligible for a Premier Cru');
+insert into public.drinking_window_ageing_group_memberships
+ (id,version_id,group_id,member_kind,member_place_id,member_product_id,rationale)
+values ('fa600000-0000-4000-8000-000000000016','fa600000-0000-4000-8000-000000000007',
+ 'fa600000-0000-4000-8000-000000000013','product','fa600000-0000-4000-8000-000000000004',
+ 'fa600000-0000-4000-8000-000000000010','Explicitly reviewed synthetic cuvée membership');
+delete from public.drinking_window_reference_rows where id='fa600000-0000-4000-8000-000000000012';
+select is((select status from private.drinking_window_preview_draft_match_for_wine(
+ 'fa600000-0000-4000-8000-000000000006','fa600000-0000-4000-8000-000000000007',
+ 'fa600000-0000-4000-8000-000000000009','fa600000-0000-4000-8000-000000000010',
+ 'fa600000-0000-4000-8000-000000000011','fa600000-0000-4000-8000-000000000004',
+ 'fa600000-0000-4000-8000-000000000002','red',2022,null)),
+ 'draft_match','An explicitly reviewed cuvée group remains eligible for a Premier Cru');
 select * from finish();
 rollback;

@@ -837,6 +837,16 @@ pending. This removes repeated mapping work but does not itself import or
 publish producer windows. Restoring a reviewed producer also discards any
 automatic cuvée suggestions belonging to a different producer.
 
+**Premier Cru group guard:** A place-based group for the parent village or
+region must not automatically treat a Premier Cru as an ordinary village
+wine. The proposed selector excludes such broad place-only memberships for
+Premier Cru, while allowing exact releases, explicitly reviewed product or
+release membership, an explicit cellar choice, or a verified classification
+place. Ten targeted checks passed on the isolated copy. Matching a dedicated
+Premier Cru group automatically still requires a classification identity in
+the wine context; this guard intentionally does not invent one. CI and
+deployment of the guard remain pending.
+
 **Real precedence rehearsal:** The supplied Saint-Véran place JSON was
 imported and staged in the same rolled-back isolated transaction as the two
 Chagnoleau identities and dates. Its village-white group supplied 20
