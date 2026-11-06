@@ -736,8 +736,16 @@ the 804 unmerged cards changed from 213 to 107 unresolved appellations: 100
 more cards now have a producer context and six reach the producer-link step.
 The number with a resolved product rose from 22 to 28, and exact releases
 from 11 to 13. These are identity counts, not published-window coverage.
-The migration and eight targeted tests passed on that copy; CI and linked
-deployment are still pending. Remaining work includes profile identity
+The migration and eight targeted tests passed on a fresh restore, including
+under the internal `postgres` reader role; all PR CI jobs passed at `91b09cb`.
+The linked dry run named only the new migration, which was then applied; the
+postflight dry run found zero pending migrations, seeds or roles. Beforehand,
+schema and data were backed up to the protected temporary directory
+`/private/tmp/cellarmanager-gate4-premier-backup.But6Ne` (0700/0600); SHA-256
+schema `0fdb97258206a70ea8816275c683e9214e407516c231ed42e916de1d743543b3`,
+data `47083ac37fa1666a9516392c549577a398a54373202548389bda0391c30a78ea`.
+The backup restored to a separate local database before migration rehearsal.
+No live signed-in smoke test is claimed. Remaining work includes profile identity
 batches, reviewed dates, other appellation/region fallbacks and actual
 coverage against the gate's exit test.
 
