@@ -6212,10 +6212,17 @@
 .producer-preferences__body > p { margin: 0; }
 .producer-preferences label { display: grid; gap: .4rem; min-width: 0; }
 .producer-preferences input { box-sizing: border-box; width: 100%; min-width: 0; }
-.producer-preferences__sources, .producer-preferences__results { display: grid; gap: .5rem; min-width: 0; max-height: 18rem; overflow-y: auto; }
+.producer-preferences__batch { min-width: 0; border: 1px solid var(--border); border-radius: .6rem; padding: .75rem; }
+.producer-preferences__batch > summary { cursor: pointer; font-weight: 600; }
+.producer-preferences__batch-list { display: grid; gap: .35rem; max-height: 24rem; overflow-y: auto; margin-block: .75rem; }
+.producer-preferences__batch-list label { display: flex; align-items: flex-start; gap: .6rem; padding: .35rem; overflow-wrap: anywhere; }
+.producer-preferences__batch-list input[type="checkbox"] { flex: none; width: auto; min-width: auto; margin-top: .25rem; }
+.producer-preferences__sources, .producer-preferences__results { display: grid; grid-auto-rows: max-content; align-content: start; gap: .5rem; min-width: 0; max-height: 18rem; overflow-y: auto; }
 .producer-preferences__sources button, .producer-preferences__results button { min-width: 0; width: 100%; text-align: left; overflow-wrap: anywhere; }
 .producer-preferences__sources button { display: grid; gap: .15rem; }
 .producer-preferences__sources button span { color: var(--text-muted, #b6aeb2); font-size: .85rem; }
+.producer-preferences__sources > div { min-width: 0; overflow-wrap: anywhere; padding: .55rem .7rem; border: 1px solid var(--border, #4d4045); border-radius: .5rem; }
+.producer-preferences__sources > div span { color: var(--text-muted, #b6aeb2); font-size: .85rem; }
 .producer-preferences button.is-selected { border-color: var(--accent-border); background: var(--accent-bg); }
 .producer-preferences__editor { display: grid; gap: .75rem; min-width: 0; border-top: 1px solid var(--border); padding-top: 1rem; }
 .producer-preferences__editor h3, .producer-preferences__editor p { margin: 0; overflow-wrap: anywhere; }
@@ -6238,6 +6245,12 @@
 .wine-identity-review__editor h3, .wine-identity-review__editor p { margin: 0; overflow-wrap: anywhere; }
 .wine-identity-review__editor p button { display: block; margin-top: .5rem; }
 .wine-identity-review__confirm { display: grid; gap: .5rem; padding: .75rem; border: 1px solid var(--border); border-radius: .5rem; }
+.wine-identity-review__batch { display: grid; gap: .65rem; min-width: 0; padding: .8rem; border: 1px solid var(--border); border-radius: .5rem; }
+.wine-identity-review__batch p, .wine-identity-review__batch h3 { margin: 0; }
+.wine-identity-review__batch-list { display: grid; gap: .4rem; max-height: 24rem; overflow-y: auto; }
+.wine-identity-review__batch-list label { display: flex; align-items: start; gap: .6rem; padding: .5rem; border: 1px solid var(--border); border-radius: .4rem; overflow-wrap: anywhere; }
+.wine-identity-review__batch-list small { display: block; color: var(--text-muted, #b6aeb2); }
+.wine-identity-review__batch-pages { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
 @media (max-width: 700px) { .wine-identity-review__layout { grid-template-columns: minmax(0, 1fr); } }
 
 .wine-ageing-review { min-width: 0; border: 1px solid var(--border); border-radius: .75rem; padding: 1rem; margin-block: 1rem; }
@@ -8904,6 +8917,33 @@
 .drinking-window-profile-import li,
 .drinking-window-source-note li {
   overflow-wrap: anywhere;
+}
+
+.drinking-window-profile-identity-choices,
+.drinking-window-profile-identity-results {
+  display: grid;
+  gap: 0.5rem;
+  max-height: 20rem;
+  overflow-y: auto;
+  min-width: 0;
+  padding: 0.65rem;
+  border: 1px solid var(--border-color, #54434a);
+  border-radius: 0.5rem;
+}
+
+.drinking-window-profile-import .drinking-window-profile-identity-choices label,
+.drinking-window-profile-import .drinking-window-profile-identity-confirm {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.drinking-window-profile-import .drinking-window-profile-identity-choices input[type="checkbox"],
+.drinking-window-profile-import .drinking-window-profile-identity-confirm input[type="checkbox"] {
+  flex: 0 0 auto;
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-top: 0.15rem;
 }
 
 .drinking-window-draft-correction {

@@ -45,8 +45,24 @@ const ordered = (proposal, vintage, path) => {
   if (first < vintage || first > start || start > end) fail(path, 'three milestones must be ordered');
   return [first, start, end];
 };
+function omitEmptyOptionalCuveeDescriptions(document) {
+  if (!Array.isArray(document.cuvees)) return document;
+  return {
+    ...document,
+    cuvees: document.cuvees.map(value => {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
+      const cuvee = { ...value };
+      for (const field of ['site_description', 'style_summary', 'grape']) {
+        if (cuvee[field] === '') delete cuvee[field];
+      }
+      return cuvee;
+    }),
+  };
+}
 export function validateProducerResearchPackage(input) {
-  const d = obj(input, '$');
+  // Empty optional descriptions are equivalent to omitted descriptions. Do
+  // not normalize identity, evidence, release existence or date fields.
+  const d = omitEmptyOptionalCuveeDescriptions(obj(input, '$'));
   if (!validateSchema(d)) {
     const details = validateSchema.errors.slice(0, 20).map(error => {
       const field = error.params?.missingProperty || error.params?.additionalProperty;

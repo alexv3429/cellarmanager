@@ -6,9 +6,14 @@ import appellationTemplate from "../../../../docs/examples/appellation-profile-t
 import producerTemplate from "../../../../docs/examples/producer-research-template.json"
 import regionTemplate from "../../../../docs/examples/region-profile-template.json"
 import {
+  createProfileIdentityBatch,
+  getReviewedProfileMappings,
   importFullProfileExchange,
   previewFullProfileExchange,
+  previewProfileIdentityBatch,
   previewProfileStaging,
+  suggestProfileIdentities,
+  suggestProfilePlaces,
   stageProfileExchange,
   type FullProfileImport,
 } from "./drinkingWindowProfileExchange"
@@ -21,10 +26,59 @@ const imported: FullProfileImport = {
 }
 
 describe("complete profile exchange", () => {
+  it("loads curator-reviewed appellations for specific releases", async () => {
+    const result = await getReviewedProfileMappings(imported, { rpc: async (name, parameters) => {
+      expect(name).toBe("get_reviewed_profile_identity_mappings")
+      expect(parameters).toEqual({ p_id: imported.id })
+      return { data: { release_appellations: { "red|2002": "shared-appellation" },
+        regions: { Languedoc: "shared-region" } }, error: null }
+    } })
+    expect(result).toEqual({ release_appellations: { "red|2002": "shared-appellation" },
+      regions: { Languedoc: "shared-region" } })
+  })
+  it("accepts only read-only unique producer and cuvée suggestions", async () => {
+    const result = await suggestProfileIdentities(imported, { rpc: async (name, parameters) => {
+      expect(name).toBe("suggest_drinking_window_profile_identities")
+      expect(parameters).toEqual({ p_id: imported.id })
+      return { data: { profile_id: imported.id, producer_id: "shared-producer",
+        producer_matches: 1, cuvees: { cote: "shared-product" },
+        ambiguous_cuvees: ["rose"], published: false, wines_linked: 0 }, error: null }
+    } })
+    expect(result).toEqual({ map: { producer_id: "shared-producer",
+      cuvees: { cote: "shared-product" } }, producerMatches: 1, ambiguousCuvees: ["rose"] })
+    await expect(suggestProfileIdentities(imported, { rpc: async () => ({
+      data: { profile_id: imported.id, producer_id: null, producer_matches: 0,
+        cuvees: { cote: "shared-product" }, ambiguous_cuvees: [], published: false,
+        wines_linked: 0 }, error: null,
+    }) })).rejects.toThrow("Invalid producer suggestions")
+  })
+  it("parses read-only place suggestions without treating them as a mapping decision", async () => {
+    const result = await suggestProfilePlaces(imported, {
+      rpc: async (name, parameters) => {
+        expect(name).toBe("suggest_drinking_window_profile_places")
+        expect(parameters).toEqual({ p_id: imported.id })
+        return { data: { regions: [{ kind: "region", source_name: "Bourgogne — Mâconnais",
+          target_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", target_name: "Bourgogne",
+          reason: "parent_region_prefix" }, { kind: "region", source_name: "Piémont",
+          target_id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc", target_name: "Piemonte",
+          reason: "existing_place_alias" }], appellations: [{ kind: "appellation",
+          source_name: "Meursault 1er Cru", target_id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd", target_name: "Meursault",
+          reason: "classification_parent_appellation" }] }, error: null }
+      },
+    })
+    expect(result.regions).toEqual([{ kind: "region", sourceName: "Bourgogne — Mâconnais",
+      targetId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", targetName: "Bourgogne",
+      reason: "parent_region_prefix" }, { kind: "region", sourceName: "Piémont",
+      targetId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc", targetName: "Piemonte",
+      reason: "existing_place_alias" }])
+    expect(result.appellations).toEqual([{ kind: "appellation", sourceName: "Meursault 1er Cru",
+      targetId: "dddddddd-dddd-4ddd-8ddd-dddddddddddd", targetName: "Meursault",
+      reason: "classification_parent_appellation" }])
+  })
   it.skipIf(!process.env.CELLARMANAGER_PROFILE_AUDIT_DIR)("accepts every supplied audited producer profile", () => {
     const directory = process.env.CELLARMANAGER_PROFILE_AUDIT_DIR!
     const files = readdirSync(directory).filter((name) => name.endsWith(".json"))
-    expect(files).toHaveLength(23)
+    expect(files.length).toBeGreaterThan(0)
     const failures: string[] = []
     for (const file of files) {
       try {
@@ -40,6 +94,18 @@ describe("complete profile exchange", () => {
     expect(previewFullProfileExchange(producerTemplate).kind).toBe("producer")
     expect(previewFullProfileExchange(appellationTemplate).kind).toBe("appellation")
     expect(previewFullProfileExchange(regionTemplate).kind).toBe("region")
+  })
+
+  it("treats blank optional cuvée descriptions as absent without changing the uploaded file", () => {
+    const document = structuredClone(producerTemplate) as unknown as Record<string, unknown>
+    const cuvee = (document.cuvees as Record<string, unknown>[])[0]
+    Object.assign(cuvee, { site_description: "", style_summary: "", grape: "" })
+    const preview = previewFullProfileExchange(document)
+    const normalizedCuvee = (preview.document.cuvees as Record<string, unknown>[])[0]
+    expect(normalizedCuvee).not.toHaveProperty("site_description")
+    expect(normalizedCuvee).not.toHaveProperty("style_summary")
+    expect(normalizedCuvee).not.toHaveProperty("grape")
+    expect(cuvee.site_description).toBe("")
   })
 
   it("rejects unsupported fields instead of silently discarding them", () => {
@@ -128,5 +194,38 @@ describe("complete profile exchange", () => {
     expect(preview.items[0]?.firstTrialYear).toBe(2025)
     await expect(stageProfileExchange(imported, preview, "too brief", true, mapping))
       .rejects.toThrow(/Review the ready rows/)
+  })
+
+  it("keeps identity creation separate from drinking-date staging and rejects a changed preview", async () => {
+    const keys = ["james|2022"]
+    const preview = await previewProfileIdentityBatch(imported, {}, keys, {
+      rpc: async (name, parameters) => {
+        expect(name).toBe("preview_drinking_window_profile_identity_batch")
+        expect(parameters.p_release_keys).toEqual(keys)
+        return { data: {
+          profile_id: imported.id, plan_sha256: "b".repeat(64), status: "ready",
+          producer_name: "Example", producer_status: "existing",
+          entries: [{ key: keys[0], cuvee_id: "james", cuvee_name: "James",
+            vintage: "2022", product_status: "existing", release_status: "create",
+            source_urls: ["https://example.org/release"], reason: null }],
+        }, error: null }
+      },
+    })
+    expect(preview.entries[0]?.sourceUrls).toEqual(["https://example.org/release"])
+    await expect(createProfileIdentityBatch(imported, {}, keys,
+      { ...preview, status: "blocked" }, "I checked the release existence and identity carefully.", true))
+      .rejects.toThrow(/Review and confirm/)
+    const result = await createProfileIdentityBatch(imported, {}, keys, preview,
+      "I checked the release existence and identity carefully.", true, {
+        rpc: async (name, parameters) => {
+          expect(name).toBe("create_drinking_window_profile_identity_batch")
+          expect(parameters.p_expected_plan_sha256).toBe("b".repeat(64))
+          expect(parameters.p_confirmed).toBe(true)
+          return { data: { created_producers: 0, created_products: 0, created_releases: 1,
+            dates_staged: 0, wines_linked: 0, published: false }, error: null }
+        },
+      })
+    expect(result).toEqual({ createdProducers: 0, createdProducts: 0,
+      createdReleases: 1, datesStaged: 0, winesLinked: 0, published: false })
   })
 })

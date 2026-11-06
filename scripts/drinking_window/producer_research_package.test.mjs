@@ -32,6 +32,14 @@ const cp=()=>structuredClone(sample);
 test('v1.1 research accepted but publishable rows remain zero',()=>{
  const result=validateProducerResearchPackage(sample);assert.equal(result.publishable_rows,0);assert.equal(result.exact_calibration_count,1);
 });
+test('empty optional cuvee descriptions do not invalidate research or mutate the source file',()=>{
+ const x=cp();
+ Object.assign(x.cuvees[0],{site_description:'',style_summary:'',grape:''});
+ assert.equal(validateProducerResearchPackage(x).exact_calibration_count,1);
+ assert.equal(x.cuvees[0].site_description,'');
+ x.exact_release_calibrations[0].release_existence.source_ids=[];
+ assert.throws(()=>validateProducerResearchPackage(x),/source_ids/);
+});
 test('exact release review respects bottle size and conflicts',()=>{
  const v=producerReleaseReview(sample,'wine',2022,{first_trial_year:2025,best_start_year:2028,best_end_year:2035},750);
  assert.equal(v.date_conflict,true);assert.equal(v.publication_allowed,false);assert.equal(v.format_ml,750);

@@ -1,6 +1,6 @@
 # Drinking windows — product contract and execution plan
 
-**Status: owner-confirmed contract, 29 October 2026.** This is
+**Status: owner-confirmed contract, clarified 1 November 2026.** This is
 the single product definition for the drinking-window feature. It records the
 owner's requested end state, not a claim that the current application already
 does it. The [living release record](drinking-window-release-plan.md) tracks
@@ -33,11 +33,8 @@ flowchart TD
     P -- No --> R["Search the shared profiles in the order below"]
     R --> F{"First complete, eligible match?"}
     F -- Yes --> S["Use its three dates from one profile"]
-    F -- No --> N{"Can the existing model safely estimate?"}
-    N -- Yes --> M["Use a labelled model estimate"]
-    N -- No --> Z["Show no window and explain why"]
+    F -- No --> Z["Show no shared window and explain why"]
     S --> A["Apply this person's younger/older offset, if set"]
-    M --> A
     A --> D["Show the dates and where they came from"]
     O --> D
     Z --> D
@@ -52,12 +49,33 @@ The shared-profile search stops at the first complete, eligible match:
 | 3 | Appellation profile | Same appellation, vintage and colour; this wine belongs to the reviewed ageing group. |
 | 4 | Region profile | Same region, vintage and colour; this wine belongs to the reviewed ageing group. |
 
-If none matches, the existing model is a **labelled last resort**, not a
-shared profile. If it cannot safely estimate a window, the card says so. A
+This diagram is the **target after legacy-model retirement**. During the
+transition, if no eligible shared row matches, the existing model may still
+provide a clearly labelled provisional estimate; it is never a shared
+profile and must not be counted as profile coverage. After cutover, an
+unmatched wine has no shared recommendation until a suitable profile is
+reviewed, although an explicit cellar-only choice can still supply dates. A
 cellar-only producer rule is different from a shared producer profile: the
 cellar owner enters their own three years for a stated producer, vintage and
 scope of wines; it affects only their cellar. It cannot silently carry over
 to another vintage or to every cuvée.
+
+**Release coverage (owner clarification, 31 October 2026):** The sixth and
+final PR is not complete when profiles are merely imported or waiting for
+review. The official app must be running the selection flow above for the
+owner's real cellar, with complete three-date windows for *nearly all* active
+wines. The working minimum is **95% of active wines**, with each remaining
+uncovered wine and its reason enumerated. This is a floor, not permission to
+stop at 95% if more wines can safely be covered. Report separately how many
+windows come from cellar choices, approved exact producer/cuvée profiles,
+approved broader producer/appellation/region profiles, and the labelled
+existing model while the transition lasts. Model-only coverage must not be
+presented as shared-profile coverage or as proof that the new system is ready
+for full cutover. The supplied 23 profiles must be used to maximize reviewed,
+specific matches, but their unreviewed proposals cannot become official
+advice by import alone. If this coverage and approval work cannot be finished
+safely within the six PR slots, do not call the feature released or quietly
+lower the target.
 
 An exact shared row must match the **canonical producer, cuvée, vintage,
 appellation, region and colour**. An explicitly
@@ -68,6 +86,52 @@ is ambiguous or the recorded appellation and region contradict each other,
 the app asks for correction instead of guessing. A producer-wide row is only
 used when a curator explicitly defined it as applicable; the absence of a
 cuvée-specific row does not itself make another row generic.
+
+**Local labels are not the identity system (owner clarification, 2 November
+2026).** A cellar owner may enter and keep an approximate producer/cuvée
+description. CellarManager must use those fields to *find* the corresponding
+shared identity, not require the owner to rewrite the wine card into canonical
+terminology. The workflow distinguishes three states: local description,
+suggested shared match, and confirmed shared link. A unique match supported
+by approved aliases or other exact, consistent identity fields may be linked
+automatically with an audit trail; an OCR or fuzzy candidate alone remains a
+suggestion and cannot activate a shared drinking window. For an ambiguous
+candidate, the app offers a focused, preferably batchable owner review rather
+than a manual search for every wine. If the shared identity does not yet
+exist, the wine remains locally usable and the missing identity enters the
+curator queue. When the shared catalogue gains a verified producer, cuvée or
+release, CellarManager retries unresolved local wines. None of these steps
+silently rewrites the owner's description or turns a household spelling into
+a global alias. Gate 4 must measure confirmed links, suggested matches and
+unresolved wines separately; the current one-by-one identity review panel is
+not sufficient evidence of this contract at cellar scale.
+
+**Reusable household identity decisions (owner clarification, 2 November
+2026).** Reconcile in this order, once per local naming pattern rather than
+once per bottle: (1) the household's producer spelling → canonical producer;
+(2) that producer's local cuvée spelling, with appellation and colour as
+discriminators → canonical cuvée; (3) its vintage → the canonical release, if
+that release exists and is unambiguous. A cuvée decision normally covers all
+vintages. A documented rename or change of identity requires separate,
+non-overlapping vintage ranges (for example Burgaud's Les Charmes/Ruyère
+era); the app must never apply a timeless alias across such a boundary by
+default. An explicit wine-card identity remains a higher-priority exception.
+Producer-only reference rows may use the confirmed producer even when the
+cuvée has no canonical product yet. Exact-release rows require the product
+and release and all applicable place, colour and format checks. These are
+identity decisions, **not** approval of the dates. The 23 supplied profiles
+must be processed through this same hierarchy; each missing shared identity
+or unresolved name stays visible in a coverage report rather than becoming
+an inferred match.
+
+The same distinction applies to geography. A cellar's region spelling can
+be linked once to a shared region or subregion; its appellation spelling can
+be linked within that region to a shared appellation. These links belong to
+the household, are auditable and reusable across vintages, and do not edit
+wine descriptions or create global aliases. An appellation outside the
+chosen region is invalid. The shared-window reader uses the confirmed local
+place links for the same wine, but a place link never approves or invents a
+drinking-window row. The owner must be able to remove or correct a link.
 
 At appellation and region scope, a reviewed ageing category or an explicit
 all-wines applicability statement is required where wines have materially
@@ -103,8 +167,35 @@ choice changes the shared database.
 | Same row, personal offset +2 years | Display shared 2025 / 2028–2040 and personal 2027 / 2030–2042; no shared edit. |
 | No exact Côte du Py 2022 row, but a reviewed applicable Morgon 2022 group exists | Use the complete Morgon row, labelled appellation estimate. |
 | No applicable Morgon row, but a reviewed applicable Beaujolais 2022 group exists | Use the complete Beaujolais row, labelled region estimate. |
-| Neither broader group includes this wine | Do not borrow another group's dates; use the labelled model estimate if safe, otherwise no window. |
+| Neither broader group includes this wine | Do not borrow another group's dates; during transition only, a clearly labelled old-model estimate may be shown if safe. After cutover, show no shared recommendation. |
 | The cellar owner entered dates for this wine or a cellar-only Burgaud rule covering it | Use those cellar dates and preserve them through future shared updates. |
+
+### Retiring the old model and checking differences
+
+**Owner clarification (1 November 2026):** The old calculation is a
+temporary bridge, not a permanent tier of the new reference hierarchy. The
+intended end state uses only explicit cellar choices and eligible, reviewed
+producer → appellation → region profiles. Do not average, combine or choose
+between old and new dates according to which seems closer.
+
+Before retiring the old model, compare its **unadjusted** three-year estimate
+with a proposed profile's three years only for a cellar wine linked to the
+**same confirmed canonical shared wine identity**, vintage and applicable
+bottle format. A similar name, an unlinked cellar wine or a broad region
+analogue is not enough to establish that comparison. Compare each milestone
+separately; if any corresponding years differ by **five years or more**, flag
+that wine and the specific year difference for human review. This is a
+diagnostic, not an automatic rejection of the profile or a reason to keep the
+old value. Differences below five years do not by themselves require review.
+If either complete triplet is missing, report the comparison as unavailable
+rather than inventing a gap. Personal offsets and cellar overrides must not
+distort this comparison.
+
+The release record must report how many active wines are served by reviewed
+profiles, cellar choices, the old model alone, and no window. The old model
+can be removed from the user-facing advice path only after the remaining
+legacy-only wines and any material differences have been examined and the
+owner has accepted the cutover; until then its presence remains explicit.
 
 ## 2. How the shared database changes
 

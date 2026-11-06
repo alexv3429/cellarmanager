@@ -89,6 +89,52 @@ select is((select count(*) from jsonb_array_elements(
       current_setting('app.gate3_map')::jsonb)->'rows') row_item
     where row_item.value->>'status'='quarantined'),1::bigint,
     'The missing vintage is reported as quarantined');
+select set_config('app.gate4_place_wording',
+    (public.import_drinking_window_profile_exchange(jsonb_set(jsonb_set(
+      current_setting('app.gate3_document')::jsonb,
+      '{cuvees,0,region}',to_jsonb('Beaujolais — northern sector'::text)),
+      '{cuvees,0,appellation}',to_jsonb('Morgon AOC'::text)))->>'id'),true);
+select is((public.preview_drinking_window_profile_exchange(
+    current_setting('app.gate4_place_wording')::uuid,
+    current_setting('app.gate3_version')::uuid,
+    current_setting('app.gate3_map')::jsonb)->'rows'->0->>'reason'),
+    'Region has no unique canonical identity',
+    'A profile region phrase is not silently collapsed to a canonical region');
+select set_config('app.gate4_region_map',
+    (current_setting('app.gate3_map')::jsonb || jsonb_build_object('regions',
+      jsonb_build_object('Beaujolais — northern sector',
+        (select id from public.enrichment_places where canonical_name='Beaujolais'))))::text,true);
+select is((public.preview_drinking_window_profile_exchange(
+    current_setting('app.gate4_place_wording')::uuid,
+    current_setting('app.gate3_version')::uuid,
+    current_setting('app.gate4_region_map')::jsonb)->'rows'->0->>'reason'),
+    'Appellation has no unique canonical identity in this region',
+    'A reviewed region selection does not bypass the appellation check');
+select set_config('app.gate4_place_map',
+    (current_setting('app.gate4_region_map')::jsonb || jsonb_build_object('appellations',
+      jsonb_build_object('Morgon AOC',
+        (select id from public.enrichment_places where canonical_name='Morgon'))))::text,true);
+select is((select count(*) from jsonb_array_elements(
+    public.preview_drinking_window_profile_exchange(
+      current_setting('app.gate4_place_wording')::uuid,
+      current_setting('app.gate3_version')::uuid,
+      current_setting('app.gate4_place_map')::jsonb)->'rows') row_item
+    where row_item.value->>'status'='ready'),2::bigint,
+    'Explicit curator place mappings make only the two existing exact releases ready');
+select is((public.preview_drinking_window_profile_exchange(
+    current_setting('app.gate4_place_wording')::uuid,
+    current_setting('app.gate3_version')::uuid,
+    current_setting('app.gate4_place_map')::jsonb)->'rows'->2->>'reason'),
+    'Release has no unique canonical identity',
+    'Place mapping does not invent a missing canonical vintage');
+select is((public.preview_drinking_window_profile_exchange(
+    current_setting('app.gate4_place_wording')::uuid,
+    current_setting('app.gate3_version')::uuid,
+    (current_setting('app.gate4_place_map')::jsonb || jsonb_build_object('regions',
+      jsonb_build_object('Beaujolais — northern sector',
+        '00000000-0000-4000-8000-000000000999')))::jsonb)->'rows'->0->>'reason'),
+    'Region has no unique canonical identity',
+    'An unknown place ID cannot authorize a profile row');
 select set_config('app.gate3_wrong_source',
     (public.import_drinking_window_profile_exchange(jsonb_set(
       current_setting('app.gate3_document')::jsonb,
