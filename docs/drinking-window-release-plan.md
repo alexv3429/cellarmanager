@@ -775,6 +775,18 @@ Chagnoleau releases: two identities were created and two three-date proposals
 were staged in a draft, with the other 16 quarantined. Nothing from that
 rehearsal persisted or became visible to cellar users.
 
+**Shared IGP spelling (6 November):** The existing canonical `IGP Herault`
+is the Languedoc appellation for the official `Pays d'Hérault` indication.
+The [INAO specification](https://extranet.inao.gouv.fr/fichier/IGPHeraultPNO2022.pdf)
+also records its earlier vin-de-pays name. A proposed migration adds the
+shared `IGP Pays d’Hérault` and `IGP Pays de l’Hérault` spellings, with guarded
+stable place creation when absent on a fresh installation. On the isolated
+copy these resolve profile-place suggestions for La Grange des Pères and Mas
+Jullien; they do not automatically create releases or approve dates. Composite
+historical names mixing Saint-Guilhem-le-Désert and Hérault remain separate
+because their correct identity can depend on the vintage. The migration and
+three targeted checks passed locally; CI and linked deployment remain open.
+
 **Real precedence rehearsal:** The supplied Saint-Véran place JSON was
 imported and staged in the same rolled-back isolated transaction as the two
 Chagnoleau identities and dates. Its village-white group supplied 20
