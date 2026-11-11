@@ -7,7 +7,7 @@ import {
   createProfileIdentityBatch,
   getReviewedProfileMappings,
   exportFullProfileExchange, importFullProfileExchange, listFullProfileExchanges, previewFullProfileExchange,
-  previewProfileIdentityBatch, previewProfileStaging, stageProfileExchange,
+  previewProfileIdentityBatch, previewProfileStaging, stageProfileExchange, stageSelectedProfileWindows,
   suggestProfileIdentities, suggestProfilePlaces,
 } from "../data/drinkingWindowProfileExchange"
 import { searchCurationTargets } from "../data/drinkingWindowFallbackAuthoring"
@@ -19,7 +19,7 @@ vi.mock("../data/drinkingWindowProfileExchange", () => ({
   getReviewedProfileMappings: vi.fn(),
   listFullProfileExchanges: vi.fn(), previewFullProfileExchange: vi.fn(),
   previewProfileIdentityBatch: vi.fn(), createProfileIdentityBatch: vi.fn(),
-  previewProfileStaging: vi.fn(), stageProfileExchange: vi.fn(),
+  previewProfileStaging: vi.fn(), stageProfileExchange: vi.fn(), stageSelectedProfileWindows: vi.fn(),
   suggestProfileIdentities: vi.fn(), suggestProfilePlaces: vi.fn(),
 }))
 vi.mock("../data/drinkingWindowReleaseWorkflow", () => ({
@@ -382,7 +382,7 @@ describe("complete profile exchange", () => {
         sourceUrls: ["https://example.org/context"], children: [],
       }],
     })
-    vi.mocked(stageProfileExchange).mockResolvedValue({
+    vi.mocked(stageSelectedProfileWindows).mockResolvedValue({
       staged: 1, unchanged: 0, quarantined: 0, published: false,
     })
     await act(async () => root.render(<FullProfileExchangePanel isOnline onStaged={onStaged} />))
@@ -401,13 +401,16 @@ describe("complete profile exchange", () => {
         "I checked this exact release and adopt these editorial estimates for shared use.")
       reason.dispatchEvent(new Event("input", { bubbles: true }))
     })
-    const consent = container.querySelector('input[type="checkbox"]') as HTMLInputElement
-    await act(async () => consent.click())
     const stage = [...container.querySelectorAll("button")]
       .find((button) => button.textContent === "Prepare valid entries in this draft")
+    const checkboxes = container.querySelectorAll('input[type="checkbox"]')
+    expect(stage?.disabled).toBe(true)
+    await act(async () => (checkboxes[0] as HTMLInputElement).click())
+    await act(async () => (checkboxes[1] as HTMLInputElement).click())
     expect(stage?.disabled).toBe(false)
     await act(async () => stage?.click())
-    expect(stageProfileExchange).toHaveBeenCalledOnce()
+    expect(stageSelectedProfileWindows).toHaveBeenCalledWith(expect.anything(), expect.anything(),
+      expect.any(String), true, expect.anything(), ["james-2022"])
     expect(onStaged).toHaveBeenCalledWith("draft")
   })
 

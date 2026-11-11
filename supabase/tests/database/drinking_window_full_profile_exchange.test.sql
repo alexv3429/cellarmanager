@@ -159,12 +159,41 @@ select throws_ok($test$
       true,current_setting('app.gate3_map')::jsonb)
 $test$, '40001', 'Profile mapping or draft changed; refresh the preview',
     'A stale or substituted preview cannot be staged');
+select throws_ok($test$
+    select public.stage_selected_drinking_window_profile_exchange(
+      current_setting('app.gate3_import')::uuid,current_setting('app.gate3_version')::uuid,
+      current_setting('app.gate3_preview_hash'),
+      'I reviewed the selected synthetic window and approve sharing it as an editorial estimate.',
+      true,current_setting('app.gate3_map')::jsonb,array['james · 2023 · 750 ml'])
+$test$, '22023', 'Selected rows must each be uniquely ready',
+    'An unresolved window cannot be selected for staging');
+select throws_ok($test$
+    select public.stage_selected_drinking_window_profile_exchange(
+      current_setting('app.gate3_import')::uuid,current_setting('app.gate3_version')::uuid,
+      current_setting('app.gate3_preview_hash'),
+      'I reviewed the selected synthetic window and approve sharing it as an editorial estimate.',
+      true,current_setting('app.gate3_map')::jsonb,array['james · 2022 · 750 ml','james · 2022 · 750 ml'])
+$test$, '22023', 'Choose distinct rows to review', 'Duplicate selections are rejected');
+select is((public.stage_selected_drinking_window_profile_exchange(
+    current_setting('app.gate3_import')::uuid,current_setting('app.gate3_version')::uuid,
+    current_setting('app.gate3_preview_hash'),
+    'I reviewed the selected synthetic window and approve sharing it as an editorial estimate.',
+    true,current_setting('app.gate3_map')::jsonb,array['james · 2022 · 750 ml'])->>'staged')::integer,1,
+    'Only the selected ready window is staged');
+select is((select count(*) from public.drinking_window_reference_rows
+    where version_id=current_setting('app.gate3_version')::uuid
+      and release_id='0ea70dd0-a315-4fff-f438-c9b3ed5fe573'),1::bigint,
+    'Another ready window remains untouched');
+select set_config('app.gate3_preview_hash',
+    public.preview_drinking_window_profile_exchange(
+      current_setting('app.gate3_import')::uuid,current_setting('app.gate3_version')::uuid,
+      current_setting('app.gate3_map')::jsonb)->>'preview_sha256',true);
 select is((public.stage_drinking_window_profile_exchange(
     current_setting('app.gate3_import')::uuid,current_setting('app.gate3_version')::uuid,
     current_setting('app.gate3_preview_hash'),
     'I checked the two size-specific synthetic windows and approve sharing them as editorial estimates.',
-    true,current_setting('app.gate3_map')::jsonb)->>'staged')::integer,2,
-    'One curator stages both valid rows atomically');
+    true,current_setting('app.gate3_map')::jsonb)->>'staged')::integer,1,
+    'The remaining valid row can be staged independently');
 select is((select count(*) from public.drinking_window_reference_rows
     where version_id=current_setting('app.gate3_version')::uuid
       and release_id='0ea70dd0-a315-4fff-f438-c9b3ed5fe573'),2::bigint,

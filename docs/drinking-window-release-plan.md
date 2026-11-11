@@ -872,6 +872,10 @@ coverage for the agreed Gate 4 exit and nothing was published. The other
 three identities have not had their dates approved: the current staging
 interface stages every technically ready item together, preventing selective
 review when evidence differs. Archived documents are not active windows.
+The same draft PR now proposes explicit per-window selection for producer
+profiles, with server-side rejection of stale, duplicated or ineligible
+selections. The web build and targeted UI tests pass; database CI, an isolated
+restore rehearsal and linked deployment are still required before using it.
 
 **Real precedence rehearsal:** The supplied Saint-Véran place JSON was
 imported and staged in the same rolled-back isolated transaction as the two

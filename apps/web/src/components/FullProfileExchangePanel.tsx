@@ -12,6 +12,7 @@ import {
   suggestProfileIdentities,
   suggestProfilePlaces,
   stageProfileExchange,
+  stageSelectedProfileWindows,
   type FullProfileImport,
   type FullProfilePreview,
   type ProfileIdentityMap,
@@ -104,6 +105,7 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
   const [identityConfirmed, setIdentityConfirmed] = useState(false)
   const [versionId, setVersionId] = useState("")
   const [stagingPreview, setStagingPreview] = useState<ProfileStagePreview | null>(null)
+  const [selectedWindowKeys, setSelectedWindowKeys] = useState<string[]>([])
   const [reviewReason, setReviewReason] = useState("")
   const [adoptAndShare, setAdoptAndShare] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -272,7 +274,7 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
   async function inspect() {
     const profile = imports.find((item) => item.id === selectedProfileId)
     if (!profile || !versionId) return
-    setBusy(true); setError(null); setMessage(null); setAdoptAndShare(false)
+    setBusy(true); setError(null); setMessage(null); setAdoptAndShare(false); setSelectedWindowKeys([])
     try { setStagingPreview(await previewProfileStaging(profile, versionId, identityMap)) }
     catch (caught: unknown) {
       setStagingPreview(null)
@@ -353,8 +355,11 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
     if (!profile || !stagingPreview) return
     setBusy(true); setError(null)
     try {
-      const result = await stageProfileExchange(profile, stagingPreview, reviewReason, adoptAndShare, identityMap)
+      const result = profile.kind === "producer"
+        ? await stageSelectedProfileWindows(profile, stagingPreview, reviewReason, adoptAndShare, identityMap, selectedWindowKeys)
+        : await stageProfileExchange(profile, stagingPreview, reviewReason, adoptAndShare, identityMap)
       setStagingPreview(await previewProfileStaging(profile, versionId, identityMap))
+      setSelectedWindowKeys([])
       setAdoptAndShare(false)
       setMessage(t("{staged} valid entries prepared; {quarantined} excluded for correction. Nothing has been published.", {
         staged: String(result.staged), quarantined: String(result.quarantined),
@@ -575,6 +580,15 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
         </Notice> : null}
         <p>{t("Only unique exact canonical identities can be prepared. Unmatched or conflicting entries remain in the saved profile; they are not silently imported.")}</p>
         <ul>{stagingPreview.items.map((item) => <li key={item.key}>
+          {selectedDocument?.kind === "producer" && item.status === "ready" ? <label>
+            <input type="checkbox" checked={selectedWindowKeys.includes(item.key)} disabled={busy}
+              onChange={(event) => {
+                const checked = event.target.checked
+                setSelectedWindowKeys((current) => checked
+                  ? [...current, item.key] : current.filter((key) => key !== item.key))
+                setAdoptAndShare(false)
+              }} /> {t("Select this window for review")}
+          </label> : null}
           <strong>{item.name}</strong> · {t(item.status)}
           {item.canonicalId ? <> · {t("Canonical ID")}: <code>{item.canonicalId}</code></> : null}
           {item.reason ? <> · {t(item.reason)}</> : null}
@@ -595,14 +609,14 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
         </li>)}</ul>
         {stagingPreview.ready ? <div>
           <p>{t("The source pages are context, not proof that the producer published these exact dates. You adopt the three dates as your own shared editorial estimates.")}</p>
-          <label>{t("Why I approve the ready entries")}
+          <label>{t(selectedDocument?.kind === "producer" ? "Why I approve the selected windows" : "Why I approve the ready entries")}
             <textarea minLength={30} maxLength={1000} value={reviewReason}
               onChange={(event) => setReviewReason(event.target.value)} />
           </label>
           <label><input type="checkbox" checked={adoptAndShare}
             onChange={(event) => setAdoptAndShare(event.target.checked)} />
-            {t("I reviewed the ready entries and authorize their reuse across cellars")}</label>
-          <button type="button" disabled={!isOnline || busy || !adoptAndShare || reviewReason.trim().length < 30}
+            {t(selectedDocument?.kind === "producer" ? "I reviewed the selected windows and authorize their reuse across cellars" : "I reviewed the ready entries and authorize their reuse across cellars")}</label>
+          <button type="button" disabled={!isOnline || busy || !adoptAndShare || reviewReason.trim().length < 30 || (selectedDocument?.kind === "producer" && !selectedWindowKeys.length)}
             onClick={() => void stage()}>{t("Prepare valid entries in this draft")}</button>
           <p>{t("After this step, run the draft preflight and impact preview in the publication section before publishing.")}</p>
         </div> : null}

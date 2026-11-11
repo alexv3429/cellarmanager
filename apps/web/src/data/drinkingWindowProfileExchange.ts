@@ -584,3 +584,23 @@ export async function stageProfileExchange(profile: FullProfileImport, preview: 
   return { staged: staged as number, unchanged: unchanged as number,
     quarantined: quarantined as number, published: false }
 }
+
+export async function stageSelectedProfileWindows(profile: FullProfileImport, preview: ProfileStagePreview,
+  reviewReason: string, adoptAndShare: boolean, identityMap: ProfileIdentityMap,
+  selectedKeys: string[], options: RpcOptions = {}): Promise<ProfileStageResult> {
+  if (profile.kind !== "producer" || !adoptAndShare || reviewReason.trim().length < 30
+      || !selectedKeys.length || new Set(selectedKeys).size !== selectedKeys.length
+      || selectedKeys.some((key) => !preview.items.some((item) => item.key === key && item.status === "ready"))) {
+    throw new Error("Review the selected ready rows and explicitly authorize their shared editorial estimates")
+  }
+  const result = object(await call("stage_selected_drinking_window_profile_exchange", {
+    p_id: profile.id, p_version_id: preview.versionId,
+    p_expected_preview_sha256: preview.previewSha256, p_review_reason: reviewReason.trim(),
+    p_adopt_and_share: true, p_identity_map: identityMap, p_selected_keys: selectedKeys,
+  }, options), "Profile staging result")
+  if (![result.staged, result.unchanged, result.quarantined].every((count) => Number.isInteger(count))) {
+    throw new Error("Invalid staging result")
+  }
+  return { staged: result.staged as number, unchanged: result.unchanged as number,
+    quarantined: result.quarantined as number, published: false }
+}
