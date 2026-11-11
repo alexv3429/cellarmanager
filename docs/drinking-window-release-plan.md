@@ -1004,10 +1004,12 @@ and published readers passed no climat to the matcher, even though explicitly
 classified climat groups were supported. The proposed shared matcher now
 derives a unique canonical climat or explicitly curated alias under the
 already resolved appellation, only when the local wine explicitly indicates a
-classified cru. An optional appellation prefix and leading article are ignored,
+classified cru. An optional appellation prefix and leading `Les` are ignored,
 so `Caillerets` can match `Meursault Les Caillerets`; other fuzzy matches are
-not assumed. It preserves the cellar spelling, never guesses among multiple
-candidates, and keeps an explicitly supplied place. Twenty-four rollback-only
+not assumed. In particular, `Le Porusot` is not collapsed into `Porusot`:
+the [Burgundy appellation specification](https://www.vins-bourgogne.fr/nos-vins-nos-terroirs/la-bourgogne-et-ses-appellations/gallery_files/site/321/19990/20242.pdf)
+lists both names. It preserves the cellar spelling, never guesses among multiple
+candidates, and keeps an explicitly supplied place. Twenty-five rollback-only
 assertions cover scope, ambiguity, aliases and fallback priority. No canonical
 climat is created by this change; the missing shared climat identities and
 their source review remain work to do. This migration is not yet deployed.

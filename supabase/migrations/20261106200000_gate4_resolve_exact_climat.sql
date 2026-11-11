@@ -20,8 +20,8 @@ returns uuid language sql stable security definer set search_path = '' as $$
           then pg_catalog.substr(p.normalized_name,pg_catalog.length(t.appellation) + 2)
           else p.normalized_name end as relative_name) n
         where t.cuvee <> '' and (p.normalized_name=t.cuvee
-          or pg_catalog.regexp_replace(n.relative_name,'^(les|le|la|l) ','')
-             = pg_catalog.regexp_replace(t.cuvee,'^(les|le|la|l) ',''))
+          or pg_catalog.regexp_replace(n.relative_name,'^les ','')
+             = pg_catalog.regexp_replace(t.cuvee,'^les ',''))
         union
         select p.id from terms t join public.enrichment_place_aliases a
           on a.normalized_value=t.cuvee or a.normalized_value=t.appellation || ' ' || t.cuvee

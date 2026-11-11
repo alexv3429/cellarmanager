@@ -165,6 +165,15 @@ select is(private.drinking_window_exact_classified_climat(
  'fa600000-0000-4000-8000-000000000024'::uuid,
  'An optional appellation prefix and article do not prevent a unique exact match');
 delete from public.enrichment_places where id='fa600000-0000-4000-8000-000000000024';
+insert into public.enrichment_places(id,parent_id,place_type,canonical_name) values
+ ('fa600000-0000-4000-8000-000000000025','fa600000-0000-4000-8000-000000000004',
+  'climat','Premier Test Village Le Porusot');
+update public.wines set cuvee='Porusot'
+where id='fa600000-0000-4000-8000-000000000006';
+select is(private.drinking_window_exact_classified_climat(
+ 'fa600000-0000-4000-8000-000000000006','fa600000-0000-4000-8000-000000000004'),
+ null::uuid, 'Distinct official names Le Porusot and Porusot are not silently conflated');
+delete from public.enrichment_places where id='fa600000-0000-4000-8000-000000000025';
 update public.wines set cuvee='Premier Test Climat'
 where id='fa600000-0000-4000-8000-000000000006';
 insert into public.enrichment_places(id,parent_id,place_type,canonical_name) values
