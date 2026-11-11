@@ -374,11 +374,16 @@ describe("complete profile exchange", () => {
     const onStaged = vi.fn()
     vi.mocked(previewProfileStaging).mockResolvedValue({
       profileId: "profile", versionId: "draft", previewSha256: "hash",
-      ready: 1, unchanged: 0, quarantined: 0,
+      ready: 2, unchanged: 0, quarantined: 0,
       items: [{
         key: "james-2022", name: "James · 2022 · 1500 ml", status: "ready",
         reason: null, rationale: "Synthetic editorial estimate", canonicalId: "release",
         firstTrialYear: 2026, bestStartYear: 2029, bestEndYear: 2038,
+        sourceUrls: ["https://example.org/context"], children: [],
+      }, {
+        key: "james-2023", name: "James · 2023 · 750 ml", status: "ready",
+        reason: null, rationale: "Another editorial estimate", canonicalId: "other-release",
+        firstTrialYear: 2027, bestStartYear: 2030, bestEndYear: 2039,
         sourceUrls: ["https://example.org/context"], children: [],
       }],
     })
@@ -406,7 +411,7 @@ describe("complete profile exchange", () => {
     const checkboxes = container.querySelectorAll('input[type="checkbox"]')
     expect(stage?.disabled).toBe(true)
     await act(async () => (checkboxes[0] as HTMLInputElement).click())
-    await act(async () => (checkboxes[1] as HTMLInputElement).click())
+    await act(async () => (checkboxes[2] as HTMLInputElement).click())
     expect(stage?.disabled).toBe(false)
     await act(async () => stage?.click())
     expect(stageSelectedProfileWindows).toHaveBeenCalledWith(expect.anything(), expect.anything(),
