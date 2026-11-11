@@ -859,8 +859,19 @@ No signed-in live smoke test, profile publication or new cellar window is
 claimed. The interface changes remain in the draft PR until it is merged.
 On 11 November a read-only linked check found 69 archived profile documents
 (including older versions), one producer-profile row staged and zero
-published reference versions. Archived documents are not active windows and
-these figures must not be presented as cellar coverage.
+published reference versions. Subsequently, through the signed-in curator
+interface, the reviewed shared identities for Frantz Chagnoleau À la Côte
+2018, 2022 and 2024, Madrigal 2019, and Pastoral 2016 were created after
+checking their vintage-specific wine listings. The first two profile estimates
+(2018: 2021 / 2024–2031; 2022: 2024 / 2027–2036) were explicitly adopted as
+uncertain editorial estimates and added to draft version 2, not attributed to
+the producer. The draft then held four approved windows and passed its
+technical check. The app's whole-cellar preview reported two matches out of
+804 cards, and 198 cards with unconfirmed identities. This is not sufficient
+coverage for the agreed Gate 4 exit and nothing was published. The other
+three identities have not had their dates approved: the current staging
+interface stages every technically ready item together, preventing selective
+review when evidence differs. Archived documents are not active windows.
 
 **Real precedence rehearsal:** The supplied Saint-Véran place JSON was
 imported and staged in the same rolled-back isolated transaction as the two
