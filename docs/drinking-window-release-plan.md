@@ -902,6 +902,38 @@ equal to the vintage. Treat those estimates individually, not as established
 facts or as automatically approved dates. The current place-profile stage
 operation works on a whole group rather than individual vintages; resolving
 that limitation and measuring actual resulting cellar coverage remain open.
+On the restored copy, independently staging the full Saint-Véran profile in a
+rolled-back transaction produced 34 matches among 804 cards, compared with
+two in the pre-import draft. Independently staging the whole Bourgogne region
+profile produced 192 matches. These are alternative simulations, not additive
+counts, approvals, publications or claims that the dates are verified. They
+use the backup taken before the later À la Côte 2024 addition. Both
+transactions were rolled back, and the 198 unresolved identities remained.
+An additional combined rollback-only rehearsal of all 12 profiles staged
+16 technically ready groups containing 320 candidate windows and quarantined
+nine groups; its impact was also 192 matched cards of 804, not 192 plus the
+Saint-Véran count. Within that simulation À la Côte 2019 and 2021 selected
+Saint-Véran estimates, while 2022 selected the more specific producer/cuvée
+estimate. These figures use the same pre-2024-row backup and are not live
+approvals or a statement that all selected estimates are reliable.
+All nine quarantined groups are Premier Cru climat groups whose members do
+not yet resolve to unique canonical place identities. On this restored
+catalogue, 172 unmerged cards have a Premier Cru marker in the appellation
+text, including 40 Puligny-Montrachet, 23 Rully, 22 Saint-Aubin and 14
+Meursault cards. This count is not the number that could automatically match
+the nine groups: the exact climats and producer profiles still matter. The
+classification-place identity path needs to be completed without assigning a
+village or region group to a Premier Cru by accident.
+Nine blocked groups are specifically Premier Cru climat groups. The
+selector also rejected an explicitly supplied exact climat because the
+Premier Cru guard only allowed a classification place. A narrow correction in
+the same draft PR accepts a verified matching climat while still rejecting a
+different climat, a missing climat, and an unclassified parent-place group.
+Thirteen rollback-only tests passed on the restored copy. CI and linked
+deployment remain pending; this does not create or resolve any real climat
+identities by itself. For example, the official [INAO Meursault specification](https://extranet.inao.gouv.fr/fichier/pno-cdc-AOC-Meursault-cn250612.pdf)
+lists the Premier Cru climats, but each identity must remain scoped to its
+own appellation, because the same climat name can occur elsewhere.
 
 **Real precedence rehearsal:** The supplied Saint-Véran place JSON was
 imported and staged in the same rolled-back isolated transaction as the two

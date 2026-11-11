@@ -76,6 +76,44 @@ select is((select status from private.drinking_window_preview_draft_match_for_wi
  null,null,null,'fa600000-0000-4000-8000-000000000004',
  'fa600000-0000-4000-8000-000000000002','red',2022,null)),
  'no_match','A parent-place group does not silently classify a Premier Cru as village');
+insert into public.enrichment_places(id,parent_id,place_type,canonical_name) values
+ ('fa600000-0000-4000-8000-000000000017','fa600000-0000-4000-8000-000000000004',
+  'climat','Premier Test Climat'),
+ ('fa600000-0000-4000-8000-000000000018','fa600000-0000-4000-8000-000000000004',
+  'climat','Another Premier Test Climat');
+insert into public.drinking_window_ageing_groups
+ (id,version_id,scope,region_id,appellation_id,wine_color,group_key,definition)
+values ('fa600000-0000-4000-8000-000000000019','fa600000-0000-4000-8000-000000000007',
+ 'appellation','fa600000-0000-4000-8000-000000000002','fa600000-0000-4000-8000-000000000004',
+ 'red','climat','Synthetic explicitly reviewed Premier Cru climat group');
+insert into public.drinking_window_ageing_group_memberships
+ (id,version_id,group_id,member_kind,member_place_id,rationale)
+values ('fa600000-0000-4000-8000-000000000020','fa600000-0000-4000-8000-000000000007',
+ 'fa600000-0000-4000-8000-000000000019','place','fa600000-0000-4000-8000-000000000017',
+ 'Synthetic reviewed exact climat membership');
+insert into public.drinking_window_reference_rows
+ (id,version_id,scope,appellation_id,region_id,wine_color,vintage_year,ageing_group_id,
+  all_at_scope,first_trial_year,best_start_year,best_end_year,rationale)
+values ('fa600000-0000-4000-8000-000000000021','fa600000-0000-4000-8000-000000000007',
+ 'appellation','fa600000-0000-4000-8000-000000000004','fa600000-0000-4000-8000-000000000002',
+ 'red',2022,'fa600000-0000-4000-8000-000000000019',false,2025,2028,2035,
+ 'Synthetic specific climat estimate');
+select is((select reference_row_id from private.drinking_window_preview_draft_match_for_wine(
+ 'fa600000-0000-4000-8000-000000000006','fa600000-0000-4000-8000-000000000007',
+ null,null,null,'fa600000-0000-4000-8000-000000000004',
+ 'fa600000-0000-4000-8000-000000000002','red',2022,'fa600000-0000-4000-8000-000000000017')),
+ 'fa600000-0000-4000-8000-000000000021'::uuid,
+ 'A reviewed exact climat is eligible for its Premier Cru');
+select is((select status from private.drinking_window_preview_draft_match_for_wine(
+ 'fa600000-0000-4000-8000-000000000006','fa600000-0000-4000-8000-000000000007',
+ null,null,null,'fa600000-0000-4000-8000-000000000004',
+ 'fa600000-0000-4000-8000-000000000002','red',2022,'fa600000-0000-4000-8000-000000000018')),
+ 'no_match','A different climat does not inherit the group');
+select is((select status from private.drinking_window_preview_draft_match_for_wine(
+ 'fa600000-0000-4000-8000-000000000006','fa600000-0000-4000-8000-000000000007',
+ null,null,null,'fa600000-0000-4000-8000-000000000004',
+ 'fa600000-0000-4000-8000-000000000002','red',2022,null)),
+ 'no_match','The climat group cannot match without a verified climat identity');
 insert into public.wine_reference_entities(id,entity_type) values
  ('fa600000-0000-4000-8000-000000000009','producer'),
  ('fa600000-0000-4000-8000-000000000010','product'),
