@@ -857,6 +857,10 @@ The temporary backup is no longer present after the environment change on
 but that path must not be relied on for recovery.
 No signed-in live smoke test, profile publication or new cellar window is
 claimed. The interface changes remain in the draft PR until it is merged.
+On 11 November a read-only linked check found 69 archived profile documents
+(including older versions), one producer-profile row staged and zero
+published reference versions. Archived documents are not active windows and
+these figures must not be presented as cellar coverage.
 
 **Real precedence rehearsal:** The supplied Saint-Véran place JSON was
 imported and staged in the same rolled-back isolated transaction as the two
