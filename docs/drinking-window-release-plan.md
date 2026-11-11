@@ -952,17 +952,25 @@ demonstrates precedence with real submitted data; it is not publication or
 evidence that these estimates are official producer dates. The Saint-Véran
 profile, the two identities and all staged rows were rolled back.
 
-**Selective place-vintage review (in progress):** The previous place-profile
-workflow staged every eligible vintage in a group at once. This PR now proposes
+**Selective place-vintage review:** The previous place-profile
+workflow staged every eligible vintage in a group at once. This PR adds
 selecting individual vintages, retaining already staged years and refusing a
 later addition if the reviewed group or its membership has changed. On a
 restored copy, 45 database assertions cover permissions, stale previews,
 duplicate selections, independent years and changed memberships. A separate
 rollback-only rehearsal selected just the 2019 and 2021 Saint-Véran windows
 and confirmed the same producer-over-appellation precedence above. These are
-editorial estimates, not producer-published dates. The new migration still
-requires CI, a fresh backup, rehearsal and linked deployment; none of these
-two fallback windows has been staged or published on the linked project.
+editorial estimates, not producer-published dates. CI passed at `87109df`;
+the migration was applied after restoring and testing a fresh temporary backup
+(`/private/tmp/cellarmanager-gate4-place-selected.eoyfgu`, 0700/0600;
+schema SHA-256 `30cd9e7061ac5e0a6a690ec30b119329f85032e93baf6a475fd22ce9e84764ad`,
+data SHA-256 `72432949bfb7e2bf2e31c1fe02eae672f51117cbbc97e92181f6574863cfb2ff`);
+postflight showed no pending migration. Through the curator interface, the
+2019 and 2021 fallback estimates were staged in unpublished draft 2 with the
+limitations of their early tasting years recorded. No window was published
+or activated in a cellar. The draft review list incorrectly showed the parent
+region rather than Saint-Véran; a subsequent display-only migration fixes
+appellation labels and is awaiting CI and linked deployment.
 
 **Execution status (the contract defines each exit test):**
 

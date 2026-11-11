@@ -420,5 +420,25 @@ select is((select count(*) from private.drinking_window_profile_exchange_links
     where exchange_id=current_setting('app.selectable_place')::uuid),2::bigint,
     'Both independently reviewed years are linked exactly once');
 
+select set_config('app.title_group', public.create_drinking_window_ageing_group(
+    current_setting('app.gate3_version')::uuid, 'appellation',
+    (select id from public.enrichment_places where canonical_name='Beaujolais'),
+    (select id from public.enrichment_places where canonical_name='Morgon'),
+    null,'red','Synthetic Morgon category',
+    'A synthetic appellation category used to test display titles.')::text,true);
+select set_config('app.title_row', public.add_drinking_window_group_year(
+    current_setting('app.title_group')::uuid, 2020, 2023, 2025, 2031,
+    'A synthetic appellation estimate for testing display titles.')::text,true);
+select is((select subject->>'title'
+    from jsonb_array_elements(public.get_drinking_window_reference_drafts()->'drafts') draft
+    cross join lateral jsonb_array_elements(draft->'subjects') subject
+    where subject->>'id'=current_setting('app.title_row')),
+    'Morgon · 2020 · red', 'An appellation window shows its appellation, not its region');
+select is((select subject->>'title'
+    from jsonb_array_elements(public.get_drinking_window_reference_drafts()->'drafts') draft
+    cross join lateral jsonb_array_elements(draft->'subjects') subject
+    where subject->>'id'=current_setting('app.title_group')),
+    'Morgon · Synthetic Morgon category', 'An appellation group shows its appellation');
+
 select * from finish();
 rollback;
