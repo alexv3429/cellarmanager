@@ -989,8 +989,15 @@ allowing a specific cuvée or release. Eighteen isolated assertions cover
 Premier Cru, Grand Cru, village and regional fallbacks and exact releases.
 It does not identify a Grand Cru whose name has no classification marker;
 canonical classification still needs to be established for those wines.
-This migration has not yet been deployed; broad regional profiles must not be
-activated on the assumption that the classification gap is fully resolved.
+CI passed at `7ffbc15`; the migration was repeated on a fresh restored copy
+and applied to the linked project, with an empty postflight. The protected
+temporary backup is `/private/tmp/cellarmanager-gate4-classified.ev1jij`
+(0700/0600), schema SHA-256
+`981b8a9d514eebff3c59699bc0475f11d793e307616fb33c547434b5c131dc8c`,
+data SHA-256
+`b75b7940d29f742965a65a654483fc9967f7150dc156333d66c22d5b28258888`.
+It is temporary, not a durable managed backup. Broad regional profiles must
+not be activated on the assumption that classification is fully resolved.
 
 **Execution status (the contract defines each exit test):**
 
