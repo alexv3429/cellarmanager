@@ -929,9 +929,16 @@ selector also rejected an explicitly supplied exact climat because the
 Premier Cru guard only allowed a classification place. A narrow correction in
 the same draft PR accepts a verified matching climat while still rejecting a
 different climat, a missing climat, and an unclassified parent-place group.
-Thirteen rollback-only tests passed on the restored copy. CI and linked
-deployment remain pending; this does not create or resolve any real climat
-identities by itself. For example, the official [INAO Meursault specification](https://extranet.inao.gouv.fr/fichier/pno-cdc-AOC-Meursault-cn250612.pdf)
+Thirteen rollback-only tests passed on the restored copy and all CI checks
+passed at `63c870d`. The single migration was then repeated on a current
+backup and applied to the linked project; the migration postflight was empty.
+The protected temporary backup is
+`/private/tmp/cellarmanager-gate4-climat-current.bsnX1r` (0700/0600), with
+schema SHA-256 `f40768ae5bb6cd8740c61b9138a51f05cb7ce60fca41370139fb9b15b723688d`
+and data SHA-256 `f972febd773d69d5e1669ef11391f5690dfd32dd504958c48bcfbaabc16766a2`.
+The backup is temporary, not a durable managed backup. This change does not
+create or resolve any real climat identities by itself. For example, the
+official [INAO Meursault specification](https://extranet.inao.gouv.fr/fichier/pno-cdc-AOC-Meursault-cn250612.pdf)
 lists the Premier Cru climats, but each identity must remain scoped to its
 own appellation, because the same climat name can occur elsewhere.
 
@@ -944,6 +951,18 @@ candidate vintages. For the cellar's `À la Côte`, the draft selector returned
 demonstrates precedence with real submitted data; it is not publication or
 evidence that these estimates are official producer dates. The Saint-Véran
 profile, the two identities and all staged rows were rolled back.
+
+**Selective place-vintage review (in progress):** The previous place-profile
+workflow staged every eligible vintage in a group at once. This PR now proposes
+selecting individual vintages, retaining already staged years and refusing a
+later addition if the reviewed group or its membership has changed. On a
+restored copy, 45 database assertions cover permissions, stale previews,
+duplicate selections, independent years and changed memberships. A separate
+rollback-only rehearsal selected just the 2019 and 2021 Saint-Véran windows
+and confirmed the same producer-over-appellation precedence above. These are
+editorial estimates, not producer-published dates. The new migration still
+requires CI, a fresh backup, rehearsal and linked deployment; none of these
+two fallback windows has been staged or published on the linked project.
 
 **Execution status (the contract defines each exit test):**
 

@@ -15,6 +15,7 @@ import {
   suggestProfileIdentities,
   suggestProfilePlaces,
   stageProfileExchange,
+  stageSelectedProfileWindows,
   type FullProfileImport,
 } from "./drinkingWindowProfileExchange"
 
@@ -26,6 +27,29 @@ const imported: FullProfileImport = {
 }
 
 describe("complete profile exchange", () => {
+  it("stages only selected place-profile vintages, including additions to an existing group", async () => {
+    const profile: FullProfileImport = { ...imported, kind: "appellation", name: "Saint-Véran" }
+    const preview = await previewProfileStaging(profile, "draft-id", {}, { rpc: async (name) => {
+      expect(name).toBe("preview_selectable_drinking_window_place_profile")
+      return { data: { profile_id: profile.id, version_id: "draft-id", preview_sha256: "b".repeat(64),
+        groups: [{ key: "white", status: "unchanged", name: "Village", color: "white", members: [],
+          windows: [{ vintage: 2020, first_trial_year: 2021, best_start_year: 2023, best_end_year: 2029,
+            selection_status: "unchanged" }, { vintage: 2021, first_trial_year: 2022,
+            best_start_year: 2025, best_end_year: 2031, selection_status: "ready" }] }] }, error: null }
+    } })
+    expect(preview.items[0]?.children.map((item) => item.status)).toEqual(["unchanged", "ready"])
+    const result = await stageSelectedProfileWindows(profile, preview,
+      "A reviewed synthetic regional estimate for shared use.", true, {}, ["white:2021"], { rpc: async (name, params) => {
+        expect(name).toBe("stage_selected_drinking_window_place_profile")
+        expect(params.p_selected_keys).toEqual(["white:2021"])
+        expect(params).not.toHaveProperty("p_identity_map")
+        return { data: { staged: 1, unchanged: 0, quarantined: 0 }, error: null }
+      } })
+    expect(result.staged).toBe(1)
+    await expect(stageSelectedProfileWindows(profile, preview,
+      "A reviewed synthetic regional estimate for shared use.", true, {}, ["white:2020"]))
+      .rejects.toThrow(/selected ready rows/)
+  })
   it("loads curator-reviewed appellations for specific releases", async () => {
     const result = await getReviewedProfileMappings(imported, { rpc: async (name, parameters) => {
       expect(name).toBe("get_reviewed_profile_identity_mappings")

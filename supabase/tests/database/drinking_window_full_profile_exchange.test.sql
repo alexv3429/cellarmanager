@@ -318,5 +318,107 @@ select ok((select count(*) from public.drinking_window_reference_reviews
     where version_id=current_setting('app.gate3_version')::uuid and verdict='approve') >= 5,
     'Both release rows, group, membership and group window have curator reviews');
 
+select set_config('app.selectable_place', (public.import_drinking_window_profile_exchange(
+    jsonb_set(jsonb_set(current_setting('app.gate3_place')::jsonb,
+      '{ageing_groups,0,name}',to_jsonb('Synthetic independently selected reds'::text)),
+      '{ageing_groups,0,windows}',
+      current_setting('app.gate3_place')::jsonb #> '{ageing_groups,0,windows}' ||
+      jsonb_build_array(jsonb_build_object('vintage',2023,'first_trial_year',2025,
+        'best_start_year',2027,'best_end_year',2031,
+        'rationale','A second synthetic regional editorial window for independent review.',
+        'source_ids',jsonb_build_array('context')))))->>'id'),true);
+select set_config('app.selectable_hash',public.preview_selectable_drinking_window_place_profile(
+    current_setting('app.selectable_place')::uuid,current_setting('app.gate3_version')::uuid)->>'preview_sha256',true);
+select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000002',true);
+select throws_ok($test$
+  select public.preview_selectable_drinking_window_place_profile(
+    current_setting('app.selectable_place')::uuid,current_setting('app.gate3_version')::uuid)
+$test$, '42501', 'An active curator grant for this profile type is required',
+  'A non-curator cannot preview geographic review details');
+select throws_ok($test$
+  select public.stage_selected_drinking_window_place_profile(
+    current_setting('app.selectable_place')::uuid,current_setting('app.gate3_version')::uuid,
+    current_setting('app.selectable_hash'),'A synthetic reason that is sufficiently long for review.',true,
+    array['synthetic_young_red:2022'])
+$test$, '42501', 'An active curator grant for this profile type is required',
+  'A non-curator cannot approve a geographic window');
+select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000001',true);
+select throws_ok($test$
+  select public.stage_selected_drinking_window_place_profile(
+    current_setting('app.selectable_place')::uuid,current_setting('app.gate3_version')::uuid,
+    repeat('0',64),'A synthetic reason that is sufficiently long for review.',true,
+    array['synthetic_young_red:2022'])
+$test$, '40001', 'Profile mapping or draft changed; refresh the preview',
+  'A stale geographic preview cannot be staged');
+select throws_ok($test$
+  select public.stage_selected_drinking_window_place_profile(
+    current_setting('app.selectable_place')::uuid,current_setting('app.gate3_version')::uuid,
+    current_setting('app.selectable_hash'),'A synthetic reason that is sufficiently long for review.',true,
+    array['synthetic_young_red:2022','synthetic_young_red:2022'])
+$test$, '22023', 'Choose distinct rows to review',
+  'Duplicate geographic selections are rejected');
+select throws_ok($test$
+  select public.stage_selected_drinking_window_place_profile(
+    current_setting('app.selectable_place')::uuid,current_setting('app.gate3_version')::uuid,
+    current_setting('app.selectable_hash'),'A synthetic reason that is sufficiently long for review.',true,
+    array['synthetic_young_red:2024'])
+$test$, '22023', 'Selected rows must each be uniquely ready',
+  'A nonexistent vintage cannot be selected');
+select is((public.stage_selected_drinking_window_place_profile(
+    current_setting('app.selectable_place')::uuid,current_setting('app.gate3_version')::uuid,
+    current_setting('app.selectable_hash'),'I checked this one regional year and its synthetic evidence for sharing.',true,
+    array['synthetic_young_red:2022'])->>'staged')::integer,1,
+    'One selected regional year is staged independently');
+select is((select count(*) from private.drinking_window_profile_exchange_links
+    where exchange_id=current_setting('app.selectable_place')::uuid),1::bigint,
+    'The second year was not staged');
+select is((public.preview_selectable_drinking_window_place_profile(
+    current_setting('app.selectable_place')::uuid,current_setting('app.gate3_version')::uuid)
+    ->'groups'->0->'windows'->0->>'selection_status'),'unchanged',
+    'The staged vintage is identifiable on re-preview');
+select is((public.preview_selectable_drinking_window_place_profile(
+    current_setting('app.selectable_place')::uuid,current_setting('app.gate3_version')::uuid)
+    ->'groups'->0->'windows'->1->>'selection_status'),'ready',
+    'The remaining vintage remains available for later review');
+select set_config('app.selectable_hash',public.preview_selectable_drinking_window_place_profile(
+    current_setting('app.selectable_place')::uuid,current_setting('app.gate3_version')::uuid)->>'preview_sha256',true);
+select set_config('app.selectable_group',(select group_id::text from private.drinking_window_profile_group_links
+    where exchange_id=current_setting('app.selectable_place')::uuid),true);
+update public.drinking_window_ageing_groups set definition='Changed synthetic definition requiring a new review.'
+    where id=current_setting('app.selectable_group')::uuid;
+select throws_ok($test$
+  select public.stage_selected_drinking_window_place_profile(
+    current_setting('app.selectable_place')::uuid,current_setting('app.gate3_version')::uuid,
+    current_setting('app.selectable_hash'),'A synthetic reason that is sufficiently long for review.',true,
+    array['synthetic_young_red:2023'])
+$test$, '40001', 'Reviewed group changed; review its definition and members again',
+  'A changed group cannot silently receive dates from the old profile');
+update public.drinking_window_ageing_groups
+    set definition='A synthetic regional category with explicitly reviewed Morgon membership only.'
+    where id=current_setting('app.selectable_group')::uuid;
+insert into public.drinking_window_ageing_group_memberships
+    (id,version_id,group_id,member_kind,member_place_id,rationale)
+values ('fa700000-0000-4000-8000-000000000001',current_setting('app.gate3_version')::uuid,
+    current_setting('app.selectable_group')::uuid,'place',
+    (select id from public.enrichment_places where canonical_name='Beaujolais'),
+    'A different synthetic membership that requires a new review.');
+select throws_ok($test$
+  select public.stage_selected_drinking_window_place_profile(
+    current_setting('app.selectable_place')::uuid,current_setting('app.gate3_version')::uuid,
+    current_setting('app.selectable_hash'),'A synthetic reason that is sufficiently long for review.',true,
+    array['synthetic_young_red:2023'])
+$test$, '40001', 'Reviewed group changed; review its definition and members again',
+  'Changed membership cannot silently receive dates from the old profile');
+delete from public.drinking_window_ageing_group_memberships
+    where id='fa700000-0000-4000-8000-000000000001';
+select is((public.stage_selected_drinking_window_place_profile(
+    current_setting('app.selectable_place')::uuid,current_setting('app.gate3_version')::uuid,
+    current_setting('app.selectable_hash'),'I checked the second regional year and its synthetic evidence for sharing.',true,
+    array['synthetic_young_red:2023'])->>'staged')::integer,1,
+    'A later vintage can be added to the same reviewed group');
+select is((select count(*) from private.drinking_window_profile_exchange_links
+    where exchange_id=current_setting('app.selectable_place')::uuid),2::bigint,
+    'Both independently reviewed years are linked exactly once');
+
 select * from finish();
 rollback;

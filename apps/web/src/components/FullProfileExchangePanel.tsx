@@ -11,7 +11,6 @@ import {
   previewFullProfileExchange,
   suggestProfileIdentities,
   suggestProfilePlaces,
-  stageProfileExchange,
   stageSelectedProfileWindows,
   type FullProfileImport,
   type FullProfilePreview,
@@ -355,9 +354,7 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
     if (!profile || !stagingPreview) return
     setBusy(true); setError(null)
     try {
-      const result = profile.kind === "producer"
-        ? await stageSelectedProfileWindows(profile, stagingPreview, reviewReason, adoptAndShare, identityMap, selectedWindowKeys)
-        : await stageProfileExchange(profile, stagingPreview, reviewReason, adoptAndShare, identityMap)
+      const result = await stageSelectedProfileWindows(profile, stagingPreview, reviewReason, adoptAndShare, identityMap, selectedWindowKeys)
       setStagingPreview(await previewProfileStaging(profile, versionId, identityMap))
       setSelectedWindowKeys([])
       setAdoptAndShare(false)
@@ -376,6 +373,9 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
     }
     return counts
   }, new Map<string, number>())
+  const hasSelectableWindows = Boolean(stagingPreview?.items.some((item) =>
+    selectedDocument?.kind === "producer" ? item.status === "ready"
+      : item.children.some((child) => child.status === "ready" && child.firstTrialYear !== null)))
   const profileCuvees = selectedDocument?.kind === "producer"
     ? selectedDocument.document.cuvees as Record<string, unknown>[] : []
   const profileRegions = [...new Set(profileCuvees.map((cuvee) => String(cuvee.region)))].sort()
@@ -595,7 +595,17 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
           {item.firstTrialYear ? <> · {item.firstTrialYear} / {item.bestStartYear}–{item.bestEndYear}</> : null}
           {item.rationale ? <p>{item.rationale}</p> : null}
           {item.children.length ? <ul>{item.children.map((child) => <li key={child.key}>
+            {selectedDocument?.kind !== "producer" && child.firstTrialYear !== null && child.status === "ready" ? <label>
+              <input type="checkbox" checked={selectedWindowKeys.includes(child.key)} disabled={busy}
+                onChange={(event) => {
+                  const checked = event.target.checked
+                  setSelectedWindowKeys((current) => checked
+                    ? [...current, child.key] : current.filter((key) => key !== child.key))
+                  setAdoptAndShare(false)
+                }} /> {t("Select this window for review")}
+            </label> : null}
             {child.name}{child.firstTrialYear ? `: ${child.firstTrialYear} / ${child.bestStartYear}–${child.bestEndYear}` : ""}
+            {child.firstTrialYear !== null ? <> · {t(child.status)}</> : null}
             {child.canonicalId ? <> · {t("Canonical ID")}: <code>{child.canonicalId}</code></> : null}
             {child.reason ? <> · {t(child.reason)}</> : null}
             {child.rationale ? <p>{child.rationale}</p> : null}
@@ -607,16 +617,16 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
             <ul>{item.sourceUrls.map((url) => <li key={url}><a href={url} target="_blank" rel="noopener noreferrer">{url}</a></li>)}</ul>
           </details> : null}
         </li>)}</ul>
-        {stagingPreview.ready ? <div>
+        {hasSelectableWindows ? <div>
           <p>{t("The source pages are context, not proof that the producer published these exact dates. You adopt the three dates as your own shared editorial estimates.")}</p>
-          <label>{t(selectedDocument?.kind === "producer" ? "Why I approve the selected windows" : "Why I approve the ready entries")}
+          <label>{t("Why I approve the selected windows")}
             <textarea minLength={30} maxLength={1000} value={reviewReason}
               onChange={(event) => setReviewReason(event.target.value)} />
           </label>
           <label><input type="checkbox" checked={adoptAndShare}
             onChange={(event) => setAdoptAndShare(event.target.checked)} />
-            {t(selectedDocument?.kind === "producer" ? "I reviewed the selected windows and authorize their reuse across cellars" : "I reviewed the ready entries and authorize their reuse across cellars")}</label>
-          <button type="button" disabled={!isOnline || busy || !adoptAndShare || reviewReason.trim().length < 30 || (selectedDocument?.kind === "producer" && !selectedWindowKeys.length)}
+            {t("I reviewed the selected windows and authorize their reuse across cellars")}</label>
+          <button type="button" disabled={!isOnline || busy || !adoptAndShare || reviewReason.trim().length < 30 || !selectedWindowKeys.length}
             onClick={() => void stage()}>{t("Prepare valid entries in this draft")}</button>
           <p>{t("After this step, run the draft preflight and impact preview in the publication section before publishing.")}</p>
         </div> : null}

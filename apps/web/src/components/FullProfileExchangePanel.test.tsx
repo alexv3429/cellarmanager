@@ -75,6 +75,48 @@ afterEach(async () => {
 })
 
 describe("complete profile exchange", () => {
+  it("lets a curator add one vintage to an already-reviewed place group", async () => {
+    vi.mocked(listFullProfileExchanges).mockResolvedValue([{
+      id: "profile", documentSha256: "hash", kind: "appellation", name: "Saint-Véran",
+      schemaVersion: "1.0.0", datasetVersion: "1.0.0", releaseCount: 2, submittedAt: "2026-10-31",
+    }])
+    vi.mocked(previewFullProfileExchange).mockReturnValue({
+      kind: "appellation", name: "Saint-Véran", datasetVersion: "1.0.0", releaseCount: 2,
+      factCount: 0, sourceCount: 0, document: {},
+    })
+    vi.mocked(previewProfileStaging).mockResolvedValue({
+      profileId: "profile", versionId: "draft", previewSha256: "hash",
+      ready: 0, unchanged: 1, quarantined: 0,
+      items: [{ key: "white", name: "Village blanc", status: "unchanged", reason: null,
+        rationale: null, canonicalId: "group", firstTrialYear: null, bestStartYear: null,
+        bestEndYear: null, sourceUrls: [], children: [2021,2022].map((year) => ({
+          key: `white:${year}`, name: String(year), status: "ready" as const, reason: null,
+          rationale: null, canonicalId: null, firstTrialYear: year + 1, bestStartYear: year + 3,
+          bestEndYear: year + 8, sourceUrls: [], children: [],
+        })) }],
+    })
+    vi.mocked(stageSelectedProfileWindows).mockResolvedValue({ staged: 1, unchanged: 0, quarantined: 0, published: false })
+    await act(async () => root.render(<FullProfileExchangePanel isOnline />))
+    await act(async () => container.querySelector("summary")?.click())
+    const profile = container.querySelector("select") as HTMLSelectElement
+    await act(async () => { profile.value = "profile"; profile.dispatchEvent(new Event("change", { bubbles: true })) })
+    const inspect = [...container.querySelectorAll("button")].find((button) => button.textContent === "Preview mapping and changes")
+    await act(async () => inspect?.click())
+    const reason = container.querySelector("textarea") as HTMLTextAreaElement
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")?.set?.call(reason,
+        "I checked the selected vintage and its context for shared editorial use.")
+      reason.dispatchEvent(new Event("input", { bubbles: true }))
+    })
+    const checks = container.querySelectorAll('input[type="checkbox"]')
+    await act(async () => (checks[0] as HTMLInputElement).click())
+    await act(async () => (checks[2] as HTMLInputElement).click())
+    const stage = [...container.querySelectorAll("button")].find((button) => button.textContent === "Prepare valid entries in this draft")
+    expect(stage?.disabled).toBe(false)
+    await act(async () => stage?.click())
+    expect(stageSelectedProfileWindows).toHaveBeenCalledWith(expect.anything(), expect.anything(),
+      expect.any(String), true, expect.anything(), ["white:2021"])
+  })
   it("uses only unique existing identity suggestions without an extra owner decision", async () => {
     vi.mocked(suggestProfileIdentities).mockResolvedValue({
       map: { producer_id: "shared-chagnoleau", cuvees: { a_la_cote: "shared-cote" } },

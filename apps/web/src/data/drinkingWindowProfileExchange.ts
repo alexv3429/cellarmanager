@@ -506,7 +506,7 @@ export async function previewProfileStaging(profile: FullProfileImport, versionI
   options: RpcOptions = {}): Promise<ProfileStagePreview> {
   const response = object(await call(profile.kind === "producer"
     ? "preview_drinking_window_profile_exchange"
-    : "preview_drinking_window_place_profile_exchange", {
+    : "preview_selectable_drinking_window_place_profile", {
     p_id: profile.id, p_version_id: versionId,
     ...(profile.kind === "producer" ? { p_identity_map: identityMap } : {}),
   }, options), "Profile staging preview")
@@ -542,8 +542,12 @@ export async function previewProfileStaging(profile: FullProfileImport, versionI
         }
       }), ...windows.map((value: unknown) => {
         const window = object(value, "Place window")
+        const selectionStatus = window.selection_status ?? item.status
+        if (selectionStatus !== "ready" && selectionStatus !== "unchanged" && selectionStatus !== "quarantined") {
+          throw new Error("Invalid window selection status")
+        }
         return {
-          key: `${item.key}:${window.vintage}`, status: item.status as ProfileStageItem["status"],
+          key: `${item.key}:${window.vintage}`, status: selectionStatus as ProfileStageItem["status"],
           reason: optionalText(item.reason), rationale: optionalText(window.rationale),
           name: String(window.vintage), canonicalId: null,
           firstTrialYear: integer(window.first_trial_year), bestStartYear: integer(window.best_start_year),
@@ -588,15 +592,19 @@ export async function stageProfileExchange(profile: FullProfileImport, preview: 
 export async function stageSelectedProfileWindows(profile: FullProfileImport, preview: ProfileStagePreview,
   reviewReason: string, adoptAndShare: boolean, identityMap: ProfileIdentityMap,
   selectedKeys: string[], options: RpcOptions = {}): Promise<ProfileStageResult> {
-  if (profile.kind !== "producer" || !adoptAndShare || reviewReason.trim().length < 30
+  const selectable = profile.kind === "producer" ? preview.items : preview.items.flatMap((item) => item.children)
+  if (!adoptAndShare || reviewReason.trim().length < 30
       || !selectedKeys.length || new Set(selectedKeys).size !== selectedKeys.length
-      || selectedKeys.some((key) => !preview.items.some((item) => item.key === key && item.status === "ready"))) {
+      || selectedKeys.some((key) => !selectable.some((item) => item.key === key && item.status === "ready"
+        && (profile.kind === "producer" || item.firstTrialYear !== null)))) {
     throw new Error("Review the selected ready rows and explicitly authorize their shared editorial estimates")
   }
-  const result = object(await call("stage_selected_drinking_window_profile_exchange", {
+  const result = object(await call(profile.kind === "producer"
+    ? "stage_selected_drinking_window_profile_exchange" : "stage_selected_drinking_window_place_profile", {
     p_id: profile.id, p_version_id: preview.versionId,
     p_expected_preview_sha256: preview.previewSha256, p_review_reason: reviewReason.trim(),
-    p_adopt_and_share: true, p_identity_map: identityMap, p_selected_keys: selectedKeys,
+    p_adopt_and_share: true, p_selected_keys: selectedKeys,
+    ...(profile.kind === "producer" ? { p_identity_map: identityMap } : {}),
   }, options), "Profile staging result")
   if (![result.staged, result.unchanged, result.quarantined].every((count) => Number.isInteger(count))) {
     throw new Error("Invalid staging result")
