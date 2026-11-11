@@ -12,6 +12,7 @@ returns uuid language sql stable security definer set search_path = '' as $$
         join public.enrichment_places a on a.id=p_appellation_id and a.place_type='appellation'
         where w.id=p_wine_id and w.merged_into_wine_id is null
           and private.drinking_window_wine_requires_cru_classification(w.id)
+          and private.household_resolved_appellation(w.household_id,w.area,w.appellation)=a.id
     ), candidates as (
         select p.id from terms t join public.enrichment_places p
           on p.place_type='climat' and private.drinking_window_place_contains(p_appellation_id,p.id)

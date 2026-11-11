@@ -1012,7 +1012,10 @@ lists both names. It preserves the cellar spelling, never guesses among multiple
 candidates, and keeps an explicitly supplied place. Twenty-five rollback-only
 assertions cover scope, ambiguity, aliases and fallback priority. No canonical
 climat is created by this change; the missing shared climat identities and
-their source review remain work to do. This migration is not yet deployed.
+their source review remain work to do. On a restored copy, a rolled-back
+simulation with two hypothetical canonical identities recognized four
+Meursault Charmes and six Meursault Perrières cards; this is not a date match
+or a live identity creation. This migration is not yet deployed.
 
 **Execution status (the contract defines each exit test):**
 

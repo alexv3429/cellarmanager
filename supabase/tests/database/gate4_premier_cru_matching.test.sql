@@ -139,9 +139,13 @@ select is((select reference_row_id from private.drinking_window_preview_draft_ma
  'fa600000-0000-4000-8000-000000000002','red',2022,null)),
  'fa600000-0000-4000-8000-000000000021'::uuid,
  'An exact unique climat is resolved from the cellar spelling within the appellation');
+insert into public.enrichment_places(id,parent_id,place_type,canonical_name) values
+ ('fa600000-0000-4000-8000-000000000026','fa600000-0000-4000-8000-000000000005',
+  'climat','Premier Test Climat');
 select is(private.drinking_window_exact_classified_climat(
  'fa600000-0000-4000-8000-000000000006','fa600000-0000-4000-8000-000000000005'),
- null::uuid, 'A climat from another appellation is not matched');
+ null::uuid, 'A same-named climat in another appellation is not matched');
+delete from public.enrichment_places where id='fa600000-0000-4000-8000-000000000026';
 update public.wines set appellation='Premier Test Village'
 where id='fa600000-0000-4000-8000-000000000006';
 select is(private.drinking_window_exact_classified_climat(
