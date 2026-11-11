@@ -832,8 +832,7 @@ producer, cuvée, region and appellation choices actually used in a confirmed
 identity batch when a curator reopens that profile. Vintage-specific choices
 are restored only for vintages included in a confirmed batch. A choice merely
 present for some other, unselected vintage is not converted into an approval.
-The isolated curator tests and web tests pass; clean CI and deployment remain
-pending. This removes repeated mapping work but does not itself import or
+The isolated curator tests and web tests pass. This removes repeated mapping work but does not itself import or
 publish producer windows. Restoring a reviewed producer also discards any
 automatic cuvée suggestions belonging to a different producer.
 
@@ -844,8 +843,20 @@ Premier Cru, while allowing exact releases, explicitly reviewed product or
 release membership, an explicit cellar choice, or a verified classification
 place. Ten targeted checks passed on the isolated copy. Matching a dedicated
 Premier Cru group automatically still requires a classification identity in
-the wine context; this guard intentionally does not invent one. CI and
-deployment of the guard remain pending.
+the wine context; this guard intentionally does not invent one.
+
+Both changes passed all CI jobs at `f49e52a`, were rehearsed together after a
+fresh protected backup and restore, and were applied to the linked project.
+The restored-copy tests passed (39 identity-batch and ten Premier Cru
+assertions); the linked postflight reported no pending migrations. The backup
+is `/private/tmp/cellarmanager-gate4-final-backup.b6QLua` (0700/0600), with
+schema SHA-256 `9e4711a02e4589f7f9de8eae1f63154c7f201e6364c3424d8493cdfbad3bb37d`
+and data SHA-256 `872f9c56c25708b58f54fc75e4b0550e7b9261b1a976d1a1113bc16c3eccb8fc`.
+The temporary backup is no longer present after the environment change on
+11 November; its recorded restore rehearsal remains the pre-deployment check,
+but that path must not be relied on for recovery.
+No signed-in live smoke test, profile publication or new cellar window is
+claimed. The interface changes remain in the draft PR until it is merged.
 
 **Real precedence rehearsal:** The supplied Saint-Véran place JSON was
 imported and staged in the same rolled-back isolated transaction as the two
