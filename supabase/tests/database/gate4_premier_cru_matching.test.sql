@@ -155,6 +155,16 @@ select is(private.drinking_window_exact_classified_climat(
  'fa600000-0000-4000-8000-000000000006','fa600000-0000-4000-8000-000000000004'),
  'fa600000-0000-4000-8000-000000000017'::uuid,
  'An explicitly curated exact alias resolves within the appellation');
+insert into public.enrichment_places(id,parent_id,place_type,canonical_name) values
+ ('fa600000-0000-4000-8000-000000000024','fa600000-0000-4000-8000-000000000004',
+  'climat','Premier Test Village Les Caillerets');
+update public.wines set cuvee='Caillerets'
+where id='fa600000-0000-4000-8000-000000000006';
+select is(private.drinking_window_exact_classified_climat(
+ 'fa600000-0000-4000-8000-000000000006','fa600000-0000-4000-8000-000000000004'),
+ 'fa600000-0000-4000-8000-000000000024'::uuid,
+ 'An optional appellation prefix and article do not prevent a unique exact match');
+delete from public.enrichment_places where id='fa600000-0000-4000-8000-000000000024';
 update public.wines set cuvee='Premier Test Climat'
 where id='fa600000-0000-4000-8000-000000000006';
 insert into public.enrichment_places(id,parent_id,place_type,canonical_name) values
