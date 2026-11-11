@@ -872,17 +872,36 @@ coverage for the agreed Gate 4 exit and nothing was published. The other
 three identities have not had their dates approved: the current staging
 interface stages every technically ready item together, preventing selective
 review when evidence differs. Archived documents are not active windows.
-The same draft PR now proposes explicit per-window selection for producer
+The same draft PR now supports explicit per-window selection for producer
 profiles, with server-side rejection of stale, duplicated or ineligible
-selections. The web build and targeted UI tests pass; database CI, an isolated
-restore rehearsal and linked deployment are still required before using it.
+selections. All CI checks passed at `0bcd9ac`; the sole migration was applied
+to a fresh restored copy where all 32 exchange tests passed, and then to the
+linked project. The postflight migration dry run was empty. The protected
+temporary backup was `/private/tmp/cellarmanager-gate4-selected-backup.dQZC97`
+(directory 0700, files 0600), schema SHA-256
+`b91d6793cea3b8f72effc4da3fd3f8d46872e86009663dd7f0bab33f10cfd3b8`,
+data SHA-256 `f46417b29a4860e41809eae4203a1138d7a466b224add2e9c60f3e1732be8181`.
+This is temporary sensitive material, not a durable backup. A signed-in
+curator used the deployed preview to select and stage only the 2024 À la Côte
+window, leaving Madrigal 2019 and Pastoral 2016 unapproved. The draft now has
+five reviewed rows; none is published.
 For À la Côte 2024, the profile's 2027 / 2030–2039 estimate is consistent
 with the available context: the [2024 merchant listing](https://www.oenovinia.com/bourgogne/10018-saint-veran-a-la-cote-2024-frantz-chagnoleau.html)
 identifies the bottle and gives a maturity indication from 2028; the
 [Vinous wine page](https://vinous.com/wines/domaine-frantz-chagnoleau-saint-veran-a-la-cote)
 shows a 2028–2040 drinking range. Neither source publishes the three
-CellarManager milestones. The 2024 row has not yet been staged; the other
-two newly created identities likewise do not constitute approved dates.
+CellarManager milestones. The other two newly created identities do not
+constitute approved dates.
+
+The 12 supplied Bourgogne-area exchange documents were then saved through
+the curator interface: 11 appellation profiles and one regional profile.
+They retain their descriptions, source pointers and 485 proposed windows for
+review; import alone does not approve or publish the windows. In particular,
+Saint-Véran groups 20 vintages together, including some first-tasting years
+equal to the vintage. Treat those estimates individually, not as established
+facts or as automatically approved dates. The current place-profile stage
+operation works on a whole group rather than individual vintages; resolving
+that limitation and measuring actual resulting cellar coverage remain open.
 
 **Real precedence rehearsal:** The supplied Saint-Véran place JSON was
 imported and staged in the same rolled-back isolated transaction as the two
