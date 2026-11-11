@@ -76,6 +76,39 @@ select is((select status from private.drinking_window_preview_draft_match_for_wi
  null,null,null,'fa600000-0000-4000-8000-000000000004',
  'fa600000-0000-4000-8000-000000000002','red',2022,null)),
  'no_match','A parent-place group does not silently classify a Premier Cru as village');
+update public.wines set appellation='Premier Test Village GC'
+where id='fa600000-0000-4000-8000-000000000006';
+select is((select status from private.drinking_window_preview_draft_match_for_wine(
+ 'fa600000-0000-4000-8000-000000000006','fa600000-0000-4000-8000-000000000007',
+ null,null,null,'fa600000-0000-4000-8000-000000000004',
+ 'fa600000-0000-4000-8000-000000000002','red',2022,null)),
+ 'no_match','GC is not assigned an unclassified village window');
+insert into public.drinking_window_reference_rows
+ (id,version_id,scope,region_id,wine_color,vintage_year,all_at_scope,
+  first_trial_year,best_start_year,best_end_year,rationale)
+values ('fa600000-0000-4000-8000-000000000022',
+ 'fa600000-0000-4000-8000-000000000007','region',
+ 'fa600000-0000-4000-8000-000000000002','red',2022,true,2024,2026,2030,
+ 'Synthetic unclassified regional estimate');
+select is((select status from private.drinking_window_preview_draft_match_for_wine(
+ 'fa600000-0000-4000-8000-000000000006','fa600000-0000-4000-8000-000000000007',
+ null,null,null,'fa600000-0000-4000-8000-000000000004',
+ 'fa600000-0000-4000-8000-000000000002','red',2022,null)),
+ 'no_match','GC is not assigned an unclassified regional window');
+delete from public.drinking_window_reference_rows
+where id='fa600000-0000-4000-8000-000000000022';
+update public.wines set appellation='Premier Test Village',cuvee='Test Grand Cru'
+where id='fa600000-0000-4000-8000-000000000006';
+select ok(private.drinking_window_wine_requires_cru_classification(
+ 'fa600000-0000-4000-8000-000000000006'),
+ 'Grand Cru in the cuvée also requires explicit classification');
+update public.wines set appellation='Premier Test Village',cuvee='Test Cuvée'
+where id='fa600000-0000-4000-8000-000000000006';
+select ok(not private.drinking_window_wine_requires_cru_classification(
+ 'fa600000-0000-4000-8000-000000000006'),
+ 'An unclassified village wine is not flagged as a cru');
+update public.wines set appellation='Premier Test Village 1C'
+where id='fa600000-0000-4000-8000-000000000006';
 insert into public.enrichment_places(id,parent_id,place_type,canonical_name) values
  ('fa600000-0000-4000-8000-000000000017','fa600000-0000-4000-8000-000000000004',
   'climat','Premier Test Climat'),
@@ -142,6 +175,14 @@ select is((select matched_scope from private.drinking_window_preview_draft_match
  'fa600000-0000-4000-8000-000000000011','fa600000-0000-4000-8000-000000000004',
  'fa600000-0000-4000-8000-000000000002','red',2022,null)),
  'release','A reviewed exact-release window remains eligible for a Premier Cru');
+update public.wines set appellation='Premier Test Village GC'
+where id='fa600000-0000-4000-8000-000000000006';
+select is((select matched_scope from private.drinking_window_preview_draft_match_for_wine(
+ 'fa600000-0000-4000-8000-000000000006','fa600000-0000-4000-8000-000000000007',
+ 'fa600000-0000-4000-8000-000000000009','fa600000-0000-4000-8000-000000000010',
+ 'fa600000-0000-4000-8000-000000000011','fa600000-0000-4000-8000-000000000004',
+ 'fa600000-0000-4000-8000-000000000002','red',2022,null)),
+ 'release','A reviewed exact-release window remains eligible for a Grand Cru');
 insert into public.drinking_window_ageing_group_memberships
  (id,version_id,group_id,member_kind,member_place_id,member_product_id,rationale)
 values ('fa600000-0000-4000-8000-000000000016','fa600000-0000-4000-8000-000000000007',

@@ -967,10 +967,30 @@ schema SHA-256 `30cd9e7061ac5e0a6a690ec30b119329f85032e93baf6a475fd22ce9e84764ad
 data SHA-256 `72432949bfb7e2bf2e31c1fe02eae672f51117cbbc97e92181f6574863cfb2ff`);
 postflight showed no pending migration. Through the curator interface, the
 2019 and 2021 fallback estimates were staged in unpublished draft 2 with the
-limitations of their early tasting years recorded. No window was published
-or activated in a cellar. The draft review list incorrectly showed the parent
-region rather than Saint-Véran; a subsequent display-only migration fixes
-appellation labels and is awaiting CI and linked deployment.
+limitations of their early tasting years recorded. The 2022 estimate
+(2023 / 2026–2032) was subsequently staged in the same way, recording that
+the first year is extrapolated. No window was published or activated in a
+cellar. The draft review list incorrectly showed the parent region rather than
+Saint-Véran. A display-only correction passed CI at `b1ad8c0`, was repeated
+on a fresh restored backup and applied; postflight reported no pending
+migrations. The protected temporary backup is
+`/private/tmp/cellarmanager-gate4-titles.R0Q7bA` (0700/0600), with schema
+SHA-256 `3a051373f537be76ec7f2d6e302251276285b943d3c6600ab486404361078067`
+and data SHA-256 `6878f0bb34573e24c5f126f477ae3fae3e02edf2aeb5a149461f1bee692152e2`.
+It predates the subsequent 2022 staging and is not a durable managed backup.
+The corrected names and eight-row unpublished draft were checked in the app.
+
+**Grand Cru safety before regional expansion:** Inspection found that the
+generic fallback guard recognized `1C` / Premier Cru but not `GC` / Grand Cru.
+Consequently, a regional or village category explicitly excluding classified
+crus could otherwise be applied to a Grand Cru. The proposed correction treats
+both explicit labels as requiring a reviewed specific membership, while still
+allowing a specific cuvée or release. Eighteen isolated assertions cover
+Premier Cru, Grand Cru, village and regional fallbacks and exact releases.
+It does not identify a Grand Cru whose name has no classification marker;
+canonical classification still needs to be established for those wines.
+This migration has not yet been deployed; broad regional profiles must not be
+activated on the assumption that the classification gap is fully resolved.
 
 **Execution status (the contract defines each exit test):**
 
@@ -989,7 +1009,7 @@ in every PR description.
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
 | 3. Complete profile exchange | #230 merged in slot 4/6; full CI green, linked migrations backed up/rehearsed/applied; signed-in owner import/preview/export checked; one Burgaud file saved privately and candidates added to Proposals, nothing published live | Preserve full-profile exchange and audited in-app curator path. |
-| 4. Prepare initial common base | Draft #231 in slot 5/6. The owner's final 46 producer JSONs (461 proposed three-date windows) are now saved in the linked, curator-private exchange archive alongside 23 older versions: **69 archived versions, zero dates published by this import**. The Gate 4 identity-tooling and Cazeneuve corrections were backed up, rehearsed, CI-checked and applied to the linked project. A restored-copy pilot-cellar audit found 97 of 799 active wine cards / 179 of 1,271 bottles with an explicit-release *candidate* from those 46 files after 29 approved producer-name choices; these are not reviewed or active shared windows. The in-app preview of Chagnoleau 11.0.0 initially quarantined all 18 dates because the profile name differed from the canonical producer. Mapping its exact alias `Frantz Chagnoleau` exposed missing canonical cuvées; for `À la Côte 2022` the identity-batch preview became ready only after explicitly mapping `Bourgogne — Mâconnais` to its parent `Bourgogne`. No product/release identity or date was created by that preview. | **No-go for merge/publication.** Reconcile canonical cuvée/release/place identities in reviewed batches; verify release-existence evidence and editorial dates, then stage and approve usable rows. Measure actual source-by-source coverage and named exceptions, including appellation/region fallbacks, before Gate 5. Do not count old-model windows or archive rows as shared-profile coverage. |
+| 4. Prepare initial common base | Draft #231 in slot 5/6. The linked private archive contains 69 producer-document versions, including the 46 latest files, plus 12 Burgundy appellation/region profiles. Draft 2 now contains eight approved but unpublished windows: five specific releases and three Saint-Véran vintage fallbacks. On a restored copy, after rehearsing the last addition, the draft matcher found 27 of 804 unmerged cards: two by exact release and 25 by appellation. These are **potential draft matches**, not active advice; the archive and old model are not counted as coverage. | **No-go for merge/publication.** Continue reconciling canonical cuvée/release/place identities, check and stage applicable profile dates, and measure coverage and exceptions. Resolve Premier Cru climat identities and extend geographic fallbacks before Gate 5. |
 | 5. Release and verify | Not started | Publish the approved reference, enable it for the consenting cellar, and verify the official app on real wines. Gate 5 passes only with a complete source-by-source coverage report, at least 95% of active wines with coherent three-date windows, each exception named, and the reviewer-approved profile dates shown where applicable; then verify cross-household behavior and rollback. Report legacy-only wines and material old/new discrepancies explicitly before deciding with the owner whether the legacy bridge can be removed. Do not call a model-dominated result the completed new system. |
 
 **Merge/deployment rule:** Do not describe #227 as feature-complete or ask the
