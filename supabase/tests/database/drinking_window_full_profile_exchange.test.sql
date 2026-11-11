@@ -73,6 +73,13 @@ select throws_ok($test$
       current_setting('app.gate3_import')::uuid)
 $test$, '42501', 'An active curator grant for this profile type is required',
     'A non-curator cannot export a saved profile');
+select throws_ok($test$
+    select public.stage_selected_drinking_window_profile_exchange(
+      current_setting('app.gate3_import')::uuid,current_setting('app.gate3_version')::uuid,
+      repeat('0',64), 'A sufficiently long synthetic reason for this access-control test.',
+      true,current_setting('app.gate3_map')::jsonb,array['james · 2022 · 750 ml'])
+$test$, '42501', 'An active curator grant for this profile type is required',
+    'A non-curator cannot stage selected windows');
 select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000000001', true);
 select is((select count(*) from private.drinking_window_profile_exchanges
     where id=current_setting('app.gate3_import')::uuid),1::bigint,
@@ -174,6 +181,14 @@ select throws_ok($test$
       'I reviewed the selected synthetic window and approve sharing it as an editorial estimate.',
       true,current_setting('app.gate3_map')::jsonb,array['james · 2022 · 750 ml','james · 2022 · 750 ml'])
 $test$, '22023', 'Choose distinct rows to review', 'Duplicate selections are rejected');
+select throws_ok($test$
+    select public.stage_selected_drinking_window_profile_exchange(
+      current_setting('app.gate3_import')::uuid,current_setting('app.gate3_version')::uuid,
+      repeat('0',64),
+      'I reviewed the selected synthetic window and approve sharing it as an editorial estimate.',
+      true,current_setting('app.gate3_map')::jsonb,array['james · 2022 · 750 ml'])
+$test$, '40001', 'Profile mapping or draft changed; refresh the preview',
+    'Selected staging also rejects a stale preview');
 select is((public.stage_selected_drinking_window_profile_exchange(
     current_setting('app.gate3_import')::uuid,current_setting('app.gate3_version')::uuid,
     current_setting('app.gate3_preview_hash'),

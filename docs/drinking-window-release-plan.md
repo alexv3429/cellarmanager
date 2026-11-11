@@ -876,6 +876,13 @@ The same draft PR now proposes explicit per-window selection for producer
 profiles, with server-side rejection of stale, duplicated or ineligible
 selections. The web build and targeted UI tests pass; database CI, an isolated
 restore rehearsal and linked deployment are still required before using it.
+For À la Côte 2024, the profile's 2027 / 2030–2039 estimate is consistent
+with the available context: the [2024 merchant listing](https://www.oenovinia.com/bourgogne/10018-saint-veran-a-la-cote-2024-frantz-chagnoleau.html)
+identifies the bottle and gives a maturity indication from 2028; the
+[Vinous wine page](https://vinous.com/wines/domaine-frantz-chagnoleau-saint-veran-a-la-cote)
+shows a 2028–2040 drinking range. Neither source publishes the three
+CellarManager milestones. The 2024 row has not yet been staged; the other
+two newly created identities likewise do not constitute approved dates.
 
 **Real precedence rehearsal:** The supplied Saint-Véran place JSON was
 imported and staged in the same rolled-back isolated transaction as the two
