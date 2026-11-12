@@ -1170,14 +1170,33 @@ group explicitly limited to the Bourgogne appellation. The group's definition,
 membership and both rows were reviewed, with context links and no claim that
 the sources published those dates. They remain unpublished.
 
-The pending `20261107000000` migration also honours Premier/Grand Cru in the
+The `20261107000000` migration also honours Premier/Grand Cru in the
 wine's separate classification field when guarding generic fallback. It does
 not infer an unmarked cru; canonical classification of known climates still
 requires a scalable reviewed-identity solution. Twenty-nine SQL assertions
-passed on the restored copy; CI, fresh backup and rehearsal are required before
-linked deployment. The place-creation form no longer imposes hidden validation
+passed on a fresh protected restore; CI passed and the single migration was
+applied to the linked project. A read-only check found 804 unmerged wine cards,
+197 flagged for cru protection, including four with the explicit field. The
+place-creation form no longer imposes hidden validation
 on its parent fallback form; its own create button retains validation, covered
 by a focused UI test.
+
+The seven matched regional cards are not all verified identities: one is
+locally labelled `Clavelier / Aligoté / Bourgogne / 2022`, whereas the
+[producer's cuvée page](https://bruno-clavelier.com/fr/cuvees.php?id=13)
+identifies Bourgogne Aligoté, a different appellation. The cellar entry has not
+been changed. The draft comparison currently cannot detect that discrepancy;
+resolve or explicitly exclude the mismatch before publication, and do not count
+that row as a validated appellation match. A separate older `À la Côte 2019`
+profile proposal was inspected but not staged: it describes its milestones
+as extrapolated from other vintages, not as independently sourced dates.
+The exact 75 cl Pastoral 2021 and 2022 identities were then curator-reviewed
+and created. Pastoral 2022 was staged from the older supplied profile at
+`2025 / 2029–2036`; its review records both Vinous's broader reported drinking
+window and Viniou's shorter optimum estimate, without attributing the three
+dates to the producer. The linked matcher confirms the corresponding 2022 card
+is an exact-release draft match. The 2021 dates remain unstaged after a material
+source disagreement.
 
 **Execution status (the contract defines each exit test):**
 
@@ -1196,7 +1215,7 @@ in every PR description.
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
 | 3. Complete profile exchange | #230 merged in slot 4/6; full CI green, linked migrations backed up/rehearsed/applied; signed-in owner import/preview/export checked; one Burgaud file saved privately and candidates added to Proposals, nothing published live | Preserve full-profile exchange and audited in-app curator path. |
-| 4. Prepare initial common base | Draft #231 in slot 5/6. The linked private archive contains 69 producer-document versions, including the 46 latest files, plus 12 Burgundy appellation/region profiles. Nineteen Meursault climates and three homonymous appellations were added to the shared identity base. Draft 2 contains twenty-five approved but unpublished windows: twenty specific releases, three Saint-Véran vintage fallbacks and two Bourgogne regional estimates limited to the Bourgogne appellation. The last full linked matcher check found 49 of 804 unmerged cards: seventeen by exact release, 25 by appellation and seven by region. These are **potential draft matches**, not active advice; the archive and old model are not counted as coverage. | **No-go for merge/publication.** Continue reconciling canonical cuvée/release/place identities, check and stage applicable profile dates, and measure coverage and exceptions. Resolve additional Premier Cru climat identities and extend geographic fallbacks before Gate 5. |
+| 4. Prepare initial common base | Draft #231 in slot 5/6. The linked private archive contains 69 producer-document versions, including the 46 latest files, plus 12 Burgundy appellation/region profiles. Nineteen Meursault climates and three homonymous appellations were added to the shared identity base. Draft 2 contains twenty-six approved but unpublished windows: twenty-one specific releases, three Saint-Véran vintage fallbacks and two Bourgogne regional estimates limited to the Bourgogne appellation. The last full linked matcher check found 50 of 804 unmerged cards: eighteen by exact release, 25 by appellation and seven by region. These are **potential draft matches**, not active advice; one regional match has a known appellation discrepancy. The archive and old model are not counted as coverage. | **No-go for merge/publication.** Continue reconciling canonical cuvée/release/place identities, check and stage applicable profile dates, and measure coverage and exceptions. Resolve additional Premier Cru climat identities and extend geographic fallbacks before Gate 5. |
 | 5. Release and verify | Not started | Publish the approved reference, enable it for the consenting cellar, and verify the official app on real wines. Gate 5 passes only with a complete source-by-source coverage report, at least 95% of active wines with coherent three-date windows, each exception named, and the reviewer-approved profile dates shown where applicable; then verify cross-household behavior and rollback. Report legacy-only wines and material old/new discrepancies explicitly before deciding with the owner whether the legacy bridge can be removed. Do not call a model-dominated result the completed new system. |
 
 **Merge/deployment rule:** Do not describe #227 as feature-complete or ask the
