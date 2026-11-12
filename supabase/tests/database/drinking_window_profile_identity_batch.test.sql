@@ -166,11 +166,20 @@ select is((select count(*) from private.drinking_window_reviewed_release_anchors
 select ok('synthetic reserve' = any(private.drinking_window_profile_cuvee_name_keys(
     'Morgon Synthetic Reserve','Morgon')),
     'A confirmed appellation prefix can be omitted from the cellar cuvée name');
-select ok(not exists (select 1 from private.drinking_window_reviewed_release_anchors a
+select ok(exists (select 1 from private.drinking_window_reviewed_release_anchors a
     join private.drinking_window_profile_identity_batches b on b.id=a.batch_id
     where b.exchange_id=current_setting('app.identity_batch_profile')::uuid
       and 'morgon reserve' = any(a.name_keys)),
-    'A profile alias is not silently promoted without its own identity review');
+    'An exact alias from the reviewed profile is available for its reviewed release');
+select ok(not ('former name' = any(private.drinking_window_reviewed_cuvee_name_keys(
+    '{"name":"Current name","appellation":"Morgon","aliases":["Former name"],"name_history":[{"name":"Former name"}]}'::jsonb))),
+    'Aliases on a cuvée with name history remain excluded pending vintage-specific review');
+select ok(not ('ab' = any(private.drinking_window_reviewed_cuvee_name_keys(
+    '{"name":"Current name","aliases":["ab"]}'::jsonb))),
+    'Very short aliases cannot identify a wine');
+insert into public.households(id,name)
+values ('00000000-0000-4000-8000-000000000100','Synthetic identity test')
+on conflict (id) do nothing;
 insert into public.wine_reference_household_producer_preferences (
     household_id,source_producer_normalized,source_producer_text,producer_id,decided_by)
 values ('00000000-0000-4000-8000-000000000100',
@@ -191,6 +200,16 @@ select is((private.drinking_window_wine_context(
 select is((select wine_reference_id from public.wines
     where id='fd000000-0000-4000-8000-000000000003'),null::uuid,
     'The read-time inference never rewrites the household wine');
+update public.wines set cuvee='Morgon Reserve'
+where id='fd000000-0000-4000-8000-000000000003';
+select is((private.drinking_window_wine_context(
+    'fd000000-0000-4000-8000-000000000003')->>'release_id')::uuid,
+    (select r.id from public.wine_reference_releases r
+     join public.wine_reference_products p on p.id=r.product_id
+     where p.canonical_name='Morgon Synthetic Reserve' and r.vintage_year=2022),
+    'A reviewed profile alias identifies the same release without changing the local name');
+update public.wines set cuvee='Synthetic Reserve'
+where id='fd000000-0000-4000-8000-000000000003';
 update private.drinking_window_reviewed_release_anchors a
 set name_keys=array['morgon premier cru les synthetic reserve']
 from public.wine_reference_releases r
