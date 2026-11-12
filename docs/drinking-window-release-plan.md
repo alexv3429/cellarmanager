@@ -1217,6 +1217,19 @@ matches **54 of 804 non-merged cards**: 22 exact releases, 25 appellation and
 7 region. These are potential draft matches, not live coverage; the known
 Aligoté conflict above is included and must be resolved before publication.
 
+**Langoureau follow-up (12 November):** After checking producer, cuvée,
+classification, vintage and 75 cl against named sources, the curator created
+shared identities for Le Champlot 2017, La Garenne 2021 and En Rémilly 2019 and
+2022. All four local cards resolve without renaming. Their profile estimates
+were staged in draft 2, which now holds 34 windows. The review explicitly
+records the Hachette 2020–2024 recommendation for Champlot and the difference
+between Vinous's 2026–2038 overall drinking window and Viniou's 2028–2033
+optimum for En Rémilly 2022; the three milestones remain editorial estimates.
+A subsequent read-only linked measurement finds **58 of 804** non-merged
+cards matching draft 2: 26 release, 25 appellation, 7 region. This is not
+live advice or a completed quality review; the previously identified Aligoté
+conflict remains in the seven regional matches.
+
 **Execution status (the contract defines each exit test):**
 
 **Hard PR budget:** [PR #227](https://github.com/alexv3429/cellarmanager/pull/227)
