@@ -1230,6 +1230,17 @@ cards matching draft 2: 26 release, 25 appellation, 7 region. This is not
 live advice or a completed quality review; the previously identified Aligoté
 conflict remains in the seven regional matches.
 
+The next reviewed Langoureau batch added identities for La Garenne and Les
+Chalumaux 2019 and 2022, all 75 cl Puligny Premier Cru. The supplied editorial
+windows for La Garenne 2019 and Les Chalumaux 2019/2022 were staged, with
+Viniou's estimates explicitly identified as algorithmic rather than source
+facts. La Garenne 2022 was not staged: its proposed end of optimum (2039)
+differs materially from a retailer's overall 2026–2032 drinking window, so
+the difference must be reviewed without assuming the two concepts are equal.
+Draft 2 now has 37 windows. A linked read-only measurement finds **61/804**
+non-merged cards matched (29 exact release, 25 appellation, 7 region); these
+are still draft matches, including the known unresolved Aligoté discrepancy.
+
 **Execution status (the contract defines each exit test):**
 
 **Hard PR budget:** [PR #227](https://github.com/alexv3429/cellarmanager/pull/227)
