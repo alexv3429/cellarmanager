@@ -32,6 +32,37 @@ export type MemberKind = "place" | "product" | "release"
 
 export interface CurationTarget { id: string; label: string; detail: string }
 
+export interface CurationClimat { id: string; name: string }
+
+export async function listCurationClimates(appellationId: string, options: RpcOptions = {}): Promise<CurationClimat[]> {
+  const result = await call("list_drinking_window_curation_climates", { p_appellation_id: appellationId }, options)
+  if (!Array.isArray(result)) throw new Error("Invalid climat list")
+  return result.map((value: unknown) => {
+    const item = record(value)
+    return { id: text(item.id), name: text(item.canonical_name) }
+  })
+}
+
+export async function createCurationClimates(input: {
+  appellationId: string; names: string[]; sourceUrl: string; reason: string; confirmed: boolean
+}, options: RpcOptions = {}): Promise<CurationClimat[]> {
+  if (!input.confirmed || input.reason.trim().length < 20 || !input.names.length || input.names.length > 50) {
+    throw new Error("Confirm the climates, their source and the reason")
+  }
+  const result = record(await call("create_drinking_window_curation_climates", {
+    p_appellation_id: input.appellationId,
+    p_names: input.names.map((name) => name.trim()),
+    p_source_url: input.sourceUrl.trim(),
+    p_identity_reason: input.reason.trim(),
+    p_confirmed: input.confirmed,
+  }, options))
+  if (!Array.isArray(result.created)) throw new Error("Invalid climat list")
+  return result.created.map((value: unknown) => {
+    const item = record(value)
+    return { id: text(item.id), name: text(item.canonical_name) }
+  })
+}
+
 export async function createCurationPlace(input: {
   kind: "region" | "appellation"
   parentRegionId: string | null

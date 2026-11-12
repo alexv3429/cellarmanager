@@ -3,6 +3,18 @@ import { frenchTextExtended } from "./frenchTextExtended"
 /** French interface copy keyed by its English source. User and wine data are not translated. */
 export const frenchText: Readonly<Record<string, string>> = {
   ...frenchTextExtended,
+  "Add missing shared climates": "Ajouter des climats à la base commune",
+  "Choose an appellation, check existing names, then add the exact official names with their source. This does not add drinking dates or change cellar wines.": "Choisissez une appellation, vérifiez les noms déjà présents, puis ajoutez les noms officiels et leur source. Cette opération ne crée aucune fenêtre et ne modifie aucune cave.",
+  "Parent appellation": "Appellation du climat",
+  "Show existing climates": "Afficher les climats déjà présents",
+  "Existing shared climates:": "Climats déjà présents :",
+  "No shared climates yet for this appellation.": "Aucun climat commun pour cette appellation.",
+  "Exact climat names, one per line": "Noms exacts des climats, un par ligne",
+  "Official source URL": "Lien vers la source officielle",
+  "Why are these the correct identities?": "Pourquoi ces identités sont-elles correctes ?",
+  "I checked each name, its appellation and the source, and avoided duplicates.": "J’ai vérifié chaque nom, son appellation et la source, ainsi que l’absence de doublons.",
+  "Create shared climates": "Ajouter les climats à la base commune",
+  "{count} shared climates created. No dates or cellar wines were changed.": "{count} climats ajoutés à la base commune. Aucune date ni aucun vin de cave n’a été modifié.",
   "Improve my catalogue": "Améliorer mon catalogue",
   "Back to catalogue": "Retour au catalogue",
   "Shared database": "Base commune",

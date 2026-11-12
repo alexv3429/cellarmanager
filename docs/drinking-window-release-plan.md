@@ -1015,7 +1015,28 @@ climat is created by this change; the missing shared climat identities and
 their source review remain work to do. On a restored copy, a rolled-back
 simulation with two hypothetical canonical identities recognized four
 Meursault Charmes and six Meursault Perrières cards; this is not a date match
-or a live identity creation. This migration is not yet deployed.
+or a live identity creation. CI passed at `85def9c`, and the migration was
+applied after a fresh backup and restored-copy rehearsal; postflight showed no
+pending migrations. The temporary protected backup is
+`/private/tmp/cellarmanager-gate4-climat-resolve.iRzcSy` (0700/0600), schema
+SHA-256 `048b4b2a516cc7dc13980d91807adb5465ef90c57113b623f6713496e6cc6d26`,
+data SHA-256 `3eb8b0fff8638c6cbb524a7c1f8f94e52503f936eb261537c90dbc836aeaea39`.
+The backup is temporary, not a durable managed backup. Creating reviewed
+canonical climates through the curator interface remains the next step.
+
+**Curator climat creation (in progress):** The proposed profile-admin panel
+lets an authorized curator select an appellation, inspect its existing
+climates, and create a checked list with a source and recorded rationale.
+Creation is atomic, rejects duplicate identities under the same appellation,
+and creates no dates or cellar links; identical names under different
+appellations stay separate. Fifteen database assertions and fourteen focused
+web tests passed. On an isolated restored copy, the 19 Meursault climat names
+in the supplied profile were created in a rollback-only rehearsal against the
+[official appellation list](https://www.vins-bourgogne.fr/nos-vins-nos-terroirs/la-bourgogne-et-ses-appellations/gallery_files/site/321/19990/20242.pdf).
+The Premier Cru group then became technically ready and eleven cellar cards
+matched three climates; this did not stage any dates or create live identities.
+The new migration and interface require CI, backup and fresh rehearsal before
+deployment.
 
 **Execution status (the contract defines each exit test):**
 

@@ -23,6 +23,7 @@ import {
 import { searchCurationTargets, type CurationTarget } from "../data/drinkingWindowFallbackAuthoring"
 import { createWorkingDraft, getReleaseWorkspace, type ReferenceVersionSummary } from "../data/drinkingWindowReleaseWorkflow"
 import { useLanguage } from "../i18n/useLanguage"
+import { CurationClimatCreation } from "./CurationClimatCreation"
 import { Notice } from "./Notice"
 
 interface Props { isOnline: boolean; onStaged?: (versionId: string) => void }
@@ -426,6 +427,7 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
           {imports.map((item) => <option value={item.id} key={item.id}>{item.name} · {item.datasetVersion}</option>)}
         </select>
       </label>
+      {selectedDocument?.kind === "appellation" ? <CurationClimatCreation isOnline={isOnline} /> : null}
       {selectedDocument?.kind === "producer" ? <details>
         <summary>{t("Map profile names to shared wine identities")}</summary>
         <p>{t("Unique existing producer and cuvée identities are suggested from exact profile names and aliases. Missing and ambiguous identities remain for curator review; no wine or date is changed.")}</p>
