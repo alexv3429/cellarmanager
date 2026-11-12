@@ -1134,6 +1134,14 @@ recommends 2024–2028 for an actual Carrette 2021; the latter is a drinking
 range, not necessarily an optimum, but this material discrepancy needs review
 before using one geographic fallback across all such wines.
 
+As the first individually checked older-only example, Chagnoleau Clos
+Saint-Pancras 2021 (2023 / 2025–2031) was staged from profile 1.2.0 after
+checking the exact 75 cl identity and the [retailer drinking guidance](https://laroutedesblancs.com/module/mwslrdb/lrdbpdf?id_product=4906).
+The retailer recommends drinking through 2029, two years earlier than the
+profile's estimated optimum end; this is recorded, and neither its range nor
+the three milestones are attributed to the producer. A linked read-only check
+confirms the corresponding cellar card matches this unpublished release.
+
 **Execution status (the contract defines each exit test):**
 
 **Hard PR budget:** [PR #227](https://github.com/alexv3429/cellarmanager/pull/227)
@@ -1151,7 +1159,7 @@ in every PR description.
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
 | 3. Complete profile exchange | #230 merged in slot 4/6; full CI green, linked migrations backed up/rehearsed/applied; signed-in owner import/preview/export checked; one Burgaud file saved privately and candidates added to Proposals, nothing published live | Preserve full-profile exchange and audited in-app curator path. |
-| 4. Prepare initial common base | Draft #231 in slot 5/6. The linked private archive contains 69 producer-document versions, including the 46 latest files, plus 12 Burgundy appellation/region profiles. Nineteen Meursault climates were added to the shared identity base. Draft 2 contains twenty-two approved but unpublished windows: nineteen specific releases and three Saint-Véran vintage fallbacks. A linked read-only matcher check found 41 of 804 unmerged cards: sixteen by exact release and 25 by appellation. These are **potential draft matches**, not active advice; the archive and old model are not counted as coverage. | **No-go for merge/publication.** Continue reconciling canonical cuvée/release/place identities, check and stage applicable profile dates, and measure coverage and exceptions. Resolve additional Premier Cru climat identities and extend geographic fallbacks before Gate 5. |
+| 4. Prepare initial common base | Draft #231 in slot 5/6. The linked private archive contains 69 producer-document versions, including the 46 latest files, plus 12 Burgundy appellation/region profiles. Nineteen Meursault climates were added to the shared identity base. Draft 2 contains twenty-three approved but unpublished windows: twenty specific releases and three Saint-Véran vintage fallbacks. The last full linked matcher check found 41 of 804 unmerged cards: sixteen by exact release and 25 by appellation; a subsequent focused check confirmed at least one additional exact-release match. These are **potential draft matches**, not active advice; the archive and old model are not counted as coverage. | **No-go for merge/publication.** Continue reconciling canonical cuvée/release/place identities, check and stage applicable profile dates, and measure coverage and exceptions. Resolve additional Premier Cru climat identities and extend geographic fallbacks before Gate 5. |
 | 5. Release and verify | Not started | Publish the approved reference, enable it for the consenting cellar, and verify the official app on real wines. Gate 5 passes only with a complete source-by-source coverage report, at least 95% of active wines with coherent three-date windows, each exception named, and the reviewer-approved profile dates shown where applicable; then verify cross-household behavior and rollback. Report legacy-only wines and material old/new discrepancies explicitly before deciding with the owner whether the legacy bridge can be removed. Do not call a model-dominated result the completed new system. |
 
 **Merge/deployment rule:** Do not describe #227 as feature-complete or ask the
