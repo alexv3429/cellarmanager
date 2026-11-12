@@ -191,6 +191,59 @@ select is((private.drinking_window_wine_context(
 select is((select wine_reference_id from public.wines
     where id='fd000000-0000-4000-8000-000000000003'),null::uuid,
     'The read-time inference never rewrites the household wine');
+update private.drinking_window_reviewed_release_anchors a
+set name_keys=array['morgon premier cru les synthetic reserve']
+from public.wine_reference_releases r
+where a.release_id=r.id and r.vintage_year=2022
+  and a.batch_id in (select id from private.drinking_window_profile_identity_batches
+    where exchange_id=current_setting('app.identity_batch_profile')::uuid);
+update public.wines set appellation='Morgon 1C'
+where id='fd000000-0000-4000-8000-000000000003';
+select is((private.drinking_window_wine_context(
+    'fd000000-0000-4000-8000-000000000003')->>'release_id')::uuid,
+    (select r.id from public.wine_reference_releases r
+     join public.wine_reference_products p on p.id=r.product_id
+     where p.canonical_name='Morgon Synthetic Reserve' and r.vintage_year=2022),
+    'A reviewed Premier Cru full name matches the short local name and 1C');
+insert into public.wine_reference_entities(id,entity_type) values
+ ('fd000000-0000-4000-8000-000000000010','product'),
+ ('fd000000-0000-4000-8000-000000000011','release');
+insert into public.wine_reference_products(id,producer_id,canonical_name) values
+ ('fd000000-0000-4000-8000-000000000010',current_setting('app.identity_batch_producer')::uuid,
+  'Second synthetic Premier Cru');
+insert into public.wine_reference_releases(id,product_id,vintage_year) values
+ ('fd000000-0000-4000-8000-000000000011','fd000000-0000-4000-8000-000000000010',2022);
+insert into private.drinking_window_reviewed_release_anchors
+ (batch_id,release_id,producer_id,product_id,region_id,appellation_id,wine_color,vintage_year,format_ml,name_keys)
+select batch_id,'fd000000-0000-4000-8000-000000000011',producer_id,
+ 'fd000000-0000-4000-8000-000000000010',region_id,appellation_id,wine_color,vintage_year,format_ml,name_keys
+from private.drinking_window_reviewed_release_anchors a
+where a.vintage_year=2022 and a.format_ml=750
+  and a.batch_id in (select id from private.drinking_window_profile_identity_batches
+    where exchange_id=current_setting('app.identity_batch_profile')::uuid);
+select is(private.drinking_window_wine_context(
+    'fd000000-0000-4000-8000-000000000003')->>'release_id',null::text,
+    'Two reviewed releases with the same shortened name remain ambiguous');
+delete from private.drinking_window_reviewed_release_anchors
+where release_id='fd000000-0000-4000-8000-000000000011';
+update public.wines set format_ml=500
+where id='fd000000-0000-4000-8000-000000000003';
+select is(private.drinking_window_wine_context(
+    'fd000000-0000-4000-8000-000000000003')->>'release_id',null::text,
+    'A classified short-name match still requires the reviewed bottle format');
+update public.wines set format_ml=750
+where id='fd000000-0000-4000-8000-000000000003';
+update public.wines set appellation='Morgon'
+where id='fd000000-0000-4000-8000-000000000003';
+select is(private.drinking_window_wine_context(
+    'fd000000-0000-4000-8000-000000000003')->>'release_id',null::text,
+    'A short name alone cannot turn a village wine into a Premier Cru');
+update private.drinking_window_reviewed_release_anchors a
+set name_keys=array['morgon synthetic reserve','synthetic reserve']
+from public.wine_reference_releases r
+where a.release_id=r.id and r.vintage_year=2022
+  and a.batch_id in (select id from private.drinking_window_profile_identity_batches
+    where exchange_id=current_setting('app.identity_batch_profile')::uuid);
 update public.wines set vintage=2024
 where id='fd000000-0000-4000-8000-000000000003';
 select is(private.drinking_window_wine_context(
