@@ -1241,6 +1241,20 @@ Draft 2 now has 37 windows. A linked read-only measurement finds **61/804**
 non-merged cards matched (29 exact release, 25 appellation, 7 region); these
 are still draft matches, including the known unresolved Aligoté discrepancy.
 
+**Saint-Aubin classification preparation:** The curator added the 30 named
+Premier Cru climates to the shared geography using the
+[official appellation specification](https://www.bourgogne-wines.com/our-wines-our-terroir/bourgogne-and-its-appellations/gallery_files/site/321/19990/20261.pdf).
+This created no date and changed no cellar entry. The final climate named
+`Village` was added only after a rolled-back restored-copy test confirmed that
+an ordinary village wine does not identify that Premier Cru; the same check
+is now a permanent database regression test. The complete 30-member profile
+group now previews as technically ready, but was not staged: its generic 2017
+optimum ending in 2036 is much later than Hachette's 2020–2024 drinking
+recommendation for Langoureau Champlot 2017. These are not identical claims,
+and the specific producer row has priority, but the magnitude warrants review
+before applying the generic group to other producers. No live window has been
+published or enabled.
+
 **Execution status (the contract defines each exit test):**
 
 **Hard PR budget:** [PR #227](https://github.com/alexv3429/cellarmanager/pull/227)

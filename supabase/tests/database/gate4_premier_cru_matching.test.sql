@@ -173,6 +173,21 @@ where id='fa600000-0000-4000-8000-000000000006';
 select is(private.drinking_window_exact_classified_climat(
  'fa600000-0000-4000-8000-000000000006','fa600000-0000-4000-8000-000000000004'),
  null::uuid, 'A name alone cannot classify a village wine as Premier Cru');
+insert into public.enrichment_places(id,parent_id,place_type,canonical_name) values
+ ('fa600000-0000-4000-8000-000000000027','fa600000-0000-4000-8000-000000000004',
+  'climat','Premier Test Village Village');
+update public.wines set cuvee='Village'
+where id='fa600000-0000-4000-8000-000000000006';
+select is(private.drinking_window_exact_classified_climat(
+ 'fa600000-0000-4000-8000-000000000006','fa600000-0000-4000-8000-000000000004'),
+ null::uuid, 'An ordinary village wine is not matched to a Premier Cru climat named Village');
+update public.wines set appellation='Premier Test Village 1C'
+where id='fa600000-0000-4000-8000-000000000006';
+select is(private.drinking_window_exact_classified_climat(
+ 'fa600000-0000-4000-8000-000000000006','fa600000-0000-4000-8000-000000000004'),
+ 'fa600000-0000-4000-8000-000000000027'::uuid,
+ 'The explicitly classified Premier Cru climat named Village can still match');
+delete from public.enrichment_places where id='fa600000-0000-4000-8000-000000000027';
 update public.wines set appellation='Premier Test Village 1C',cuvee='Synthetic alias spelling'
 where id='fa600000-0000-4000-8000-000000000006';
 insert into public.enrichment_place_aliases(place_id,alias_value) values
