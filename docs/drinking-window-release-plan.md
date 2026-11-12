@@ -1198,6 +1198,25 @@ dates to the producer. The linked matcher confirms the corresponding 2022 card
 is an exact-release draft match. The 2021 dates remain unstaged after a material
 source disagreement.
 
+**Reviewed profile aliases (12 November):** The four Daumas Gassac Rouge
+2011, 2012, 2013 and 2015 identities were checked against producer vintage
+records, with 750 ml cross-checked, and their supplied editorial estimates
+were approved into draft 2. Their precise dates are not claimed as published
+by the producer. The 2008 label remains unresolved because the producer's
+historical appellation differs from the later IGP; it was not included.
+The identity reader was not using explicit cuvée aliases from reviewed JSON
+profiles. Migration `20261107010000` adds those exact aliases while retaining
+producer, appellation, colour, vintage, format and uniqueness checks. Profiles
+with name histories are excluded from this automatic alias step. A protected
+fresh backup was restored and the migration rehearsed; 46 identity assertions
+and all PR CI checks passed. The migration was then applied to the linked
+project. Postflight: 810 wines, 27 reviewed anchors, zero published versions,
+no pending migrations, and the four Daumas cellar cards resolve to their
+reviewed releases without changing local names. On the restored copy, draft 2
+matches **54 of 804 non-merged cards**: 22 exact releases, 25 appellation and
+7 region. These are potential draft matches, not live coverage; the known
+Aligoté conflict above is included and must be resolved before publication.
+
 **Execution status (the contract defines each exit test):**
 
 **Hard PR budget:** [PR #227](https://github.com/alexv3429/cellarmanager/pull/227)
@@ -1681,7 +1700,7 @@ meaningful. At minimum, each update must:
 
 | Date / change | Gate and decision | Evidence / remaining risk |
 | --- | --- | --- |
-| 2026-11-12 · PR #231 profile alias matching | Gate 4 remains in progress. Four independently identified Mas de Daumas Gassac red 750 ml vintages (2011, 2012, 2013, 2015) were added as editorial estimates to unpublished draft 2, now 30 windows; the producer does not publish these three exact milestones. No window was published and no household wine was changed. | A proposed migration lets a reviewed release be found by an exact alias in its reviewed profile, retaining producer, geography, colour, vintage, format and ambiguity checks. Aliases on cuvées with name history are withheld pending vintage-specific review; historical 2008 Daumas geography is not assumed to be the same as 2011–15. The first restored-copy run passed 46 identity-batch assertions. A fresh backup and rehearsal, CI, linked migration and postflight remain necessary; draft matches are not live coverage. The Bourgogne Aligoté conflict remains unresolved and prevents blind publication. |
+| 2026-11-12 · PR #231 profile alias matching | Gate 4 remains in progress. Four independently identified Mas de Daumas Gassac red 750 ml vintages (2011, 2012, 2013, 2015) were added as editorial estimates to unpublished draft 2, now 30 windows; the producer does not publish these three exact milestones. No window was published and no household wine was changed. | The linked migration, applied after a fresh backup, restored-copy rehearsal and green CI, lets a reviewed release be found by an exact profile alias while retaining identity and ambiguity checks. Aliases on cuvées with name history are withheld pending vintage-specific review; historical 2008 Daumas geography is not assumed to be the same as 2011–15. Forty-six identity-batch assertions passed; 4 Daumas cards now resolve to reviewed releases. The restored-copy draft matched 54/804 cards, not live coverage. The Bourgogne Aligoté conflict remains unresolved and prevents blind publication. |
 | 2026-11-04 · draft PR #231 consolidated-base intake and reconciliation | Gate 4 format validation, complete old-row audit reconciliation and protected-copy coverage measurement. Optional blank descriptions are normalized for validation and import; no linked database, permission, date, publication or household state changed. | [Intake audit](drinking-window-final-producer-base-intake-2026-11-04.md): 46/46 native validation; all 345 omissions classified; 2022 Bret dates independently supported by retailer, 2024 unresolved; corrected 97/802 new textual exact candidates and 104 older-only candidates. Actual shared-profile coverage remains zero; curator evidence/identity review and appellation/region profiles remain open. |
 | 2026-10-22 · PR #201 | Establish this tracked release plan and CI update guard. All delivery gates remain open. No live advice or database state changes. | Existing merged implementation and draft are described above; CI proves a plan update accompanies future relevant PRs, but cannot judge its quality. |
 | 2026-10-22 · PR #202 | Gate 0 moved to In progress after read-only linked migration/status checks and static review. No live advice, permission, or database change. | [Audit](drinking-window-gate0-audit.md) records 13 pending migrations, seed conflicts to preflight, and reader compatibility risk. Private rehearsal, backup/restore, active deployment hash, and owner authorization remain open. |
