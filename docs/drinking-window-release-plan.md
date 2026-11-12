@@ -1122,7 +1122,13 @@ recorded. One additional cellar card matches the exact release.
 found in older profile versions. For example Chagnoleau À la Côte 2019 appears
 in version 1.2.0 but not 11.0.0. The older estimate must not silently override
 the later audited dataset: assess its source and vintage-specific evidence
-before bringing it forward. Likewise the proposed generic Pouilly-Fuissé 2021
+before bringing it forward. A read-only comparison found 345 older proposal
+rows across 21 producer profiles without an exact newer counterpart when
+compared by normalized cuvée name, colour, vintage and format. This is an
+investigation queue, not 345 verified losses or publishable windows: renamed
+cuvees and changed identities can also account for differences. Prioritize
+rows relevant to the actual cellar and independently recheck them. Likewise
+the proposed generic Pouilly-Fuissé 2021
 window ends in 2035, while [Hachette](https://www.hachette-vins.com/guide-vins/les-vins/dom-carrette-2021-2024/202465241/)
 recommends 2024–2028 for an actual Carrette 2021; the latter is a drinking
 range, not necessarily an optimum, but this material discrepancy needs review
