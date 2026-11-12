@@ -1149,6 +1149,15 @@ through the curator interface, with INAO references; no dates or cellar wines
 were modified. Linked read-only checks show the three exact cellar labels now
 resolve for 49 cards (43 with a resolved producer, six still lacking one).
 An identity match alone is not a drinking window or evidence of publication.
+After those identities were added, the Bourgogne regional import exposed a
+name-resolution bug: its explicit region member was treated as ambiguous with
+the homonymous appellation. The proposed `20261106230000` migration uses the
+profile's existing anchored place when a member repeats its name, while still
+quarantining other ambiguous descendants. Reproduced on a restored copy;
+six focused tests and 47 existing profile exchange tests pass. It changes no
+wine or window; CI, a fresh backup and rehearsal remain required before applying
+it to the linked project. Regional windows remain subject to the classification
+guard and must not silently stand in for identified premier or grand cru wines.
 
 **Execution status (the contract defines each exit test):**
 
