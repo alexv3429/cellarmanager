@@ -1065,13 +1065,47 @@ without publication. A live read-only coverage check still found 27 of 804
 cards matched, not 28: the local `Perrières` / `Meursault 1C` spelling did
 not match the reviewed full name `Meursault Premier Cru Perrières`.
 
-**Classified release short names (in progress):** The proposed correction
+**Classified release short names (deployed):** The correction
 matches a reviewed full Premier Cru name to its short cellar spelling only
 when the cellar also says Premier Cru/1C and the already-confirmed producer,
 appellation, colour, vintage and bottle format agree. It does not write a
 household mapping, collapse Grand Cru into Premier Cru, or choose between
-multiple releases. The isolated identity-batch tests pass. This correction
-is not yet deployed and the Bouzereau cellar match is not yet claimed.
+multiple releases. Forty-three isolated identity-batch assertions passed;
+CI passed at `6763868`. The correction was applied after a fresh protected
+backup and successful restored-copy test of the actual Bouzereau 2022 card;
+postflight showed no pending migrations. The temporary backup is
+`/private/tmp/cellarmanager-gate4-release-names.XK4nTb` (0700/0600), schema
+SHA-256 `d98c2a7cbf3cfefdadd3d41b86df184c6e6052f5fc5103f0167fa7eebe2bd912`,
+data SHA-256 `b049e3e533ddfe164b6430ca6ab3c11a6d14d20e45251a8df79568bb30fa56a0`.
+The linked read-only matcher now resolves Bouzereau Perrières 2022 to its
+specific unpublished window. This backup predates the subsequent Tessons
+staging and is temporary, not a durable managed backup.
+
+The supplied Bouzereau Les Tessons 2022 (2025 / 2027–2033) and 2023
+(2026 / 2028–2034) estimates were also staged through the curator interface
+after checking the [2022](https://www.lecarredesvins.com/16593-domaine-michel-bouzereau-et-fils-meursault-les-tessons-2022-6626900.html)
+and [2023](https://www.lecarredesvins.com/18237-domaine-michel-bouzereau-et-fils-meursault-les-tessons-2023-7000800.html)
+wine-specific sources. Both sources give the same first-tasting years and
+optimum bounds one year earlier than the profile; this difference was recorded
+in the review rationale. A live read-only check confirms both cellar cards
+resolve to their own draft release windows. No shared version is published.
+
+The Bouzereau Genevrières 2022 identity and profile estimate
+(2026 / 2029–2037) were staged through the curator interface as an editorial
+estimate. The [specific 75 cl retailer page](https://www.lecarredesvins.com/16594-domaine-michel-bouzereau-et-fils-meursault-genevrieres-1er-cru-2022-6627000.html)
+gives 2026 / 2027–2036 and a separate 2038+ drinking horizon; the review
+records the difference rather than attributing the selected optimum to that
+source. The [producer](https://michelbouzereauetfils.com/meursault-genevrieres-1er-cru/)
+gives general ageing guidance, not these vintage-specific milestones. The
+entry remains in the unpublished draft.
+
+Six Mas Jullien Autour de Jonquières releases (2014, 2015, 2016, 2018,
+2020 and 2021; 750 ml) were created and staged after checking the named
+vintage-specific retailer pages. The profile's three-date estimates and the
+retailer optimum differ by zero to two years at each optimum boundary; the
+curator rationale records the actual source values rather than presenting the
+profile estimates as quotations. All six match cellar cards in a linked
+read-only preview; they are not published.
 
 **Execution status (the contract defines each exit test):**
 
@@ -1090,7 +1124,7 @@ in every PR description.
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
 | 3. Complete profile exchange | #230 merged in slot 4/6; full CI green, linked migrations backed up/rehearsed/applied; signed-in owner import/preview/export checked; one Burgaud file saved privately and candidates added to Proposals, nothing published live | Preserve full-profile exchange and audited in-app curator path. |
-| 4. Prepare initial common base | Draft #231 in slot 5/6. The linked private archive contains 69 producer-document versions, including the 46 latest files, plus 12 Burgundy appellation/region profiles. Nineteen Meursault climates were added to the shared identity base. Draft 2 contains nine approved but unpublished windows: six specific releases and three Saint-Véran vintage fallbacks. A live read-only matcher check found 27 of 804 unmerged cards: two by exact release and 25 by appellation. The new Bouzereau release is not yet among them because its short cellar name requires the correction now under test. These are **potential draft matches**, not active advice; the archive and old model are not counted as coverage. | **No-go for merge/publication.** Continue reconciling canonical cuvée/release/place identities, check and stage applicable profile dates, and measure coverage and exceptions. Resolve Premier Cru climat identities and extend geographic fallbacks before Gate 5. |
+| 4. Prepare initial common base | Draft #231 in slot 5/6. The linked private archive contains 69 producer-document versions, including the 46 latest files, plus 12 Burgundy appellation/region profiles. Nineteen Meursault climates were added to the shared identity base. Draft 2 contains eighteen approved but unpublished windows: fifteen specific releases and three Saint-Véran vintage fallbacks. A linked read-only matcher check found 37 of 804 unmerged cards: twelve by exact release and 25 by appellation. These are **potential draft matches**, not active advice; the archive and old model are not counted as coverage. | **No-go for merge/publication.** Continue reconciling canonical cuvée/release/place identities, check and stage applicable profile dates, and measure coverage and exceptions. Resolve additional Premier Cru climat identities and extend geographic fallbacks before Gate 5. |
 | 5. Release and verify | Not started | Publish the approved reference, enable it for the consenting cellar, and verify the official app on real wines. Gate 5 passes only with a complete source-by-source coverage report, at least 95% of active wines with coherent three-date windows, each exception named, and the reviewer-approved profile dates shown where applicable; then verify cross-household behavior and rollback. Report legacy-only wines and material old/new discrepancies explicitly before deciding with the owner whether the legacy bridge can be removed. Do not call a model-dominated result the completed new system. |
 
 **Merge/deployment rule:** Do not describe #227 as feature-complete or ask the
