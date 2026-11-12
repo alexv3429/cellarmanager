@@ -107,6 +107,28 @@ where id='fa600000-0000-4000-8000-000000000006';
 select ok(not private.drinking_window_wine_requires_cru_classification(
  'fa600000-0000-4000-8000-000000000006'),
  'An unclassified village wine is not flagged as a cru');
+update public.wines set classification='Premier Cru'
+where id='fa600000-0000-4000-8000-000000000006';
+select ok(private.drinking_window_wine_requires_cru_classification(
+ 'fa600000-0000-4000-8000-000000000006'),
+ 'Premier Cru in the separate classification field requires an explicit group');
+select is((select status from private.drinking_window_preview_draft_match_for_wine(
+ 'fa600000-0000-4000-8000-000000000006','fa600000-0000-4000-8000-000000000007',
+ null,null,null,'fa600000-0000-4000-8000-000000000004',
+ 'fa600000-0000-4000-8000-000000000002','red',2022,null)),
+ 'no_match','A separate Premier Cru classification blocks an unclassified village fallback');
+update public.wines set classification='Grand Cru'
+where id='fa600000-0000-4000-8000-000000000006';
+select ok(private.drinking_window_wine_requires_cru_classification(
+ 'fa600000-0000-4000-8000-000000000006'),
+ 'Grand Cru in the separate classification field requires an explicit group');
+update public.wines set classification='AOC'
+where id='fa600000-0000-4000-8000-000000000006';
+select ok(not private.drinking_window_wine_requires_cru_classification(
+ 'fa600000-0000-4000-8000-000000000006'),
+ 'AOC alone does not invent a cru classification');
+update public.wines set classification=null
+where id='fa600000-0000-4000-8000-000000000006';
 update public.wines set appellation='Premier Test Village 1C'
 where id='fa600000-0000-4000-8000-000000000006';
 insert into public.enrichment_places(id,parent_id,place_type,canonical_name) values

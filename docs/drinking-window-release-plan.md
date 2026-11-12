@@ -1151,13 +1151,33 @@ resolve for 49 cards (43 with a resolved producer, six still lacking one).
 An identity match alone is not a drinking window or evidence of publication.
 After those identities were added, the Bourgogne regional import exposed a
 name-resolution bug: its explicit region member was treated as ambiguous with
-the homonymous appellation. The proposed `20261106230000` migration uses the
+the homonymous appellation. The `20261106230000` migration uses the
 profile's existing anchored place when a member repeats its name, while still
 quarantining other ambiguous descendants. Reproduced on a restored copy;
-six focused tests and 47 existing profile exchange tests pass. It changes no
-wine or window; CI, a fresh backup and rehearsal remain required before applying
-it to the linked project. Regional windows remain subject to the classification
-guard and must not silently stand in for identified premier or grand cru wines.
+six focused tests and 47 existing profile exchange tests pass. CI passed, a
+protected schema/data backup was restored and the migration rehearsed, then
+the single migration was applied to the linked project. Both actual Bourgogne
+categories now preview as ready. It changed no wine or window.
+
+**Narrow regional fallback and classification:** Four broad Bourgogne 2021/22
+regional estimates were simulated in a rolled-back transaction on the restored
+copy. They would match 51 extra cards, but inspection revealed that at least
+one known Premier Cru, Louis Boillot Les Pruliers 2021, lacked its classification
+in the local name and would receive a generic region estimate. No broad regional
+fallback was staged. Instead, the curator prepared the supplied editorial white
+2021 (`2022 / 2025–2029`) and 2022 (`2023 / 2026–2030`) estimates in a regional
+group explicitly limited to the Bourgogne appellation. The group's definition,
+membership and both rows were reviewed, with context links and no claim that
+the sources published those dates. They remain unpublished.
+
+The pending `20261107000000` migration also honours Premier/Grand Cru in the
+wine's separate classification field when guarding generic fallback. It does
+not infer an unmarked cru; canonical classification of known climates still
+requires a scalable reviewed-identity solution. Twenty-nine SQL assertions
+passed on the restored copy; CI, fresh backup and rehearsal are required before
+linked deployment. The place-creation form no longer imposes hidden validation
+on its parent fallback form; its own create button retains validation, covered
+by a focused UI test.
 
 **Execution status (the contract defines each exit test):**
 
@@ -1176,7 +1196,7 @@ in every PR description.
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
 | 3. Complete profile exchange | #230 merged in slot 4/6; full CI green, linked migrations backed up/rehearsed/applied; signed-in owner import/preview/export checked; one Burgaud file saved privately and candidates added to Proposals, nothing published live | Preserve full-profile exchange and audited in-app curator path. |
-| 4. Prepare initial common base | Draft #231 in slot 5/6. The linked private archive contains 69 producer-document versions, including the 46 latest files, plus 12 Burgundy appellation/region profiles. Nineteen Meursault climates and three homonymous appellations were added to the shared identity base. Draft 2 contains twenty-three approved but unpublished windows: twenty specific releases and three Saint-Véran vintage fallbacks. The last full linked matcher check found 42 of 804 unmerged cards: seventeen by exact release and 25 by appellation. These are **potential draft matches**, not active advice; the archive and old model are not counted as coverage. | **No-go for merge/publication.** Continue reconciling canonical cuvée/release/place identities, check and stage applicable profile dates, and measure coverage and exceptions. Resolve additional Premier Cru climat identities and extend geographic fallbacks before Gate 5. |
+| 4. Prepare initial common base | Draft #231 in slot 5/6. The linked private archive contains 69 producer-document versions, including the 46 latest files, plus 12 Burgundy appellation/region profiles. Nineteen Meursault climates and three homonymous appellations were added to the shared identity base. Draft 2 contains twenty-five approved but unpublished windows: twenty specific releases, three Saint-Véran vintage fallbacks and two Bourgogne regional estimates limited to the Bourgogne appellation. The last full linked matcher check found 49 of 804 unmerged cards: seventeen by exact release, 25 by appellation and seven by region. These are **potential draft matches**, not active advice; the archive and old model are not counted as coverage. | **No-go for merge/publication.** Continue reconciling canonical cuvée/release/place identities, check and stage applicable profile dates, and measure coverage and exceptions. Resolve additional Premier Cru climat identities and extend geographic fallbacks before Gate 5. |
 | 5. Release and verify | Not started | Publish the approved reference, enable it for the consenting cellar, and verify the official app on real wines. Gate 5 passes only with a complete source-by-source coverage report, at least 95% of active wines with coherent three-date windows, each exception named, and the reviewer-approved profile dates shown where applicable; then verify cross-household behavior and rollback. Report legacy-only wines and material old/new discrepancies explicitly before deciding with the owner whether the legacy bridge can be removed. Do not call a model-dominated result the completed new system. |
 
 **Merge/deployment rule:** Do not describe #227 as feature-complete or ask the
