@@ -25,6 +25,7 @@ import { createWorkingDraft, getReleaseWorkspace, type ReferenceVersionSummary }
 import { useLanguage } from "../i18n/useLanguage"
 import { CurationClimatCreation } from "./CurationClimatCreation"
 import { Notice } from "./Notice"
+import { ProfileLwinSearch } from "./ProfileLwinSearch"
 
 interface Props { isOnline: boolean; onStaged?: (versionId: string) => void }
 
@@ -55,8 +56,9 @@ function profileReleaseChoices(document: FullProfilePreview | null) {
   return [...choices.values()].sort((a, b) => a.label.localeCompare(b.label))
 }
 
-function CanonicalMappingSearch({ kind, suggestedName, selectedId, onSelect, disabled }: {
+function CanonicalMappingSearch({ kind, suggestedName, selectedId, selectedExternalLabel, onSelect, disabled }: {
   kind: "producer" | "product" | "region" | "appellation"; suggestedName: string; selectedId: string
+  selectedExternalLabel?: string
   onSelect: (id: string, label: string) => void; disabled: boolean
 }) {
   const { t } = useLanguage()
@@ -76,7 +78,7 @@ function CanonicalMappingSearch({ kind, suggestedName, selectedId, onSelect, dis
     </label>
     <button type="button" disabled={disabled || query.trim().length < 2}
       onClick={() => void search()}>{t("Search canonical identities")}</button>
-    {selectedId ? <p>{t("Selected")}: {selectedLabel || selectedId}</p> : null}
+    {selectedId ? <p>{t("Selected")}: {selectedExternalLabel || selectedLabel || selectedId}</p> : null}
     {error ? <Notice role="alert" tone="warning">{error}</Notice> : null}
     {results.length ? <ul>{results.map((item) => <li key={item.id}>
       <button type="button" disabled={disabled} onClick={() => {
@@ -96,6 +98,7 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
   const [selectedProfileId, setSelectedProfileId] = useState("")
   const [selectedDocument, setSelectedDocument] = useState<FullProfilePreview | null>(null)
   const [identityMap, setIdentityMap] = useState<ProfileIdentityMap>({})
+  const [lwinLabels, setLwinLabels] = useState<Record<string, string>>({})
   const [identitySuggestions, setIdentitySuggestions] = useState<ProfileIdentitySuggestions | null>(null)
   const [placeSuggestions, setPlaceSuggestions] = useState<ProfilePlaceSuggestions | null>(null)
   const [selectedPlaceSuggestions, setSelectedPlaceSuggestions] = useState<string[]>([])
@@ -216,6 +219,7 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
     setSelectedProfileId(id)
     setSelectedDocument(null)
     setIdentityMap({})
+    setLwinLabels({})
     setIdentitySuggestions(null)
     setPlaceSuggestions(null)
     setSelectedPlaceSuggestions([])
@@ -479,10 +483,18 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
         {profileCuvees.map((cuvee) => <div key={String(cuvee.id)}>
           <strong>{String(cuvee.name)}</strong> · {String(cuvee.appellation)}
           <CanonicalMappingSearch key={selectedProfileId + ":" + String(cuvee.id)} kind="product" suggestedName={String(cuvee.name)}
-            selectedId={identityMap.cuvees?.[String(cuvee.id)] || ""} disabled={busy || !isOnline}
+            selectedId={identityMap.cuvees?.[String(cuvee.id)] || ""}
+            selectedExternalLabel={lwinLabels[String(cuvee.id)]} disabled={busy || !isOnline}
             onSelect={(id) => {
+              setLwinLabels((current) => { const next = { ...current }; delete next[String(cuvee.id)]; return next })
               updateIdentityMap((current) => ({ ...current,
                 cuvees: { ...current.cuvees, [String(cuvee.id)]: id } }))
+            }} />
+          <ProfileLwinSearch key={`lwin:${selectedProfileId}:${String(cuvee.id)}`}
+            profileId={selectedProfileId} cuveeId={String(cuvee.id)} producerId={identityMap.producer_id || ""}
+            disabled={busy || !isOnline} onSelect={(id, label) => {
+              setLwinLabels((current) => ({ ...current, [String(cuvee.id)]: label }))
+              updateIdentityMap((current) => ({ ...current, cuvees: { ...current.cuvees, [String(cuvee.id)]: id } }))
             }} />
         </div>)}
       </details> : null}

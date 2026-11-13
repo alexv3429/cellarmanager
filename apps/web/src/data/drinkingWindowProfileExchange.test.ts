@@ -14,6 +14,8 @@ import {
   previewProfileStaging,
   suggestProfileIdentities,
   suggestProfilePlaces,
+  searchProfileLwin,
+  reuseProfileLwin,
   stageProfileExchange,
   stageSelectedProfileWindows,
   type FullProfileImport,
@@ -27,6 +29,24 @@ const imported: FullProfileImport = {
 }
 
 describe("complete profile exchange", () => {
+  it("searches and reuses an LWIN product without approving dates or linking a cellar", async () => {
+    const rpc = async (name: string, parameters: Record<string, unknown>) => {
+      if (name === "search_drinking_window_profile_lwin") {
+        expect(parameters.p_query).toBe("Referts")
+        return { data: [{ lwin7: "1195121", name: "Jacques Carillon Les Referts", producer: "Jacques Carillon",
+          region: "Burgundy", site: "Les Referts", parcel: null, color: "White", classification: "Premier Cru" }], error: null }
+      }
+      expect(name).toBe("reuse_drinking_window_profile_lwin")
+      expect(parameters.p_confirmed).toBe(true)
+      return { data: { lwin7: "1195121", product_id: "product-1", dates_staged: 0, wines_linked: 0, published: false }, error: null }
+    }
+    const matches = await searchProfileLwin("profile", "cuvee", "producer", " Referts ", { rpc })
+    expect(matches[0]).toMatchObject({ lwin7: "1195121", site: "Les Referts" })
+    await expect(reuseProfileLwin("profile", "cuvee", "producer", "1195121",
+      "Verified producer, appellation, colour and cuvée in the source.", false, { rpc })).rejects.toThrow(/confirm/)
+    await expect(reuseProfileLwin("profile", "cuvee", "producer", "1195121",
+      "Verified producer, appellation, colour and cuvée in the source.", true, { rpc })).resolves.toBe("product-1")
+  })
   it("stages only selected place-profile vintages, including additions to an existing group", async () => {
     const profile: FullProfileImport = { ...imported, kind: "appellation", name: "Saint-Véran" }
     const preview = await previewProfileStaging(profile, "draft-id", {}, { rpc: async (name) => {

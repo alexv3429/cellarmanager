@@ -1325,6 +1325,20 @@ rule, not a product-specific rule, until a product is identified. Targeted
 parsing and UI tests and the web build passed. This frontend change is not yet
 merged into the official app.
 
+**Curator LWIN reuse from profiles (13 November, local testing):** The
+Carillon case showed that the profile workflow searched only materialised
+products, even when the same wine was already present in the imported LWIN
+catalogue. A new curator-only search and reuse action works directly from a
+profile, without linking a cellar wine, approving dates, or publishing. It
+checks the selected shared producer, exact cuvée name or safe reviewed alias,
+colour, known appellation and classification; historical aliases are excluded.
+An existing matching product must be reconciled instead of duplicated. The
+decision is audited and LWIN identifiers remain unique. Tests on a private
+copy include the real Carillon LWIN identity and 68 database assertions;
+targeted web tests and the build passed. CI, fresh backup, restored-copy
+rehearsal, linked migration and signed-in preview verification are still
+required. This path is a general app feature, not a cellar-specific mapping.
+
 **Execution status (the contract defines each exit test):**
 
 **Hard PR budget:** [PR #227](https://github.com/alexv3429/cellarmanager/pull/227)

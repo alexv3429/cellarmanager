@@ -36,7 +36,9 @@ select set_config('app.identity_batch_profile',
       "producer":{"name":"Jean-Marc Burgaud"},
       "cuvees":[{"id":"synthetic_reserve","name":"Morgon Synthetic Reserve",
         "aliases":["Morgon Reserve"],
-        "region":"Beaujolais","appellation":"Morgon","color":"red"}],
+        "region":"Beaujolais","appellation":"Morgon","color":"red"},
+        {"id":"lwin_cuvee","name":"Morgon Synthetic LWIN",
+        "aliases":[],"region":"Beaujolais","appellation":"Morgon","color":"red"}],
       "sources":[{"id":"existence","url":"https://example.org/synthetic-release"},
         {"id":"large-format","url":"https://example.org/synthetic-magnum"}],
       "exact_release_calibrations":[
@@ -62,6 +64,119 @@ select set_config('app.identity_batch_profile',
       "import_policy":{"review_required":true,"no_direct_production_publication":true}
     }
     $profile$::jsonb)->>'id'),true);
+
+-- Reuse an unmaterialised LWIN product directly from the curator profile,
+-- without creating a cellar match or granting ordinary users write access.
+update public.wine_reference_lwin_snapshots set import_status='superseded'
+where source_key='liv-ex-lwin' and import_status='active';
+insert into public.wine_reference_lwin_snapshots
+ (id,source_key,content_sha256,source_file_name,source_retrieved_at,source_updated_through,
+  expected_record_count,record_count,live_record_count,combined_record_count,deleted_record_count,
+  import_status,rows_retained,completed_at)
+values ('fd000000-0000-4000-8000-000000000070','liv-ex-lwin',repeat('8',64),
+ 'synthetic-profile-lwin.xlsx','2026-11-01T00:00:00Z','2026-11-01T00:00:00',
+ 5,5,5,0,0,'active',true,'2026-11-01T00:01:00Z');
+insert into public.wine_reference_lwin_entries
+ (snapshot_id,lwin7,source_row_number,source_status,display_name,producer_name,wine_name,
+  country,region,sub_region,colour,product_type,designation,vintage_configuration)
+values
+ ('fd000000-0000-4000-8000-000000000070','1999801',2,'live',
+  'Jean-Marc Burgaud, Morgon Synthetic LWIN','Jean-Marc Burgaud','Morgon Synthetic LWIN',
+  'France','Beaujolais','Morgon','Red','Wine','AOP','sequential'),
+ ('fd000000-0000-4000-8000-000000000070','1999802',3,'live',
+  'Another Producer, Morgon Synthetic LWIN','Another Producer','Morgon Synthetic LWIN',
+  'France','Beaujolais','Morgon','Red','Wine','AOP','sequential'),
+ ('fd000000-0000-4000-8000-000000000070','1999803',4,'live',
+  'Jean-Marc Burgaud, Morgon Synthetic White','Jean-Marc Burgaud','Morgon Synthetic White',
+  'France','Beaujolais','Morgon','White','Wine','AOP','sequential'),
+ ('fd000000-0000-4000-8000-000000000070','1999804',5,'live',
+  'Jean-Marc Burgaud, Morgon Another Cuvée','Jean-Marc Burgaud','Morgon Another Cuvée',
+  'France','Beaujolais','Morgon','Red','Wine','AOP','sequential'),
+ ('fd000000-0000-4000-8000-000000000070','1999805',6,'live',
+  'Jean-Marc Burgaud, Other Place Synthetic LWIN','Jean-Marc Burgaud','Morgon Synthetic LWIN',
+  'France','Beaujolais','Fleurie','Red','Wine','AOP','sequential');
+select is(jsonb_array_length(public.search_drinking_window_profile_lwin(
+ current_setting('app.identity_batch_profile')::uuid,'lwin_cuvee',
+ current_setting('app.identity_batch_producer')::uuid,'Synthetic LWIN')),2,
+ 'LWIN search finds the reviewed producer and excludes a similarly named producer');
+select ok(not private.drinking_window_lwin_profile_cuvee_matches(
+ '{"name":"Different current cuvée","appellation":"Morgon","aliases":["Morgon Synthetic LWIN"],"name_history":[{"name":"Morgon Synthetic LWIN"}]}'::jsonb,
+ (select e from public.wine_reference_lwin_entries e where e.lwin7='1999801' limit 1)),
+ 'Historical aliases are not silently applied across vintages');
+select throws_ok($test$ select public.reuse_drinking_window_profile_lwin(
+ current_setting('app.identity_batch_profile')::uuid,'lwin_cuvee',
+ current_setting('app.identity_batch_producer')::uuid,'1999801',
+ 'Verified the synthetic identity against the test source.',false) $test$,
+ '22023','Confirm the LWIN wine and explain the identity decision',
+ 'An LWIN identity requires an explicit curator confirmation');
+select throws_ok($test$ select public.reuse_drinking_window_profile_lwin(
+ current_setting('app.identity_batch_profile')::uuid,'lwin_cuvee',
+ current_setting('app.identity_batch_producer')::uuid,'1999802',
+ 'Verified the synthetic identity against the test source.',true) $test$,
+ '22023','LWIN producer does not match the reviewed shared producer',
+ 'Another producer cannot be attached to the profile');
+select throws_ok($test$ select public.reuse_drinking_window_profile_lwin(
+ current_setting('app.identity_batch_profile')::uuid,'lwin_cuvee',
+ current_setting('app.identity_batch_producer')::uuid,'1999803',
+ 'Verified the synthetic identity against the test source.',true) $test$,
+ '22023','LWIN color conflicts with the profile cuvée',
+ 'A conflicting LWIN color cannot be attached');
+select throws_ok($test$ select public.reuse_drinking_window_profile_lwin(
+ current_setting('app.identity_batch_profile')::uuid,'lwin_cuvee',
+ current_setting('app.identity_batch_producer')::uuid,'1999804',
+ 'Verified the synthetic identity against the test source.',true) $test$,
+ '22023','LWIN cuvée does not match the exact profile name or its reviewed aliases',
+ 'A different cuvée from the same producer cannot be attached');
+select throws_ok($test$ select public.reuse_drinking_window_profile_lwin(
+ current_setting('app.identity_batch_profile')::uuid,'lwin_cuvee',
+ current_setting('app.identity_batch_producer')::uuid,'1999805',
+ 'Verified the synthetic identity against the test source.',true) $test$,
+ '22023','LWIN appellation conflicts with the profile cuvée',
+ 'The same cuvée name in a different appellation cannot be attached');
+insert into public.wine_reference_entities(id,entity_type)
+values ('fd000000-0000-4000-8000-000000000071','product');
+insert into public.wine_reference_products(id,producer_id,canonical_name)
+values ('fd000000-0000-4000-8000-000000000071',current_setting('app.identity_batch_producer')::uuid,
+ 'Synthetic LWIN');
+select throws_ok($test$ select public.reuse_drinking_window_profile_lwin(
+ current_setting('app.identity_batch_profile')::uuid,'lwin_cuvee',
+ current_setting('app.identity_batch_producer')::uuid,'1999801',
+ 'Verified the synthetic identity against the test source.',true) $test$,
+ '23505','A matching shared cuvée already exists; reconcile it before importing LWIN',
+ 'An existing unlabelled shared product is not duplicated');
+delete from public.wine_reference_products where id='fd000000-0000-4000-8000-000000000071';
+delete from public.wine_reference_entities where id='fd000000-0000-4000-8000-000000000071';
+select set_config('request.jwt.claim.sub','fd000000-0000-4000-8000-000000000002',true);
+select throws_ok($test$ select public.search_drinking_window_profile_lwin(
+ current_setting('app.identity_batch_profile')::uuid,'lwin_cuvee',
+ current_setting('app.identity_batch_producer')::uuid,'Synthetic LWIN') $test$,
+ '42501','An active curator grant for this profile type is required',
+ 'An ordinary user cannot search the curator-only profile LWIN path');
+select throws_ok($test$ select public.reuse_drinking_window_profile_lwin(
+ current_setting('app.identity_batch_profile')::uuid,'lwin_cuvee',
+ current_setting('app.identity_batch_producer')::uuid,'1999801',
+ 'Verified the synthetic identity against the test source.',true) $test$,
+ '42501','An active curator grant for this profile type is required',
+ 'An ordinary user cannot import a shared LWIN product');
+select set_config('request.jwt.claim.sub','fd000000-0000-4000-8000-000000000001',true);
+select is((public.reuse_drinking_window_profile_lwin(
+ current_setting('app.identity_batch_profile')::uuid,'lwin_cuvee',
+ current_setting('app.identity_batch_producer')::uuid,'1999801',
+ 'Verified the synthetic producer and cuvée against the test source.',true)->>'wines_linked')::integer,0,
+ 'A curator may reuse an LWIN product without changing a cellar wine');
+select is((select count(*)::integer from public.wine_reference_external_identifiers
+ where authority='liv-ex' and identifier_scheme='LWIN7' and identifier_value='1999801'),1,
+ 'The product retains its unique LWIN7 identity');
+select is((select count(*)::integer from private.drinking_window_profile_lwin_reviews
+ where lwin7='1999801'),1,'The LWIN reuse decision is auditable');
+select is((public.reuse_drinking_window_profile_lwin(
+ current_setting('app.identity_batch_profile')::uuid,'lwin_cuvee',
+ current_setting('app.identity_batch_producer')::uuid,'1999801',
+ 'Verified the synthetic producer and cuvée against the test source.',true)->>'dates_staged')::integer,0,
+ 'Repeating the reuse neither stages dates nor duplicates the product');
+select is((select count(*)::integer from public.wine_reference_external_identifiers
+ where authority='liv-ex' and identifier_scheme='LWIN7' and identifier_value='1999801'),1,
+ 'Repeated reuse leaves exactly one LWIN product');
 
 select is((public.preview_drinking_window_profile_identity_batch(
     current_setting('app.identity_batch_profile')::uuid,

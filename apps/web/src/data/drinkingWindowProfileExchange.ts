@@ -434,6 +434,50 @@ function identityStatus(value: unknown): "existing" | "create" | "blocked" {
   throw new Error("Invalid identity status")
 }
 
+export interface ProfileLwinCandidate {
+  lwin7: string
+  name: string
+  producer: string
+  region: string | null
+  appellation: string | null
+  site: string | null
+  parcel: string | null
+  color: string | null
+  classification: string | null
+}
+
+export async function searchProfileLwin(profileId: string, cuveeId: string, producerId: string,
+  query: string, options: RpcOptions = {}): Promise<ProfileLwinCandidate[]> {
+  if (!profileId || !cuveeId || !producerId || query.trim().length < 3) throw new Error("Choose a profile, producer and search term")
+  const result = await call("search_drinking_window_profile_lwin", {
+    p_profile_id: profileId, p_cuvee_id: cuveeId, p_producer_id: producerId, p_query: query.trim(),
+  }, options)
+  if (!Array.isArray(result)) throw new Error("Invalid LWIN search response")
+  return result.map((value: unknown) => {
+    const item = object(value, "LWIN candidate")
+    const lwin7 = string(item.lwin7, "LWIN7")
+    if (!/^\d{7}$/.test(lwin7)) throw new Error("Invalid LWIN7")
+    return { lwin7, name: string(item.name, "LWIN wine"), producer: string(item.producer, "LWIN producer"),
+      region: optionalText(item.region), appellation: optionalText(item.appellation),
+      site: optionalText(item.site), parcel: optionalText(item.parcel),
+      color: optionalText(item.color), classification: optionalText(item.classification) }
+  })
+}
+
+export async function reuseProfileLwin(profileId: string, cuveeId: string, producerId: string,
+  lwin7: string, reason: string, confirmed: boolean, options: RpcOptions = {}): Promise<string> {
+  if (!profileId || !cuveeId || !producerId || !/^\d{7}$/.test(lwin7)
+    || !confirmed || reason.trim().length < 30) throw new Error("Review and confirm the LWIN wine identity")
+  const result = object(await call("reuse_drinking_window_profile_lwin", {
+    p_profile_id: profileId, p_cuvee_id: cuveeId, p_producer_id: producerId,
+    p_lwin7: lwin7, p_reason: reason.trim(), p_confirmed: true,
+  }, options), "LWIN reuse")
+  if (result.lwin7 !== lwin7 || result.dates_staged !== 0 || result.wines_linked !== 0 || result.published !== false) {
+    throw new Error("Invalid LWIN reuse response")
+  }
+  return string(result.product_id, "Shared product ID")
+}
+
 export async function previewProfileIdentityBatch(profile: FullProfileImport, identityMap: ProfileIdentityMap,
   releaseKeys: string[], options: RpcOptions = {}): Promise<ProfileIdentityBatchPreview> {
   if (profile.kind !== "producer" || !releaseKeys.length || releaseKeys.length > 100) {
