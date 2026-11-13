@@ -290,5 +290,60 @@ select is((select status from private.drinking_window_preview_draft_match_for_wi
  'fa600000-0000-4000-8000-000000000011','fa600000-0000-4000-8000-000000000004',
  'fa600000-0000-4000-8000-000000000002','red',2022,null)),
  'draft_match','An explicitly reviewed cuvée group remains eligible for a Premier Cru');
+
+-- Some historical canonical databases represent a Premier Cru as an
+-- appellation node under its village. A reviewed group anchored to the
+-- village must still recognise its exact classified climat, not all crus.
+insert into public.enrichment_places(id,parent_id,place_type,canonical_name) values
+ ('fa600000-0000-4000-8000-000000000028','fa600000-0000-4000-8000-000000000004',
+  'appellation','Premier Test Village Premier Cru');
+update public.enrichment_places set parent_id='fa600000-0000-4000-8000-000000000028',
+ canonical_name='Premier Test Village Les Caillerets'
+where id='fa600000-0000-4000-8000-000000000017';
+update public.wines set appellation='Premier Test Village Premier Cru',cuvee='Caillerets'
+where id='fa600000-0000-4000-8000-000000000006';
+select is(private.drinking_window_exact_classified_climat(
+ 'fa600000-0000-4000-8000-000000000006','fa600000-0000-4000-8000-000000000028'),
+ 'fa600000-0000-4000-8000-000000000017'::uuid,
+ 'A climate under a classified child resolves using the parent appellation prefix');
+select is((select reference_row_id from private.drinking_window_preview_draft_match_for_wine(
+ 'fa600000-0000-4000-8000-000000000006','fa600000-0000-4000-8000-000000000007',
+ null,null,null,'fa600000-0000-4000-8000-000000000028',
+ 'fa600000-0000-4000-8000-000000000002','red',2022,null)),
+ 'fa600000-0000-4000-8000-000000000021'::uuid,
+ 'A reviewed parent-appellation group applies to its explicitly listed child climat');
+update public.wines set cuvee='Unknown climat' where id='fa600000-0000-4000-8000-000000000006';
+select is((select status from private.drinking_window_preview_draft_match_for_wine(
+ 'fa600000-0000-4000-8000-000000000006','fa600000-0000-4000-8000-000000000007',
+ null,null,null,'fa600000-0000-4000-8000-000000000028',
+ 'fa600000-0000-4000-8000-000000000002','red',2022,null)),
+ 'no_match','An unknown classified climat receives neither a village nor another climat window');
+update public.wines set cuvee='Caillerets' where id='fa600000-0000-4000-8000-000000000006';
+select is((select status from private.drinking_window_preview_draft_match_for_wine(
+ 'fa600000-0000-4000-8000-000000000006','fa600000-0000-4000-8000-000000000007',
+ null,null,null,'fa600000-0000-4000-8000-000000000028',
+ 'fa600000-0000-4000-8000-000000000002','white',2022,null)),
+ 'no_match','A classified group does not cross wine colors');
+update public.wines set classification='Grand Cru' where id='fa600000-0000-4000-8000-000000000006';
+select is((select status from private.drinking_window_preview_draft_match_for_wine(
+ 'fa600000-0000-4000-8000-000000000006','fa600000-0000-4000-8000-000000000007',
+ null,null,null,'fa600000-0000-4000-8000-000000000028',
+ 'fa600000-0000-4000-8000-000000000002','red',2022,null)),
+ 'no_match','Contradictory Grand Cru classification cannot inherit a Premier Cru group');
+update public.wines set classification=null where id='fa600000-0000-4000-8000-000000000006';
+insert into public.drinking_window_reference_rows
+ (id,version_id,scope,producer_id,product_id,release_id,appellation_id,region_id,
+  wine_color,vintage_year,all_at_scope,first_trial_year,best_start_year,best_end_year,rationale)
+values ('fa600000-0000-4000-8000-000000000012','fa600000-0000-4000-8000-000000000007',
+ 'release','fa600000-0000-4000-8000-000000000009','fa600000-0000-4000-8000-000000000010',
+ 'fa600000-0000-4000-8000-000000000011','fa600000-0000-4000-8000-000000000028',
+ 'fa600000-0000-4000-8000-000000000002','red',2022,true,2025,2028,2040,
+ 'Synthetic exact release under the classified child');
+select is((select matched_scope from private.drinking_window_preview_draft_match_for_wine(
+ 'fa600000-0000-4000-8000-000000000006','fa600000-0000-4000-8000-000000000007',
+ 'fa600000-0000-4000-8000-000000000009','fa600000-0000-4000-8000-000000000010',
+ 'fa600000-0000-4000-8000-000000000011','fa600000-0000-4000-8000-000000000028',
+ 'fa600000-0000-4000-8000-000000000002','red',2022,null)),
+ 'release','An exact release still takes precedence over the parent climate group');
 select * from finish();
 rollback;

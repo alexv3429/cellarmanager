@@ -1287,6 +1287,21 @@ copy now matches **65/804** cards (31 release, 27 appellation, 7 region),
 including the known Aligoté discrepancy. Live totals remain 810 wines, 37
 reviewed anchors, zero published versions and zero pending migrations.
 
+**Puligny classified-appellation hierarchy (13 November, local rehearsal):**
+The legacy shared identities for `Puligny-Montrachet` and
+`Puligny-Montrachet Premier Cru` were siblings, although the submitted profile
+and the [appellation specification](https://www.bourgogne-wines.com/wine-and-terroir/bourgogne-and-its-appellations/gallery_files/site/321/19990/20255.pdf)
+place its 17 Premier Cru climates under Puligny. The proposed migration retains
+both existing IDs while making the classified identity a child, enabling a
+reviewed climate group anchored at the parent to match its named climate. It
+does not assign a broad village window, create dates, publish a reference or
+modify cellar wines. It also rejects conflicting Grand Cru labels and keeps
+exact-release priority. On the private copy 37 Premier Cru assertions and 53
+profile-identity assertions passed; legacy white place profiles at the parent
+all have a more specific child profile for the same knowledge version. Green
+CI, a fresh linked backup, restore/rehearsal, and postflight remain required;
+the official Puligny climates and windows are not yet staged.
+
 **Execution status (the contract defines each exit test):**
 
 **Hard PR budget:** [PR #227](https://github.com/alexv3429/cellarmanager/pull/227)
