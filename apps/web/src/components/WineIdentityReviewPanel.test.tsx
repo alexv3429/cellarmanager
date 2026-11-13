@@ -4,16 +4,20 @@ import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import {
+  confirmWineIdentityReconciliation,
   getHouseholdWineIdentityStatus,
   manageHouseholdWineIdentity,
+  previewWineIdentityReconciliation,
   requestSharedWineIdentity,
   searchHouseholdWineIdentities,
 } from "../data/householdWineIdentities"
 import { WineIdentityReviewPanel } from "./WineIdentityReviewPanel"
 
 vi.mock("../data/householdWineIdentities", () => ({
+  confirmWineIdentityReconciliation: vi.fn(),
   getHouseholdWineIdentityStatus: vi.fn(),
   manageHouseholdWineIdentity: vi.fn(),
+  previewWineIdentityReconciliation: vi.fn(),
   requestSharedWineIdentity: vi.fn(),
   searchHouseholdWineIdentities: vi.fn(),
 }))
@@ -39,6 +43,8 @@ beforeEach(() => {
   vi.mocked(searchHouseholdWineIdentities).mockReset().mockResolvedValue([identity])
   vi.mocked(manageHouseholdWineIdentity).mockReset().mockResolvedValue("release")
   vi.mocked(requestSharedWineIdentity).mockReset().mockResolvedValue("request")
+  vi.mocked(previewWineIdentityReconciliation).mockReset().mockResolvedValue([])
+  vi.mocked(confirmWineIdentityReconciliation).mockReset().mockResolvedValue()
   container = document.createElement("div")
   document.body.append(container)
   root = createRoot(container)
@@ -76,6 +82,48 @@ async function enterQuery(value: string) {
 }
 
 describe("household wine identity panel", () => {
+  it("previews the cellar and only links a unique candidate after explicit batch confirmation", async () => {
+    const onChanged = vi.fn()
+    vi.mocked(previewWineIdentityReconciliation).mockResolvedValue([{
+      wineId: wine.id, sourceFingerprint: "fingerprint", candidateCount: 1,
+      candidates: [{ ...identity, matchBasis: "name_containment" }],
+    }])
+    await act(async () => root.render(<WineIdentityReviewPanel isOnline onChanged={onChanged} wines={[wine]} />))
+    const details = container.querySelector("details")
+    await act(async () => {
+      if (details) details.open = true
+      details?.dispatchEvent(new Event("toggle"))
+    })
+    await click("Find shared matches for my cellar")
+    expect(previewWineIdentityReconciliation).toHaveBeenCalledWith([wine.id])
+    expect(confirmWineIdentityReconciliation).not.toHaveBeenCalled()
+    expect(container.textContent).toContain("Name overlap — check carefully")
+    const checkbox = container.querySelector<HTMLInputElement>('.wine-identity-review__batch-list input[type="checkbox"]')
+    await act(async () => checkbox?.click())
+    await click("Confirm selected links")
+    expect(confirmWineIdentityReconciliation).toHaveBeenCalledWith([{
+      wineId: wine.id, referenceId: identity.referenceId, sourceFingerprint: "fingerprint",
+    }])
+    expect(onChanged).toHaveBeenCalledTimes(1)
+  })
+
+  it("does not batch-link ambiguous or missing candidates", async () => {
+    vi.mocked(previewWineIdentityReconciliation).mockResolvedValue([{
+      wineId: wine.id, sourceFingerprint: "fingerprint", candidateCount: 2,
+      candidates: [{ ...identity, matchBasis: "name_containment" },
+        { ...identity, referenceId: "other", matchBasis: "name_containment" }],
+    }])
+    await act(async () => root.render(<WineIdentityReviewPanel isOnline wines={[wine]} />))
+    const details = container.querySelector("details")
+    await act(async () => {
+      if (details) details.open = true
+      details?.dispatchEvent(new Event("toggle"))
+    })
+    await click("Find shared matches for my cellar")
+    expect(container.textContent).toContain("Several possible matches — review individually")
+    expect(container.textContent).not.toContain("Confirm selected links")
+    expect(confirmWineIdentityReconciliation).not.toHaveBeenCalled()
+  })
   it("reviews one wine directly from its card and reports a private link change", async () => {
     const onChanged = vi.fn()
     await act(async () => root.render(<WineIdentityReviewPanel

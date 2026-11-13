@@ -5,12 +5,13 @@ import {
   manageHouseholdProducerPreference,
   parseProducerReferences,
   parseProducerSources,
+  partitionProducerReferences,
   searchHouseholdReferenceProducers,
 } from "./householdProducerPreferences"
 
 const source = {
   sourceText: "Barthod", normalized: "barthod", wineCount: 3,
-  producerId: null, canonicalName: null,
+  producerId: null, canonicalName: null, suggestions: [],
 }
 const wire = {
   household_id: "household",
@@ -25,6 +26,14 @@ describe("household producer preferences", () => {
     expect(() => parseProducerSources({ ...wire, household_id: "other" }, "household")).toThrow()
     expect(() => parseProducerSources({ ...wire, sources: [wire.sources[0], wire.sources[0]] }, "household")).toThrow()
     expect(() => parseProducerSources({ ...wire, sources: [{ ...wire.sources[0], canonical_name: "Ghislaine Barthod" }] }, "household")).toThrow()
+    expect(parseProducerSources({ ...wire, sources: [{ ...wire.sources[0], suggestions: [
+      { id: "producer", canonical_name: "Ghislaine Barthod", match_kind: "similar" },
+    ] }] }, "household")[0].suggestions).toEqual([
+      { id: "producer", canonicalName: "Ghislaine Barthod", matchKind: "similar" },
+    ])
+    expect(() => parseProducerSources({ ...wire, sources: [{ ...wire.sources[0], suggestions: [
+      { id: "producer", canonical_name: "Ghislaine Barthod", match_kind: "approved" },
+    ] }] }, "household")).toThrow()
   })
 
   it("searches existing shared identities but rejects blank searches", async () => {
@@ -33,6 +42,18 @@ describe("household producer preferences", () => {
     expect(rpc).toHaveBeenCalledWith("search_household_reference_producers", { p_household_id: "household", p_query: "Barthod" })
     await expect(searchHouseholdReferenceProducers("household", " ", { rpc })).rejects.toThrow()
     expect(() => parseProducerReferences({ id: "producer" })).toThrow()
+  })
+
+  it("does not offer indistinguishable producer IDs as separate choices", () => {
+    expect(partitionProducerReferences([
+      { id: "one", canonicalName: "Alvina Pernot" },
+      { id: "two", canonicalName: "Alvina Pernot" },
+      { id: "three", canonicalName: "Alvina Pernot" },
+      { id: "four", canonicalName: "Ghislaine Barthod" },
+    ])).toEqual({
+      choices: [{ id: "four", canonicalName: "Ghislaine Barthod" }],
+      ambiguousNames: ["Alvina Pernot"],
+    })
   })
 
   it("submits an explicit local choice with optimistic concurrency", async () => {

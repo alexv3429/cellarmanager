@@ -206,6 +206,21 @@ describe("maturity RPC boundary", () => {
     })
   })
 
+  it("keeps maturity advice readable when a producer is linked but its product is not", () => {
+    const result = parseWineMaturity({
+      ...maturityResponse(),
+      producer_rules: {
+        status: "ok", context: {
+          producer_name: "Jacques Carillon", product_name: null,
+          appellation_name: "Puligny-Montrachet Premier Cru", region_name: "Bourgogne", vintage_year: 2022,
+        },
+        applicable: [], selected: null,
+      },
+    })
+    expect(result.producerRules?.context.productName).toBeNull()
+    expect(result.projection).not.toBeNull()
+  })
+
   it("saves and removes a cellar producer rule through narrow RPCs", async () => {
     const rpc = vi.fn().mockResolvedValueOnce({ data: { status: "saved", rule_id: "rule-1" }, error: null })
       .mockResolvedValueOnce({ data: true, error: null })

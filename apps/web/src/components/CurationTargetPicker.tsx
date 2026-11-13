@@ -38,7 +38,7 @@ export function CurationTargetPicker({ kind, label, value, onChange, isOnline }:
     <button type="button" disabled={!isOnline || busy || query.trim().length < 2}
       onClick={() => void search()}>{busy ? t("Searching…") : t("Search shared reference")}</button>
     {error ? <Notice role="alert" tone="warning">{error}</Notice> : null}
-    {options.length ? <select aria-label={label} value={value?.id ?? ""}
+    {options.length ? <select aria-label={label} value={value?.id ?? ""} disabled={!isOnline || busy}
       onChange={(event) => onChange(options.find((option) => option.id === event.target.value) ?? null)}>
       <option value="">{t("Choose an exact identity")}</option>
       {options.map((option) => <option key={option.id} value={option.id}>{option.label} · {option.detail}</option>)}

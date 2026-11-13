@@ -88,7 +88,7 @@ export interface HouseholdProducerWindowRules {
   status: string
   context: {
     producerName?: string
-    productName?: string
+    productName?: string | null
     appellationName?: string | null
     regionName?: string
     vintageYear?: number
@@ -328,7 +328,7 @@ function parseHouseholdProducerWindowRules(value: unknown): HouseholdProducerWin
     status: text(item.status, "producer rule status"),
     context: {
       producerName: rawContext.producer_name === undefined ? undefined : text(rawContext.producer_name, "producer name"),
-      productName: rawContext.product_name === undefined ? undefined : text(rawContext.product_name, "product name"),
+      productName: rawContext.product_name === undefined ? undefined : optionalText(rawContext.product_name, "product name"),
       appellationName: rawContext.appellation_name === undefined ? undefined : optionalText(rawContext.appellation_name, "appellation name"),
       regionName: rawContext.region_name === undefined ? undefined : text(rawContext.region_name, "region name"),
       vintageYear: rawContext.vintage_year === undefined ? undefined : integer(rawContext.vintage_year, "vintage year"),

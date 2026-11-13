@@ -134,7 +134,7 @@ describe("wine maturity manual window", () => {
     }
     reviewed.producerRules = {
       status: "ok",
-      context: { producerName: "Burgaud", appellationName: "Morgon", regionName: "Beaujolais", vintageYear: 2022 },
+      context: { producerName: "Burgaud", productName: "Côte du Py", appellationName: "Morgon", regionName: "Beaujolais", vintageYear: 2022 },
       applicable: [], selected: null,
     }
     vi.mocked(getWineMaturity).mockResolvedValue(reviewed)
@@ -153,5 +153,21 @@ describe("wine maturity manual window", () => {
     expect(setHouseholdProducerWindowRule).toHaveBeenCalledWith(
       "wine-1", "product", { firstTrialYear: 2025, bestStartYear: 2028, bestEndYear: 2035 }, "Our cellar's preference",
     )
+  })
+
+  it("offers a producer-appellation rule when the wine has no shared product", async () => {
+    const reviewed = maturity(null, false)
+    reviewed.producerRules = {
+      status: "ok",
+      context: { producerName: "Jacques Carillon", productName: null,
+        appellationName: "Puligny-Montrachet Premier Cru", regionName: "Bourgogne", vintageYear: 2022 },
+      applicable: [], selected: null,
+    }
+    vi.mocked(getWineMaturity).mockResolvedValue(reviewed)
+    await act(async () => root.render(<WineMaturityPanel canManageCellar householdId="household-1" isOnline wineId="wine-1" />))
+    const select = container.querySelector('.wine-maturity__producer-rule select[name="scope"]') as HTMLSelectElement
+    expect(select.value).toBe("producer_appellation")
+    expect(select.querySelector('option[value="product"]')).toBeNull()
+    expect(select.querySelector('option[value="producer_region"]')).not.toBeNull()
   })
 })

@@ -1076,10 +1076,13 @@ export function WineMaturityPanel({
                 onSubmit={(event) => void saveProducerRule(event)}>
                 <label>{t("This rule applies to")}
                   <select defaultValue={result.producerRules.selected?.scope ??
-                    (result.producerRules.context.appellationName ? "product" : "producer_region")} name="scope">
+                    (result.producerRules.context.appellationName
+                      ? result.producerRules.context.productName ? "product" : "producer_appellation"
+                      : "producer_region")} name="scope">
                     {result.producerRules.context.appellationName ? (
                       <>
-                        <option value="product">{t(producerRuleScopeLabel("product"))}</option>
+                        {result.producerRules.context.productName ?
+                          <option value="product">{t(producerRuleScopeLabel("product"))}</option> : null}
                         <option value="producer_appellation">{t(producerRuleScopeLabel("producer_appellation"))}</option>
                       </>
                     ) : null}

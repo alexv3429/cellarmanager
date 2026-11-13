@@ -14,12 +14,115 @@ the most specific applicable shared profile, or a private cellar choice,
 followed by a personal offset when applicable. Curators can maintain and
 publish complete shared profiles from the app without a developer PR or a
 second curator; users can suggest individual changes. The supplied producer
-profiles become a reviewed common base, with appellation and region fallbacks
-and the labelled existing model as last resort. The initial pilot is a safety
-gate, not the permanent way to distribute updates. See the contract for exact
-precedence and acceptance examples.
+profiles become a reviewed common base, with appellation and region fallbacks.
+The labelled existing model is a **transition-only bridge**, not part of the
+intended end state. The initial pilot is a safety gate, not the permanent way
+to distribute updates. See the contract for exact precedence and acceptance
+examples.
 
-## Current delivery checkpoint — 30 October 2026
+**Owner clarification on 31 October:** 6/6 means the feature is live in the
+official app and gives complete three-date windows to nearly all active wines
+in the owner's cellar, not merely a one-wine demonstration or 23 imported
+files awaiting approval. Use **95% as the working minimum**, report every
+remaining exception, and keep improving safe coverage. Measure and disclose
+separately the number of wines served by private choices, reviewed exact
+producer/cuvée rows, reviewed broader producer/appellation/region rows, the
+labelled existing model, and no safe window. All 23 supplied producer
+documents and 670 proposals must be accounted for, and reviewed applicable
+rows must actually drive wine cards. A high total achieved only through the
+old model does not demonstrate that the new shared-profile base is mature.
+The bundle itself says the proposals are unapproved; **no provisional or
+official recommendation may bypass curator review**. The remaining editorial
+work is part of delivery, not a post-release queue. If the target cannot be
+met safely within the six-PR budget, stop and report the gap rather than
+declare 6/6 complete or add a seventh PR without the owner's agreement.
+
+**Owner decision on 1 November — legacy cutover and discrepancy review:**
+Eventually remove the old calculation from user-facing drinking-window
+selection. During transition, its estimates can be compared with reviewed
+profile candidates **only for the same confirmed shared wine identity**, exact
+vintage and applicable bottle format. Compare the unadjusted three milestones
+individually. A gap of **five years or more on any milestone** flags a human
+review with the affected wine and dates; a smaller gap alone does not. The
+old result is diagnostic evidence, not a veto or a source of published profile
+dates. Unlinked wines, incomplete windows and personal/cellar adjustments
+cannot produce a meaningful old-versus-new gap. Keep reporting legacy-only
+coverage separately and list the wines still depending on it. This decision
+changes the *target* from a permanent model fallback to a staged retirement;
+it does not claim that current code or live data have changed. Before cutover,
+review the remaining legacy-only cases and material gaps with the owner. Keep
+this work in the remaining Gate 4/5 PR slots; if it cannot be done safely
+within the six-PR budget, report that explicitly rather than silently adding
+another PR or declaring the end state delivered.
+
+**Gate 4 reality check, 5 November:** The final 46 owner profiles contain
+461 proposed exact-release date rows, but a conservative read-only match to
+the restored active pilot cellar finds only 67 wine cards / 126 bottles with
+an explicit producer, cuvée, colour, vintage and format overlap. Applying
+only already-approved household producer-name choices raises that candidate
+overlap to 91 wine cards / 165 bottles, still far from broad profile-backed
+coverage. This is not approved or live profile coverage. See the
+[deployment audit](drinking-window-gate4-deployment.md#final-46-profile-candidate-overlap--5-november).
+The remaining work must include verified local-to-shared identities and
+reviewed broader profiles; counting imports or old-model windows would not
+satisfy the agreed 6/6 outcome.
+The additional classification-parent suggestion migration passed CI and
+restored-copy rehearsal, was applied to the linked project after a protected
+backup, and returned zero pending migrations in postflight. It enables
+individual curator review of suggestions; it approves no identity or date.
+An additional Cazeneuve canonical-name correction passed CI and a fresh
+backup/restore rehearsal in the same draft PR, preserving the shared ID and
+the two owner-approved household choices while keeping the old LWIN spelling
+as an alias. It was applied to the linked project, and postflight found zero
+pending migrations. It is not a drinking-window approval.
+On the newer restored snapshot, incorporating this correction and 29
+existing household producer-name decisions, the explicit-release candidate
+overlap is **97 of 799 active pilot wine cards** (179 of 1,271 bottles).
+**Gate 4 name-resolution correction in draft #231, 5 November:**
+The owner confirmed that exact producer/cuvée/appellation/vintage matches
+must not require a household confirmation. A new read-only curator resolver
+uses the supplied profile's exact aliases and full producer/appellation/cuvée
+wording to preselect **unique existing** shared identities. In an isolated
+restored-copy check, final Chagnoleau 11.0.0 now resolves its producer plus
+`À la Côte` and `Les Raspillères` products without a name-choice click.
+Boillot resolves its producer but not the still-absent `Caillerets` product;
+two `Evocelles` identities remain ambiguous. Appellation errors, producer
+exceptions, missing canonical releases and genuinely generic cuvée labels
+remain distinct tasks; this resolver alone does not activate any window.
+After green CI, fresh protected backup and restored-copy rehearsal, both
+this migration and the confirmed-sibling reader migration were applied to
+the linked project; the PR remains **unmerged**. See the
+[deployment audit](drinking-window-gate4-deployment.md#exact-profile-name-resolution-in-the-same-draft--5-november).
+The Gate 4 reader also reuses a **current,
+owner-confirmed** reference link from another vintage of exactly the same
+household producer/cuvée/appellation/colour group, without a second owner
+decision or a local wine edit. Its restored-copy test derives Chagnoleau
+`À la Côte` 2021/2022 from the confirmed 2019 package, but correctly leaves
+the mismatched `Raspilleres 2022` appellation and all missing shared releases
+open. Deployment alone activates no new three-date advice.
+This remains candidate matching, not published profile-backed coverage.
+
+On the fresh restored pilot data, 799 active cards have positive holdings:
+376 reach a resolved producer context, only 22 a shared cuvée, and 11 an
+exact shared release. A further 212 are blocked by appellation identity,
+74 by region identity, 128 by producer identity after place resolution, and
+nine by absent required fields. This is why migration deployment cannot be
+mistaken for date coverage. Of the appellation blockers, 106 have a unique
+geographically valid `1C` parent candidate; those can be handled only while
+retaining Premier Cru classification, not by a blanket village fallback.
+The [identity bottleneck audit](drinking-window-gate4-deployment.md#restored-pilot-cellar-identity-bottleneck--5-november)
+records the exact boundaries.
+
+The owner supplied a later-use Bourgogne place-profile package on 5 November:
+one regional and 11 appellation documents. All 12 pass the app's native
+read-only full-profile parser. They contain 485 candidate three-date windows
+across 25 groups, all editorial estimates with low
+confidence and unreviewed source reuse rights. It is **not imported or
+approved**. It can support reviewed appellation/region fallbacks once the
+producer identity path is reconciled, but cannot be counted as current
+coverage or replace a specific producer/cuvée row.
+
+## Current delivery checkpoint — 31 October 2026
 
 The [PR #227](https://github.com/alexv3429/cellarmanager/pull/227) is
 **merged and database-deployed, but the feature is not released**. Its seven new
@@ -188,6 +291,1054 @@ publication and visibility in two cellars on disposable data. The web tests
 verify the exact-version handoff. This is not a live Burgaud publication;
 real-profile identity and date review remain Gate 4 work.
 
+**Gate 4 work in slot 5/6 (1 November, [draft PR #231](https://github.com/alexv3429/cellarmanager/pull/231); research archive populated, no dates deployed):** PR #230 is merged. The initial [base audit](drinking-window-gate4-initial-base.md)
+processed the complete 23-file, 670-row quality-audited bundle against an
+isolated restored-catalogue copy with Gate 3 schema. The per-file/per-row
+manifest finds nine unambiguous canonical identities, one Côte du Py 2022
+row already separately reviewed in existing draft version 2, **669
+quarantined rows, and zero newly approved rows**. The eight previously
+proposed Alsace/Beaujolais 2022–2023 fallbacks also have zero approved rows
+because scope membership and evidence remain unreviewed. The source bundle
+explicitly labels every proposal unapproved and source rights unreviewed;
+parsing, matching, or adding to the research queue cannot change that. Seven
+focused Node tests pass, including a guard against confusing Côte du Py and
+James. A prior Gate 3 synthetic integration fixture was corrected to use
+the actual reviewed Côte du Py release ID instead of the distinct James ID.
+The restored-catalogue exact/appellation/region SQL rehearsal passed and
+rolled back; it used synthetic fallback dates solely to test selection.
+The curator UI now accepts multiple complete JSON files in one selection,
+saves each through the same permission-checked import action, reports partial
+failures, and retains failed files for retry. No profile is approved or
+published by this batch action. A rollback-only import of **all 23 documents
+and 670 proposals** through the curator RPC passed on the disposable restored
+copy; the reference-row count stayed unchanged. The private generated SQL
+was removed afterward. Since this initial audit, all 23 complete profiles
+were saved in the linked curator-only research archive, as recorded below.
+No live dates, canonical links, or reference rows changed. The six-PR budget
+remains binding. This audit reveals that a broad initial common base cannot
+be declared ready without real curator identity, date, membership and source
+review; Gate 5 must not silently publish the remaining proposals. **The
+current Gate 4 result is not yet a route to the owner's near-all-wines release
+target:** first measure real-cellar three-date coverage and its source mix;
+then prioritize identity and date review by wines affected, not by JSON row
+count. Keep this work inside #231 and its app-based curation workflow; do not
+move an unbounded review backlog into Gate 5 and call it a finished base.
+
+**Gate 4 measured baseline (1 November):** a read-only linked SQL Editor
+query ran the app's maturity reader for all 802 active pilot wine cards:
+751 complete model estimates, two complete cellar-manual windows, **49 with
+no window, and zero active reviewed-reference windows**. Thus total three-date
+coverage is 753/802 (93.9%), nearly all from the legacy model. The protected
+1 November restored clone found 34 unavailable due to unsupported place profiles,
+nine without a vintage, and six with appellation/colour conflicts. A separate
+candidate-only comparison of the 23 private JSONs to the clone found 488
+wine cards with a potential producer-name correspondence and 183 with an
+explicit same-cuvée-label, colour, vintage and format row. None of those 183
+is approved by this analysis. The fresh protected 1 November backup restored
+successfully; a complete 23-file/670-proposal curator import passed on that
+isolated copy and was rolled back, leaving the reference tables unchanged.
+The linked project has had no profile import or publication from this
+rehearsal. These findings make a simple 95%
+total-coverage tick-box inadequate: the approved profile source mix must
+rise materially, and the remaining no-window cases must be explained, not
+hidden behind the old model.
+
+**Gate 4 identity preparation added in draft #231 (1 November):** A third
+proposed migration and a separate curator UI action can prepare selected,
+explicitly reviewed producer/cuvée/vintage identities from a saved JSON
+profile in one audited batch. The preview requires a unique producer and
+place mapping, a valid vintage and format, and at least one cited release-
+existence source; a curator must inspect the exact selected entries and give
+a reason before creation. The action does **not** approve or stage drinking
+dates, link household wines, publish a reference, or change anyone's advice.
+An isolated restored database passed 17 rollback-only identity assertions,
+including multi-format source pointers, role checks, stale-preview rejection,
+and no date/cellar writes; the new client-contract test, full web suite and
+production build pass.
+After all PR CI checks passed, the owner authorized a fresh protected backup,
+restored-copy rehearsal and linked application of all three Gate 4 migrations
+on 1 November; the [deployment record](drinking-window-gate4-deployment.md)
+confirms zero pending migrations, seeds and roles. No real profile identity
+batch was created by the **migration deployment**. Subsequently, the signed-in
+curator created the checked Dureuil-Janthial Les Margotés blanc 2021 / 750 ml
+cuvée and release identity through that workflow and approved its **2024 /
+2026–2034** editorial estimate into unpublished version 2. The other 28
+Dureuil rows were set aside. The draft check passed, but its read-only effect
+preview found only **one match among 804 wine cards**, and no version was
+published or enabled. This proves the app curation route, not broad reference
+coverage. Gate 4 remains a no-go until much more reviewed identity/date work,
+household linking and whole-cellar remeasurement are done.
+
+**Owner clarification, 2 November — cellar-to-shared identity is an app
+responsibility:** The owner may keep approximate local wine names. The app
+must resolve those names to canonical shared wines where the evidence is
+unique and consistent, suggest ambiguous candidates for focused review, and
+retry when a missing shared wine is added. The current
+`WineIdentityReviewPanel` only supports searching and confirming one wine at
+a time; the `search_household_wine_references` RPC filters by the same vintage
+but searches a user-entered string, and does not generate candidates from
+the local wine. Therefore the baseline **785/802 unlinked** cards are a
+product-workflow gap, not 785 manual corrections to assign to the owner.
+Gate 4 must deliver and test a scalable, audited reconciliation path within
+the existing draft #231. A fuzzy candidate alone must not activate a shared
+profile or silently rewrite a local card. Re-measure confirmed links,
+ambiguous candidates and genuinely missing shared identities separately
+before publication. This is a clarification of the existing canonical
+identity requirement, not a new PR or a change to the six-slot budget.
+
+**Gate 4 implementation in draft #231, 2 November:** The app now requests a
+whole-cellar preview in bounded groups of 100 active, unlinked wines. The
+owner sees unique, ambiguous and missing shared identities separately. An
+exact canonical name, curated alias, or sufficiently long name containment
+may produce a *suggestion* for the same vintage; a substring is explicitly
+marked for careful checking. Nothing links or applies dates during preview.
+The owner can select proposed unique links and confirm them in batches of 50.
+The page-level bulk selector includes only exact names or curated aliases;
+name-containment suggestions require individual checkbox review, and no
+hidden page is bulk-selected.
+Each link rechecks the current candidate and source fingerprint, uses the
+existing owner-only guarded RPC, and writes a per-wine audit decision without
+rewriting the local producer/cuvée. Ambiguous wines stay in individual review;
+missing identities stay unchanged and can be requested. This is a first
+scalable reconciliation workflow, **not automatic proof that the 785 unlinked
+cards now match**. It must be deployed after a fresh backup/rehearsal and
+measured against the real cellar; the newly added migration is not on the
+linked project. The UI and database regression tests pass locally. Gate 4
+remains a no-go while the canonical library is sparse and date review is
+unfinished.
+
+**Restored-copy measurement, 2 November:** After applying only the new
+reconciliation migration to the disposable 1 November restore, an owner-role,
+read-only preview of all 785 unlinked active wines returned **six unique
+name-containment suggestions, zero ambiguous suggestions and 779 without a
+candidate**; none of the six used an exact canonical name or curated alias.
+No link was created. The previous identity-creation audit therefore remains
+the dominant Gate 4 task: verified producer, cuvée and release identities from
+the supplied profiles must populate the common graph before the cellar-wide
+reconciler can provide meaningful coverage. Do not present the six as
+confirmed matches or count them toward published-window coverage.
+
+**Gate 4 group-level correction, 2 November (still draft #231):** The owner
+clarified that matching is primarily producer spelling once, then cuvée
+spelling within that producer (using appellation and colour), then vintage.
+The previous release-per-wine preview remains useful for exceptions but is
+not the primary coverage mechanism. A new unpublished migration and Cellar
+setup panel implement owner-confirmed, cellar-only cuvée links with bounded
+vintage eras, after the existing owner producer preference. The shared
+reader resolves an exact release only if it is unambiguous; otherwise the
+product or confirmed producer can support an appropriately scoped fallback.
+The local disposable-restore SQL regression passed 17 assertions, and the
+focused client tests and web build pass. Neither this migration nor these
+group decisions have been applied to the linked project. The 23 JSONs still
+need canonical product/release creation and editorial date review; a name
+link alone cannot make a missing three-date row appear. Re-measure effective
+identity and shared-date coverage after those steps, not just non-null
+`wine_reference_id` counts. Gate 4 remains **no-go**.
+
+**Gate 4 geographic links in the same draft #231, 2 November:** A sixth,
+not-yet-deployed migration and Cellar setup panel now let the owner confirm
+local region/subregion and appellation spellings for the household. The
+shared-window reader uses these links; an appellation must sit inside the
+resolved region. The links are audited, reusable across vintages, removable,
+and do not rename cellar wines or create shared aliases. Twenty-five local SQL
+assertions and 912 web tests passed. This closes the *mechanism* gap, not the
+data-coverage gap: no owner place links, canonical identities or profile
+dates were silently created or approved. After deployment and owner review,
+measure effective producer/cuvée/place links and actual profile-backed
+three-date windows on the real catalogue. Gate 4 remains **no-go**.
+
+**Gate 4 deployment and measured pre-link status, 2 November:** With the
+owner's instruction to proceed, all three pending reconciliation migrations
+were applied to linked `cellarmanager-v02-dev` after green CI, a fresh
+protected backup, and an isolated restore/rehearsal. The linked migration
+dry run is now empty; no owner name link or published date was created by
+the migrations. The signed-in preview showed both new owner panels. A
+read-only aggregate of the fresh restored copy (804 active cards) found 201
+shared identity contexts ready, 305 with producer/cuvée unresolved, 213
+with appellation unresolved, 75 with region unresolved, and 10 without
+required place/colour/vintage fields. These are **identity statuses, not
+profile-backed window counts**. The next Gate 4 work is to add verified
+canonical identities, confirm the local correspondences, and remeasure
+actual reviewed-profile three-date coverage. The full deployment record is
+[here](drinking-window-gate4-deployment.md); Gate 4 remains **no-go**.
+
+**Gate 4 producer-name correction in draft #231 (2 November, deployed to the
+linked database):** The owner found that local `Chaland` returned no shared
+producer even though the audited JSON archive contains `Domaine Sainte-Barbe
+— Jean-Marie Chaland`. The archive is a review queue, whereas the household
+search reads only canonical producer identities. A comparison of all 23
+audited profile names with the predeployment canonical snapshot identified
+nine missing producer identities; one identity-only migration adds those nine
+to the common base. It does **not** create global shorthand aliases, link any
+household catalogue, create cuvées/releases, stage or publish dates, or imply
+that all 23 producer profiles have been activated. The owner must still choose
+the now-searchable shared producer for local `Chaland`. The UI also explains
+this distinction when an archived JSON profile is not yet searchable. CI,
+backup, restored-copy rehearsal, and the linked migration push passed; the
+linked dry run reports zero pending changes. Signed-in owner confirmation in
+the preview is still needed before calling this a completed name link.
+
+**Gate 4 duplicate-identity safety check (2 November):** The owner then found
+several visually identical `Alvina Pernot` search choices. A fresh read-only
+linked public-data snapshot contains three distinct shared producer IDs with
+that exact name, each holding a different cuvée (Clos de la Garenne, Le
+Cailleret, Les Pucelles). A fourth visible occurrence can be the separate
+current-link label; the source list itself has three IDs. The preview now
+suppresses indistinguishable choices and asks for curator reconciliation,
+so the owner cannot accidentally link all local Alvina Pernot wines to only
+one of those partial identities. No producer identity or date has been
+merged or deleted. A verified, backed-up consolidation of these exact IDs
+requires the owner's explicit approval and a separate dependency check.
+
+The owner authorized that specific Alvina Pernot consolidation on 2 November.
+The follow-up Gate 4 migration retains the oldest producer ID, reparents the
+other two cuvées and any household preference to it, and refuses to proceed
+if an unreviewed alias, window, evidence row or other reference points to a
+retired ID. It intentionally does not make canonical names globally unique:
+different real producers may share a name. CI, fresh backup and restored-copy
+rehearsal passed; the single migration was applied to the linked project on
+2 November, followed by a dry run with no pending migration. The two
+duplicate producer rows were removed, while their cuvées and releases retain
+their IDs. This correction does not approve or publish a drinking window;
+Gate 4 remains a draft no-go for full rollout.
+
+**Gate 4 identity-path cleanup in draft #231 (3 November; code not yet
+deployed):** The owner correctly identified that the canonical producer graph
+had several creation routes. The LWIN match-confirmation route could create a
+new producer for every newly promoted LWIN7 even when an exact canonical
+producer already existed; the LWIN research-confirmation route chose the first
+same-name producer on ambiguity. A new migration makes both routes resolve a
+single normalized canonical name under a lock shared with the curator profile
+batch. A unique existing producer is reused; no existing producer means one
+new producer; multiple same-name producers or a missing source producer name
+block without promoting the product. The local `Pernot` text remains in the
+household and its explicit mapping points **toward** the shared ID. LWIN is
+still an optional external product identifier, not the identity authority for
+the producer JSON. Rollback-only local tests cover two Alvina Pernot cuvées,
+ambiguity, missing name, existing LWIN matching, and research reuse. Fresh CI
+passed; the linked dry run listed only the new migration, and a protected
+backup restored to a disposable database where the migration applied without
+changing wine, producer, product or LWIN counts. The owner then authorized
+linked application; the push and aggregate postflight passed, with no pending
+migrations. This is not a live-data merge, a date approval, or a claim of
+full profile coverage. A read-only postflight on the largest cellar counted
+802 active cards: 300 effectively linked to a shared producer, 17 to a cuvée,
+16 to a vintage and **502 still without a shared producer**. Those 502 are
+the next bounded household-name review queue, not 502 separate wine edits.
+
+**Finite Gate 4 exit check:** Keep this correction inside #231, not a new PR.
+CI, fresh backup, restored-copy rehearsal, authorized application and the
+linked duplicate-name check are complete. Next verify one producer/cuvée
+link in the signed-in preview and measure source-by-source window counts. A
+bounded exception list must identify any identity still needing owner review;
+no fuzzy match may be auto-accepted. Gate 4 may then hand the measured,
+unpublished base to Gate 5. Gate 5 remains responsible for the promised
+near-all-wines profile-backed coverage, publication and official-app
+verification; the 95% criterion is not waived or replaced by legacy-model
+dates. If the measured gap makes that impossible within the remaining PR
+slot, report it before claiming either gate complete.
+
+**Gate 4 continuation, 3 November (still draft #231; suggestion migration
+deployed):** The owner correctly
+objected that installing the LWIN correction did not finish Gate 4. The same
+PR now proposes an owner-only, read-only producer-name suggestion list drawn
+from canonical names and curated aliases. Exact, alias and similar-name
+suggestions are visibly distinguished. A separate, explicit checklist lets
+the owner save selected household links in a batch; no choice is preselected,
+and similar names never become global aliases. Opening that nested checklist
+no longer resets the producer panel. The curator profile-identity preview also
+offers a way to discard blocked entries and re-preview only the unblocked
+subset; that remains identity-only, never date approval. The migration and
+23 rollback-only local SQL assertions, focused UI tests, the full web
+suite and build passed. On an isolated restored copy of the pilot cellar,
+**22 of 136 unmapped local producer-name groups have exactly one suggested
+canonical producer, affecting 248 of 802 active wine cards**. Seven of the 22 are exact
+names and the other 15 are name-containment candidates that need the owner's
+review; these are not 248 confirmed links or active profile windows. The other
+114 groups have no candidate in the present canonical graph. This migration
+was applied to the linked project after explicit owner authorization, green
+CI, a fresh protected backup and a restored-copy rehearsal. The linked dry
+run now shows zero pending migrations. No household mapping or shared date
+was approved or published. Gate 4 remains open until name decisions,
+cuvée/release identities and reviewed date rows yield a
+measured, usable initial base; the legacy model still dominates current
+coverage.
+
+**Gate 4 owner-name review and Bernardins correction (4 November; same draft
+#231):** The owner saved 21 more household producer-name associations in the
+official app. A fresh protected linked snapshot, restored to an isolated
+database, now measures 32 mapped local-name groups and 538/802 active pilot
+wines with an effective shared producer (up from 300). Only 17 reach a shared
+cuvée and 16 a release. Of 147 local-name groups, 114 still have no candidate
+in the current 31-producer common graph; the sole remaining suggested group
+is `Bernardins` → `de Bernardins`, which the owner correctly questioned. The
+winery's own name is *Domaine des Bernardins*. A narrow migration in this PR
+keeps the existing shared UUID and links, renames its canonical display to
+`Domaine des Bernardins`, and keeps `de Bernardins` only as a source alias so
+older LWIN imports cannot create a duplicate. It has passed restored-copy
+rehearsal and all PR CI checks. After the owner's explicit authorization, a
+fresh protected backup was restored and rehearsed, and **only this migration**
+was applied to the linked project; the postflight dry run is clean. No date
+is approved or published by this correction. Gate 4 remains **no-go** until cuvée/release reconciliation,
+reviewed profile dates, and source-by-source coverage are measured.
+
+**Gate 4 new-profile intake audit (4 November; same draft #231):** The owner
+supplied Vajra and Roulot research files. Their 28 proposed exact releases
+line up by local cuvée alias, vintage and 750 ml format with 28 active pilot
+wine cards holding 35 bottles, subject to canonical identity and evidence
+review. They are not yet imported or published: nine empty optional
+descriptions fail the v1.1 schema, and both files carry a copied Carillon
+identity-policy sentence. The files need those narrow corrections before
+curator archival. At that point, the highest-impact missing producer profile was Alvina
+Pernot (23 cards / 32 bottles across two already owner-linked local labels),
+then Thomas Morey (8 / 18), Boxler (10 / 17) and Darnaud (8 / 16); Giuseppe
+Cortese was 5 / 8. See the [Gate 4 deployment audit](drinking-window-gate4-deployment.md)
+for the full priority table. This intake does not relax the Gate 4 exit test
+or add another PR slot.
+
+**Gate 4 additional owner bundle (4 November; still #231):** The owner has
+now supplied 19 more producer research files plus Alvina Pernot. Their 101
+explicit cuvée/vintage/format rows overlap with 101 active pilot wine cards
+holding 165 bottles, by local names only. This is an opportunity queue, **not
+active coverage**. All 20 files fail the agreed exchange validator: none of
+their 101 release rows supplies a confirmed named-vintage source, and eleven
+profiles have no sources at all. The ZIP explicitly calls its dates
+model-based estimates drawn partly from the owner's private CSV. The new
+files therefore remain outside the curator archive and publication until
+identity and provenance are checked; do not fabricate source pointers or
+weaken the published-data boundary to improve a coverage statistic. Keep
+verification and any narrow intake correction in #231, then remeasure real
+profile-backed coverage for Gate 5. No seventh PR is authorized.
+
+**Gate 4 consolidated producer-base intake (4 November; still draft #231):**
+The owner supplied a newer 46-producer, 598-cuvée research ZIP with 461
+three-date candidates. After a narrowly scoped normalization of blank
+optional cuvée descriptions, **46/46 exchange JSONs pass the native
+validators**. This is intake validity, not source/date approval. A comparison
+with the 23 already archived profiles found 323 unchanged rows, two changed
+rows and 345 older rows absent from the new lot. The supplied audit classifies
+all 345: 340 lack a named-vintage URL, four point to another cuvée, and one
+does not name the cuvée. The 2022 Bret Brothers changed dates agree with a
+checked retailer page; its 2024 page could not be retrieved, so that change
+remains unresolved. A corrected read-only pilot measurement, using the
+owner-reviewed producer labels, finds 97/802 cards with a textual exact
+cuvée/vintage/format overlap in the new lot, **not** the previously reported
+67; 104 cards overlap only the older omitted rows. None of these overlaps
+proves a canonical match or active window. The protected restored copy's
+actual effective sources are 751 model, two manual, 49 unavailable and
+**zero published shared profile** cards.
+The lot has no appellation or region fallback profiles. It was **not imported,
+staged, approved, published or enabled**. The [intake audit](drinking-window-final-producer-base-intake-2026-11-04.md)
+records the supersession and coverage risks. Gate 4 remains open and the 95%
+Gate 5 target remains unchanged; no additional PR is authorized.
+
+**Gate 4 exact-name reconciliation in draft #231 (4 November; local rehearsal
+only):** A new owner-scoped preview/apply batch links only a unique canonical
+cuvée whose normalized name is identical to the cellar spelling under an
+already-confirmed producer. It skips similar names, aliases, ambiguous
+products, groups with existing links and groups containing explicitly linked
+wines. Applying records an auditable cellar-only identity decision; it never
+creates a global alias, approves a date or publishes a reference. Eighteen
+rollback-only database assertions, the focused web tests and a production
+build passed. On a disposable restored clone with the current 28 shared
+products, only **one** active card qualifies; this is deliberately not a
+claim of useful drinking-window coverage. All 46 newer JSONs were then
+archived **in that clone only**. Using the existing curator identity-batch RPC,
+20 unblocked Mas Jullien release identities (four cuvées) were rehearsed,
+without staging dates. The exact-name batch then linked four Mas Jullien
+naming groups / 26 cards plus the existing one-card Cal Demoura opportunity:
+the clone's effective product/release identities rose from 17/16 to 44/28
+of 802 cards. **Published shared-profile windows remain zero.** The other
+profile identity plans are predominantly blocked on canonical region or
+appellation reconciliation; these are the next concrete Gate 4 data decisions,
+not a reason to substitute old-model dates. No clone operation touched the
+linked project or the owner's live cellar. The later authorized schema
+application is recorded below; Gate 4 remains **no-go**.
+
+**Gate 4 place reconciliation in the same draft #231 (4 November; local
+rehearsal only):** The curator can now request import-scoped, read-only
+suggestions where a composite region begins with one existing canonical
+parent, where a unique existing place alias applies, or where `1er Cru`
+spelling uniquely matches an existing `Premier Cru` appellation. Nothing is
+selected until the curator checks and accepts the
+displayed list; the server still rejects inconsistent region/appellation
+pairs. On the disposable clone containing the 46 final owner profiles, this
+found 41 region and 12 appellation suggestions across files. For their 460
+distinct cuvée/vintage keys, identity previews rose from **28 unblocked with
+no mapping** to **235 unblocked if every suggestion is reviewed and accepted**.
+This is potential identity work, not 235 approved dates or cellar windows;
+15 keys still lack a region and 210 lack an appellation after the suggested
+maps. No linked data or official-app date changed. The remaining geography,
+source review, release matching and cellar coverage are still Gate 4 work;
+do not treat this as Gate 4 completion or start another PR.
+On 5 November, fresh CI passed and a linked dry run named only the two
+pending identity-tooling migrations. A fresh protected export was restored
+to an isolated local database, both migrations applied there, and 26
+rollback-only assertions passed; the baseline wine/profile/reference counts
+were unchanged. This preflight was not permission to publish. The owner then
+explicitly authorized linked application. Both exact migrations applied
+successfully to `cellarmanager-v02-dev`; a fresh linked dry run found zero
+pending migrations, seeds or roles. No live profile import, household mapping
+batch, date approval/publication, or advice activation occurred, and no live
+aggregate or signed-in smoke test is claimed. The [deployment
+record](drinking-window-gate4-deployment.md) contains the backup,
+restored-copy and postflight details. Gate 4 remains draft/no-go while
+canonical identities, evidence and actual profile-backed coverage are resolved.
+
+**Gate 4 classified-appellation continuation (5 November, same draft #231):**
+The final 46-profile clone revealed 40 proposed rows where a `1er Cru` string
+can be traced through a unique existing classification to its appellation
+parent (21 distinct suggestions across 14 profiles). A new, read-only curator
+suggestion exposes that relationship for
+individual, initially unchecked review; it does not flatten the
+classification into a global alias
+or approve a window. Ten rollback-only SQL assertions and focused web tests
+passed on the disposable clone. Separately, 59 proposals say `appellation à
+préciser`; 38 are Mas Cal Demoura rows spanning years before the standalone
+Terrasses du Larzac AOC. They remain blocked pending release-specific place
+verification, rather than being mapped wholesale to today's appellation.
+All PR checks passed, and a fresh protected linked backup was restored into
+another isolated copy before repeating the migration and ten assertions.
+That copy's wine, account, archive, reference and cellar-link counts stayed
+unchanged. The linked dry run names only the new suggestion migration;
+application to the linked project still requires the owner's separate answer.
+The [Gate 4 deployment record](drinking-window-gate4-deployment.md) records
+the evidence and test boundary. This is still **no-go** for Gate 4 exit and
+profile publication.
+
+**Gate 4 exact-release reconciliation (5 November, same draft #231; linked
+migration deployed):** A reviewed identity batch now supplies private, release-specific
+name anchors. A local shorthand such as `Caillerets` can resolve a reviewed
+`Volnay 1er cru Les Caillerets` only after the household producer choice and
+appellation, colour, vintage and format also agree, with exactly one release
+left. No wine link, global alias or date is written. The migration passed on
+a fresh isolated restore, all four clean CI jobs passed, and the single
+migration was applied to the linked project after protected backup; its
+postflight ledger initially had zero pending migrations. A restored-copy
+postflight then exposed a `postgres` internal-reader permission gap that
+clean CI missed because of different migration ownership. The narrow grant
+follow-up was rehearsed and linked-deployed, with zero pending migrations
+postflight. The restored-copy context sweep now passes; a signed-in live app
+smoke check remains open. See the Gate 4 deployment record.
+The local Supabase test instance is behind current migrations, so its failing
+full run is not treated as a code verdict. Only one previously reviewed batch
+exists in the restored copy; this change alone does **not** materially raise
+profile-backed date coverage. Producer-profile batches, date review, safe
+`1C` classification and measured coverage remain Gate 4 exit work.
+
+**Gate 4 Premier Cru identity matching (6 November, same draft #231):**
+The proposed reader resolves a local `1C`, `1er cru` or `premier cru` suffix
+to the unique parent appellation in the cellar's resolved region. The local
+label remains unchanged. A Grand Cru is not reduced to a village, and broad
+unclassified windows are excluded for wines explicitly marked Premier Cru;
+exact-release and eligible group rows may still apply. On an isolated restore,
+the 804 unmerged cards changed from 213 to 107 unresolved appellations: 100
+more cards now have a producer context and six reach the producer-link step.
+The number with a resolved product rose from 22 to 28, and exact releases
+from 11 to 13. These are identity counts, not published-window coverage.
+The migration and eight targeted tests passed on a fresh restore, including
+under the internal `postgres` reader role; all PR CI jobs passed at `91b09cb`.
+The linked dry run named only the new migration, which was then applied; the
+postflight dry run found zero pending migrations, seeds or roles. Beforehand,
+schema and data were backed up to the protected temporary directory
+`/private/tmp/cellarmanager-gate4-premier-backup.But6Ne` (0700/0600); SHA-256
+schema `0fdb97258206a70ea8816275c683e9214e407516c231ed42e916de1d743543b3`,
+data `47083ac37fa1666a9516392c549577a398a54373202548389bda0391c30a78ea`.
+The backup restored to a separate local database before migration rehearsal.
+No live signed-in smoke test is claimed. Remaining work includes profile identity
+batches, reviewed dates, other appellation/region fallbacks and actual
+coverage against the gate's exit test.
+
+**Chagnoleau identity rehearsal (6 November):** For the latest archived
+producer profile, the existing identity planner accepts 17 of 18 candidate
+release identities when using unique producer/cuvée suggestions and the
+Bourgogne parent for Mâconnais; one appellation remains unresolved. This is
+an identity preview, not a review of 17 windows. The cited merchant pages for
+À la Côte 2018 and 2022 identify the producer, Saint-Véran, white wine and
+750 ml format. On an isolated restore, the regular curator batch operation
+created these two release identities inside a transaction, after which the
+cellar's À la Côte 2022 resolved to the shared release. The transaction was
+rolled back and no dates were staged. In the profile, the 2022 dates
+2024 / 2027–2036 are an editorial proposal; the 2022 merchant page mentions
+an optimum from 2026, not all three proposed years. A real curator-authenticated
+workflow remains necessary to record reviewed identities and publish dates.
+Source pointers: [2018 release](https://www.vinsetmillesimes.com/fr/frantz-chagnoleau/118788-frantz-chagnoleau-saint-veran-a-la-cote-2018.html),
+[2022 release](https://www.oenovinia.com/bourgogne/8160-saint-veran-a-la-cote-2022-domaine-frantz-chagnoleau.html).
+
+Across all 46 latest archived profiles, a read-only identity-plan rehearsal
+with the current unique identity/place suggestions returned 275 technically
+ready release candidates, 171 blocked by appellation and 15 by region. This
+does not establish that sources or proposed dates have been reviewed, and
+does not authorize blindly creating or publishing the candidates. The same
+isolated, rolled-back curator workflow was exercised end-to-end for the two
+Chagnoleau releases: two identities were created and two three-date proposals
+were staged in a draft, with the other 16 quarantined. Nothing from that
+rehearsal persisted or became visible to cellar users.
+
+**Shared IGP spelling (6 November):** The existing canonical `IGP Herault`
+is the Languedoc appellation for the official `Pays d'Hérault` indication.
+The [INAO specification](https://extranet.inao.gouv.fr/fichier/IGPHeraultPNO2022.pdf)
+also records its earlier vin-de-pays name. A proposed migration adds the
+shared `IGP Pays d’Hérault` and `IGP Pays de l’Hérault` spellings, with guarded
+stable place creation when absent on a fresh installation. On the isolated
+copy these resolve profile-place suggestions for La Grange des Pères and Mas
+Jullien; they do not automatically create releases or approve dates. Composite
+historical names mixing Saint-Guilhem-le-Désert and Hérault remain separate
+because their correct identity can depend on the vintage. The migration and
+three targeted checks passed on a fresh isolated restore, including under the
+internal reader role. All CI checks passed at `76bd424`; the linked dry run
+named only this migration, it was applied, and postflight found no pending
+migrations. Both aliases were read back from the linked project. The protected
+preflight backup is at `/private/tmp/cellarmanager-gate4-igp-backup.7MyUBH`
+(0700/0600); SHA-256 schema
+`6018f7f8e2a8c48a1866c25cd31a755deefe1cd5620fecf1ee4de8cd4692a6b3`,
+data `ac98db1a30135a66e31405e3f3ed8e278ea6c2bf90395b056061e103c9e069c9`.
+After the alias change, the same isolated planning exercise returned 295 of
+461 releases technically ready, with 151 blocked by appellation and 15 by
+region. These counts do not imply source review or publication. The linked
+reader returned 477 ready, 107 appellation-unresolved, 75
+region-unresolved, 135 producer-unlinked and 10 missing region/colour/vintage
+among 804 unmerged cards; 28 have a product and 13 a release. These remain
+identity counts, not published-window coverage.
+
+**Appellations that change with the vintage (6 November):** The official
+Daumas Gassac producer records identify the [2002 red](https://www.daumas-gassac.com/fr/millesime/mas-de-daumas-gassac-rouge-2002/)
+as Vin de Pays de l’Hérault and the [2018 white](https://www.daumas-gassac.com/fr/millesime/mas-de-daumas-gassac-blanc-2018/)
+as IGP Saint-Guilhem-le-Désert – Cité d’Aniane. The proposed curator workflow
+accepts an appellation for one cuvée and vintage, validates it against the
+region, and applies the same choice to identity creation and date staging;
+other vintages do not inherit it. On a rolled-back fresh restore, both
+identities and their matching draft previews resolved to their respective
+appellations. The profile's other unmatched 2018 red remained quarantined.
+The cellar's 2018 white currently says `Pays Herault`, so it must not be
+silently attached to the 2018 Saint-Guilhem identity. If reviewed anchors
+disagree about one shared release's appellation or colour, automatic cellar
+matching now stops for that release until the conflict is resolved. A
+confirmed vintage-specific choice is restored when a curator reopens the
+profile; unconfirmed choices are not persisted as approvals. The targeted
+database checks, curator-interface tests, web build and all clean CI jobs
+passed at `847c1f8`. After a protected schema/data backup and successful fresh
+restore, the linked dry run named only the vintage-specific migration; it was
+applied and postflight reports no pending migrations. The linked RPC permissions
+and a read-only sweep of the wine reader also passed. The protected backup is
+`/private/tmp/cellarmanager-gate4-vintage-backup.gZkJ2a` (0700/0600), schema
+SHA-256 `6018f7f8e2a8c48a1866c25cd31a755deefe1cd5620fecf1ee4de8cd4692a6b3`,
+data SHA-256 `906d4cb3d1db989e1da46ed34d8a1fe1581394c4b7315c940f7e7d6474ab8615`.
+The application interface remains in the PR preview until merge; no signed-in
+live smoke test is claimed. These checks do not approve or publish dates.
+
+**Reuse reviewed profile mappings:** The next proposed change restores
+producer, cuvée, region and appellation choices actually used in a confirmed
+identity batch when a curator reopens that profile. Vintage-specific choices
+are restored only for vintages included in a confirmed batch. A choice merely
+present for some other, unselected vintage is not converted into an approval.
+The isolated curator tests and web tests pass. This removes repeated mapping work but does not itself import or
+publish producer windows. Restoring a reviewed producer also discards any
+automatic cuvée suggestions belonging to a different producer.
+
+**Premier Cru group guard:** A place-based group for the parent village or
+region must not automatically treat a Premier Cru as an ordinary village
+wine. The proposed selector excludes such broad place-only memberships for
+Premier Cru, while allowing exact releases, explicitly reviewed product or
+release membership, an explicit cellar choice, or a verified classification
+place. Ten targeted checks passed on the isolated copy. Matching a dedicated
+Premier Cru group automatically still requires a classification identity in
+the wine context; this guard intentionally does not invent one.
+
+Both changes passed all CI jobs at `f49e52a`, were rehearsed together after a
+fresh protected backup and restore, and were applied to the linked project.
+The restored-copy tests passed (39 identity-batch and ten Premier Cru
+assertions); the linked postflight reported no pending migrations. The backup
+is `/private/tmp/cellarmanager-gate4-final-backup.b6QLua` (0700/0600), with
+schema SHA-256 `9e4711a02e4589f7f9de8eae1f63154c7f201e6364c3424d8493cdfbad3bb37d`
+and data SHA-256 `872f9c56c25708b58f54fc75e4b0550e7b9261b1a976d1a1113bc16c3eccb8fc`.
+The temporary backup is no longer present after the environment change on
+11 November; its recorded restore rehearsal remains the pre-deployment check,
+but that path must not be relied on for recovery.
+No signed-in live smoke test, profile publication or new cellar window is
+claimed. The interface changes remain in the draft PR until it is merged.
+On 11 November a read-only linked check found 69 archived profile documents
+(including older versions), one producer-profile row staged and zero
+published reference versions. Subsequently, through the signed-in curator
+interface, the reviewed shared identities for Frantz Chagnoleau À la Côte
+2018, 2022 and 2024, Madrigal 2019, and Pastoral 2016 were created after
+checking their vintage-specific wine listings. The first two profile estimates
+(2018: 2021 / 2024–2031; 2022: 2024 / 2027–2036) were explicitly adopted as
+uncertain editorial estimates and added to draft version 2, not attributed to
+the producer. The draft then held four approved windows and passed its
+technical check. The app's whole-cellar preview reported two matches out of
+804 cards, and 198 cards with unconfirmed identities. This is not sufficient
+coverage for the agreed Gate 4 exit and nothing was published. The other
+three identities have not had their dates approved: the current staging
+interface stages every technically ready item together, preventing selective
+review when evidence differs. Archived documents are not active windows.
+The same draft PR now supports explicit per-window selection for producer
+profiles, with server-side rejection of stale, duplicated or ineligible
+selections. All CI checks passed at `0bcd9ac`; the sole migration was applied
+to a fresh restored copy where all 32 exchange tests passed, and then to the
+linked project. The postflight migration dry run was empty. The protected
+temporary backup was `/private/tmp/cellarmanager-gate4-selected-backup.dQZC97`
+(directory 0700, files 0600), schema SHA-256
+`b91d6793cea3b8f72effc4da3fd3f8d46872e86009663dd7f0bab33f10cfd3b8`,
+data SHA-256 `f46417b29a4860e41809eae4203a1138d7a466b224add2e9c60f3e1732be8181`.
+This is temporary sensitive material, not a durable backup. A signed-in
+curator used the deployed preview to select and stage only the 2024 À la Côte
+window, leaving Madrigal 2019 and Pastoral 2016 unapproved. The draft now has
+five reviewed rows; none is published.
+For À la Côte 2024, the profile's 2027 / 2030–2039 estimate is consistent
+with the available context: the [2024 merchant listing](https://www.oenovinia.com/bourgogne/10018-saint-veran-a-la-cote-2024-frantz-chagnoleau.html)
+identifies the bottle and gives a maturity indication from 2028; the
+[Vinous wine page](https://vinous.com/wines/domaine-frantz-chagnoleau-saint-veran-a-la-cote)
+shows a 2028–2040 drinking range. Neither source publishes the three
+CellarManager milestones. The other two newly created identities do not
+constitute approved dates.
+
+The 12 supplied Bourgogne-area exchange documents were then saved through
+the curator interface: 11 appellation profiles and one regional profile.
+They retain their descriptions, source pointers and 485 proposed windows for
+review; import alone does not approve or publish the windows. In particular,
+Saint-Véran groups 20 vintages together, including some first-tasting years
+equal to the vintage. Treat those estimates individually, not as established
+facts or as automatically approved dates. The current place-profile stage
+operation works on a whole group rather than individual vintages; resolving
+that limitation and measuring actual resulting cellar coverage remain open.
+On the restored copy, independently staging the full Saint-Véran profile in a
+rolled-back transaction produced 34 matches among 804 cards, compared with
+two in the pre-import draft. Independently staging the whole Bourgogne region
+profile produced 192 matches. These are alternative simulations, not additive
+counts, approvals, publications or claims that the dates are verified. They
+use the backup taken before the later À la Côte 2024 addition. Both
+transactions were rolled back, and the 198 unresolved identities remained.
+An additional combined rollback-only rehearsal of all 12 profiles staged
+16 technically ready groups containing 320 candidate windows and quarantined
+nine groups; its impact was also 192 matched cards of 804, not 192 plus the
+Saint-Véran count. Within that simulation À la Côte 2019 and 2021 selected
+Saint-Véran estimates, while 2022 selected the more specific producer/cuvée
+estimate. These figures use the same pre-2024-row backup and are not live
+approvals or a statement that all selected estimates are reliable.
+All nine quarantined groups are Premier Cru climat groups whose members do
+not yet resolve to unique canonical place identities. On this restored
+catalogue, 172 unmerged cards have a Premier Cru marker in the appellation
+text, including 40 Puligny-Montrachet, 23 Rully, 22 Saint-Aubin and 14
+Meursault cards. This count is not the number that could automatically match
+the nine groups: the exact climats and producer profiles still matter. The
+classification-place identity path needs to be completed without assigning a
+village or region group to a Premier Cru by accident.
+Nine blocked groups are specifically Premier Cru climat groups. The
+selector also rejected an explicitly supplied exact climat because the
+Premier Cru guard only allowed a classification place. A narrow correction in
+the same draft PR accepts a verified matching climat while still rejecting a
+different climat, a missing climat, and an unclassified parent-place group.
+Thirteen rollback-only tests passed on the restored copy and all CI checks
+passed at `63c870d`. The single migration was then repeated on a current
+backup and applied to the linked project; the migration postflight was empty.
+The protected temporary backup is
+`/private/tmp/cellarmanager-gate4-climat-current.bsnX1r` (0700/0600), with
+schema SHA-256 `f40768ae5bb6cd8740c61b9138a51f05cb7ce60fca41370139fb9b15b723688d`
+and data SHA-256 `f972febd773d69d5e1669ef11391f5690dfd32dd504958c48bcfbaabc16766a2`.
+The backup is temporary, not a durable managed backup. This change does not
+create or resolve any real climat identities by itself. For example, the
+official [INAO Meursault specification](https://extranet.inao.gouv.fr/fichier/pno-cdc-AOC-Meursault-cn250612.pdf)
+lists the Premier Cru climats, but each identity must remain scoped to its
+own appellation, because the same climat name can occur elsewhere.
+
+**Real precedence rehearsal:** The supplied Saint-Véran place JSON was
+imported and staged in the same rolled-back isolated transaction as the two
+Chagnoleau identities and dates. Its village-white group supplied 20
+candidate vintages. For the cellar's `À la Côte`, the draft selector returned
+2019: 2020 / 2023–2029 (appellation), 2021: 2022 / 2025–2031
+(appellation), and 2022: 2024 / 2027–2036 (producer/cuvée/vintage). This
+demonstrates precedence with real submitted data; it is not publication or
+evidence that these estimates are official producer dates. The Saint-Véran
+profile, the two identities and all staged rows were rolled back.
+
+**Selective place-vintage review:** The previous place-profile
+workflow staged every eligible vintage in a group at once. This PR adds
+selecting individual vintages, retaining already staged years and refusing a
+later addition if the reviewed group or its membership has changed. On a
+restored copy, 45 database assertions cover permissions, stale previews,
+duplicate selections, independent years and changed memberships. A separate
+rollback-only rehearsal selected just the 2019 and 2021 Saint-Véran windows
+and confirmed the same producer-over-appellation precedence above. These are
+editorial estimates, not producer-published dates. CI passed at `87109df`;
+the migration was applied after restoring and testing a fresh temporary backup
+(`/private/tmp/cellarmanager-gate4-place-selected.eoyfgu`, 0700/0600;
+schema SHA-256 `30cd9e7061ac5e0a6a690ec30b119329f85032e93baf6a475fd22ce9e84764ad`,
+data SHA-256 `72432949bfb7e2bf2e31c1fe02eae672f51117cbbc97e92181f6574863cfb2ff`);
+postflight showed no pending migration. Through the curator interface, the
+2019 and 2021 fallback estimates were staged in unpublished draft 2 with the
+limitations of their early tasting years recorded. The 2022 estimate
+(2023 / 2026–2032) was subsequently staged in the same way, recording that
+the first year is extrapolated. No window was published or activated in a
+cellar. The draft review list incorrectly showed the parent region rather than
+Saint-Véran. A display-only correction passed CI at `b1ad8c0`, was repeated
+on a fresh restored backup and applied; postflight reported no pending
+migrations. The protected temporary backup is
+`/private/tmp/cellarmanager-gate4-titles.R0Q7bA` (0700/0600), with schema
+SHA-256 `3a051373f537be76ec7f2d6e302251276285b943d3c6600ab486404361078067`
+and data SHA-256 `6878f0bb34573e24c5f126f477ae3fae3e02edf2aeb5a149461f1bee692152e2`.
+It predates the subsequent 2022 staging and is not a durable managed backup.
+The corrected names and eight-row unpublished draft were checked in the app.
+
+**Grand Cru safety before regional expansion:** Inspection found that the
+generic fallback guard recognized `1C` / Premier Cru but not `GC` / Grand Cru.
+Consequently, a regional or village category explicitly excluding classified
+crus could otherwise be applied to a Grand Cru. The proposed correction treats
+both explicit labels as requiring a reviewed specific membership, while still
+allowing a specific cuvée or release. Eighteen isolated assertions cover
+Premier Cru, Grand Cru, village and regional fallbacks and exact releases.
+It does not identify a Grand Cru whose name has no classification marker;
+canonical classification still needs to be established for those wines.
+CI passed at `7ffbc15`; the migration was repeated on a fresh restored copy
+and applied to the linked project, with an empty postflight. The protected
+temporary backup is `/private/tmp/cellarmanager-gate4-classified.ev1jij`
+(0700/0600), schema SHA-256
+`981b8a9d514eebff3c59699bc0475f11d793e307616fb33c547434b5c131dc8c`,
+data SHA-256
+`b75b7940d29f742965a65a654483fc9967f7150dc156333d66c22d5b28258888`.
+It is temporary, not a durable managed backup. Broad regional profiles must
+not be activated on the assumption that classification is fully resolved.
+
+**Exact climat matching (in progress):** Inspection found that the real draft
+and published readers passed no climat to the matcher, even though explicitly
+classified climat groups were supported. The proposed shared matcher now
+derives a unique canonical climat or explicitly curated alias under the
+already resolved appellation, only when the local wine explicitly indicates a
+classified cru. An optional appellation prefix and leading `Les` are ignored,
+so `Caillerets` can match `Meursault Les Caillerets`; other fuzzy matches are
+not assumed. In particular, `Le Porusot` is not collapsed into `Porusot`:
+the [Burgundy appellation specification](https://www.vins-bourgogne.fr/nos-vins-nos-terroirs/la-bourgogne-et-ses-appellations/gallery_files/site/321/19990/20242.pdf)
+lists both names. It preserves the cellar spelling, never guesses among multiple
+candidates, and keeps an explicitly supplied place. Twenty-five rollback-only
+assertions cover scope, ambiguity, aliases and fallback priority. No canonical
+climat is created by this change; the missing shared climat identities and
+their source review remain work to do. On a restored copy, a rolled-back
+simulation with two hypothetical canonical identities recognized four
+Meursault Charmes and six Meursault Perrières cards; this is not a date match
+or a live identity creation. CI passed at `85def9c`, and the migration was
+applied after a fresh backup and restored-copy rehearsal; postflight showed no
+pending migrations. The temporary protected backup is
+`/private/tmp/cellarmanager-gate4-climat-resolve.iRzcSy` (0700/0600), schema
+SHA-256 `048b4b2a516cc7dc13980d91807adb5465ef90c57113b623f6713496e6cc6d26`,
+data SHA-256 `3eb8b0fff8638c6cbb524a7c1f8f94e52503f936eb261537c90dbc836aeaea39`.
+The backup is temporary, not a durable managed backup. Creating reviewed
+canonical climates through the curator interface remains the next step.
+
+**Curator climat creation (in progress):** The proposed profile-admin panel
+lets an authorized curator select an appellation, inspect its existing
+climates, and create a checked list with a source and recorded rationale.
+Creation is atomic, rejects duplicate identities under the same appellation,
+and creates no dates or cellar links; identical names under different
+appellations stay separate. Fifteen database assertions and fourteen focused
+web tests passed. On an isolated restored copy, the 19 Meursault climat names
+in the supplied profile were created in a rollback-only rehearsal against the
+[official appellation list](https://www.vins-bourgogne.fr/nos-vins-nos-terroirs/la-bourgogne-et-ses-appellations/gallery_files/site/321/19990/20242.pdf).
+The Premier Cru group then became technically ready and eleven cellar cards
+matched three climates; this did not stage any dates or create live identities.
+CI passed at `4a7192a`; the migration was repeated on a fresh restored copy
+and applied, with no remaining migrations in postflight. The temporary
+protected backup is `/private/tmp/cellarmanager-gate4-climat-create.48YEda`
+(0700/0600), schema SHA-256
+`ed5939f0fce45b624c2405a9368480cdc30383e00bc0abeb261b847607f8583f`,
+data SHA-256
+`53c3e5fed924eebf0ac5624099aa4a219d55f5ffa9ac151151bda71ba57c3288`.
+It predates the subsequent identity creation and is not a durable managed
+backup. Through the authenticated curator interface, the 19 official
+Meursault Premier Cru names were then added under Meursault with the source
+and rationale recorded. No dates, household wine records or publication were
+changed by that action; the profile's broad 2022 Premier Cru estimate still
+requires review against the distinction between optimum and drinking horizon.
+For example, the supplied Bouzereau Perrières 2022 producer profile proposes
+2026 / 2030–2039. Its [named retailer source](https://www.lecarredesvins.com/16598-domaine-michel-bouzereau-et-fils-meursault-perrieres-1er-cru-2022-6627200.html)
+distinguishes tasting from 2026, optimum 2028–2038 and a later drinking
+horizon; the [producer's general page](https://michelbouzereauetfils.com/meursault-perrieres-1er-cru/)
+gives 12–15 years rather than the three specific years. The producer-profile
+dates are an editorial proposal, not producer-published milestones. By contrast,
+the broad Meursault Premier Cru 2022 profile proposes 2026 / 2031–2043 across
+19 climates. Sources vary by wine and some describe 2040+ as a drinking
+horizon rather than the end of optimum. Do not assert that the broad range is
+the producer's own recommendation or approve it solely from that horizon.
+The exact Bouzereau Perrières 2022 identity and its 2026 / 2030–2039
+editorial estimate were subsequently reviewed and staged in draft 2 through
+the curator interface, without linking or changing a household wine and
+without publication. A live read-only coverage check still found 27 of 804
+cards matched, not 28: the local `Perrières` / `Meursault 1C` spelling did
+not match the reviewed full name `Meursault Premier Cru Perrières`.
+
+**Classified release short names (deployed):** The correction
+matches a reviewed full Premier Cru name to its short cellar spelling only
+when the cellar also says Premier Cru/1C and the already-confirmed producer,
+appellation, colour, vintage and bottle format agree. It does not write a
+household mapping, collapse Grand Cru into Premier Cru, or choose between
+multiple releases. Forty-three isolated identity-batch assertions passed;
+CI passed at `6763868`. The correction was applied after a fresh protected
+backup and successful restored-copy test of the actual Bouzereau 2022 card;
+postflight showed no pending migrations. The temporary backup is
+`/private/tmp/cellarmanager-gate4-release-names.XK4nTb` (0700/0600), schema
+SHA-256 `d98c2a7cbf3cfefdadd3d41b86df184c6e6052f5fc5103f0167fa7eebe2bd912`,
+data SHA-256 `b049e3e533ddfe164b6430ca6ab3c11a6d14d20e45251a8df79568bb30fa56a0`.
+The linked read-only matcher now resolves Bouzereau Perrières 2022 to its
+specific unpublished window. This backup predates the subsequent Tessons
+staging and is temporary, not a durable managed backup.
+
+The supplied Bouzereau Les Tessons 2022 (2025 / 2027–2033) and 2023
+(2026 / 2028–2034) estimates were also staged through the curator interface
+after checking the [2022](https://www.lecarredesvins.com/16593-domaine-michel-bouzereau-et-fils-meursault-les-tessons-2022-6626900.html)
+and [2023](https://www.lecarredesvins.com/18237-domaine-michel-bouzereau-et-fils-meursault-les-tessons-2023-7000800.html)
+wine-specific sources. Both sources give the same first-tasting years and
+optimum bounds one year earlier than the profile; this difference was recorded
+in the review rationale. A live read-only check confirms both cellar cards
+resolve to their own draft release windows. No shared version is published.
+
+The Bouzereau Genevrières 2022 identity and profile estimate
+(2026 / 2029–2037) were staged through the curator interface as an editorial
+estimate. The [specific 75 cl retailer page](https://www.lecarredesvins.com/16594-domaine-michel-bouzereau-et-fils-meursault-genevrieres-1er-cru-2022-6627000.html)
+gives 2026 / 2027–2036 and a separate 2038+ drinking horizon; the review
+records the difference rather than attributing the selected optimum to that
+source. The [producer](https://michelbouzereauetfils.com/meursault-genevrieres-1er-cru/)
+gives general ageing guidance, not these vintage-specific milestones. The
+entry remains in the unpublished draft.
+
+Six Mas Jullien Autour de Jonquières releases (2014, 2015, 2016, 2018,
+2020 and 2021; 750 ml) were created and staged after checking the named
+vintage-specific retailer pages. The profile's three-date estimates and the
+retailer optimum differ by zero to two years at each optimum boundary; the
+curator rationale records the actual source values rather than presenting the
+profile estimates as quotations. All six match cellar cards in a linked
+read-only preview; they are not published.
+
+Three additional Mas Jullien releases were reviewed and staged: Carlan 2022
+(2024 / 2026–2035), La Brune 2022 (2027 / 2031–2039), and Lous Rougeos 2018
+(2022 / 2026–2034). Their review records distinguish those profile estimates
+from the respective wine-specific retailer optima of 2025–2035, 2032–2037,
+and 2025–2033. The linked preview confirms three further cellar-card matches.
+Autour de Jonquières 2022 (2025 / 2029–2040) was subsequently staged after
+comparison with [Les Passionnés du Vin](https://www.lespassionnesduvin.com/mas-jullien-coteaux-du-languedoc-rouge-autour-de-jonquieres-2022.html)
+and [Le Carré des Vins](https://www.lecarredesvins.com/18381-mas-jullien-autour-de-jonquieres-2022-7180500.html);
+the different retailer estimates and the profile's editorial nature are
+recorded. One additional cellar card matches the exact release.
+
+**Coverage research:** Several supplied latest producer profiles omit vintages
+found in older profile versions. For example Chagnoleau À la Côte 2019 appears
+in version 1.2.0 but not 11.0.0. The older estimate must not silently override
+the later audited dataset: assess its source and vintage-specific evidence
+before bringing it forward. A read-only comparison found 345 older proposal
+rows across 21 producer profiles without an exact newer counterpart when
+compared by normalized cuvée name, colour, vintage and format. This is an
+investigation queue, not 345 verified losses or publishable windows: renamed
+cuvees and changed identities can also account for differences. Prioritize
+rows relevant to the actual cellar and independently recheck them. Likewise
+the proposed generic Pouilly-Fuissé 2021
+window ends in 2035, while [Hachette](https://www.hachette-vins.com/guide-vins/les-vins/dom-carrette-2021-2024/202465241/)
+recommends 2024–2028 for an actual Carrette 2021; the latter is a drinking
+range, not necessarily an optimum, but this material discrepancy needs review
+before using one geographic fallback across all such wines.
+
+As the first individually checked older-only example, Chagnoleau Clos
+Saint-Pancras 2021 (2023 / 2025–2031) was staged from profile 1.2.0 after
+checking the exact 75 cl identity and the [retailer drinking guidance](https://laroutedesblancs.com/module/mwslrdb/lrdbpdf?id_product=4906).
+The retailer recommends drinking through 2029, two years earlier than the
+profile's estimated optimum end; this is recorded, and neither its range nor
+the three milestones are attributed to the producer. A linked read-only check
+confirms the corresponding cellar card matches this unpublished release.
+
+**Regional appellation identities:** The reference had the regions Bourgogne,
+Beaujolais and Languedoc but not the homonymous official appellations. All
+three appellation identities were created under their corresponding regions
+through the curator interface, with INAO references; no dates or cellar wines
+were modified. Linked read-only checks show the three exact cellar labels now
+resolve for 49 cards (43 with a resolved producer, six still lacking one).
+An identity match alone is not a drinking window or evidence of publication.
+After those identities were added, the Bourgogne regional import exposed a
+name-resolution bug: its explicit region member was treated as ambiguous with
+the homonymous appellation. The `20261106230000` migration uses the
+profile's existing anchored place when a member repeats its name, while still
+quarantining other ambiguous descendants. Reproduced on a restored copy;
+six focused tests and 47 existing profile exchange tests pass. CI passed, a
+protected schema/data backup was restored and the migration rehearsed, then
+the single migration was applied to the linked project. Both actual Bourgogne
+categories now preview as ready. It changed no wine or window.
+
+**Narrow regional fallback and classification:** Four broad Bourgogne 2021/22
+regional estimates were simulated in a rolled-back transaction on the restored
+copy. They would match 51 extra cards, but inspection revealed that at least
+one known Premier Cru, Louis Boillot Les Pruliers 2021, lacked its classification
+in the local name and would receive a generic region estimate. No broad regional
+fallback was staged. Instead, the curator prepared the supplied editorial white
+2021 (`2022 / 2025–2029`) and 2022 (`2023 / 2026–2030`) estimates in a regional
+group explicitly limited to the Bourgogne appellation. The group's definition,
+membership and both rows were reviewed, with context links and no claim that
+the sources published those dates. They remain unpublished.
+
+The `20261107000000` migration also honours Premier/Grand Cru in the
+wine's separate classification field when guarding generic fallback. It does
+not infer an unmarked cru; canonical classification of known climates still
+requires a scalable reviewed-identity solution. Twenty-nine SQL assertions
+passed on a fresh protected restore; CI passed and the single migration was
+applied to the linked project. A read-only check found 804 unmerged wine cards,
+197 flagged for cru protection, including four with the explicit field. The
+place-creation form no longer imposes hidden validation
+on its parent fallback form; its own create button retains validation, covered
+by a focused UI test.
+
+The seven matched regional cards are not all verified identities: one is
+locally labelled `Clavelier / Aligoté / Bourgogne / 2022`, whereas the
+[producer's cuvée page](https://bruno-clavelier.com/fr/cuvees.php?id=13)
+identifies Bourgogne Aligoté, a different appellation. The cellar entry has not
+been changed. The draft comparison currently cannot detect that discrepancy;
+resolve or explicitly exclude the mismatch before publication, and do not count
+that row as a validated appellation match. A separate older `À la Côte 2019`
+profile proposal was inspected but not staged: it describes its milestones
+as extrapolated from other vintages, not as independently sourced dates.
+The exact 75 cl Pastoral 2021 and 2022 identities were then curator-reviewed
+and created. Pastoral 2022 was staged from the older supplied profile at
+`2025 / 2029–2036`; its review records both Vinous's broader reported drinking
+window and Viniou's shorter optimum estimate, without attributing the three
+dates to the producer. The linked matcher confirms the corresponding 2022 card
+is an exact-release draft match. The 2021 dates remain unstaged after a material
+source disagreement.
+
+**Reviewed profile aliases (12 November):** The four Daumas Gassac Rouge
+2011, 2012, 2013 and 2015 identities were checked against producer vintage
+records, with 750 ml cross-checked, and their supplied editorial estimates
+were approved into draft 2. Their precise dates are not claimed as published
+by the producer. The 2008 label remains unresolved because the producer's
+historical appellation differs from the later IGP; it was not included.
+The identity reader was not using explicit cuvée aliases from reviewed JSON
+profiles. Migration `20261107010000` adds those exact aliases while retaining
+producer, appellation, colour, vintage, format and uniqueness checks. Profiles
+with name histories are excluded from this automatic alias step. A protected
+fresh backup was restored and the migration rehearsed; 46 identity assertions
+and all PR CI checks passed. The migration was then applied to the linked
+project. Postflight: 810 wines, 27 reviewed anchors, zero published versions,
+no pending migrations, and the four Daumas cellar cards resolve to their
+reviewed releases without changing local names. On the restored copy, draft 2
+matches **54 of 804 non-merged cards**: 22 exact releases, 25 appellation and
+7 region. These are potential draft matches, not live coverage; the known
+Aligoté conflict above is included and must be resolved before publication.
+
+**Langoureau follow-up (12 November):** After checking producer, cuvée,
+classification, vintage and 75 cl against named sources, the curator created
+shared identities for Le Champlot 2017, La Garenne 2021 and En Rémilly 2019 and
+2022. All four local cards resolve without renaming. Their profile estimates
+were staged in draft 2, which now holds 34 windows. The review explicitly
+records the Hachette 2020–2024 recommendation for Champlot and the difference
+between Vinous's 2026–2038 overall drinking window and Viniou's 2028–2033
+optimum for En Rémilly 2022; the three milestones remain editorial estimates.
+A subsequent read-only linked measurement finds **58 of 804** non-merged
+cards matching draft 2: 26 release, 25 appellation, 7 region. This is not
+live advice or a completed quality review; the previously identified Aligoté
+conflict remains in the seven regional matches.
+
+The next reviewed Langoureau batch added identities for La Garenne and Les
+Chalumaux 2019 and 2022, all 75 cl Puligny Premier Cru. The supplied editorial
+windows for La Garenne 2019 and Les Chalumaux 2019/2022 were staged, with
+Viniou's estimates explicitly identified as algorithmic rather than source
+facts. La Garenne 2022 was not staged: its proposed end of optimum (2039)
+differs materially from a retailer's overall 2026–2032 drinking window, so
+the difference must be reviewed without assuming the two concepts are equal.
+Draft 2 now has 37 windows. A linked read-only measurement finds **61/804**
+non-merged cards matched (29 exact release, 25 appellation, 7 region); these
+are still draft matches, including the known unresolved Aligoté discrepancy.
+
+**Saint-Aubin classification preparation:** The curator added the 30 named
+Premier Cru climates to the shared geography using the
+[official appellation specification](https://www.bourgogne-wines.com/our-wines-our-terroir/bourgogne-and-its-appellations/gallery_files/site/321/19990/20261.pdf).
+This created no date and changed no cellar entry. The final climate named
+`Village` was added only after a rolled-back restored-copy test confirmed that
+an ordinary village wine does not identify that Premier Cru; the same check
+is now a permanent database regression test. The complete 30-member profile
+group now previews as technically ready, but its generic 2017 window was not staged: its
+optimum ending in 2036 is much later than Hachette's 2020–2024 drinking
+recommendation for Langoureau Champlot 2017. These are not identical claims,
+and the specific producer row has priority, but the magnitude warrants review
+before applying the generic group to other producers. No live window has been
+published or enabled.
+
+**Saint-Aubin 2018 and producer precedence (13 November):** The 2018 white
+Premier Cru fallback (`2020 / 2023–2034`) alone was added to the unpublished
+draft, restricted to the 30 officially documented climates; it is explicitly
+an editorial estimate, not a claim that the appellation published the three
+milestones. The curator separately reviewed Bas de Vermarain 2018 using its
+existing LWIN identity and Sur Gamay 2019 and staged their producer-specific
+estimates (`2021 / 2024–2029` and `2022 / 2025–2031` respectively). Their
+review notes record Hachette's different drinking recommendations rather than
+attributing the estimates to it. A linked read-only postflight verified that
+Bas de Vermarain selects the exact release while En Rémilly 2018 uses the
+appellation fallback. Draft 2 now has **40 windows** and matches **64/804**
+non-merged cards (31 release, 26 appellation, 7 region); this is not live
+coverage, and the previously identified Aligoté discrepancy remains.
+
+**Reviewed producer aliases for climates (13 November, applied):** A
+migration allows a classified wine's climat to be resolved through explicit
+aliases on the same reviewed producer cuvée, even when the household vintage
+has no exact producer-release entry. This addresses `Champlot` versus the
+official `Les Champlots` without changing local names, creating global aliases,
+or inventing a release or date. It requires the reviewed producer, matching
+appellation and colour, explicit cru status, a unique product and climat, and
+no recorded cuvée name history. The isolated copy passed 53 profile-identity
+and 31 Premier Cru assertions, including ambiguity and historical-name guards.
+The migration was applied after green CI and a fresh protected backup and
+restored-copy rehearsal. Linked postflight identified all six Langoureau
+Champlot cards with Saint-Aubin Les Champlots: the 2017 exact producer window
+remains first, 2018 uses the Saint-Aubin fallback, and the four other vintages
+remain unmatched because no applicable window has been staged. The restored
+copy now matches **65/804** cards (31 release, 27 appellation, 7 region),
+including the known Aligoté discrepancy. Live totals remain 810 wines, 37
+reviewed anchors, zero published versions and zero pending migrations.
+
+**Puligny classified-appellation hierarchy (13 November, applied):**
+The legacy shared identities for `Puligny-Montrachet` and
+`Puligny-Montrachet Premier Cru` were siblings, although the submitted profile
+and the [appellation specification](https://www.bourgogne-wines.com/wine-and-terroir/bourgogne-and-its-appellations/gallery_files/site/321/19990/20255.pdf)
+place its 17 Premier Cru climates under Puligny. The proposed migration retains
+both existing IDs and recognises the classified identity as belonging to the
+base appellation, whether legacy geography stores it as a sibling or a child.
+It enables a reviewed group anchored at the base to match its named climate. It
+does not assign a broad village window, create dates, publish a reference or
+modify cellar wines. It also rejects conflicting Grand Cru labels and keeps
+exact-release priority, and does not change legacy geography or old-model
+ancestry. After a protected fresh linked backup, restored-copy rehearsal and
+green CI, the migration was applied. The copy passed 40 Premier Cru and 53
+profile-identity assertions. The curator interface then created the 17
+official Puligny climates, with their source, without changing wines or dates;
+the supplied Puligny profile now finds all 17 and reports its three groups as
+ready for review. No Puligny appellation window has been staged. The cellar
+wine `Carillon · Referts · 2022` was explicitly matched in the app to the
+existing LWIN7 1195121 after checking its already-linked Jacques Carillon
+producer, appellation, cuvée, colour and 75 cl format. This records an identity
+link, but does not rename the wine or change stock. The curator then reused
+that shared product and 2022 release rather than creating duplicates, and
+staged the supplied specific 2026 / 2030–2039 editorial estimate in draft 2.
+[Le Carré des Vins](https://www.lecarredesvins.com/17119-domaine-jacques-carillon-puligny-montrachet-1er-cru-les-referts-2021-6653400.html)
+reports an optimum 2028–2037 and [Farr Vintners](https://farrvintners.com/wine.php?wine=111524)
+reports a general 2026–2045 drinking range; neither publishes this exact
+three-date synthesis. The general 2022 Premier Cru estimate ends in 2044 and
+differs by five years from the specific estimate; keep this discrepancy visible
+during review. Draft 2 contains 41 windows and is not published.
+
+**Partially identified wine-card fix (13 November, PR only):** The real
+Carillon card exposed `Invalid maturity response: product name` when its
+producer was resolved but its product was still unknown. The frontend now
+accepts the database's nullable product name and offers a producer/appellation
+rule, not a product-specific rule, until a product is identified. Targeted
+parsing and UI tests and the web build passed. This frontend change is not yet
+merged into the official app.
+
+**Curator LWIN reuse from profiles (13 November, local testing):** The
+Carillon case showed that the profile workflow searched only materialised
+products, even when the same wine was already present in the imported LWIN
+catalogue. A new curator-only search and reuse action works directly from a
+profile, without linking a cellar wine, approving dates, or publishing. It
+checks the selected shared producer, exact cuvée name or safe reviewed alias,
+colour, known appellation and classification; historical aliases are excluded.
+An existing matching product must be reconciled instead of duplicated. The
+decision is audited and LWIN identifiers remain unique. Tests on a private
+copy include the real Carillon LWIN identity and 68 database assertions;
+targeted web tests and the build passed. CI, fresh backup, restored-copy
+rehearsal, linked migration and signed-in preview verification are still
+required. This path is a general app feature, not a cellar-specific mapping.
+
 **Execution status (the contract defines each exit test):**
 
 **Hard PR budget:** [PR #227](https://github.com/alexv3429/cellarmanager/pull/227)
@@ -204,9 +1355,9 @@ in every PR description.
 | 0. Lock product contract | Verified by owner on 29 October 2026; #227 merged and nine migrations safely deployed | Preserve the agreed contract and acceptance cases. |
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
-| 3. Complete profile exchange | PR #230 open in slot 4/6; full CI green, including the new rollback-only import-to-publication test across two cellars; 23-file read-only validation and signed-in owner import/preview/export checked; exact-version UI handoff covered by web tests; two linked migrations backed up, rehearsed, applied and checked; one Burgaud file saved privately and research candidates separately added to Proposals, nothing staged or published live | Ready for owner merge review. Burgaud's unresolved exact identities remain quarantined for Gate 4; optional facts remain private until a later display model is reviewed. |
-| 4. Prepare initial common base | Not started | Process all 23 supplied files and reviewed fallbacks in staging; prepare an approved publication manifest and quarantine every exception with a reason. |
-| 5. Release and verify | Not started | Rehearse and authorize migrations, publish the approved initial base, pilot on mobile, then verify ordinary cross-household publication and rollback on the official app. |
+| 3. Complete profile exchange | #230 merged in slot 4/6; full CI green, linked migrations backed up/rehearsed/applied; signed-in owner import/preview/export checked; one Burgaud file saved privately and candidates added to Proposals, nothing published live | Preserve full-profile exchange and audited in-app curator path. |
+| 4. Prepare initial common base | Draft #231 in slot 5/6. The linked private archive contains 69 producer-document versions, including the 46 latest files, plus 12 Burgundy appellation/region profiles. Nineteen Meursault climates and three homonymous appellations were added to the shared identity base. Draft 2 contains twenty-six approved but unpublished windows: twenty-one specific releases, three Saint-Véran vintage fallbacks and two Bourgogne regional estimates limited to the Bourgogne appellation. The last full linked matcher check found 50 of 804 unmerged cards: eighteen by exact release, 25 by appellation and seven by region. These are **potential draft matches**, not active advice; one regional match has a known appellation discrepancy. The archive and old model are not counted as coverage. | **No-go for merge/publication.** Continue reconciling canonical cuvée/release/place identities, check and stage applicable profile dates, and measure coverage and exceptions. Resolve additional Premier Cru climat identities and extend geographic fallbacks before Gate 5. |
+| 5. Release and verify | Not started | Publish the approved reference, enable it for the consenting cellar, and verify the official app on real wines. Gate 5 passes only with a complete source-by-source coverage report, at least 95% of active wines with coherent three-date windows, each exception named, and the reviewer-approved profile dates shown where applicable; then verify cross-household behavior and rollback. Report legacy-only wines and material old/new discrepancies explicitly before deciding with the owner whether the legacy bridge can be removed. Do not call a model-dominated result the completed new system. |
 
 **Merge/deployment rule:** Do not describe #227 as feature-complete or ask the
 owner to deploy its migrations as the end state. Update this record whenever
@@ -671,6 +1822,8 @@ meaningful. At minimum, each update must:
 
 | Date / change | Gate and decision | Evidence / remaining risk |
 | --- | --- | --- |
+| 2026-11-12 · PR #231 profile alias matching | Gate 4 remains in progress. Four independently identified Mas de Daumas Gassac red 750 ml vintages (2011, 2012, 2013, 2015) were added as editorial estimates to unpublished draft 2, now 30 windows; the producer does not publish these three exact milestones. No window was published and no household wine was changed. | The linked migration, applied after a fresh backup, restored-copy rehearsal and green CI, lets a reviewed release be found by an exact profile alias while retaining identity and ambiguity checks. Aliases on cuvées with name history are withheld pending vintage-specific review; historical 2008 Daumas geography is not assumed to be the same as 2011–15. Forty-six identity-batch assertions passed; 4 Daumas cards now resolve to reviewed releases. The restored-copy draft matched 54/804 cards, not live coverage. The Bourgogne Aligoté conflict remains unresolved and prevents blind publication. |
+| 2026-11-04 · draft PR #231 consolidated-base intake and reconciliation | Gate 4 format validation, complete old-row audit reconciliation and protected-copy coverage measurement. Optional blank descriptions are normalized for validation and import; no linked database, permission, date, publication or household state changed. | [Intake audit](drinking-window-final-producer-base-intake-2026-11-04.md): 46/46 native validation; all 345 omissions classified; 2022 Bret dates independently supported by retailer, 2024 unresolved; corrected 97/802 new textual exact candidates and 104 older-only candidates. Actual shared-profile coverage remains zero; curator evidence/identity review and appellation/region profiles remain open. |
 | 2026-10-22 · PR #201 | Establish this tracked release plan and CI update guard. All delivery gates remain open. No live advice or database state changes. | Existing merged implementation and draft are described above; CI proves a plan update accompanies future relevant PRs, but cannot judge its quality. |
 | 2026-10-22 · PR #202 | Gate 0 moved to In progress after read-only linked migration/status checks and static review. No live advice, permission, or database change. | [Audit](drinking-window-gate0-audit.md) records 13 pending migrations, seed conflicts to preflight, and reader compatibility risk. Private rehearsal, backup/restore, active deployment hash, and owner authorization remain open. |
 | 2026-10-23 · PR #202 update | Gate 0 aggregate linked preflight completed read-only; no live advice, permission, or database change. | Reference-version count 0; checked Beaujolais/Morgon/Burgaud/Barraud identity counts 1 each; six other producer names 0 exact normalized matches. Cloudflare version 420 deployed at 20:53:20Z on 22 October, but its commit remains unverified. Private rehearsal and restore evidence remain open. |

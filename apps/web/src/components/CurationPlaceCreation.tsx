@@ -57,17 +57,17 @@ export function CurationPlaceCreation({ initialRegionName = "", initialAppellati
     {kind === "appellation" ? <CurationTargetPicker kind="region" label={t("Parent region")}
       value={parent} onChange={setParent} isOnline={isOnline} /> : null}
     <label>{t(kind === "region" ? "Canonical region name" : "Canonical appellation name")}
-      <input required minLength={2} maxLength={200}
+      <input maxLength={200}
         value={kind === "region" ? regionName : appellationName}
         onChange={(event) => kind === "region" ? setRegionName(event.target.value)
           : setAppellationName(event.target.value)} />
     </label>
     <label>{t("Country code (two letters)")}
-      <input required minLength={2} maxLength={2} autoCapitalize="characters"
+      <input maxLength={2} autoCapitalize="characters"
         value={countryCode} onChange={(event) => setCountryCode(event.target.value.toUpperCase())} />
     </label>
     <label>{t("Why is this the correct geographic identity?")}
-      <textarea required minLength={20} maxLength={1000} value={reason}
+      <textarea maxLength={1000} value={reason}
         onChange={(event) => setReason(event.target.value)} />
     </label>
     <label><input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} />
