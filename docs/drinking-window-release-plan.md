@@ -1287,7 +1287,7 @@ copy now matches **65/804** cards (31 release, 27 appellation, 7 region),
 including the known Aligoté discrepancy. Live totals remain 810 wines, 37
 reviewed anchors, zero published versions and zero pending migrations.
 
-**Puligny classified-appellation hierarchy (13 November, local rehearsal):**
+**Puligny classified-appellation hierarchy (13 November, applied):**
 The legacy shared identities for `Puligny-Montrachet` and
 `Puligny-Montrachet Premier Cru` were siblings, although the submitted profile
 and the [appellation specification](https://www.bourgogne-wines.com/wine-and-terroir/bourgogne-and-its-appellations/gallery_files/site/321/19990/20255.pdf)
@@ -1298,11 +1298,32 @@ It enables a reviewed group anchored at the base to match its named climate. It
 does not assign a broad village window, create dates, publish a reference or
 modify cellar wines. It also rejects conflicting Grand Cru labels and keeps
 exact-release priority, and does not change legacy geography or old-model
-ancestry. On the private copy 39 Premier Cru assertions and 53 profile-identity
-assertions passed. A first CI run exposed an empty-database migration failure;
-the revised migration does not require seeded places. Green CI, a fresh linked
-backup, restore/rehearsal, and postflight remain required;
-the official Puligny climates and windows are not yet staged.
+ancestry. After a protected fresh linked backup, restored-copy rehearsal and
+green CI, the migration was applied. The copy passed 40 Premier Cru and 53
+profile-identity assertions. The curator interface then created the 17
+official Puligny climates, with their source, without changing wines or dates;
+the supplied Puligny profile now finds all 17 and reports its three groups as
+ready for review. No Puligny appellation window has been staged. The cellar
+wine `Carillon · Referts · 2022` was explicitly matched in the app to the
+existing LWIN7 1195121 after checking its already-linked Jacques Carillon
+producer, appellation, cuvée, colour and 75 cl format. This records an identity
+link, but does not rename the wine or change stock. The curator then reused
+that shared product and 2022 release rather than creating duplicates, and
+staged the supplied specific 2026 / 2030–2039 editorial estimate in draft 2.
+[Le Carré des Vins](https://www.lecarredesvins.com/17119-domaine-jacques-carillon-puligny-montrachet-1er-cru-les-referts-2021-6653400.html)
+reports an optimum 2028–2037 and [Farr Vintners](https://farrvintners.com/wine.php?wine=111524)
+reports a general 2026–2045 drinking range; neither publishes this exact
+three-date synthesis. The general 2022 Premier Cru estimate ends in 2044 and
+differs by five years from the specific estimate; keep this discrepancy visible
+during review. Draft 2 contains 41 windows and is not published.
+
+**Partially identified wine-card fix (13 November, PR only):** The real
+Carillon card exposed `Invalid maturity response: product name` when its
+producer was resolved but its product was still unknown. The frontend now
+accepts the database's nullable product name and offers a producer/appellation
+rule, not a product-specific rule, until a product is identified. Targeted
+parsing and UI tests and the web build passed. This frontend change is not yet
+merged into the official app.
 
 **Execution status (the contract defines each exit test):**
 

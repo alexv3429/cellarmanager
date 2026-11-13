@@ -308,6 +308,9 @@ select ok(private.drinking_window_place_contains(
 select ok(not private.drinking_window_place_contains(
  'fa600000-0000-4000-8000-000000000005','fa600000-0000-4000-8000-000000000017'),
  'A classified climate does not belong to a different appellation');
+select ok(not private.drinking_window_place_contains(
+ 'fa600000-0000-4000-8000-000000000028','fa600000-0000-4000-8000-000000000018'),
+ 'A village climate is not automatically classified as Premier Cru');
 select is(private.drinking_window_exact_classified_climat(
  'fa600000-0000-4000-8000-000000000006','fa600000-0000-4000-8000-000000000028'),
  'fa600000-0000-4000-8000-000000000017'::uuid,
