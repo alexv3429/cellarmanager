@@ -1,21 +1,30 @@
 begin;
 
--- Preserve both historic identifiers, but place the classified appellation under
--- its shared parent. Existing release and household references retain their IDs.
--- Refuse unexpected source data rather than silently changing a different place.
-do $$
-declare base_id uuid; cru_id uuid; region_id uuid;
-begin
-  select id into strict region_id from public.enrichment_places
-    where place_type='region' and canonical_name='Bourgogne';
-  select id into strict base_id from public.enrichment_places
-    where place_type='appellation' and canonical_name='Puligny-Montrachet'
-      and parent_id=region_id;
-  select id into strict cru_id from public.enrichment_places
-    where place_type='appellation' and canonical_name='Puligny-Montrachet Premier Cru'
-      and parent_id in (region_id,base_id);
-  update public.enrichment_places set parent_id=base_id where id=cru_id and parent_id<>base_id;
-end $$;
+-- Older datasets encode a classified appellation as a sibling of its base
+-- appellation, while newer datasets place it beneath that appellation. Treat
+-- these representations consistently without mutating legacy geography or
+-- breaking idempotent knowledge installers. A sibling bridge requires the
+-- exact canonical base name, Premier Cru suffix, and same geographic parent.
+create or replace function private.drinking_window_place_contains(
+    p_ancestor_id uuid, p_descendant_id uuid
+) returns boolean language sql stable set search_path = '' as $$
+    with recursive chain(id) as (
+        select p.id from public.enrichment_places p where p.id=p_descendant_id
+        union
+        select next_place.id from chain c
+        join public.enrichment_places p on p.id=c.id
+        cross join lateral (
+            select p.parent_id as id where p.parent_id is not null
+            union
+            select base.id from public.enrichment_places base
+            where p.place_type='appellation' and base.place_type='appellation'
+              and base.parent_id=p.parent_id and base.id<>p.id
+              and p.normalized_name=base.normalized_name || ' premier cru'
+        ) next_place
+    )
+    select p_ancestor_id is not null
+      and exists (select 1 from chain where id=p_ancestor_id);
+$$;
 
 -- Names of climates use the base appellation, not its legacy Premier Cru suffix.
 create or replace function private.drinking_window_exact_classified_climat(p_wine_id uuid, p_appellation_id uuid)
@@ -30,7 +39,9 @@ returns uuid language sql stable security definer set search_path = '' as $$
                lineage.producer_id, lineage.product_id
         from public.wines w
         join public.enrichment_places a on a.id=p_appellation_id and a.place_type='appellation'
-        left join public.enrichment_places parent on parent.id=a.parent_id
+        left join public.enrichment_places parent on parent.place_type='appellation'
+          and a.normalized_name=parent.normalized_name || ' premier cru'
+          and (parent.id=a.parent_id or parent.parent_id=a.parent_id)
         left join lateral private.drinking_window_wine_reference_lineage(w) lineage on true
         where w.id=p_wine_id and w.merged_into_wine_id is null
           and private.drinking_window_wine_requires_cru_classification(w.id)
@@ -248,10 +259,11 @@ begin
                       )
                       and exists (
                         select 1 from public.enrichment_places child
-                        join public.enrichment_places parent on parent.id=child.parent_id
+                        join public.enrichment_places parent on parent.id=r.appellation_id
                         join public.enrichment_places climat on climat.id=p_place_id
                         where child.id=p_appellation_id and child.place_type='appellation'
-                          and parent.id=r.appellation_id and parent.place_type='appellation'
+                          and parent.place_type='appellation'
+                          and (parent.id=child.parent_id or parent.parent_id=child.parent_id)
                           and child.normalized_name=parent.normalized_name || ' premier cru'
                           and climat.place_type='climat'
                           and private.drinking_window_place_contains(child.id,climat.id)

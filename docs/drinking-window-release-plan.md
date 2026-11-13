@@ -1292,14 +1292,16 @@ The legacy shared identities for `Puligny-Montrachet` and
 `Puligny-Montrachet Premier Cru` were siblings, although the submitted profile
 and the [appellation specification](https://www.bourgogne-wines.com/wine-and-terroir/bourgogne-and-its-appellations/gallery_files/site/321/19990/20255.pdf)
 place its 17 Premier Cru climates under Puligny. The proposed migration retains
-both existing IDs while making the classified identity a child, enabling a
-reviewed climate group anchored at the parent to match its named climate. It
+both existing IDs and recognises the classified identity as belonging to the
+base appellation, whether legacy geography stores it as a sibling or a child.
+It enables a reviewed group anchored at the base to match its named climate. It
 does not assign a broad village window, create dates, publish a reference or
 modify cellar wines. It also rejects conflicting Grand Cru labels and keeps
-exact-release priority. On the private copy 37 Premier Cru assertions and 53
-profile-identity assertions passed; legacy white place profiles at the parent
-all have a more specific child profile for the same knowledge version. Green
-CI, a fresh linked backup, restore/rehearsal, and postflight remain required;
+exact-release priority, and does not change legacy geography or old-model
+ancestry. On the private copy 39 Premier Cru assertions and 53 profile-identity
+assertions passed. A first CI run exposed an empty-database migration failure;
+the revised migration does not require seeded places. Green CI, a fresh linked
+backup, restore/rehearsal, and postflight remain required;
 the official Puligny climates and windows are not yet staged.
 
 **Execution status (the contract defines each exit test):**

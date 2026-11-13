@@ -292,16 +292,22 @@ select is((select status from private.drinking_window_preview_draft_match_for_wi
  'draft_match','An explicitly reviewed cuvée group remains eligible for a Premier Cru');
 
 -- Some historical canonical databases represent a Premier Cru as an
--- appellation node under its village. A reviewed group anchored to the
+-- appellation sibling of its village. A reviewed group anchored to the
 -- village must still recognise its exact classified climat, not all crus.
 insert into public.enrichment_places(id,parent_id,place_type,canonical_name) values
- ('fa600000-0000-4000-8000-000000000028','fa600000-0000-4000-8000-000000000004',
+ ('fa600000-0000-4000-8000-000000000028','fa600000-0000-4000-8000-000000000002',
   'appellation','Premier Test Village Premier Cru');
 update public.enrichment_places set parent_id='fa600000-0000-4000-8000-000000000028',
  canonical_name='Premier Test Village Les Caillerets'
 where id='fa600000-0000-4000-8000-000000000017';
 update public.wines set appellation='Premier Test Village Premier Cru',cuvee='Caillerets'
 where id='fa600000-0000-4000-8000-000000000006';
+select ok(private.drinking_window_place_contains(
+ 'fa600000-0000-4000-8000-000000000004','fa600000-0000-4000-8000-000000000017'),
+ 'A classified sibling and its climate belong to the corresponding base appellation');
+select ok(not private.drinking_window_place_contains(
+ 'fa600000-0000-4000-8000-000000000005','fa600000-0000-4000-8000-000000000017'),
+ 'A classified climate does not belong to a different appellation');
 select is(private.drinking_window_exact_classified_climat(
  'fa600000-0000-4000-8000-000000000006','fa600000-0000-4000-8000-000000000028'),
  'fa600000-0000-4000-8000-000000000017'::uuid,
