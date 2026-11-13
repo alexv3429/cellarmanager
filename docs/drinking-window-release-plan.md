@@ -1248,12 +1248,38 @@ This created no date and changed no cellar entry. The final climate named
 `Village` was added only after a rolled-back restored-copy test confirmed that
 an ordinary village wine does not identify that Premier Cru; the same check
 is now a permanent database regression test. The complete 30-member profile
-group now previews as technically ready, but was not staged: its generic 2017
+group now previews as technically ready, but its generic 2017 window was not staged: its
 optimum ending in 2036 is much later than Hachette's 2020–2024 drinking
 recommendation for Langoureau Champlot 2017. These are not identical claims,
 and the specific producer row has priority, but the magnitude warrants review
 before applying the generic group to other producers. No live window has been
 published or enabled.
+
+**Saint-Aubin 2018 and producer precedence (13 November):** The 2018 white
+Premier Cru fallback (`2020 / 2023–2034`) alone was added to the unpublished
+draft, restricted to the 30 officially documented climates; it is explicitly
+an editorial estimate, not a claim that the appellation published the three
+milestones. The curator separately reviewed Bas de Vermarain 2018 using its
+existing LWIN identity and Sur Gamay 2019 and staged their producer-specific
+estimates (`2021 / 2024–2029` and `2022 / 2025–2031` respectively). Their
+review notes record Hachette's different drinking recommendations rather than
+attributing the estimates to it. A linked read-only postflight verified that
+Bas de Vermarain selects the exact release while En Rémilly 2018 uses the
+appellation fallback. Draft 2 now has **40 windows** and matches **64/804**
+non-merged cards (31 release, 26 appellation, 7 region); this is not live
+coverage, and the previously identified Aligoté discrepancy remains.
+
+**Reviewed producer aliases for climates (13 November, proposed):** A local
+migration allows a classified wine's climat to be resolved through explicit
+aliases on the same reviewed producer cuvée, even when the household vintage
+has no exact producer-release entry. This addresses `Champlot` versus the
+official `Les Champlots` without changing local names, creating global aliases,
+or inventing a release or date. It requires the reviewed producer, matching
+appellation and colour, explicit cru status, a unique product and climat, and
+no recorded cuvée name history. The isolated copy passed 53 profile-identity
+and 31 Premier Cru assertions, including ambiguity and historical-name guards.
+The migration is **not yet applied to the linked database**; green CI, a fresh
+protected backup, restored-copy rehearsal and live postflight remain required.
 
 **Execution status (the contract defines each exit test):**
 

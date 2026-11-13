@@ -200,6 +200,75 @@ select is((private.drinking_window_wine_context(
 select is((select wine_reference_id from public.wines
     where id='fd000000-0000-4000-8000-000000000003'),null::uuid,
     'The read-time inference never rewrites the household wine');
+insert into public.enrichment_places(id,parent_id,place_type,canonical_name)
+select 'fd000000-0000-4000-8000-000000000012',id,'climat','Morgon Reserve'
+from public.enrichment_places where place_type='appellation' and normalized_name='morgon';
+update public.wines set appellation='Morgon 1C',vintage=2024
+where id='fd000000-0000-4000-8000-000000000003';
+select is(private.drinking_window_exact_classified_climat(
+    'fd000000-0000-4000-8000-000000000003',
+    (select id from public.enrichment_places where place_type='appellation' and normalized_name='morgon')),
+    'fd000000-0000-4000-8000-000000000012'::uuid,
+    'A reviewed producer profile relates two explicit cuvée names to the same climat across vintages');
+select is(private.drinking_window_wine_context(
+    'fd000000-0000-4000-8000-000000000003')->>'release_id',null::text,
+    'Recognizing a climat never fabricates an unreviewed release for this vintage');
+-- Synthetic test only: emulate a saved profile whose history requires review.
+set local session_replication_role=replica;
+update private.drinking_window_profile_exchanges
+set document=jsonb_set(document,'{cuvees,0,name_history}','[{"name":"Earlier name"}]'::jsonb,true)
+where id=current_setting('app.identity_batch_profile')::uuid;
+set local session_replication_role=origin;
+select is(private.drinking_window_exact_classified_climat(
+    'fd000000-0000-4000-8000-000000000003',
+    (select id from public.enrichment_places where place_type='appellation' and normalized_name='morgon')),
+    null::uuid, 'A cuvée with name history cannot infer its climat across vintages');
+set local session_replication_role=replica;
+update private.drinking_window_profile_exchanges
+set document=jsonb_set(document,'{cuvees,0,name_history}','[]'::jsonb,true)
+where id=current_setting('app.identity_batch_profile')::uuid;
+set local session_replication_role=origin;
+insert into public.wine_reference_entities(id,entity_type) values
+ ('fd000000-0000-4000-8000-000000000013','product'),
+ ('fd000000-0000-4000-8000-000000000014','release');
+insert into public.wine_reference_products(id,producer_id,canonical_name) values
+ ('fd000000-0000-4000-8000-000000000013',current_setting('app.identity_batch_producer')::uuid,'Ambiguous synthetic cuvée');
+insert into public.wine_reference_releases(id,product_id,vintage_year) values
+ ('fd000000-0000-4000-8000-000000000014','fd000000-0000-4000-8000-000000000013',2022);
+insert into private.drinking_window_reviewed_release_anchors
+ (batch_id,release_id,producer_id,product_id,region_id,appellation_id,wine_color,vintage_year,format_ml,name_keys)
+select batch_id,'fd000000-0000-4000-8000-000000000014',producer_id,
+ 'fd000000-0000-4000-8000-000000000013',region_id,appellation_id,wine_color,vintage_year,format_ml,name_keys
+from private.drinking_window_reviewed_release_anchors a
+where a.vintage_year=2022 and a.format_ml=750 and a.batch_id in
+ (select id from private.drinking_window_profile_identity_batches where exchange_id=current_setting('app.identity_batch_profile')::uuid);
+select is(private.drinking_window_exact_classified_climat(
+    'fd000000-0000-4000-8000-000000000003',
+    (select id from public.enrichment_places where place_type='appellation' and normalized_name='morgon')),
+    null::uuid, 'Two products sharing the alias cannot silently select a climat');
+delete from private.drinking_window_reviewed_release_anchors
+where release_id='fd000000-0000-4000-8000-000000000014';
+update public.wines set appellation='Morgon'
+where id='fd000000-0000-4000-8000-000000000003';
+select is(private.drinking_window_exact_classified_climat(
+    'fd000000-0000-4000-8000-000000000003',
+    (select id from public.enrichment_places where place_type='appellation' and normalized_name='morgon')),
+    null::uuid, 'A profile alias cannot classify an unclassified village wine');
+update public.wines set appellation='Morgon 1C',color='white'
+where id='fd000000-0000-4000-8000-000000000003';
+select is(private.drinking_window_exact_classified_climat(
+    'fd000000-0000-4000-8000-000000000003',
+    (select id from public.enrichment_places where place_type='appellation' and normalized_name='morgon')),
+    null::uuid, 'A profile alias cannot cross wine colours');
+update public.wines set color='red',producer='Other producer'
+where id='fd000000-0000-4000-8000-000000000003';
+select is(private.drinking_window_exact_classified_climat(
+    'fd000000-0000-4000-8000-000000000003',
+    (select id from public.enrichment_places where place_type='appellation' and normalized_name='morgon')),
+    null::uuid, 'A profile alias cannot cross producers');
+delete from public.enrichment_places where id='fd000000-0000-4000-8000-000000000012';
+update public.wines set producer='Local Synthetic',appellation='Morgon',vintage=2022
+where id='fd000000-0000-4000-8000-000000000003';
 update public.wines set cuvee='Morgon Reserve'
 where id='fd000000-0000-4000-8000-000000000003';
 select is((private.drinking_window_wine_context(
