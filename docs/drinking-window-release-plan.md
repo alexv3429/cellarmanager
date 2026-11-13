@@ -1269,7 +1269,7 @@ appellation fallback. Draft 2 now has **40 windows** and matches **64/804**
 non-merged cards (31 release, 26 appellation, 7 region); this is not live
 coverage, and the previously identified Aligoté discrepancy remains.
 
-**Reviewed producer aliases for climates (13 November, proposed):** A local
+**Reviewed producer aliases for climates (13 November, applied):** A
 migration allows a classified wine's climat to be resolved through explicit
 aliases on the same reviewed producer cuvée, even when the household vintage
 has no exact producer-release entry. This addresses `Champlot` versus the
@@ -1278,8 +1278,14 @@ or inventing a release or date. It requires the reviewed producer, matching
 appellation and colour, explicit cru status, a unique product and climat, and
 no recorded cuvée name history. The isolated copy passed 53 profile-identity
 and 31 Premier Cru assertions, including ambiguity and historical-name guards.
-The migration is **not yet applied to the linked database**; green CI, a fresh
-protected backup, restored-copy rehearsal and live postflight remain required.
+The migration was applied after green CI and a fresh protected backup and
+restored-copy rehearsal. Linked postflight identified all six Langoureau
+Champlot cards with Saint-Aubin Les Champlots: the 2017 exact producer window
+remains first, 2018 uses the Saint-Aubin fallback, and the four other vintages
+remain unmatched because no applicable window has been staged. The restored
+copy now matches **65/804** cards (31 release, 27 appellation, 7 region),
+including the known Aligoté discrepancy. Live totals remain 810 wines, 37
+reviewed anchors, zero published versions and zero pending migrations.
 
 **Execution status (the contract defines each exit test):**
 
