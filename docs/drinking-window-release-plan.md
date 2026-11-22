@@ -196,6 +196,15 @@ unchanged dates. The actual draft check now passes. The 104-window draft is
 still **unpublished**; the impact preview and remaining profile intake are
 not complete. No household data was modified.
 
+**Saint-Véran appellation, 23 November:** Using the curator interface, the
+15 remaining ready village-white estimates for 2005–2018 and 2020 were added
+to draft 2; the 2019, 2021 and 2022 estimates were already present. The
+appellation identity and vintage context were reviewed; the dates are
+explicitly labelled CellarManager editorial estimates, not producer-published
+windows, and more specific producer advice takes precedence. The 2023 and
+2024 candidates remain unprepared. The actual 119-window draft check passes;
+the draft is not published and no household wine or stock was changed.
+
 **Owner decision on 1 November — legacy cutover and discrepancy review:**
 Eventually remove the old calculation from user-facing drinking-window
 selection. During transition, its estimates can be compared with reviewed
@@ -1521,7 +1530,7 @@ in every PR description.
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
 | 3. Complete profile exchange | #230 merged in slot 4/6; full CI green, linked migrations backed up/rehearsed/applied; signed-in owner import/preview/export checked; one Burgaud file saved privately and candidates added to Proposals, nothing published live | Preserve full-profile exchange and audited in-app curator path. |
-| 4. Prepare initial common base | **In progress**, draft #231 in slot 5/6. The shared archive contains 46 latest producer profiles and 12 Burgundy appellation/region profiles. Draft 2 has 104 reviewed but **unpublished** windows; the Bourgogne scope conflict was corrected and the actual draft check passes. Shared identity, source-preview and scope-correction fixes are deployed to the linked database. No local wine was renamed. | Process and account for the remaining supplied profiles and exceptions; verify impact, producer/appellation/region precedence and the remaining product acceptance criteria. Local-cellar cleanup is not a gate. |
+| 4. Prepare initial common base | **In progress**, draft #231 in slot 5/6. The shared archive contains 46 latest producer profiles and 12 Burgundy appellation/region profiles. Draft 2 has 119 reviewed but **unpublished** windows; the Bourgogne scope conflict was corrected and the actual draft check passes. Shared identity, source-preview and scope-correction fixes are deployed to the linked database. No local wine was renamed. | Process and account for the remaining supplied profiles and exceptions; verify impact, producer/appellation/region precedence and the remaining product acceptance criteria. Local-cellar cleanup is not a gate. |
 | 5. Release and verify | Not started | Publish an approved shared base and verify the official app on representative producer, appellation and region cases, private choices, offsets, cross-household behavior and rollback. Report shared, private, legacy-only and missing coverage separately. A 95% match in one cellar is **not** a release threshold; local naming and later profile enrichment are ordinary app use, not developer PRs. The legacy model is a temporary labelled bridge, not shared-profile coverage. |
 
 **Merge/deployment rule:** Do not describe #227 as feature-complete or ask the
