@@ -127,6 +127,18 @@ recommends drinking that exact wine in 2027–2032. These are different kinds of
 window but the discrepancy merits editorial review rather than automatic
 approval. Source: https://www.hachette-vins.com/guide-vins/les-vins/dom-sylvain-langoureau-la-garenne-2022-2025/202582417/.
 
+**Producer preview source isolation, 22 November (awaiting CI and linked
+application):** When an earlier identity check quarantined a row, its preview
+could retain the previous wine's source link. The supplied JSON had the correct
+per-wine links: the error was in the preview, not the input. Migration
+`20261107060000` checks sources independently for every row, even if an
+identity is missing, and does not expose a URL outside that row's declared
+sources. On the isolated restored copy, five focused checks passed; the
+Chagnoleau La Fournaise 2016, 2018 and 2020 previews now each show their own
+source. The 68 profile-identity checks also passed. CI, a fresh backup and a
+repeat on a restored copy precede linked application. No historical JSON or
+household wine is rewritten by this correction.
+
 **Owner decision on 1 November — legacy cutover and discrepancy review:**
 Eventually remove the old calculation from user-facing drinking-window
 selection. During transition, its estimates can be compared with reviewed
