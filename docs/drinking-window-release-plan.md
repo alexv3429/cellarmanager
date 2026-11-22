@@ -61,6 +61,29 @@ entries and the approval guard; the profile-exchange tests and web build also
 pass locally. This reduces repeated clicks but does not by itself process the
 provided files, approve their contents, publish the initial base or close Gate 4.
 
+**Shared-base inventory, 22 November:** A fresh protected linked backup was
+restored locally and interrogated through the app's curator preview functions,
+without household matching or writing to the linked database. The archive
+contains 46 latest producer profiles (461 candidate windows), 11 appellation
+profiles and one region profile (485 candidate windows). Existing earlier
+producer versions are separate archives, not additional current producers.
+Using existing suggested/reviewed shared identity mappings, the producer
+preview reports 3 ready, 30 already present in the draft and 428 set aside:
+257 cuvée identities, 75 producer identities, 57 region identities and 39
+vintage identities are not uniquely resolved at the point of preview. These
+are shared-profile statuses, not cellar-formatting tasks or date approvals.
+
+The 12 geographic profiles contain 25 groups. Their previews report 376
+selectable windows, four already in the draft and 105 set aside in six groups
+whose member identities need resolution. Ready means technically selectable,
+not yet reviewed or published. As an end-to-end rehearsal only, after checking
+the Volnay village red definition against the Bourgogne interprofession and
+two vintage-guide contexts, 18 proposed 2005–2022 editorial rows were staged
+on the isolated copy in one transaction and rolled back successfully. The
+later two vintages were not included in that rehearsal; no live rows changed.
+The preview requires curator authentication in the browser, which was not
+available in this session, so real profile staging remains outstanding.
+
 **Owner decision on 1 November — legacy cutover and discrepancy review:**
 Eventually remove the old calculation from user-facing drinking-window
 selection. During transition, its estimates can be compared with reviewed
@@ -1349,7 +1372,7 @@ rule, not a product-specific rule, until a product is identified. Targeted
 parsing and UI tests and the web build passed. This frontend change is not yet
 merged into the official app.
 
-**Curator LWIN reuse from profiles (13 November, local testing):** The
+**Curator LWIN reuse from profiles (22 November, migration deployed):** The
 Carillon case showed that the profile workflow searched only materialised
 products, even when the same wine was already present in the imported LWIN
 catalogue. A new curator-only search and reuse action works directly from a
@@ -1359,9 +1382,15 @@ colour, known appellation and classification; historical aliases are excluded.
 An existing matching product must be reconciled instead of duplicated. The
 decision is audited and LWIN identifiers remain unique. Tests on a private
 copy include the real Carillon LWIN identity and 68 database assertions;
-targeted web tests and the build passed. CI, fresh backup, restored-copy
-rehearsal, linked migration and signed-in preview verification are still
-required. This path is a general app feature, not a cellar-specific mapping.
+targeted web tests and the build passed. PR #231 CI passed at `dc9f5f2`.
+After a fresh protected linked schema/data backup restored to an isolated
+local database, the migration applied and all 68 transactional assertions
+passed again. Linked preflight contained only
+`20261107040000_gate4_curator_profile_lwin.sql`; it was applied and postflight
+showed no pending migrations, roles or seeds. This changes no cellar wine,
+drinking dates or publication. The preview opened but required sign-in, so a
+signed-in end-to-end verification remains open; no such test is claimed.
+This path is a general app feature, not a cellar-specific mapping.
 
 **Execution status (the contract defines each exit test):**
 
