@@ -127,17 +127,40 @@ recommends drinking that exact wine in 2027–2032. These are different kinds of
 window but the discrepancy merits editorial review rather than automatic
 approval. Source: https://www.hachette-vins.com/guide-vins/les-vins/dom-sylvain-langoureau-la-garenne-2022-2025/202582417/.
 
-**Producer preview source isolation, 22 November (awaiting CI and linked
-application):** When an earlier identity check quarantined a row, its preview
+**Producer preview source isolation, 23 November (applied):** When an earlier identity check quarantined a row, its preview
 could retain the previous wine's source link. The supplied JSON had the correct
 per-wine links: the error was in the preview, not the input. Migration
 `20261107060000` checks sources independently for every row, even if an
 identity is missing, and does not expose a URL outside that row's declared
 sources. On the isolated restored copy, five focused checks passed; the
 Chagnoleau La Fournaise 2016, 2018 and 2020 previews now each show their own
-source. The 68 profile-identity checks also passed. CI, a fresh backup and a
-repeat on a restored copy precede linked application. No historical JSON or
-household wine is rewritten by this correction.
+source. The 68 profile-identity checks also passed. CI passed at `93ac999`,
+the linked schema and data were freshly backed up, and the migration and
+73 focused checks were repeated on a separate local database using the
+backed-up current function definition. The single pending migration was then
+applied to the linked project; postflight reported no pending migrations. No
+historical JSON or household wine was rewritten by this correction.
+
+**Five further Chagnoleau releases, 23 November:** Clos Saint-Pancras 2014
+and Madrigal 2010 were verified against independent vintage-specific sources
+and added as vintages to existing shared cuvées. La Fournaise's `Les
+Fournaises` alias was verified against the profile and a merchant using both
+names for the same wine; the existing LWIN7 1456361 was reused, then the
+2016, 2018 and 2020 vintages were created from their cited existence sources.
+The five associated three-date estimates were prepared in draft 2, which now
+contains 66 windows. The review records that the dates are editorial and
+uncertain, including that a merchant's 2020 recommendation ends in 2030
+versus the profile's 2033 optimum end. No dates were published and no cellar
+wine was changed or linked.
+
+**La Roche, 23 November:** Reused the existing Saint-Véran La Roche white
+LWIN7 1331057 for the Chagnoleau profile and created the separately verified
+2011 and 2018 shared vintages. Prepared the associated editorial estimates
+in draft 2, bringing it to 68 windows. For 2018, the review notes a merchant's
+2026 drinking horizon and another critic's earlier 2024 end; the proposed
+2026 optimum end is not presented as consensus. A 2011 price listing confirms
+the wine exists, not its present condition. These actions changed no cellar
+wine and did not publish the draft.
 
 **Owner decision on 1 November — legacy cutover and discrepancy review:**
 Eventually remove the old calculation from user-facing drinking-window
