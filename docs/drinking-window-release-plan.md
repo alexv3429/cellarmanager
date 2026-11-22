@@ -20,22 +20,46 @@ intended end state. The initial pilot is a safety gate, not the permanent way
 to distribute updates. See the contract for exact precedence and acceptance
 examples.
 
-**Owner clarification on 31 October:** 6/6 means the feature is live in the
-official app and gives complete three-date windows to nearly all active wines
-in the owner's cellar, not merely a one-wine demonstration or 23 imported
-files awaiting approval. Use **95% as the working minimum**, report every
-remaining exception, and keep improving safe coverage. Measure and disclose
-separately the number of wines served by private choices, reviewed exact
-producer/cuvée rows, reviewed broader producer/appellation/region rows, the
-labelled existing model, and no safe window. All 23 supplied producer
-documents and 670 proposals must be accounted for, and reviewed applicable
-rows must actually drive wine cards. A high total achieved only through the
-old model does not demonstrate that the new shared-profile base is mature.
-The bundle itself says the proposals are unapproved; **no provisional or
-official recommendation may bypass curator review**. The remaining editorial
-work is part of delivery, not a post-release queue. If the target cannot be
-met safely within the six-PR budget, stop and report the gap rather than
-declare 6/6 complete or add a seventh PR without the owner's agreement.
+**Owner clarification on 22 November — product versus one cellar:** Gate 4
+and release deliver the *shared application*: profile import, common identity
+and three-date references, selection by specificity, user-local mappings and
+preferences, curator publication and later maintenance without developer PRs.
+The latest supplied producer and place profiles must be processed to prepare a
+useful initial base; successfully parsing a file is not publication. The
+curator can approve checked editorial estimates in batches, with exceptions
+and genuinely ambiguous identities recorded separately.
+
+The 31 October near-complete-coverage goal remains an outcome to monitor, but
+the 95% working target for this one cellar is **not a Gate 4 or release
+threshold**. Fixing this cellar's local names or authoring every missing
+reference is ongoing app use, not a reason for another developer PR or for
+indefinitely delaying the generic feature. Measure and distinguish private,
+shared-profile, legacy-only and missing windows honestly. Do not claim the old
+model as shared-profile coverage. This clarification supersedes conflicting
+95%-as-blocker statements in the historical notes below. Continue in the
+existing Gate 4 PR #231 (5/6) and final Gate 5 PR (6/6); do not silently open
+a seventh PR.
+
+**Current Gate 4 exit checklist:** (1) account for the latest provided
+producer and place profiles, including eligible rows and explicit exclusions;
+(2) prepare a useful reviewed shared base without requiring local-cellar
+cleanup; (3) prove exact producer/cuvée, appellation and region selection on
+representative identities, plus local overrides, offsets, ambiguity and
+missing-data behavior; (4) demonstrate that a curator can import, select and
+approve a profile and that a user can resolve local names through the app;
+(5) record remaining issues, CI and migration/rehearsal evidence in this PR.
+Publication and official-app end-to-end verification belong to Gate 5. The
+historical owner-cellar counts in this record are diagnostic snapshots only.
+
+**Gate 4 profile workflow, 22 November (PR #231):** A curator can now select
+all ready windows in an imported producer, appellation or region profile at
+once, or clear the selection. Quarantined and unchanged entries are excluded;
+selection alone neither approves nor publishes anything. The curator still
+records a review rationale and explicitly authorizes the batch before staging.
+Component tests cover both producer and place profiles, exclusion of blocked
+entries and the approval guard; the profile-exchange tests and web build also
+pass locally. This reduces repeated clicks but does not by itself process the
+provided files, approve their contents, publish the initial base or close Gate 4.
 
 **Owner decision on 1 November — legacy cutover and discrepancy review:**
 Eventually remove the old calculation from user-facing drinking-window

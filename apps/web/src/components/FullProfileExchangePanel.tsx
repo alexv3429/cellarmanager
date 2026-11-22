@@ -378,9 +378,12 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
     }
     return counts
   }, new Map<string, number>())
-  const hasSelectableWindows = Boolean(stagingPreview?.items.some((item) =>
-    selectedDocument?.kind === "producer" ? item.status === "ready"
-      : item.children.some((child) => child.status === "ready" && child.firstTrialYear !== null)))
+  const selectableWindowKeys = stagingPreview?.items.flatMap((item) =>
+    selectedDocument?.kind === "producer"
+      ? item.status === "ready" ? [item.key] : []
+      : item.children.filter((child) => child.status === "ready" && child.firstTrialYear !== null)
+        .map((child) => child.key)) || []
+  const hasSelectableWindows = selectableWindowKeys.length > 0
   const profileCuvees = selectedDocument?.kind === "producer"
     ? selectedDocument.document.cuvees as Record<string, unknown>[] : []
   const profileRegions = [...new Set(profileCuvees.map((cuvee) => String(cuvee.region)))].sort()
@@ -593,6 +596,17 @@ export function FullProfileExchangePanel({ isOnline, onStaged }: Props) {
             : null}
         </Notice> : null}
         <p>{t("Only unique exact canonical identities can be prepared. Unmatched or conflicting entries remain in the saved profile; they are not silently imported.")}</p>
+        {hasSelectableWindows ? <div>
+          <button type="button" disabled={busy || !isOnline} onClick={() => {
+            setSelectedWindowKeys(selectableWindowKeys)
+            setAdoptAndShare(false)
+          }}>{t("Select all ready windows for review")}</button>
+          <button type="button" disabled={busy || !isOnline || !selectedWindowKeys.length} onClick={() => {
+            setSelectedWindowKeys([])
+            setAdoptAndShare(false)
+          }}>{t("Clear window selection")}</button>
+          <p>{t("Selecting windows does not approve or publish them. Entries set aside are not selected.")}</p>
+        </div> : null}
         <ul>{stagingPreview.items.map((item) => <li key={item.key}>
           {selectedDocument?.kind === "producer" && item.status === "ready" ? <label>
             <input type="checkbox" checked={selectedWindowKeys.includes(item.key)} disabled={busy}
