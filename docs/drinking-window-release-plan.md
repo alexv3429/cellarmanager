@@ -172,15 +172,12 @@ on a rollback-only copy: an earlier `Bourgogne AOC — blancs` group is stored
 at **region** scope, but its member is the narrower Bourgogne appellation;
 the new region-wide group overlaps it for 2021 and 2022. Their dates are
 identical in those vintages, but the current matcher treats two same-scope
-rows as ambiguous. **This is a real publication blocker introduced by adding
-the regional group to this existing draft; do not suppress the overlap check
-or publish until the scope/duplication is corrected and matcher precedence is
-verified.** No cellar wine or stock was changed. The intended resolution is
-to correctly distinguish the appellation from the regional fallback, retaining
-traceability and enabling normal curator maintenance in the app; a local
-cellar identity edit is not the solution.
+rows as ambiguous. This was a real publication blocker introduced by adding
+the regional group; the resolution below preserves the overlap check and
+distinguishes the appellation from the regional fallback. No cellar wine or
+stock was changed; a local cellar identity edit was not the solution.
 
-**Correcting scope from the app, 23 November (proposed in #231):** Add a
+**Correcting scope from the app, 23 November (#231):** Added a
 curator action to narrow a region-scoped group to one appellation only when
 every existing member already belongs to that appellation. It preserves group
 and row IDs, dates and evidence, records before/after audit history, and makes
@@ -190,10 +187,14 @@ Bourgogne overlaps disappeared after narrowing the AOC group and reapproving
 its two unchanged windows; publication preflight then reported zero issues.
 Sixteen synthetic SQL checks cover curator-only access, stale state, wrong
 appellation, preserved dates, audit, no publication and appellation-before-
-region selection; four client tests and the web build passed. This correction
-is **not yet applied to the linked project**, and the current draft remains
-blocked until CI, backup, rehearsal, deployment and the in-app correction and
-reviews are complete.
+region selection; four client tests and the web build passed. CI passed for
+commit `2b8dfbb`. After a protected backup and rehearsal on an isolated copy,
+the single migration was applied to the linked project; the migration dry run
+then reported no pending migrations. The curator used the preview app to
+correct the existing Bourgogne AOC group and reapprove that group and its two
+unchanged dates. The actual draft check now passes. The 104-window draft is
+still **unpublished**; the impact preview and remaining profile intake are
+not complete. No household data was modified.
 
 **Owner decision on 1 November — legacy cutover and discrepancy review:**
 Eventually remove the old calculation from user-facing drinking-window
@@ -1520,7 +1521,7 @@ in every PR description.
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
 | 3. Complete profile exchange | #230 merged in slot 4/6; full CI green, linked migrations backed up/rehearsed/applied; signed-in owner import/preview/export checked; one Burgaud file saved privately and candidates added to Proposals, nothing published live | Preserve full-profile exchange and audited in-app curator path. |
-| 4. Prepare initial common base | **In progress**, draft #231 in slot 5/6. The shared archive contains 46 latest producer profiles and 12 Burgundy appellation/region profiles. Draft 2 has 104 reviewed but **unpublished** windows; preflight detects two same-scope Bourgogne overlaps introduced by the regional fallback, so it cannot be published yet. Shared identity and source-preview fixes are deployed to the linked database. No local wine was renamed. | Correct the Bourgogne appellation-versus-region scope conflict without weakening ambiguity checks; rerun preflight and precedence tests. Process and account for the remaining supplied profiles and exceptions. Local-cellar cleanup is not a gate. |
+| 4. Prepare initial common base | **In progress**, draft #231 in slot 5/6. The shared archive contains 46 latest producer profiles and 12 Burgundy appellation/region profiles. Draft 2 has 104 reviewed but **unpublished** windows; the Bourgogne scope conflict was corrected and the actual draft check passes. Shared identity, source-preview and scope-correction fixes are deployed to the linked database. No local wine was renamed. | Process and account for the remaining supplied profiles and exceptions; verify impact, producer/appellation/region precedence and the remaining product acceptance criteria. Local-cellar cleanup is not a gate. |
 | 5. Release and verify | Not started | Publish an approved shared base and verify the official app on representative producer, appellation and region cases, private choices, offsets, cross-household behavior and rollback. Report shared, private, legacy-only and missing coverage separately. A 95% match in one cellar is **not** a release threshold; local naming and later profile enrichment are ordinary app use, not developer PRs. The legacy model is a temporary labelled bridge, not shared-profile coverage. |
 
 **Merge/deployment rule:** Do not describe #227 as feature-complete or ask the
