@@ -86,7 +86,7 @@ editorial windows were prepared through the app in draft 2. The app showed
 59 windows and current approvals, with the draft still unpublished. No cellar
 wine or stock was edited; the 2023/2024 Volnay rows were left unstaged.
 
-**Shared climat matching fix, 22 November (proposed):** A profile can name a
+**Shared climat matching fix, 22 November (applied):** A profile can name a
 member `Chambolle-Musigny Les Amoureuses` while the common catalogue records
 the official short name `Les Amoureuses`. Previously this left the whole group
 quarantined even after the correct climates were created. Migration
@@ -96,9 +96,36 @@ multiple matching identities remain quarantined. Five focused database
 assertions and 61 existing place, Premier Cru and climate assertions passed
 on an isolated restored copy. Creating the 24 official
 Chambolle-Musigny climates and re-previewing changed its Premier Cru group
-from quarantined to ready in the copy; that rehearsal was rolled back. No
-climates, dates or cellar changes were made on the linked project. This
-migration still needs CI, backup, fresh-copy rehearsal and linked deployment.
+from quarantined to ready in the copy; that rehearsal was rolled back. At
+`db74df2`, CI passed. A fresh linked schema/data backup including the Volnay
+draft was restored to an isolated copy; the migration and focused tests
+passed again, and wine, holding and reference-row counts were unchanged. The
+only pending migration `20261107050000` was then applied to the linked project;
+postflight showed no pending migrations. Using the authenticated curator app,
+the 24 official Chambolle-Musigny Premier Cru climates were created under the
+shared appellation with a link to its official specification. A fresh preview
+shows both Chambolle groups as technically ready. No drinking dates or cellar
+wines were changed by this identity creation. The Chambolle dates themselves
+are not yet staged: for example the proposed 2022 Premier Cru optimum ends in
+2048 while independent published drinking ranges for particular cuvées end
+earlier. Those are not identical claims and do not prove the proposal wrong;
+they do require an informed editorial review, not automatic batch approval.
+
+**Producer-window review, 22 November:** The latest Chagnoleau profile
+resolved Madrigal 2019 and Pastoral 2016 to unique shared Pouilly-Fuissé
+identities in 750 ml. Their bottle and vintage were checked against the
+profile's merchant pages; independent context was also consulted for the
+producer and Madrigal. The curator prepared the two profile estimates in
+unpublished reference draft 2, explicitly recording that the three dates
+are editorial estimates rather than published source claims and that actual
+ageing, particularly Pastoral, remains uncertain. The draft now contains 61
+windows; this did not publish them or change household wines. Other Chagnoleau
+entries still need their shared cuvée or vintage identities, not household
+renaming. One technically ready Langoureau La Garenne 2022 entry remains
+unprepared: its proposed optimum ends in 2039, while the Guide Hachette
+recommends drinking that exact wine in 2027–2032. These are different kinds of
+window but the discrepancy merits editorial review rather than automatic
+approval. Source: https://www.hachette-vins.com/guide-vins/les-vins/dom-sylvain-langoureau-la-garenne-2022-2025/202582417/.
 
 **Owner decision on 1 November — legacy cutover and discrepancy review:**
 Eventually remove the old calculation from user-facing drinking-window
