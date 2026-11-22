@@ -81,8 +81,24 @@ the Volnay village red definition against the Bourgogne interprofession and
 two vintage-guide contexts, 18 proposed 2005–2022 editorial rows were staged
 on the isolated copy in one transaction and rolled back successfully. The
 later two vintages were not included in that rehearsal; no live rows changed.
-The preview requires curator authentication in the browser, which was not
-available in this session, so real profile staging remains outstanding.
+After the owner signed in as the authorized curator, the same 18 checked
+editorial windows were prepared through the app in draft 2. The app showed
+59 windows and current approvals, with the draft still unpublished. No cellar
+wine or stock was edited; the 2023/2024 Volnay rows were left unstaged.
+
+**Shared climat matching fix, 22 November (proposed):** A profile can name a
+member `Chambolle-Musigny Les Amoureuses` while the common catalogue records
+the official short name `Les Amoureuses`. Previously this left the whole group
+quarantined even after the correct climates were created. Migration
+`20261107050000` compares the existing conservative climat key only inside the
+anchored appellation; a same-name climat in another appellation is ignored and
+multiple matching identities remain quarantined. Five focused database
+assertions and 61 existing place, Premier Cru and climate assertions passed
+on an isolated restored copy. Creating the 24 official
+Chambolle-Musigny climates and re-previewing changed its Premier Cru group
+from quarantined to ready in the copy; that rehearsal was rolled back. No
+climates, dates or cellar changes were made on the linked project. This
+migration still needs CI, backup, fresh-copy rehearsal and linked deployment.
 
 **Owner decision on 1 November — legacy cutover and discrepancy review:**
 Eventually remove the old calculation from user-facing drinking-window
