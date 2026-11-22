@@ -5,6 +5,7 @@ import {
   correctFallbackSubject,
   getFallbackSubject,
   memberTargetId,
+  narrowFallbackToAppellation,
   type FallbackCorrectionKind,
   type FallbackSubject,
 } from "../data/drinkingWindowFallbackCorrections"
@@ -41,6 +42,9 @@ export function FallbackSubjectCorrectionEditor({ versionId, kind, subjectId, is
   const [place, setPlace] = useState<CurationTarget | null>(null)
   const [firstVintage, setFirstVintage] = useState("")
   const [lastVintage, setLastVintage] = useState("")
+  const [scopeAppellation, setScopeAppellation] = useState<CurationTarget | null>(null)
+  const [scopeReason, setScopeReason] = useState("")
+  const [scopeConfirmed, setScopeConfirmed] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
@@ -101,6 +105,21 @@ export function FallbackSubjectCorrectionEditor({ versionId, kind, subjectId, is
     } finally { setBusy(false) }
   }
 
+  async function narrowScope() {
+    if (!subject || !scopeAppellation || !scopeConfirmed || !isOnline) return
+    setBusy(true); setError(null); setMessage(null)
+    try {
+      await narrowFallbackToAppellation({ versionId, groupId: subjectId,
+        appellationId: scopeAppellation.id, expectedHash: subject.hash, reason: scopeReason.trim() })
+      fill(await getFallbackSubject(versionId, kind, subjectId))
+      setScopeAppellation(null); setScopeReason(""); setScopeConfirmed(false)
+      await onChanged()
+      setMessage(t("Scope corrected. Review the group and its dates again before publication."))
+    } catch (caught: unknown) {
+      setError(caught instanceof Error ? caught.message : "Unable to correct scope")
+    } finally { setBusy(false) }
+  }
+
   return <section className="drinking-window-draft-correction">
     <h5>{t("Correct this unpublished fallback")}</h5>
     <p>{t("Changing a fallback removes its old supporting link and invalidates its approval. Add reviewed evidence again before publication.")}</p>
@@ -143,5 +162,20 @@ export function FallbackSubjectCorrectionEditor({ versionId, kind, subjectId, is
         {busy ? t("Saving…") : t("Save fallback correction")}
       </button>
     </form>}
+    {kind === "group" && subject?.data.scope === "region" ? <details>
+      <summary>{t("This group applies to one appellation")}</summary>
+      <p>{t("Use this only when every existing member belongs to the chosen appellation. Dates are kept, but the group and its dates must be reviewed again before publication.")}</p>
+      <CurationTargetPicker kind="appellation" label={t("Correct appellation")}
+        value={scopeAppellation} onChange={(value) => { setScopeAppellation(value); setScopeConfirmed(false) }} isOnline={isOnline} />
+      <label>{t("Why does this group only apply to this appellation?")}
+        <textarea minLength={30} maxLength={1000} value={scopeReason}
+          onChange={(event) => { setScopeReason(event.target.value); setScopeConfirmed(false) }} />
+      </label>
+      <label><input type="checkbox" checked={scopeConfirmed}
+        onChange={(event) => setScopeConfirmed(event.target.checked)} />
+        {t("I checked the group members and understand the dates need a new review.")}</label>
+      <button type="button" disabled={!isOnline || busy || !scopeAppellation || !scopeConfirmed || scopeReason.trim().length < 30}
+        onClick={() => void narrowScope()}>{t("Correct the appellation scope")}</button>
+    </details> : null}
   </section>
 }

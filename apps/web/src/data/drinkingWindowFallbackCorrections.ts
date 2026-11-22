@@ -55,6 +55,24 @@ export async function correctFallbackSubject(input: {
   return result
 }
 
+export async function narrowFallbackToAppellation(input: {
+  versionId: string
+  groupId: string
+  appellationId: string
+  expectedHash: string
+  reason: string
+}, options: RpcOptions = {}): Promise<void> {
+  const result = await call("narrow_drinking_window_region_group", {
+    p_version_id: input.versionId, p_group_id: input.groupId,
+    p_appellation_id: input.appellationId, p_expected_hash: input.expectedHash,
+    p_reason: input.reason, p_confirm: true,
+  }, options)
+  if (!result || typeof result !== "object" || Array.isArray(result)
+    || (result as Record<string, unknown>).group_id !== input.groupId) {
+    throw new Error("Invalid scope correction result")
+  }
+}
+
 export function memberTargetId(data: Record<string, unknown>, kind: MemberKind): string {
   const value = kind === "place" ? data.member_place_id
     : kind === "product" ? data.member_product_id : data.member_release_id
