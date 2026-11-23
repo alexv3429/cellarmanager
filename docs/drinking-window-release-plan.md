@@ -64,6 +64,16 @@ the real curator import, review, impact preview and publication RPCs for two
 households. These are automated checks, not a declaration that the entire
 supplied shared database is published or that Gate 4 has passed.
 
+**Current shared-profile accounting:** The [profile inventory](drinking-window-gate4-shared-profile-inventory.md)
+accounts for all 46 latest producer and 12 place profiles without examining
+household mappings. Of 461 producer windows, 39 match the draft, 3 are
+technically selectable and 419 need a shared identity resolved; these are
+not yet published. A separate identity-plan preview can prepare 115 of the
+460 producer/cuvée/vintage keys with existing mappings, while 345 need a
+shared region or appellation resolved first. Among 485 geographic windows,
+134 match the draft, 286 are technically selectable, and 65 need a shared
+place identity. Selectable is not the same as checked or approved.
+
 **Geographic denomination support, 23 November:** The parent relationship
 alone did not make a denomination inherit its parent AOC's dates; a synthetic
 test reproduced the missing match. The Gate 4 PR now proposes an audited,
