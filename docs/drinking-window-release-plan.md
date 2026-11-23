@@ -411,6 +411,13 @@ later renamed cuvée, so that name history needs explicit handling before
 creating a misleading combined canonical name. These are shared reference
 checks, not requests to edit any cellar.
 
+The curator also created the missing shared product and 2013 vintage for
+Chagnoleau Pouilly-Fuissé La Folle after checking the profile and its
+[75 cl wine listing](https://www.idealwine.com/fr/prix-vin/118283-2013-Bouteille-Bourgogne-Pouilly-Fuisse-La-Folle-Frantz-Chagnoleau-blanc).
+This historical identity currently rests on that listing, not independent
+producer confirmation. Its estimated dates remain unstaged, and no household
+wine was linked.
+
 The 2019 Mâcon-Pierreclos Vieilles Vignes red release is supported by
 [a 75 cl listing](https://www.idealwine.com/fr/prix-vin/207849-2019-Bouteille-Bourgogne-Macon-Pierreclos-Vieilles-Vignes-Frantz-Chagnoleau-rouge)
 and an independent trade list. The import preview cannot yet resolve the
