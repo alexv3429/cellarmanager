@@ -311,6 +311,16 @@ applied to the linked project; postflight found no pending migrations. The
 actual preview app then confirmed the same 804 / 198 / 143 counts for the
 132-window draft. No household mapping or wine was changed.
 
+**Meursault village whites, 23 November:** Prepared eleven editorial
+appellation estimates for 2012–2022 from the supplied profile, excluding
+Premiers Crus. The [BIVB appellation description](https://www.vins-bourgogne.fr/vins-et-terroirs/la-bourgogne-et-ses-appellations/gallery_files/site/321/402/57486/57552.pdf)
+and indicative vintage guidance provide context; individual producer advice
+can be notably shorter or longer, and the sources do not establish these
+exact three milestones for every wine. More specific profiles take priority.
+Draft 2 now contains 143 windows; its draft check passes and it remains
+unpublished. The previous 132-window impact preview is stale. No household
+data was changed.
+
 **Owner decision on 1 November — legacy cutover and discrepancy review:**
 Eventually remove the old calculation from user-facing drinking-window
 selection. During transition, its estimates can be compared with reviewed
@@ -1636,7 +1646,7 @@ in every PR description.
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
 | 3. Complete profile exchange | #230 merged in slot 4/6; full CI green, linked migrations backed up/rehearsed/applied; signed-in owner import/preview/export checked; one Burgaud file saved privately and candidates added to Proposals, nothing published live | Preserve full-profile exchange and audited in-app curator path. |
-| 4. Prepare initial common base | **In progress**, draft #231 in slot 5/6. The shared archive contains 46 latest producer profiles and 12 Burgundy appellation/region profiles. Draft 2 has 132 reviewed but **unpublished** windows; its check and corrected impact preview pass. No local wine was renamed. | Process and account for remaining supplied profiles and exceptions; verify producer/appellation/region precedence and remaining product acceptance criteria. Local-cellar cleanup is not a gate. |
+| 4. Prepare initial common base | **In progress**, draft #231 in slot 5/6. The shared archive contains 46 latest producer profiles and 12 Burgundy appellation/region profiles. Draft 2 has 143 reviewed but **unpublished** windows; its check passes and the previous 132-window impact preview is stale. No local wine was renamed. | Process and account for remaining supplied profiles and exceptions; verify producer/appellation/region precedence and remaining product acceptance criteria. Local-cellar cleanup is not a gate. |
 | 5. Release and verify | Not started | Publish an approved shared base and verify the official app on representative producer, appellation and region cases, private choices, offsets, cross-household behavior and rollback. Report shared, private, legacy-only and missing coverage separately. A 95% match in one cellar is **not** a release threshold; local naming and later profile enrichment are ordinary app use, not developer PRs. The legacy model is a temporary labelled bridge, not shared-profile coverage. |
 
 **Merge/deployment rule:** Do not describe #227 as feature-complete or ask the
