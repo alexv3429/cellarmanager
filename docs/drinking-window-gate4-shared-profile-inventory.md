@@ -35,6 +35,13 @@ ready for publication: it is a count of identities the existing curator
 workflow can review and create. Suggested place mappings must be checked;
 unrelated regions must never inherit one another's dates.
 
+As a read-only experiment, applying the app's **unapproved unique geographic
+suggestions to the preview only** raises the technically preparable count to
+327 keys, leaving 133 blocked. No suggestions were accepted or written by
+this experiment. Those 327 are still identities to review, not approved
+drinking windows; the preview deliberately preserves already reviewed
+mappings over new suggestions.
+
 ## Producer profiles
 
 | Profile | Selectable | In draft | Set aside |
@@ -105,6 +112,11 @@ unrelated regions must never inherit one another's dates.
 
 This is a point-in-time preview, not a permanent block list. Earlier versions
 of the producer files are preserved separately and are **not** added again to
-these latest-profile totals. The curator interface, selection, provenance,
+these latest-profile totals. An earlier comparison found 345 proposal rows in
+21 older producer profiles without an exact counterpart by normalized name,
+colour, vintage and format; changed names can account for some differences,
+so these are a review queue, not 345 confirmed missing or publishable dates.
+Review them as shared-reference data, not based on one cellar's formatting.
+The curator interface, selection, provenance,
 ambiguity safeguards and cross-household publication still require final
 release verification described in the release plan.

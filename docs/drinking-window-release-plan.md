@@ -72,7 +72,10 @@ not yet published. A separate identity-plan preview can prepare 115 of the
 460 producer/cuvée/vintage keys with existing mappings, while 345 need a
 shared region or appellation resolved first. Among 485 geographic windows,
 134 match the draft, 286 are technically selectable, and 65 need a shared
-place identity. Selectable is not the same as checked or approved.
+place identity. A read-only preview using the app's as-yet-unapproved unique
+place suggestions raises preparable producer keys from 115 to 327, with 133
+still blocked; no mapping was accepted by that experiment. Selectable is not
+the same as checked or approved.
 
 **Geographic denomination support, 23 November:** The parent relationship
 alone did not make a denomination inherit its parent AOC's dates; a synthetic
