@@ -269,12 +269,10 @@ check reports 30 `membership_place_overlap` issues. A read-only diagnosis
 shows these are the same 2018 village group intersecting each of the 30
 members of the pre-existing 2018 Premier Cru climat group. The groups are
 intended for distinct classifications, but the eligibility check currently
-sees the appellation parent and its climats as overlapping. Do not bypass
-the check or publish: prove the selection and explicit household-choice
-semantics on a restored copy, and correct the guard or draft safely before
-rechecking. The 122-window impact preview is stale. No household data changed.
+sees the appellation parent and its climats as overlapping. The subsequent
+correction and postflight are recorded below. No household data changed.
 
-**Proposed classification-overlap correction, 23 November:** For otherwise
+**Classification-overlap correction, 23 November:** For otherwise
 equal reference scopes, a confirmed exact climat outranks its parent
 appellation; the existing producer/appellation/region and bottle-format
 priorities remain unchanged. The overlap check accepts only this strict
@@ -287,9 +285,15 @@ overlaps. The first CI run also caught an unintended precedence change for
 a regional all-scope row versus a group. The proposal was narrowed so
 specificity only orders compatible, place-only appellation groups; regional,
 all-scope and mixed-membership competitors remain ambiguous. The previously
-failing batch-preview tests now pass locally. This remains proposed in #231,
-**not yet applied to the linked project**; fresh CI, rehearsal of the revised
-migration and an actual postflight remain required.
+failing batch-preview tests now pass. The full CI passed at `ec1563c`.
+A fresh protected backup was restored locally with the actual 132 windows;
+the exact revised migration changed 30 eligibility issues to zero without
+changing the rows. Its batched impact rehearsal finished on 804 wines.
+After applying the single migration to the linked project, the migration
+postflight showed no pending migrations and the actual draft check and
+cross-cellar impact preview succeeded. The preview reports 198 matching wine
+cards out of 804, with 149 unresolved identities; this diagnostic is not a
+release threshold or final coverage. The draft remains unpublished.
 
 **Owner decision on 1 November — legacy cutover and discrepancy review:**
 Eventually remove the old calculation from user-facing drinking-window
@@ -1616,7 +1620,7 @@ in every PR description.
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
 | 3. Complete profile exchange | #230 merged in slot 4/6; full CI green, linked migrations backed up/rehearsed/applied; signed-in owner import/preview/export checked; one Burgaud file saved privately and candidates added to Proposals, nothing published live | Preserve full-profile exchange and audited in-app curator path. |
-| 4. Prepare initial common base | **In progress**, draft #231 in slot 5/6. The shared archive contains 46 latest producer profiles and 12 Burgundy appellation/region profiles. Draft 2 has 132 reviewed but **unpublished** windows; the latest addition exposed 30 Saint-Aubin village-versus-Premier-Cru membership overlap issues. The 122-window impact preview is stale. No local wine was renamed. | Resolve and test the Saint-Aubin classification conflict without hiding real ambiguity; rerun checks and impact. Process and account for remaining supplied profiles and exceptions; verify producer/appellation/region precedence and remaining product acceptance criteria. Local-cellar cleanup is not a gate. |
+| 4. Prepare initial common base | **In progress**, draft #231 in slot 5/6. The shared archive contains 46 latest producer profiles and 12 Burgundy appellation/region profiles. Draft 2 has 132 reviewed but **unpublished** windows; its draft check and batched impact preview pass after the classification-priority fix. No local wine was renamed. | Process and account for remaining supplied profiles and exceptions; verify producer/appellation/region precedence and remaining product acceptance criteria. Local-cellar cleanup is not a gate. |
 | 5. Release and verify | Not started | Publish an approved shared base and verify the official app on representative producer, appellation and region cases, private choices, offsets, cross-household behavior and rollback. Report shared, private, legacy-only and missing coverage separately. A 95% match in one cellar is **not** a release threshold; local naming and later profile enrichment are ordinary app use, not developer PRs. The legacy model is a temporary labelled bridge, not shared-profile coverage. |
 
 **Merge/deployment rule:** Do not describe #227 as feature-complete or ask the
