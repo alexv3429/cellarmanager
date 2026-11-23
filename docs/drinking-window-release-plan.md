@@ -283,8 +283,13 @@ and product/release overlaps remain conflicts. Tests on an isolated copy
 cover both selectors, unresolved Premier Crus, explicit cellar choices and
 equal-specificity ambiguity. A rollback-only rehearsal with the actual 2018
 Saint-Aubin profile and its existing Premier Cru group removed the 30 false
-overlaps. This is proposed in #231, **not yet applied to the linked project**;
-CI, a fresh backup, rehearsal and an actual postflight remain required.
+overlaps. The first CI run also caught an unintended precedence change for
+a regional all-scope row versus a group. The proposal was narrowed so
+specificity only orders compatible, place-only appellation groups; regional,
+all-scope and mixed-membership competitors remain ambiguous. The previously
+failing batch-preview tests now pass locally. This remains proposed in #231,
+**not yet applied to the linked project**; fresh CI, rehearsal of the revised
+migration and an actual postflight remain required.
 
 **Owner decision on 1 November — legacy cutover and discrepancy review:**
 Eventually remove the old calculation from user-facing drinking-window
