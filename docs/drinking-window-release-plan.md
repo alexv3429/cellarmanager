@@ -51,7 +51,7 @@ approve a profile and that a user can resolve local names through the app;
 Publication and official-app end-to-end verification belong to Gate 5. The
 historical owner-cellar counts in this record are diagnostic snapshots only.
 
-**Geographic denomination support, in progress:** The parent relationship
+**Geographic denomination support, 23 November:** The parent relationship
 alone did not make a denomination inherit its parent AOC's dates; a synthetic
 test reproduced the missing match. The Gate 4 PR now proposes an audited,
 curator-created geographic denomination linked to an existing parent AOC.
@@ -63,9 +63,20 @@ checks have passed. A profile regression exposed an older Premier Cru name
 matcher in the first implementation; the current migration preserves the
 newer matcher. On a clean restored local copy, 14 denomination checks,
 70 profile-identity checks, 40 Premier Cru checks and 12 place-specificity
-checks passed. CI, an up-to-date backup and linked-data rehearsal are still
-required before applying the migration. This is generic product work,
-not a requirement to format any particular household's cellar.
+checks passed. CI passed at `f71ac5b` in PR run `45279797819` and the
+subsequent standalone rerun `45279843349`; its first attempt collided with
+the simultaneous PR run on the local Supabase port, not a test assertion.
+After a fresh protected linked schema/data backup at
+`/private/tmp/cellarmanager-gate4-geodenom-20261123.HI9oAt`, the exact
+migration was rehearsed on a restored local copy. Its draft impact totals
+and a per-wine selection digest were identical before and after for all 804
+wine cards. The sole pending migration `20261107110000` was applied to the
+linked project, and postflight showed no pending migrations or seeds. The
+preview administration form exposes a denomination with its parent AOC;
+no denomination, window or household mapping was created by the migration.
+This is generic product work, not a requirement to format a particular
+household's cellar. Gate 4 remains open for its remaining product checks and
+initial shared-reference preparation.
 
 **Gate 4 profile workflow, 22 November (PR #231):** A curator can now select
 all ready windows in an imported producer, appellation or region profile at
