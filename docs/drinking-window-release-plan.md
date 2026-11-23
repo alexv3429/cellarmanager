@@ -51,6 +51,18 @@ approve a profile and that a user can resolve local names through the app;
 Publication and official-app end-to-end verification belong to Gate 5. The
 historical owner-cellar counts in this record are diagnostic snapshots only.
 
+**Geographic denomination support, in progress:** The parent relationship
+alone did not make a denomination inherit its parent AOC's dates; a synthetic
+test reproduced the missing match. The Gate 4 PR now proposes an audited,
+curator-created geographic denomination linked to an existing parent AOC.
+An exact producer/vintage window remains first, a denomination-specific
+window outranks its parent, and the parent is used only as fallback; a parent
+wine cannot inherit a child's window. No cellar links or windows are created
+by the migration. Local synthetic selector, access-control and component
+checks have passed; CI, an up-to-date backup and linked-data rehearsal are
+still required before applying the migration. This is generic product work,
+not a requirement to format any particular household's cellar.
+
 **Gate 4 profile workflow, 22 November (PR #231):** A curator can now select
 all ready windows in an imported producer, appellation or region profile at
 once, or clear the selection. Quarantined and unchanged entries are excluded;

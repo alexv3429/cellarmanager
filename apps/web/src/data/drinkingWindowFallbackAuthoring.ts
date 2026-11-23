@@ -86,6 +86,21 @@ export async function createCurationPlace(input: {
     detail: input.kind === "region" ? "region" : "appellation" }
 }
 
+export async function createCurationGeographicDenomination(input: {
+  appellationId: string; canonicalName: string; identityReason: string; confirmed: boolean
+}, options: RpcOptions = {}): Promise<CurationTarget> {
+  if (!input.confirmed || input.identityReason.trim().length < 20) {
+    throw new Error("Confirm the place identity and explain the evidence")
+  }
+  const result = record(await call("create_drinking_window_geographic_denomination", {
+    p_appellation_id: input.appellationId,
+    p_name: input.canonicalName.trim(),
+    p_reason: input.identityReason.trim(),
+    p_confirmed: input.confirmed,
+  }, options))
+  return { id: text(result.id), label: text(result.canonical_name), detail: "geographic denomination" }
+}
+
 export async function searchCurationTargets(kind: TargetKind, query: string, options: RpcOptions = {}): Promise<CurationTarget[]> {
   if (query.trim().length < 2) throw new Error("Search with at least two letters")
   const result = await call("search_drinking_window_curation_targets", {
