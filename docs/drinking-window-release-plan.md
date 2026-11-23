@@ -51,6 +51,19 @@ approve a profile and that a user can resolve local names through the app;
 Publication and official-app end-to-end verification belong to Gate 5. The
 historical owner-cellar counts in this record are diagnostic snapshots only.
 
+**Live reader hierarchy verification:** A rollback-only integration test now
+exercises the real wine-card and catalogue readers against the same synthetic
+published reference: exact producer/cuvée/vintage first, then appellation,
+then region. It verifies that all three years come from the selected source,
+an unrelated vintage gets no shared estimate, catalogue and card agree, a
+personal offset applies consistently to all reference levels, a manual
+cellar window wins without a second offset, and another household member does
+not inherit the owner's personal offset. All 16 assertions passed locally.
+Separately, `drinking_window_full_profile_publication_flow.test.sql` covers
+the real curator import, review, impact preview and publication RPCs for two
+households. These are automated checks, not a declaration that the entire
+supplied shared database is published or that Gate 4 has passed.
+
 **Geographic denomination support, 23 November:** The parent relationship
 alone did not make a denomination inherit its parent AOC's dates; a synthetic
 test reproduced the missing match. The Gate 4 PR now proposes an audited,
