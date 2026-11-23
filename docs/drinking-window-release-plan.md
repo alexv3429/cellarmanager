@@ -357,6 +357,15 @@ still held for separate review because individual recommendations vary
 considerably. Draft 2 now has 177 windows and passes its draft check; the
 impact preview is stale, nothing is published and no household data changed.
 
+**Gevrey Premier Cru climat identities, 23 November:** The curator compared
+all 26 names in the supplied profile with the official [Gevrey-Chambertin
+specification](https://www.bourgogne-wines.com/wine-and-terroir/bourgogne-and-its-appellations/gallery_files/site/321/19990/20226.pdf),
+checked existing shared names, and created the 26 missing climat identities
+under the correct shared appellation in the app. The profile preview now
+resolves the Premier Cru group instead of quarantining it for missing place
+identities. This does not validate its proposed windows: those are still
+unprepared, and no wine in a household was linked or changed.
+
 **Owner decision on 1 November — legacy cutover and discrepancy review:**
 Eventually remove the old calculation from user-facing drinking-window
 selection. During transition, its estimates can be compared with reviewed
