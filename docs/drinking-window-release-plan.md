@@ -256,7 +256,10 @@ a [2022 Saint-Aubin village example](https://www.frw.co.uk/product/650069da8b5d9
 whose drinking recommendation is 2024–2034. This example does not establish
 the three milestones for every producer. Other Saint-Aubin windows have not
 been approved in this batch. Draft 2 contains 122 windows, passes its draft
-check and remains unpublished; no household data was changed.
+check and remains unpublished; no household data was changed. Its actual
+impact preview was refreshed: the diagnostic remains 198 matches among 804
+wine cards, with 149 identities unresolved, across all cellars. These counts
+do not measure the quality or final completeness of the shared database.
 
 **Owner decision on 1 November — legacy cutover and discrepancy review:**
 Eventually remove the old calculation from user-facing drinking-window
@@ -1583,7 +1586,7 @@ in every PR description.
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
 | 3. Complete profile exchange | #230 merged in slot 4/6; full CI green, linked migrations backed up/rehearsed/applied; signed-in owner import/preview/export checked; one Burgaud file saved privately and candidates added to Proposals, nothing published live | Preserve full-profile exchange and audited in-app curator path. |
-| 4. Prepare initial common base | **In progress**, draft #231 in slot 5/6. The shared archive contains 46 latest producer profiles and 12 Burgundy appellation/region profiles. Draft 2 has 122 reviewed but **unpublished** windows and its draft check passes; the batched impact preview worked on the preceding 119-window draft and needs refreshing after additions. No local wine was renamed. | Process and account for the remaining supplied profiles and exceptions; verify producer/appellation/region precedence and remaining product acceptance criteria. Local-cellar cleanup is not a gate. |
+| 4. Prepare initial common base | **In progress**, draft #231 in slot 5/6. The shared archive contains 46 latest producer profiles and 12 Burgundy appellation/region profiles. Draft 2 has 122 reviewed but **unpublished** windows; its draft check and refreshed batched impact preview pass. No local wine was renamed. | Process and account for the remaining supplied profiles and exceptions; verify producer/appellation/region precedence and remaining product acceptance criteria. Local-cellar cleanup is not a gate. |
 | 5. Release and verify | Not started | Publish an approved shared base and verify the official app on representative producer, appellation and region cases, private choices, offsets, cross-household behavior and rollback. Report shared, private, legacy-only and missing coverage separately. A 95% match in one cellar is **not** a release threshold; local naming and later profile enrichment are ordinary app use, not developer PRs. The legacy model is a temporary labelled bridge, not shared-profile coverage. |
 
 **Merge/deployment rule:** Do not describe #227 as feature-complete or ask the
