@@ -393,6 +393,20 @@ preview completed for 804 wine cards across all cellars, with 199 matching
 and 143 identities unresolved; these are diagnostics, not a household
 cleanup requirement. Nothing was published or changed in a household.
 
+**Chagnoleau shared identities, 23 November:** The curator reused LWIN7
+`1217463` for Frantz Chagnoleau Saint-Véran Pré Jaux, and created the 2020
+75 cl shared release identity after checking the [wine listing](https://www.idealwine.com/fr/prix-vin/181517-2020-Bouteille-Bourgogne-Saint-Veran-Pre-Jaux-Frantz-Chagnoleau-blanc).
+The profile preview now resolves that candidate; its proposed dates remain
+unstaged. Subsequent research found a [2014 trade-list note](https://applejack.com/assets/Annual_Bordeaux_and_Burgundy_Sale_2017.pdf)
+describing Prélude as formerly called Pré Jaux, so the exact historical
+naming and this 2020 listing need reconciliation before adopting the dates
+or treating the names as interchangeable. Likewise, the profile's 2018
+Montchanins candidate says 75 cl, while [a merchant describes that vintage
+as exclusively magnum](https://laroutedesblancs.com/109-domaine-frantz-chagnoleau-)
+and another source lists 75 cl. The discrepancy is left unresolved; no
+Montchanins identity or date was added. These are shared reference checks,
+not requests to edit any cellar.
+
 **Owner decision on 1 November — legacy cutover and discrepancy review:**
 Eventually remove the old calculation from user-facing drinking-window
 selection. During transition, its estimates can be compared with reviewed
