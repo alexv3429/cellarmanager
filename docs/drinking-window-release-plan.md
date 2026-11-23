@@ -403,9 +403,13 @@ naming and this 2020 listing need reconciliation before adopting the dates
 or treating the names as interchangeable. Likewise, the profile's 2018
 Montchanins candidate says 75 cl, while [a merchant describes that vintage
 as exclusively magnum](https://laroutedesblancs.com/109-domaine-frantz-chagnoleau-)
-and another source lists 75 cl. The discrepancy is left unresolved; no
-Montchanins identity or date was added. These are shared reference checks,
-not requests to edit any cellar.
+and another source lists 75 cl. The common cuvée was matched to LWIN7
+`1821800`, but the format discrepancy remains unresolved: no 2018 release
+identity or date was added. The profile's Prélude 2015 and 2018 names were
+also checked against merchant listings; the same profile groups them with the
+later renamed cuvée, so that name history needs explicit handling before
+creating a misleading combined canonical name. These are shared reference
+checks, not requests to edit any cellar.
 
 **Owner decision on 1 November — legacy cutover and discrepancy review:**
 Eventually remove the old calculation from user-facing drinking-window
