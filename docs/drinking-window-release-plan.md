@@ -379,6 +379,20 @@ the subsequent actual impact refresh reports 199 matching wine cards out of
 coverage requirement for Gate 4. No dates were published and no household
 data changed.
 
+**Vosne-Romanée village, 23 November:** The supplied 2019 and 2021 red
+village estimates were reviewed and prepared in draft 2, separately from
+Premier and Grand Cru. The [official specification](https://www.bourgogne-wines.com/wine-and-terroir/bourgogne-and-its-appellations/gallery_files/site/321/19990/20269.pdf)
+establishes appellation scope; [general vintage guidance](https://cavisteapp.com/fr/appellations/vosne-romanee.html)
+and a [2019 village example](https://vinous.com/wines/domaine-arnoux-lachaux-2019-vosne-romanee-village)
+provide context, not independent confirmation of all three proposed dates.
+They are explicitly labelled editorial estimates; producer and cuvée windows
+take priority. Other years, including 2020 where individual producer advice
+can end substantially earlier, remain for further review. Draft 2 now holds
+180 unpublished windows and passes its draft check. The refreshed impact
+preview completed for 804 wine cards across all cellars, with 199 matching
+and 143 identities unresolved; these are diagnostics, not a household
+cleanup requirement. Nothing was published or changed in a household.
+
 **Owner decision on 1 November — legacy cutover and discrepancy review:**
 Eventually remove the old calculation from user-facing drinking-window
 selection. During transition, its estimates can be compared with reviewed
