@@ -240,6 +240,16 @@ end should not be presented as generally established. Draft 2 now contains
 121 windows; its draft check passes, its earlier impact preview is stale,
 and it remains unpublished. No household data changed.
 
+**Producer candidate requiring review, 23 November:** With existing suggested
+and reviewed shared mappings, one latest producer-profile row is technically
+ready in the restored snapshot: Nathalie and Sylvain Langoureau,
+Puligny-Montrachet Premier Cru La Garenne 2022, proposed 2025 / 2029–2039.
+The linked [Guide Hachette entry for that exact wine and vintage](https://www.hachette-vins.com/guide-vins/les-vins/dom-sylvain-langoureau-la-garenne-2022-2025/202582417/)
+recommends 2027–2032. A two-date recommendation is not identical to the
+three-milestone optimum, but the seven-year difference in the stated end is
+material and requires editorial reconciliation, not a claim that either
+source proves the same thing. The candidate was not staged or published.
+
 **Owner decision on 1 November — legacy cutover and discrepancy review:**
 Eventually remove the old calculation from user-facing drinking-window
 selection. During transition, its estimates can be compared with reviewed
