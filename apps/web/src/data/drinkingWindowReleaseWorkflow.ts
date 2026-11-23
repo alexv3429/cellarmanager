@@ -3,6 +3,7 @@ interface RpcOptions {
     data?: unknown
     error: { message: string } | null
   }>
+  onProgress?: (processed: number) => void
 }
 
 async function call(name: string, parameters: Record<string, unknown>, options: RpcOptions): Promise<unknown> {
@@ -89,9 +90,16 @@ export interface PublicationImpact {
 }
 
 export async function previewPublicationImpact(versionId: string, options: RpcOptions = {}): Promise<PublicationImpact> {
-  const result = object(await call("preview_drinking_window_publication_impact", {
+  const jobId = text(await call("start_drinking_window_impact_preview", {
     p_version_id: versionId,
   }, options))
+  let result: Record<string, unknown>
+  do {
+    result = object(await call("continue_drinking_window_impact_preview", { p_job_id: jobId }, options))
+    if (typeof result.completed !== "boolean") throw new Error("Invalid publication preview")
+    if (!Number.isInteger(result.wine_count) || (result.wine_count as number) < 0) throw new Error("Invalid publication preview")
+    options.onProgress?.(result.wine_count as number)
+  } while (!result.completed)
   for (const field of ["wine_count", "matched_count", "changed_count", "unchanged_count",
     "private_preserved_count", "unresolved_count"]) {
     if (!Number.isInteger(result[field]) || (result[field] as number) < 0) throw new Error("Invalid publication preview")

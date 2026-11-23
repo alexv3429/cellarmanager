@@ -85,7 +85,10 @@ export function DrinkingWindowReleasePanel({ householdId, isOnline, onChanged, p
         setMessage(checked.issueCount === 0 ? t("Draft checks passed. You can preview it in your cellar, then publish it for all cellars.")
           : t("{count} issues still block this draft.", { count: String(checked.issueCount) }))
       } else if (action === "impact") {
-        const preview = await previewPublicationImpact(selectedId)
+        setMessage(t("Checking the impact across cellars…"))
+        const preview = await previewPublicationImpact(selectedId, {
+          onProgress: (count) => setMessage(t("Checking the impact: {count} wines processed…", { count: String(count) })),
+        })
         setImpact(preview)
         setMessage(t("Publication impact preview recorded. Check the counts before publishing."))
       } else if (action === "pilot") {
