@@ -411,6 +411,15 @@ later renamed cuvée, so that name history needs explicit handling before
 creating a misleading combined canonical name. These are shared reference
 checks, not requests to edit any cellar.
 
+The 2019 Mâcon-Pierreclos Vieilles Vignes red release is supported by
+[a 75 cl listing](https://www.idealwine.com/fr/prix-vin/207849-2019-Bouteille-Bourgogne-Macon-Pierreclos-Vieilles-Vignes-Frantz-Chagnoleau-rouge)
+and an independent trade list. The import preview cannot yet resolve the
+shared Mâcon-Pierreclos place. The [Mâcon specification](https://www.bourgogne-wines.com/wine-and-terroir/bourgogne-and-its-appellations/gallery_files/site/321/19990/20236.pdf)
+identifies Pierreclos as a complementary geographical denomination within
+AOC Mâcon, not a separate AOC. Do not silently flatten or mislabel that
+distinction: review how the place model represents it before staging the
+release. No cellar wine or date was altered for this candidate.
+
 **Owner decision on 1 November — legacy cutover and discrepancy review:**
 Eventually remove the old calculation from user-facing drinking-window
 selection. During transition, its estimates can be compared with reviewed
