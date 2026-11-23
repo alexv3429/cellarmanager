@@ -225,8 +225,20 @@ linked project and its postflight showed no pending migrations. The preview
 app then completed the actual impact calculation: 198 of 804 wine cards match
 this draft, 198 have different dates, zero have identical or private dates,
 and 149 have unconfirmed identities. These cross-cellar diagnostic figures
-are neither a cellar-cleanup requirement nor final coverage. The draft remains
+were for the 119-window draft, not the subsequently modified draft; they are
+neither a cellar-cleanup requirement nor final coverage. The draft remains
 unpublished and no cellar wines or stock were changed.
+
+**Gevrey village, 23 November:** Added the 2010 and 2017 red village estimates
+from the supplied profile to draft 2, after checking the appellation context
+and vintage-specific examples. Those examples are not proof of the exact
+three milestones; the estimates are labelled as editorial, exclude Premiers
+and Grands Crus and defer to more specific profiles. Other Gevrey vintages
+and its quarantined Premier Cru group remain to be assessed; for example,
+2022 village advice varies widely by producer and the proposed 2043 optimum
+end should not be presented as generally established. Draft 2 now contains
+121 windows; its draft check passes, its earlier impact preview is stale,
+and it remains unpublished. No household data changed.
 
 **Owner decision on 1 November — legacy cutover and discrepancy review:**
 Eventually remove the old calculation from user-facing drinking-window
@@ -1553,7 +1565,7 @@ in every PR description.
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
 | 3. Complete profile exchange | #230 merged in slot 4/6; full CI green, linked migrations backed up/rehearsed/applied; signed-in owner import/preview/export checked; one Burgaud file saved privately and candidates added to Proposals, nothing published live | Preserve full-profile exchange and audited in-app curator path. |
-| 4. Prepare initial common base | **In progress**, draft #231 in slot 5/6. The shared archive contains 46 latest producer profiles and 12 Burgundy appellation/region profiles. Draft 2 has 119 reviewed but **unpublished** windows; its draft check and actual cross-cellar impact preview pass after deployment of the batched fix. No local wine was renamed. | Process and account for the remaining supplied profiles and exceptions; verify producer/appellation/region precedence and remaining product acceptance criteria. Local-cellar cleanup is not a gate. |
+| 4. Prepare initial common base | **In progress**, draft #231 in slot 5/6. The shared archive contains 46 latest producer profiles and 12 Burgundy appellation/region profiles. Draft 2 has 121 reviewed but **unpublished** windows and its draft check passes; the batched impact preview worked on the preceding 119-window draft and needs refreshing after additions. No local wine was renamed. | Process and account for the remaining supplied profiles and exceptions; verify producer/appellation/region precedence and remaining product acceptance criteria. Local-cellar cleanup is not a gate. |
 | 5. Release and verify | Not started | Publish an approved shared base and verify the official app on representative producer, appellation and region cases, private choices, offsets, cross-household behavior and rollback. Report shared, private, legacy-only and missing coverage separately. A 95% match in one cellar is **not** a release threshold; local naming and later profile enrichment are ordinary app use, not developer PRs. The legacy model is a temporary labelled bridge, not shared-profile coverage. |
 
 **Merge/deployment rule:** Do not describe #227 as feature-complete or ask the
