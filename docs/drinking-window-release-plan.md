@@ -59,8 +59,12 @@ An exact producer/vintage window remains first, a denomination-specific
 window outranks its parent, and the parent is used only as fallback; a parent
 wine cannot inherit a child's window. No cellar links or windows are created
 by the migration. Local synthetic selector, access-control and component
-checks have passed; CI, an up-to-date backup and linked-data rehearsal are
-still required before applying the migration. This is generic product work,
+checks have passed. A profile regression exposed an older Premier Cru name
+matcher in the first implementation; the current migration preserves the
+newer matcher. On a clean restored local copy, 14 denomination checks,
+70 profile-identity checks, 40 Premier Cru checks and 12 place-specificity
+checks passed. CI, an up-to-date backup and linked-data rehearsal are still
+required before applying the migration. This is generic product work,
 not a requirement to format any particular household's cellar.
 
 **Gate 4 profile workflow, 22 November (PR #231):** A curator can now select

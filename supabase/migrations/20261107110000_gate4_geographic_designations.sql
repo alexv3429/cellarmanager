@@ -171,13 +171,24 @@ create or replace function private.drinking_window_unique_reviewed_release(
 language sql stable set search_path = '' as $$
     select min(anchor.product_id::text)::uuid, min(anchor.release_id::text)::uuid
     from private.drinking_window_reviewed_release_anchors anchor
-    where anchor.producer_id = p_producer_id
+    join public.enrichment_places appellation on appellation.id=anchor.appellation_id
+    cross join lateral (select pg_catalog.regexp_replace(appellation.normalized_name,
+        ' (1c|1er cru|premier cru)$','') as root) app
+    where anchor.producer_id=p_producer_id
       and private.drinking_window_appellation_applies(anchor.appellation_id,p_appellation_id)
-      and private.drinking_window_place_contains(p_region_id, anchor.region_id)
-      and anchor.wine_color = p_color
-      and anchor.vintage_year = p_wine.vintage
-      and anchor.format_ml = p_wine.format_ml
-      and private.normalize_wine_reference_text(p_wine.cuvee) = any(anchor.name_keys)
+      and private.drinking_window_place_contains(p_region_id,anchor.region_id)
+      and anchor.wine_color=p_color and anchor.vintage_year=p_wine.vintage
+      and anchor.format_ml=p_wine.format_ml
+      and (private.normalize_wine_reference_text(p_wine.cuvee)=any(anchor.name_keys)
+        or (private.normalize_wine_reference_text(coalesce(p_wine.appellation,'') || ' ' ||
+              coalesce(p_wine.cuvee,'')) ~ '(^| )(1c|1er cru|premier cru)( |$)'
+          and exists (select 1 from pg_catalog.unnest(anchor.name_keys) reviewed_name
+            where app.root <> '' and pg_catalog.left(reviewed_name,pg_catalog.length(app.root)+1)=app.root || ' '
+              and pg_catalog.substr(reviewed_name,pg_catalog.length(app.root)+2) ~ '^(1c|1er cru|premier cru) '
+              and pg_catalog.regexp_replace(pg_catalog.regexp_replace(
+                pg_catalog.substr(reviewed_name,pg_catalog.length(app.root)+2),
+                '^(1c|1er cru|premier cru) ',''),'^les ','')
+                =pg_catalog.regexp_replace(private.normalize_wine_reference_text(p_wine.cuvee),'^les ',''))))
       and not exists (
           select 1 from private.drinking_window_reviewed_release_anchors conflicting
           where conflicting.release_id = anchor.release_id

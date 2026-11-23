@@ -315,6 +315,32 @@ select is((private.drinking_window_wine_context(
 select is((select wine_reference_id from public.wines
     where id='fd000000-0000-4000-8000-000000000003'),null::uuid,
     'The read-time inference never rewrites the household wine');
+-- The exact reviewed release is still recognized when the cellar supplies a
+-- more precise, curated geographic denomination under the profile's AOC.
+insert into public.enrichment_places(id,parent_id,place_type,canonical_name)
+select 'fd000000-0000-4000-8000-000000000015',id,'appellation','Synthetic Morgon Designation'
+from public.enrichment_places where place_type='appellation' and normalized_name='morgon';
+insert into private.drinking_window_geographic_designations(place_id,appellation_id,curator_id,identity_reason)
+select 'fd000000-0000-4000-8000-000000000015',id,
+ 'fd000000-0000-4000-8000-000000000001','Synthetic designation with explicitly checked parent'
+from public.enrichment_places where place_type='appellation' and normalized_name='morgon';
+select is((select x.release_id from public.wines w
+ cross join lateral private.drinking_window_unique_reviewed_release(w,
+  current_setting('app.identity_batch_producer')::uuid,
+  (select id from public.enrichment_places where place_type='region' and normalized_name='beaujolais'),
+  'fd000000-0000-4000-8000-000000000015','red') x
+ where w.id='fd000000-0000-4000-8000-000000000003'),
+ (select r.id from public.wine_reference_releases r
+  join public.wine_reference_products p on p.id=r.product_id
+  where p.canonical_name='Morgon Synthetic Reserve' and r.vintage_year=2022),
+ 'A reviewed parent-AOC release resolves for a confirmed denomination');
+select is((select count(*) from public.wines w
+ cross join lateral private.drinking_window_unique_reviewed_release(w,
+  current_setting('app.identity_batch_producer')::uuid,
+  (select id from public.enrichment_places where place_type='region' and normalized_name='beaujolais'),
+  'fd000000-0000-4000-8000-000000000015','white') x
+ where w.id='fd000000-0000-4000-8000-000000000003'),0::bigint,
+ 'A denomination never makes a reviewed red release match a white wine');
 insert into public.enrichment_places(id,parent_id,place_type,canonical_name)
 select 'fd000000-0000-4000-8000-000000000012',id,'climat','Morgon Reserve'
 from public.enrichment_places where place_type='appellation' and normalized_name='morgon';
