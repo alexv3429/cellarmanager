@@ -295,6 +295,20 @@ cross-cellar impact preview succeeded. The preview reports 198 matching wine
 cards out of 804, with 149 unresolved identities; this diagnostic is not a
 release threshold or final coverage. The draft remains unpublished.
 
+**Impact preview and local geographic mappings, 23 November:** A further
+comparison found the impact preview repeated global place-name lookup for
+wines without a producer link, instead of using the household-confirmed
+region and appellation already resolved by the live reader. On a restored
+132-window copy, six confirmed local appellations were consequently counted
+as unresolved. The proposed fix reuses the live reader's resolved context,
+while preserving household isolation and rejecting a contradictory explicit
+wine-reference link. On the copy, both the single and batched previews now
+agree: 804 wine cards, 198 matches and 143 unresolved rather than 149.
+Synthetic tests cover one household mapping, another household with the same
+unmapped spelling, and a conflicting vintage. This fix is not yet deployed;
+fresh CI, backup, rehearsal and actual postflight are required. No household
+mapping or wine was changed.
+
 **Owner decision on 1 November — legacy cutover and discrepancy review:**
 Eventually remove the old calculation from user-facing drinking-window
 selection. During transition, its estimates can be compared with reviewed
@@ -1620,7 +1634,7 @@ in every PR description.
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
 | 3. Complete profile exchange | #230 merged in slot 4/6; full CI green, linked migrations backed up/rehearsed/applied; signed-in owner import/preview/export checked; one Burgaud file saved privately and candidates added to Proposals, nothing published live | Preserve full-profile exchange and audited in-app curator path. |
-| 4. Prepare initial common base | **In progress**, draft #231 in slot 5/6. The shared archive contains 46 latest producer profiles and 12 Burgundy appellation/region profiles. Draft 2 has 132 reviewed but **unpublished** windows; its draft check and batched impact preview pass after the classification-priority fix. No local wine was renamed. | Process and account for remaining supplied profiles and exceptions; verify producer/appellation/region precedence and remaining product acceptance criteria. Local-cellar cleanup is not a gate. |
+| 4. Prepare initial common base | **In progress**, draft #231 in slot 5/6. The shared archive contains 46 latest producer profiles and 12 Burgundy appellation/region profiles. Draft 2 has 132 reviewed but **unpublished** windows; its check passes. A proposed impact-preview fix must still be deployed to count household-confirmed places correctly. No local wine was renamed. | Validate and deploy the impact correction; process and account for remaining supplied profiles and exceptions; verify producer/appellation/region precedence and remaining product acceptance criteria. Local-cellar cleanup is not a gate. |
 | 5. Release and verify | Not started | Publish an approved shared base and verify the official app on representative producer, appellation and region cases, private choices, offsets, cross-household behavior and rollback. Report shared, private, legacy-only and missing coverage separately. A 95% match in one cellar is **not** a release threshold; local naming and later profile enrichment are ordinary app use, not developer PRs. The legacy model is a temporary labelled bridge, not shared-profile coverage. |
 
 **Merge/deployment rule:** Do not describe #227 as feature-complete or ask the
