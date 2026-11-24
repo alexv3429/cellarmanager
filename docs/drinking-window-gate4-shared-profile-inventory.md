@@ -5,8 +5,10 @@ profiles**, not an analysis of one household or a request to rename wines.
 It was generated on a local restore of the linked project with the curator's
 current suggested and previously reviewed profile mappings. Draft 2 contains
 180 windows at this snapshot but had not been published. A later update on
-24 November added five Burgaud estimates to the draft, bringing it to 185;
-the tables below remain the original snapshot, not a recomputed inventory.
+24 November added five Burgaud estimates, 20 Viré-Clessé white appellation
+fallbacks and 11 Pommard village red fallbacks, bringing it to 216; the tables
+below remain the original snapshot, not a recomputed inventory. Pommard
+Premier Cru entries remain aside pending shared geographic identity review.
 
 The subsequent Burgaud batch reused existing producer and cuvée identities
 where reviewed, created three cuvées and five vintages, and staged Chollet

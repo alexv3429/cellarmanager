@@ -69,6 +69,24 @@ The draft check passed and the refreshed multi-cellar impact preview reported
 diagnostics, not household coverage requirements or live publication. No
 local wine, cellar mapping, window publication or rollout was changed.
 
+**Viré-Clessé fallback, 24 November:** The curator then staged the supplied
+20 white appellation-level estimates for vintages 2005–2024, bringing draft 2
+to **205 unpublished windows**. The BIVB confirms the village appellation;
+the three dates are explicitly editorial, informed by the supplied vintage
+research and subject to producer and storage variation. They are fallback
+estimates, not dates published by the BIVB and not substitutes for a more
+specific producer/cuvée window. The draft check passed after staging. No
+cellar wine or local identity mapping was changed.
+
+**Pommard village fallback, 24 November:** The curator added 11 missing
+red village estimates (2005–2013 and 2023–2024) from the supplied profile;
+the other nine were already in the draft. Draft 2 now contains **216
+unpublished windows**. These are editorial village-level fallbacks, not
+producer-published dates; the BIVB description and producer ageing guidance
+provide context, not the exact three milestones. The separately defined
+Premier Cru group remains quarantined until its shared geographic members
+are identified. The draft check passed; no household wine was changed.
+
 Two existing shared Côte du Py product identities were discovered during
 this intake. The importer initially suggested the one without 2022, whereas
 the other is already attached to the 2022 draft. The latter was explicitly
@@ -1846,7 +1864,7 @@ in every PR description.
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
 | 3. Complete profile exchange | #230 merged in slot 4/6; full CI green, linked migrations backed up/rehearsed/applied; signed-in owner import/preview/export checked; one Burgaud file saved privately and candidates added to Proposals, nothing published live | Preserve full-profile exchange and audited in-app curator path. |
-| 4. Prepare initial common base | **In progress**, draft #231 in slot 5/6. The shared archive contains 46 latest producer profiles and 12 Burgundy appellation/region profiles. Draft 2 has 185 reviewed but **unpublished** windows. The real reader hierarchy, source-specific three dates, private overrides and member offsets pass 16 synthetic local checks; geographic-denomination and suggestion-safety migrations were tested, rehearsed and applied. No local wine was renamed. | Continue supplied-profile intake; account for the existing shared Côte du Py duplicate and verify remaining product acceptance criteria. Local-cellar cleanup is not a gate. |
+| 4. Prepare initial common base | **In progress**, draft #231 in slot 5/6. The shared archive contains 46 latest producer profiles and 12 Burgundy appellation/region profiles. Draft 2 has 216 reviewed but **unpublished** windows. The real reader hierarchy, source-specific three dates, private overrides and member offsets pass 16 synthetic local checks; geographic-denomination and suggestion-safety migrations were tested, rehearsed and applied. No local wine was renamed. | Continue supplied-profile intake; account for the existing shared Côte du Py duplicate and verify remaining product acceptance criteria. Local-cellar cleanup is not a gate. |
 | 5. Release and verify | Not started | Publish an approved shared base and verify the official app on representative producer, appellation and region cases, private choices, offsets, cross-household behavior and rollback. Report shared, private, legacy-only and missing coverage separately. A 95% match in one cellar is **not** a release threshold; local naming and later profile enrichment are ordinary app use, not developer PRs. The legacy model is a temporary labelled bridge, not shared-profile coverage. |
 
 **Merge/deployment rule:** Do not describe #227 as feature-complete or ask the
