@@ -87,6 +87,15 @@ provide context, not the exact three milestones. The separately defined
 Premier Cru group remains quarantined until its shared geographic members
 are identified. The draft check passed; no household wine was changed.
 
+**Meursault village fallback, 25 November:** Nine missing white-village
+estimates (2005–2011 and 2023–2024) were staged from the supplied profile;
+the remaining eleven were already in the draft. Draft 2 now has **225
+unpublished windows**. The BIVB's appellation description and two producers'
+ageing indications provide context, not the exact three editorial dates.
+Old white wines warrant particular caution because conservation and bottle
+variation matter. Red and Premier Cru categories were not included in this
+batch. The draft check passed; no cellar wine or local mapping was changed.
+
 Two existing shared Côte du Py product identities were discovered during
 this intake. The importer initially suggested the one without 2022, whereas
 the other is already attached to the 2022 draft. The latter was explicitly
@@ -1864,7 +1873,7 @@ in every PR description.
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
 | 3. Complete profile exchange | #230 merged in slot 4/6; full CI green, linked migrations backed up/rehearsed/applied; signed-in owner import/preview/export checked; one Burgaud file saved privately and candidates added to Proposals, nothing published live | Preserve full-profile exchange and audited in-app curator path. |
-| 4. Prepare initial common base | **In progress**, draft #231 in slot 5/6. The shared archive contains 46 latest producer profiles and 12 Burgundy appellation/region profiles. Draft 2 has 216 reviewed but **unpublished** windows. The real reader hierarchy, source-specific three dates, private overrides and member offsets pass 16 synthetic local checks; geographic-denomination and suggestion-safety migrations were tested, rehearsed and applied. No local wine was renamed. | Continue supplied-profile intake; account for the existing shared Côte du Py duplicate and verify remaining product acceptance criteria. Local-cellar cleanup is not a gate. |
+| 4. Prepare initial common base | **In progress**, draft #231 in slot 5/6. The shared archive contains 46 latest producer profiles and 12 Burgundy appellation/region profiles. Draft 2 has 225 reviewed but **unpublished** windows. The real reader hierarchy, source-specific three dates, private overrides and member offsets pass 16 synthetic local checks; geographic-denomination and suggestion-safety migrations were tested, rehearsed and applied. No local wine was renamed. | Continue supplied-profile intake; account for the existing shared Côte du Py duplicate and verify remaining product acceptance criteria. Local-cellar cleanup is not a gate. |
 | 5. Release and verify | Not started | Publish an approved shared base and verify the official app on representative producer, appellation and region cases, private choices, offsets, cross-household behavior and rollback. Report shared, private, legacy-only and missing coverage separately. A 95% match in one cellar is **not** a release threshold; local naming and later profile enrichment are ordinary app use, not developer PRs. The legacy model is a temporary labelled bridge, not shared-profile coverage. |
 
 **Merge/deployment rule:** Do not describe #227 as feature-complete or ask the
