@@ -78,6 +78,42 @@ select is((public.suggest_drinking_window_profile_identities(
     current_setting('app.identity_suggestion_profile')::uuid)->>'published')::boolean,
     false, 'Name suggestions do not publish drinking dates');
 
+-- The same shared cuvée may have been registered in both common LWIN name
+-- orders. An apparently unique match in only one order must not be selected.
+insert into public.wine_reference_entities(id,entity_type) values
+    ('fd120000-0000-4000-8000-000000000204','product'),
+    ('fd120000-0000-4000-8000-000000000205','product'),
+    ('fd120000-0000-4000-8000-000000000206','product');
+insert into public.wine_reference_products(id,producer_id,canonical_name) values
+    ('fd120000-0000-4000-8000-000000000204',
+     'fd120000-0000-4000-8000-000000000101',
+     'Synthetic Frantz Chagnoleau, Saint-Veran, Cote du Py'),
+    ('fd120000-0000-4000-8000-000000000205',
+     'fd120000-0000-4000-8000-000000000101',
+     'Synthetic Frantz Chagnoleau, Cote du Py, Saint-Veran'),
+    ('fd120000-0000-4000-8000-000000000206',
+     'fd120000-0000-4000-8000-000000000101',
+     'Synthetic Frantz Chagnoleau, Cote du Py James, Saint-Veran');
+select set_config('app.identity_suggestion_word_order',
+    (public.import_drinking_window_profile_exchange(pg_catalog.jsonb_set(
+        (select document from private.drinking_window_profile_exchanges
+         where id = current_setting('app.identity_suggestion_profile')::uuid),
+        '{cuvees}',
+        '[{"id":"py","name":"Saint-Véran Côte du Py","aliases":["Côte du Py"],
+           "region":"Bourgogne","appellation":"Saint-Véran","color":"red"},
+          {"id":"james","name":"Côte du Py James",
+           "region":"Bourgogne","appellation":"Saint-Véran","color":"red"}]'::jsonb)))->>'id',true);
+select is((public.suggest_drinking_window_profile_identities(
+    current_setting('app.identity_suggestion_word_order')::uuid)#>>'{cuvees,py}'),
+    null, 'Reordered duplicate identities are not silently preselected');
+select is((public.suggest_drinking_window_profile_identities(
+    current_setting('app.identity_suggestion_word_order')::uuid)->'ambiguous_cuvees') ? 'py',
+    true, 'Reordered duplicates are exposed as ambiguous');
+select is((public.suggest_drinking_window_profile_identities(
+    current_setting('app.identity_suggestion_word_order')::uuid)#>>'{cuvees,james}')::uuid,
+    'fd120000-0000-4000-8000-000000000206'::uuid,
+    'A distinct longer cuvée name is not confused with the base cuvée');
+
 select set_config('app.identity_suggestion_overlap',
     (public.import_drinking_window_profile_exchange(pg_catalog.jsonb_set(
         (select document from private.drinking_window_profile_exchanges

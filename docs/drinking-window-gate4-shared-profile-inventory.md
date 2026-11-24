@@ -4,7 +4,23 @@ Snapshot: 23 November 2026. This is an inventory of **shared reference
 profiles**, not an analysis of one household or a request to rename wines.
 It was generated on a local restore of the linked project with the curator's
 current suggested and previously reviewed profile mappings. Draft 2 contains
-180 windows but has not been published.
+180 windows at this snapshot but had not been published. A later update on
+24 November added five Burgaud estimates to the draft, bringing it to 185;
+the tables below remain the original snapshot, not a recomputed inventory.
+
+The subsequent Burgaud batch reused existing producer and cuvée identities
+where reviewed, created three cuvées and five vintages, and staged Chollet
+2024, James 2022, Javernières 2021, La Roche 2024 and Ruyère 2024 as
+editorial estimates. Côte du Py 2022 was already in the draft. James 2017's
+dates need further review; Lantignié 2024 remains aside because sources name
+Beaujolais-Villages where the file says Beaujolais. Two existing common Côte
+du Py identities require follow-up: the automatic suggestion initially
+selected a different product from the one with the existing 2022 draft.
+The reviewed batch selected the latter and created no extra Côte du Py
+duplicate. A proposed, locally tested suggestion correction flags the two
+exact name orders as ambiguous; it has not yet been applied to the linked
+project or merged the existing duplicate. No household wine or published
+window was changed.
 
 The columns below count proposed **windows**, including distinct bottle sizes:
 

@@ -51,6 +51,38 @@ approve a profile and that a user can resolve local names through the app;
 Publication and official-app end-to-end verification belong to Gate 5. The
 historical owner-cellar counts in this record are diagnostic snapshots only.
 
+**Shared Burgaud intake, 24 November:** The curator used the app's shared
+profile workflow, independently of any household's local names. The reviewed
+identity batch reused the existing producer, created three cuvée identities
+and five vintage identities, and reused previously existing identities for
+the remaining selections. Five editorial estimates were added to unpublished
+draft 2, now **185 windows**: Chollet 2024, James 2022, Javernières 2021,
+La Roche 2024 and Ruyère 2024. The already reviewed Côte du Py 2022 row
+remained unchanged. These are CellarManager estimates, not producer-published
+three-date claims. James 2022's proposed optimum end (2038) differs from
+one merchant's 2036 drinking horizon; the recorded rationale makes that
+distinction. James 2017 was not staged because its dates are extrapolated
+and need further review. Lantignié 2024 was set aside: the profile names the
+Beaujolais appellation while inspected sources describe Beaujolais-Villages.
+The draft check passed and the refreshed multi-cellar impact preview reported
+201 matching cards out of 804 and 143 unconfirmed identities; these are
+diagnostics, not household coverage requirements or live publication. No
+local wine, cellar mapping, window publication or rollout was changed.
+
+Two existing shared Côte du Py product identities were discovered during
+this intake. The importer initially suggested the one without 2022, whereas
+the other is already attached to the 2022 draft. The latter was explicitly
+selected, avoiding a further duplicate. The new migration
+`20261107120000` makes the general suggestion consider both exact word orders
+and report multiple matching products as ambiguous instead of preselecting
+one; a regression test reproduced the fault and all 15 assertions pass with
+the correction on a local restored copy. The real Burgaud profile on that
+copy is now flagged ambiguous and not preselected. CI, a fresh live backup,
+rehearsal and linked application are still required; the pre-existing shared
+duplicate itself is not merged or deleted by this correction. Ruyère 2024 was associated with the existing
+Les Charmes identity on the basis of a documented name change, not a blanket
+assumption that all vintage-specific renamings are interchangeable.
+
 **Live reader hierarchy verification:** A rollback-only integration test now
 exercises the real wine-card and catalogue readers against the same synthetic
 published reference: exact producer/cuvée/vintage first, then appellation,
@@ -1805,7 +1837,7 @@ in every PR description.
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
 | 3. Complete profile exchange | #230 merged in slot 4/6; full CI green, linked migrations backed up/rehearsed/applied; signed-in owner import/preview/export checked; one Burgaud file saved privately and candidates added to Proposals, nothing published live | Preserve full-profile exchange and audited in-app curator path. |
-| 4. Prepare initial common base | **In progress**, draft #231 in slot 5/6. The shared archive contains 46 latest producer profiles and 12 Burgundy appellation/region profiles. Draft 2 has 180 reviewed but **unpublished** windows. The real reader hierarchy, source-specific three dates, private overrides and member offsets pass 16 synthetic local checks; geographic-denomination migration was rehearsed and applied. No local wine was renamed. | Finish the complete supplied-profile accounting, record unresolved shared-reference exceptions, and verify remaining product acceptance criteria and CI. Local-cellar cleanup is not a gate. |
+| 4. Prepare initial common base | **In progress**, draft #231 in slot 5/6. The shared archive contains 46 latest producer profiles and 12 Burgundy appellation/region profiles. Draft 2 has 185 reviewed but **unpublished** windows. The real reader hierarchy, source-specific three dates, private overrides and member offsets pass 16 synthetic local checks; geographic-denomination migration was rehearsed and applied. A proposed suggestion-safety migration has passed its local regression on a restored copy but is not yet applied to the linked project. No local wine was renamed. | Continue supplied-profile intake; complete CI and deployment safeguards for the suggestion correction, account for the existing shared Côte du Py duplicate, and verify remaining product acceptance criteria. Local-cellar cleanup is not a gate. |
 | 5. Release and verify | Not started | Publish an approved shared base and verify the official app on representative producer, appellation and region cases, private choices, offsets, cross-household behavior and rollback. Report shared, private, legacy-only and missing coverage separately. A 95% match in one cellar is **not** a release threshold; local naming and later profile enrichment are ordinary app use, not developer PRs. The legacy model is a temporary labelled bridge, not shared-profile coverage. |
 
 **Merge/deployment rule:** Do not describe #227 as feature-complete or ask the
