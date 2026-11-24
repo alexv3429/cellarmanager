@@ -17,10 +17,9 @@ Beaujolais-Villages where the file says Beaujolais. Two existing common Côte
 du Py identities require follow-up: the automatic suggestion initially
 selected a different product from the one with the existing 2022 draft.
 The reviewed batch selected the latter and created no extra Côte du Py
-duplicate. A proposed, locally tested suggestion correction flags the two
-exact name orders as ambiguous; it has not yet been applied to the linked
-project or merged the existing duplicate. No household wine or published
-window was changed.
+duplicate. A tested and applied suggestion correction flags the two exact
+name orders as ambiguous; it has not merged the existing duplicate. No
+household wine or published window was changed.
 
 The columns below count proposed **windows**, including distinct bottle sizes:
 
