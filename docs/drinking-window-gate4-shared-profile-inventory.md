@@ -7,8 +7,21 @@ current suggested and previously reviewed profile mappings. Draft 2 contains
 180 windows at this snapshot but had not been published. A later update on
 24 November added five Burgaud estimates, 20 Viré-Clessé white appellation
 fallbacks and 11 Pommard village red fallbacks. On 25 November, nine
-Meursault village white estimates brought the total to 225; the tables below
-remain the original snapshot, not a recomputed inventory. Pommard
+Meursault village white estimates brought the total to 225. Subsequent
+review added nine Chambolle-Musigny village red, five Puligny-Montrachet
+village white, seven exact-release Mas Jullien, six Vosne-Romanée Premier
+Cru, four Volnay Premier Cru and 21 exact-release Mas Cal Demoura estimates,
+for **277** unpublished windows. The Mas Cal Demoura additions cover
+Combariolles, Terre de Jonquières and Feu Sacré 2016–2022 and use the
+domaine's vintage table as context with separately identified editorial
+interpretations where the three milestones are not explicit.
+All 14 Vosne-Romanée and 29 Volnay Premier Cru climat names were checked and
+added to the common geographic reference. For Pommard, 28 such names were
+added; a version 1.0.1 of the shared profile excludes Les Perrières until its
+conflicting source classification is resolved. Its remaining Premier Cru
+windows have not been staged. Some unusually long geographic estimates and older
+Mas Jullien releases with historical appellation questions remain aside.
+The tables below remain the original snapshot, not a recomputed inventory. Pommard
 Premier Cru entries remain aside pending shared geographic identity review.
 
 The subsequent Burgaud batch reused existing producer and cuvée identities

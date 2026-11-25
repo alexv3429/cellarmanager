@@ -96,6 +96,59 @@ Old white wines warrant particular caution because conservation and bottle
 variation matter. Red and Premier Cru categories were not included in this
 batch. The draft check passed; no cellar wine or local mapping was changed.
 
+**Additional shared references, 25 November:** The curator added nine
+Chambolle-Musigny village red fallbacks (2006–2009, 2011–2013, 2023–2024)
+and five Puligny-Montrachet village white fallbacks (2006, 2007, 2009, 2011,
+2024). These are editorial estimates, not dates published by the appellation
+or a producer. Two Chambolle years with unusually long horizons and six
+Puligny years including 2023 were not added pending further review; a
+producer's 2023 indication is materially earlier than the generic profile.
+Premier Cru, grand cru and red/white categories were not collapsed together.
+
+Seven producer-specific Mas Jullien references were also staged after
+checking producer, cuvée, vintage, red colour, appellation and 75 cl: Autour
+de Jonquières 2023; La Brune 2018 and 2023; Carlan 2019 and 2023; and Lous
+Rougeos 2022 and 2024. Seven vintage identities were added to existing shared
+products, with source links in the curator audit. Merchant estimates differ
+slightly from some adopted editorial milestones; those differences were
+recorded rather than attributed to the producer. Lous Rougeos red AOP was
+distinguished from a similarly named white IGP. Older Carlan vintages remain
+unprepared until their historical appellations are checked: Terrasses du
+Larzac became a separate AOP in 2014. Draft 2 has **246 unpublished
+windows**. Its check passed; no household mapping, published window, cellar
+wine or rollout was changed. More supplied profiles and historical
+identities remain to process; Gate 4 has not passed.
+
+**Premier Cru geographic intake, 25 November:** Using the curator interface,
+28 Pommard, 14 Vosne-Romanée and 29 Volnay climat identities were added to
+their respective shared parent appellations; no household wines were linked
+or renamed. The names were checked against the official 2011 appellation
+specifications; the Volnay list also matches the 2026 specification. A
+Pommard profile revision 1.0.1 retains the original and excludes Les
+Perrières pending resolution of the conflict between the BIVB web page and
+the 2011 specification; its 28 remaining identities now resolve. The
+Pommard Premier Cru windows remain unstaged while the unusually long generic
+optima are assessed. Six Vosne-Romanée Premier Cru estimates (2007, 2011,
+2017, 2021, 2023, 2024) and four Volnay Premier Cru estimates (2007, 2011,
+2021, 2024) were staged as lower-precision editorial fallbacks after the
+climat membership check. Their rationale explicitly notes the wide spread
+in producers' ageing guidance. Longer-horizon years remain for review.
+Draft 2 therefore has **256 unpublished windows**; nothing was published.
+
+**Mas Cal Demoura release-level intake, 25 November:** The curator checked
+the domaine's own January 2025 vintage advice and created shared 75 cl
+vintage identities for Les Combariolles, Terre de Jonquières and Feu Sacré,
+2016–2022. The three 2022 entries and 18 earlier entries were staged as
+three-date interpretations of that advice, not as claims that the domaine
+formally published three maturity milestones. Specific appellation choices
+for Terre de Jonquières and Feu Sacré were made per vintage, without
+extrapolating the current AOP onto earlier years. The source discrepancy for
+Terre de Jonquières 2019 was reviewed and recorded: one merchant suggests
+drinking before 2029 whereas the domaine indicates maturity until 2035; the
+staged reference follows the domaine while retaining this uncertainty. Draft
+2 now has **277 unpublished windows**. The draft check passed. No cellar
+wine, local mapping, publication or rollout was changed.
+
 Two existing shared Côte du Py product identities were discovered during
 this intake. The importer initially suggested the one without 2022, whereas
 the other is already attached to the 2022 draft. The latter was explicitly
@@ -1873,7 +1926,7 @@ in every PR description.
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
 | 3. Complete profile exchange | #230 merged in slot 4/6; full CI green, linked migrations backed up/rehearsed/applied; signed-in owner import/preview/export checked; one Burgaud file saved privately and candidates added to Proposals, nothing published live | Preserve full-profile exchange and audited in-app curator path. |
-| 4. Prepare initial common base | **In progress**, draft #231 in slot 5/6. The shared archive contains 46 latest producer profiles and 12 Burgundy appellation/region profiles. Draft 2 has 225 reviewed but **unpublished** windows. The real reader hierarchy, source-specific three dates, private overrides and member offsets pass 16 synthetic local checks; geographic-denomination and suggestion-safety migrations were tested, rehearsed and applied. No local wine was renamed. | Continue supplied-profile intake; account for the existing shared Côte du Py duplicate and verify remaining product acceptance criteria. Local-cellar cleanup is not a gate. |
+| 4. Prepare initial common base | **In progress**, draft #231 in slot 5/6. The shared archive contains 46 latest producer profiles and 12 supplied Burgundy appellation/region profiles, plus a reviewed Pommard profile revision. Draft 2 has 277 reviewed but **unpublished** windows. The real reader hierarchy, source-specific three dates, private overrides and member offsets pass 16 synthetic local checks; geographic-denomination and suggestion-safety migrations were tested, rehearsed and applied. No local wine was renamed. | Continue supplied-profile intake and review unusually long generic windows; resolve the Pommard source discrepancy, account for the existing shared Côte du Py duplicate and verify remaining product acceptance criteria. Local-cellar cleanup is not a gate. |
 | 5. Release and verify | Not started | Publish an approved shared base and verify the official app on representative producer, appellation and region cases, private choices, offsets, cross-household behavior and rollback. Report shared, private, legacy-only and missing coverage separately. A 95% match in one cellar is **not** a release threshold; local naming and later profile enrichment are ordinary app use, not developer PRs. The legacy model is a temporary labelled bridge, not shared-profile coverage. |
 
 **Merge/deployment rule:** Do not describe #227 as feature-complete or ask the
