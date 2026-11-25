@@ -1,6 +1,6 @@
 # Drinking windows — product contract and execution plan
 
-**Status: owner-confirmed contract, 29 October 2026.** This is
+**Status: owner-confirmed contract, clarified 25 November 2026.** This is
 the single product definition for the drinking-window feature. It records the
 owner's requested end state, not a claim that the current application already
 does it. The [living release record](drinking-window-release-plan.md) tracks
@@ -8,6 +8,18 @@ implementation and deployment. Where older design notes or pilot procedures
 conflict with this contract, this contract governs the target; the older text
 must be reconciled before general release. A passing PR is not a released
 feature.
+
+## Binding delivery clarification — owner decision, 25 November 2026
+
+This section supersedes any conflicting acceptance criteria in this contract, the release record, PR #231 and earlier audits. Gate 4 validates generic functionality; Gate 5 delivers it. Neither requires reconciliation of the owner's real cellar, ingestion or publication of the supplied real profile bundle, or any real-cellar coverage threshold (90%, 95% or otherwise). Preserve existing research for separate operational curation.
+
+Gate 4 (PR #231, slot 5/6): use an isolated deterministic synthetic cellar and self-contained fixtures (roughly 30–50 representative wines, not a mandatory count). Prove complete producer, appellation and region import, schema validation, canonical matching, reusable audited household mappings without rewriting labels, curator review, publication, versioning, rollback and reader/display. Cover nominal and boundary cases: ambiguity, missing identities/vintages, colour, format, classification, scope, precedence, private overrides, offsets, idempotency, quarantine, authorization and cross-household isolation. Published eligible profiles must beat the labelled legacy estimate; unpublished or invalid rows must never become live advice. Reuse existing tests, remove accidental dependencies on preloaded real identities, and verify migrations on an isolated database. Preserve applied migration history; distinguish real-data corrections from generic schema work. Run SQL/security tests, git diff --check and npm run web:ci, plus required repository CI before merge. Record evidence and remaining defects; owner merges manually.
+
+UX acceptance across Gates 4 and 5: everyday wine cards show a concise maturity status, three dates or an honest unavailable state, and source. Details, provenance and personal adjustments are available on demand. Separate advanced profile import, editing, canonical administration, review and publication into permission-controlled workspaces; do not clutter routine inventory operations. Verify mobile usability and ordinary-user versus curator journeys. Preserve existing profile facts and pairing provenance; new pairing inference remains outside the first drinking-window release.
+
+Gate 5 (slot 6/6): deploy validated code and schema, verify official app/mobile, controlled test-profile publication and cross-cellar visibility, private preference protection, authorization, rollback and emergency disablement. Use isolated or safely scoped test identities; never publish fictitious advice as genuine wine guidance. Record build, migration and postflight evidence. Legacy retirement remains a separate explicit owner decision after operational review; it is not required for generic delivery. No real profile is approved by this clarification.
+
+Operational follow-up: reconcile personal labels through persistent mappings, curate and publish real profiles, measure coverage by shared/private/legacy/unavailable source, and review eventual legacy cutover separately. No new feature scope or extra PR is implied. Historical audit evidence remains historical, not a merge gate.
 
 ## 1. What a cellar owner receives
 
@@ -33,11 +45,8 @@ flowchart TD
     P -- No --> R["Search the shared profiles in the order below"]
     R --> F{"First complete, eligible match?"}
     F -- Yes --> S["Use its three dates from one profile"]
-    F -- No --> N{"Can the existing model safely estimate?"}
-    N -- Yes --> M["Use a labelled model estimate"]
-    N -- No --> Z["Show no window and explain why"]
+    F -- No --> Z["Show no shared window and explain why"]
     S --> A["Apply this person's younger/older offset, if set"]
-    M --> A
     A --> D["Show the dates and where they came from"]
     O --> D
     Z --> D
@@ -52,12 +61,35 @@ The shared-profile search stops at the first complete, eligible match:
 | 3 | Appellation profile | Same appellation, vintage and colour; this wine belongs to the reviewed ageing group. |
 | 4 | Region profile | Same region, vintage and colour; this wine belongs to the reviewed ageing group. |
 
-If none matches, the existing model is a **labelled last resort**, not a
-shared profile. If it cannot safely estimate a window, the card says so. A
+This diagram is the **target after legacy-model retirement**. During the
+transition, if no eligible shared row matches, the existing model may still
+provide a clearly labelled provisional estimate; it is never a shared
+profile and must not be counted as profile coverage. After cutover, an
+unmatched wine has no shared recommendation until a suitable profile is
+reviewed, although an explicit cellar-only choice can still supply dates. A
 cellar-only producer rule is different from a shared producer profile: the
 cellar owner enters their own three years for a stated producer, vintage and
 scope of wines; it affects only their cellar. It cannot silently carry over
 to another vintage or to every cuvée.
+
+**Product versus cellar data (owner clarification, 22 November 2026):** The
+release must deliver a working shared-profile system and use the supplied
+profiles to establish a useful initial shared base. Separately, each cellar
+owner maintains their own labels, local-to-shared links and cellar preferences
+in the app. An administrator maintains or enriches common profiles in the
+app. Neither routine activity requires a developer, code change or PR.
+
+Near-complete coverage of the owner's cellar remains a useful outcome to
+measure and improve; it is not an application-release gate requiring that
+cellar's every label be cleaned or every missing profile be authored first.
+The earlier 95% cellar-specific working threshold is therefore a diagnostic
+target, not a condition for passing Gate 4 or releasing the generic product.
+Report profile, private-choice, legacy-only and unmatched results separately;
+do not count the old model as shared-profile coverage or claim a profile is
+published merely because its JSON parsed. Where a wine lacks a safe match,
+the app must explain that and support correction or enrichment through its
+normal user/curator workflows. The initial shared base still needs the
+supplied producer and place profiles processed with their exclusions stated.
 
 An exact shared row must match the **canonical producer, cuvée, vintage,
 appellation, region and colour**. An explicitly
@@ -68,6 +100,53 @@ is ambiguous or the recorded appellation and region contradict each other,
 the app asks for correction instead of guessing. A producer-wide row is only
 used when a curator explicitly defined it as applicable; the absence of a
 cuvée-specific row does not itself make another row generic.
+
+**Local labels are not the identity system (owner clarification, 2 November
+2026).** A cellar owner may enter and keep an approximate producer/cuvée
+description. CellarManager must use those fields to *find* the corresponding
+shared identity, not require the owner to rewrite the wine card into canonical
+terminology. The workflow distinguishes three states: local description,
+suggested shared match, and confirmed shared link. A unique match supported
+by approved aliases or other exact, consistent identity fields may be linked
+automatically with an audit trail; an OCR or fuzzy candidate alone remains a
+suggestion and cannot activate a shared drinking window. For an ambiguous
+candidate, the app offers a focused, preferably batchable owner review rather
+than a manual search for every wine. If the shared identity does not yet
+exist, the wine remains locally usable and the missing identity enters the
+curator queue. When the shared catalogue gains a verified producer, cuvée or
+release, CellarManager retries unresolved local wines. None of these steps
+silently rewrites the owner's description or turns a household spelling into
+a global alias. Gate 4 must measure confirmed links, suggested matches and
+unresolved wines separately; the current one-by-one identity review panel is
+not sufficient evidence of this contract at cellar scale. Cellar-specific
+cleanup itself is not a release gate or a reason to create a developer PR.
+
+**Reusable household identity decisions (owner clarification, 2 November
+2026).** Reconcile in this order, once per local naming pattern rather than
+once per bottle: (1) the household's producer spelling → canonical producer;
+(2) that producer's local cuvée spelling, with appellation and colour as
+discriminators → canonical cuvée; (3) its vintage → the canonical release, if
+that release exists and is unambiguous. A cuvée decision normally covers all
+vintages. A documented rename or change of identity requires separate,
+non-overlapping vintage ranges (for example Burgaud's Les Charmes/Ruyère
+era); the app must never apply a timeless alias across such a boundary by
+default. An explicit wine-card identity remains a higher-priority exception.
+Producer-only reference rows may use the confirmed producer even when the
+cuvée has no canonical product yet. Exact-release rows require the product
+and release and all applicable place, colour and format checks. These are
+identity decisions, **not** approval of the dates. The 23 supplied profiles
+must be processed through this same hierarchy; each missing shared identity
+or unresolved name stays visible in a coverage report rather than becoming
+an inferred match.
+
+The same distinction applies to geography. A cellar's region spelling can
+be linked once to a shared region or subregion; its appellation spelling can
+be linked within that region to a shared appellation. These links belong to
+the household, are auditable and reusable across vintages, and do not edit
+wine descriptions or create global aliases. An appellation outside the
+chosen region is invalid. The shared-window reader uses the confirmed local
+place links for the same wine, but a place link never approves or invents a
+drinking-window row. The owner must be able to remove or correct a link.
 
 At appellation and region scope, a reviewed ageing category or an explicit
 all-wines applicability statement is required where wines have materially
@@ -103,8 +182,35 @@ choice changes the shared database.
 | Same row, personal offset +2 years | Display shared 2025 / 2028–2040 and personal 2027 / 2030–2042; no shared edit. |
 | No exact Côte du Py 2022 row, but a reviewed applicable Morgon 2022 group exists | Use the complete Morgon row, labelled appellation estimate. |
 | No applicable Morgon row, but a reviewed applicable Beaujolais 2022 group exists | Use the complete Beaujolais row, labelled region estimate. |
-| Neither broader group includes this wine | Do not borrow another group's dates; use the labelled model estimate if safe, otherwise no window. |
+| Neither broader group includes this wine | Do not borrow another group's dates; during transition only, a clearly labelled old-model estimate may be shown if safe. After cutover, show no shared recommendation. |
 | The cellar owner entered dates for this wine or a cellar-only Burgaud rule covering it | Use those cellar dates and preserve them through future shared updates. |
+
+### Retiring the old model and checking differences
+
+**Owner clarification (1 November 2026):** The old calculation is a
+temporary bridge, not a permanent tier of the new reference hierarchy. The
+intended end state uses only explicit cellar choices and eligible, reviewed
+producer → appellation → region profiles. Do not average, combine or choose
+between old and new dates according to which seems closer.
+
+Before retiring the old model, compare its **unadjusted** three-year estimate
+with a proposed profile's three years only for a cellar wine linked to the
+**same confirmed canonical shared wine identity**, vintage and applicable
+bottle format. A similar name, an unlinked cellar wine or a broad region
+analogue is not enough to establish that comparison. Compare each milestone
+separately; if any corresponding years differ by **five years or more**, flag
+that wine and the specific year difference for human review. This is a
+diagnostic, not an automatic rejection of the profile or a reason to keep the
+old value. Differences below five years do not by themselves require review.
+If either complete triplet is missing, report the comparison as unavailable
+rather than inventing a gap. Personal offsets and cellar overrides must not
+distort this comparison.
+
+The release record must report how many active wines are served by reviewed
+profiles, cellar choices, the old model alone, and no window. The old model
+can be removed from the user-facing advice path only after the remaining
+legacy-only wines and any material differences have been examined and the
+owner has accepted the cutover; until then its presence remains explicit.
 
 ## 2. How the shared database changes
 
@@ -208,8 +314,8 @@ decide what changes; do not silently open a seventh PR or declare success.
 | 2/6 | 1. Correct the core selection and preferences | Make the published selector follow the exact → applicable broader → model order; apply personal offsets to reviewed dates; add cellar-only producer rules; preserve private wine windows. | Automated precedence, no-mixing, identity, membership, format, colour, vintage, offset and override tests pass; the wine card shows base and effective dates with source. |
 | 3/6 | 2. Finish curator and user workflows | User proposes one window; curator directly authors or edits, self-approves and publishes. Replace pilot-only publisher/household approvals as routine requirements while keeping audit, preflight, diff and rollback. | In the app, one user proposes Burgaud 2023; one curator publishes it without another curator, developer PR or household opt-in; a second user sees it and private choices remain unchanged. |
 | 4/6 | 3. Import complete profiles | Support whole producer v1.1 files and agreed appellation/region JSON; preview identity mapping and changes; preserve window and optional profile facts with provenance; batch-approve valid rows, quarantine others. | Curator can import and publish a complete profile from the app; re-import/idempotency and malformed/conflicting-file tests pass; no silent partial import. |
-| 5/6 | 4. Prepare the initial common base | Process all 23 supplied producer files and the reviewed appellation/region fallbacks in a staging/restored database. Resolve canonical identities and membership; prepare approved rows for publication and report every excluded row with a reason. | A coverage manifest lists each file, row and status; real catalogue fixtures resolve exact, appellation and region matches; no row is assumed publishable because it parsed. |
-| 6/6 | 5. Release and verify | Rehearse migrations on a restored backup, deploy code and schema, publish the approved initial base, run a mobile pilot, then enable ordinary shared publication. | Official app shows correct source, dates and private adjustments; user/curator end-to-end test passes; another cellar receives a new approved vintage; emergency-off/rollback work; release record contains build, migration, published-row counts and postflight evidence. |
+| 5/6 | 4. Prepare the initial common base | Process the latest supplied producer and place profiles independently of one household's naming; prepare eligible shared rows, record exclusions and verify app-level identity and profile workflows. | A manifest lists each current file and row with a disposition; representative product, appellation and region fixtures resolve correctly; curator import and bulk review work in-app without a developer PR. Cellar-specific cleanup is not a gate. |
+| 6/6 | 5. Release and verify | Rehearse migrations on a restored backup, deploy code and schema, publish the approved initial base, run a mobile pilot, then enable ordinary shared publication. | Official app shows correct source, dates and private adjustments; user/curator end-to-end test passes; another cellar receives a new approved vintage; emergency-off/rollback work; release record contains build, migration, published-row counts and postflight evidence. Cellar coverage is reported, not required to reach 95% before release. |
 
 ### Current gap ledger
 

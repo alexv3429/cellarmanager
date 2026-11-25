@@ -12,11 +12,18 @@ insert into public.household_members(household_id, user_id, role)
 values ('00000000-0000-4000-8000-000000000100', '00000000-0000-4000-8000-000000009501', 'member');
 insert into public.wines(id, household_id, producer, cuvee) values
 ('00000000-0000-4000-8000-000000009511', '00000000-0000-4000-8000-000000000100', 'Barthod', 'Les Cras'),
+('00000000-0000-4000-8000-000000009513', '00000000-0000-4000-8000-000000000100', 'G. Barthod', 'Les Cras'),
+('00000000-0000-4000-8000-000000009514', '00000000-0000-4000-8000-000000000100', 'Clos Marie', 'Les Glorieuses'),
 ('00000000-0000-4000-8000-000000009512', '00000000-0000-4000-8000-000000000200', 'Barthod', 'Another cellar');
 insert into public.wine_reference_entities(id, entity_type)
-values ('00000000-0000-4000-8000-000000009521', 'producer');
+values ('00000000-0000-4000-8000-000000009521', 'producer'),
+       ('00000000-0000-4000-8000-000000009522', 'producer');
 insert into public.wine_reference_producers(id, canonical_name)
-values ('00000000-0000-4000-8000-000000009521', 'Test Ghislaine Barthod');
+values ('00000000-0000-4000-8000-000000009521', 'Test Ghislaine Barthod'),
+       ('00000000-0000-4000-8000-000000009522', 'Clos Marie');
+insert into public.wine_reference_aliases(entity_id, entity_type, alias_value, normalized_value, source_name)
+values ('00000000-0000-4000-8000-000000009521', 'producer', 'G. Barthod',
+        private.normalize_wine_reference_text('G. Barthod'), 'test');
 
 set local role authenticated;
 set local request.jwt.claim.sub = '00000000-0000-4000-8000-000000009501';
@@ -49,6 +56,22 @@ select is(
 select is(
   (select item->>'canonical_name' from jsonb_array_elements(public.get_household_producer_preference_review('00000000-0000-4000-8000-000000000100')->'sources') item where item->>'normalized' = 'barthod'),
   null, 'Catalogue shorthand begins without a household preference'
+);
+select is(
+  (select item->'suggestions'->0->>'match_kind' from jsonb_array_elements(public.get_household_producer_preference_review('00000000-0000-4000-8000-000000000100')->'sources') item where item->>'normalized' = 'barthod'),
+  'similar', 'A substring name offers a suggestion without selecting it'
+);
+select is(
+  (select item->'suggestions'->0->>'match_kind' from jsonb_array_elements(public.get_household_producer_preference_review('00000000-0000-4000-8000-000000000100')->'sources') item where item->>'source_text' = 'G. Barthod'),
+  'alias', 'A curated alias is distinguished from a mere similar name'
+);
+select is(
+  (select item->'suggestions'->0->>'match_kind' from jsonb_array_elements(public.get_household_producer_preference_review('00000000-0000-4000-8000-000000000100')->'sources') item where item->>'source_text' = 'Clos Marie'),
+  'exact', 'An exact canonical name is distinguished from other candidates'
+);
+select is(
+  (select item->>'producer_id' from jsonb_array_elements(public.get_household_producer_preference_review('00000000-0000-4000-8000-000000000100')->'sources') item where item->>'source_text' = 'Clos Marie'),
+  null, 'A suggested exact name does not silently create a household mapping'
 );
 select lives_ok(
   $$select public.manage_household_producer_preference('00000000-0000-4000-8000-000000000100', 'Barthod', 'set', '00000000-0000-4000-8000-000000009521', null)$$,

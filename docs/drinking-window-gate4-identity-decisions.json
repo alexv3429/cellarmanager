@@ -1,0 +1,55 @@
+{
+  "regions": {
+    "Bourgogne — Mâconnais": "Bourgogne",
+    "Bourgogne — Côte de Beaune": "Bourgogne",
+    "Bourgogne — Côte de Nuits": "Bourgogne",
+    "Bourgogne — Côte Chalonnaise": "Bourgogne",
+    "Languedoc — Pic Saint-Loup": "Languedoc",
+    "Languedoc — Haute Vallée du Gassac": "Languedoc"
+  },
+  "appellations": {
+    "Pouilly-Fuissé 1er Cru": "Pouilly-Fuisse",
+    "Gevrey-Chambertin 1er cru": "Gevrey-Chambertin",
+    "Saint-Aubin 1er Cru": "Saint-Aubin"
+  },
+  "producers": {
+    "CellarManager_Bruno_Clavelier_v1.1_qualite_auditee.json": "Bruno Clavelier",
+    "CellarManager_Burgaud_v1.1_dataset_1.0.3_draft_qualite_auditee.json": "Jean-Marc Burgaud",
+    "CellarManager_Chateau_de_Cazeneuve_v1.1_qualite_auditee.json": "de Cazeneuve",
+    "CellarManager_Daniel_Barraud_v1.1_qualite_auditee.json": "Daniel Barraud",
+    "CellarManager_Frantz_Chagnoleau_v1.1_qualite_auditee.json": "Frantz Chagnoleau",
+    "CellarManager_Ghislaine_Barthod_v1.1_qualite_auditee.json": "Ghislaine Barthod",
+    "CellarManager_Jacques_Carillon_v1.1_qualite_auditee.json": "Jacques Carillon",
+    "CellarManager_Jerome_Castagnier_v1.1_qualite_auditee.json": "Domaine Castagnier",
+    "CellarManager_Louis_Boillot_v1.1_qualite_auditee.json": "Louis Boillot",
+    "CellarManager_Michel_Bouzereau_et_Fils_v1.1_qualite_auditee.json": "Michel Bouzereau & Fils",
+    "CellarManager_Saumaize_Michelin_v1.1_qualite_auditee.json": "Saumaize Michelin",
+    "CellarManager_Sylvain_Langoureau_v1.1_research_qualite_auditee.json": "Sylvain Langoureau",
+    "CellarManager_Vincent_Dureuil_Janthial_v1.1_qualite_auditee.json": "Vincent Dureuil Janthial"
+  },
+  "products": {
+    "CellarManager_Burgaud_v1.1_dataset_1.0.3_draft_qualite_auditee.json": {
+      "morgon_cote_du_py": "Jean-Marc Burgaud, Côte du Py, Morgon",
+      "morgon_james": "Jean-Marc Burgaud, Cote du Py James, Morgon"
+    },
+    "CellarManager_Daniel_Barraud_v1.1_qualite_auditee.json": {
+      "bar_buland": "Daniel Barraud, Pouilly-Fuisse, En Buland Vieilles Vignes",
+      "bar_sur_roche": "Pouilly-Fuissé Premier Cru Sur la Roche"
+    },
+    "CellarManager_Frantz_Chagnoleau_v1.1_qualite_auditee.json": {
+      "fc_a_la_cote": "Domaine Frantz Chagnoleau, Saint-Veran, A la Cote",
+      "fc_raspilleres": "Domaine Frantz Chagnoleau, Vire-Clesse, Raspilleres"
+    },
+    "CellarManager_Louis_Boillot_v1.1_qualite_auditee.json": {
+      "boillot_gevrey_champonnet": "Domaine Louis Boillot, Gevrey-Chambertin Premier Cru, Champonnet",
+      "boillot_mav_aux_caves": "Louis Boillot, Moulin-a-Vent, Aux Caves",
+      "boillot_mav_plantier_favre": "Louis Boillot, Plantier Favre, Moulin-a-Vent"
+    },
+    "CellarManager_Sylvain_Langoureau_v1.1_research_qualite_auditee.json": {
+      "lg_vermarain": "Sylvain Langoureau, Saint-Aubin Premier Cru, Bas de Vermarain a l'Est"
+    },
+    "CellarManager_Vincent_Dureuil_Janthial_v1.1_qualite_auditee.json": {
+      "dj_alig": "Vincent Dureuil Janthial, Bourgogne Aligote"
+    }
+  }
+}

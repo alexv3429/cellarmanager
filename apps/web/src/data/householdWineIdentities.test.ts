@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from "vitest"
 
 import {
+  confirmWineIdentityReconciliation,
   getHouseholdWineIdentityStatus,
   manageHouseholdWineIdentity,
+  previewWineIdentityReconciliation,
   parseSharedWineIdentities,
   requestSharedWineIdentity,
   searchHouseholdWineIdentities,
@@ -18,6 +20,32 @@ const release = {
 }
 
 describe("household wine identity review", () => {
+  it("parses a bounded household preview and checks its response identities", async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: [{
+      wine_id: "wine", source_fingerprint: "fingerprint", candidate_count: 1,
+      candidates: [{ ...release, match_basis: "name_containment" }],
+    }], error: null })
+    expect(await previewWineIdentityReconciliation(["wine"], { rpc })).toEqual([{
+      wineId: "wine", sourceFingerprint: "fingerprint", candidateCount: 1,
+      candidates: [{
+        referenceId: "release-2023", referenceType: "release", producerName: "Daniel Barraud",
+        productName: "Sur La Roche", vintageYear: 2023, releaseDesignator: null,
+        matchBasis: "name_containment",
+      }],
+    }])
+    expect(rpc).toHaveBeenCalledWith("preview_household_wine_identity_reconciliation", { p_wine_ids: ["wine"] })
+  })
+
+  it("sends explicit batch choices and rejects an unconfirmed result", async () => {
+    const choice = { wineId: "wine", referenceId: "release-2023", sourceFingerprint: "fingerprint" }
+    const rpc = vi.fn().mockResolvedValueOnce({ data: [{ wine_id: "wine", reference_id: "release-2023" }], error: null })
+      .mockResolvedValueOnce({ data: [], error: null })
+    await expect(confirmWineIdentityReconciliation([choice], { rpc })).resolves.toBeUndefined()
+    expect(rpc).toHaveBeenCalledWith("confirm_household_wine_identity_reconciliation", {
+      p_choices: [{ wine_id: "wine", reference_id: "release-2023", source_fingerprint: "fingerprint" }],
+    })
+    await expect(confirmWineIdentityReconciliation([choice], { rpc })).rejects.toThrow("could not be confirmed")
+  })
   it("reads the owner-only status without relying on Liv-ex candidates", async () => {
     const rpc = vi.fn().mockResolvedValue({ data: {
       wine_id: "wine", source_fingerprint: "fingerprint", matched_reference: null,

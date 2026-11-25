@@ -18,6 +18,13 @@ export interface HouseholdWineIdentityStatus {
   requestStatus: "pending" | "reviewed" | "declined" | null
 }
 
+export interface WineIdentityReconciliationItem {
+  wineId: string
+  sourceFingerprint: string
+  candidateCount: number
+  candidates: (SharedWineIdentity & { matchBasis: "exact_or_curated_alias" | "name_containment" })[]
+}
+
 interface Options {
   rpc?: (name: string, parameters: Record<string, unknown>) => PromiseLike<{
     data?: unknown
@@ -61,6 +68,66 @@ export function parseSharedWineIdentities(value: unknown): SharedWineIdentity[] 
       releaseDesignator: row.release_designator === null ? null : string(row.release_designator),
     }
   })
+}
+
+export function parseWineIdentityReconciliation(value: unknown): WineIdentityReconciliationItem[] {
+  if (!Array.isArray(value)) throw new Error("Invalid wine reconciliation response")
+  return value.map((item) => {
+    const row = record(item)
+    const count = Number(row.candidate_count)
+    if (!Number.isInteger(count) || count < 0) throw new Error("Invalid wine reconciliation count")
+    const rawCandidates = row.candidates
+    const candidates = parseSharedWineIdentities(rawCandidates)
+    if (candidates.length > count || candidates.length > 5 || (count <= 5 && candidates.length !== count)) {
+      throw new Error("Invalid wine reconciliation candidates")
+    }
+    if (!Array.isArray(rawCandidates)) throw new Error("Invalid wine reconciliation candidates")
+    return {
+      wineId: string(row.wine_id),
+      sourceFingerprint: string(row.source_fingerprint),
+      candidateCount: count,
+      candidates: candidates.map((candidate, index) => {
+        const basis = record(rawCandidates[index]).match_basis
+        if (basis !== "exact_or_curated_alias" && basis !== "name_containment") {
+          throw new Error("Invalid wine reconciliation match basis")
+        }
+        return { ...candidate, matchBasis: basis }
+      }),
+    }
+  })
+}
+
+export async function previewWineIdentityReconciliation(wineIds: string[], options: Options = {}): Promise<WineIdentityReconciliationItem[]> {
+  if (wineIds.length < 1 || wineIds.length > 100 || new Set(wineIds).size !== wineIds.length) {
+    throw new Error("Choose 1 to 100 distinct wines")
+  }
+  const items = parseWineIdentityReconciliation(await call("preview_household_wine_identity_reconciliation", {
+    p_wine_ids: wineIds,
+  }, options))
+  if (items.length !== wineIds.length || new Set(items.map((item) => item.wineId)).size !== wineIds.length ||
+      items.some((item) => !wineIds.includes(item.wineId))) {
+    throw new Error("Wine reconciliation response does not match the request")
+  }
+  return items
+}
+
+export async function confirmWineIdentityReconciliation(
+  choices: { wineId: string; referenceId: string; sourceFingerprint: string }[],
+  options: Options = {},
+): Promise<void> {
+  if (choices.length < 1 || choices.length > 50 || new Set(choices.map((choice) => choice.wineId)).size !== choices.length) {
+    throw new Error("Choose 1 to 50 distinct wine links")
+  }
+  const result = await call("confirm_household_wine_identity_reconciliation", {
+    p_choices: choices.map((choice) => ({
+      wine_id: string(choice.wineId), reference_id: string(choice.referenceId),
+      source_fingerprint: string(choice.sourceFingerprint),
+    })),
+  }, options)
+  if (!Array.isArray(result) || result.length !== choices.length || result.some((value, index) => {
+    const row = record(value)
+    return row.wine_id !== choices[index].wineId || row.reference_id !== choices[index].referenceId
+  })) throw new Error("Wine reconciliation could not be confirmed")
 }
 
 export function parseHouseholdWineIdentityStatus(value: unknown, wineId: string): HouseholdWineIdentityStatus {

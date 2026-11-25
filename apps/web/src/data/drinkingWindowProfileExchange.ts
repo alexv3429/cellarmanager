@@ -60,6 +60,74 @@ export interface ProfileStageResult {
 export interface ProfileIdentityMap {
   producer_id?: string
   cuvees?: Record<string, string>
+  regions?: Record<string, string>
+  appellations?: Record<string, string>
+  release_appellations?: Record<string, string>
+}
+
+export interface ProfileIdentitySuggestions {
+  map: ProfileIdentityMap
+  producerMatches: number
+  ambiguousCuvees: string[]
+}
+
+export async function getReviewedProfileMappings(profile: FullProfileImport,
+  options: RpcOptions = {}): Promise<ProfileIdentityMap> {
+  if (profile.kind !== "producer") throw new Error("Choose a producer profile")
+  const result = object(await call("get_reviewed_profile_identity_mappings", {
+    p_id: profile.id,
+  }, options), "Reviewed profile mappings")
+  const mappings: ProfileIdentityMap = {}
+  if (result.producer_id !== undefined) mappings.producer_id = string(result.producer_id, "Shared producer ID")
+  for (const key of ["cuvees", "regions", "appellations", "release_appellations"] as const) {
+    if (result[key] === undefined) continue
+    mappings[key] = Object.fromEntries(Object.entries(object(result[key], "Reviewed mappings"))
+      .map(([source, target]) => [string(source, "Profile identity"), string(target, "Shared identity")]))
+  }
+  return mappings
+}
+
+export interface ProfilePlaceSuggestion {
+  kind: "region" | "appellation"
+  sourceName: string
+  targetId: string
+  targetName: string
+  reason: "parent_region_prefix" | "premier_cru_spelling" | "existing_place_alias"
+    | "classification_parent_appellation"
+}
+
+export interface ProfilePlaceSuggestions {
+  regions: ProfilePlaceSuggestion[]
+  appellations: ProfilePlaceSuggestion[]
+}
+
+export interface ProfileIdentityEntry {
+  key: string
+  cuveeId: string | null
+  cuveeName: string | null
+  vintage: number | null
+  productStatus: "existing" | "create" | "blocked"
+  releaseStatus: "existing" | "create" | "blocked"
+  sourceUrls: string[]
+  reason: string | null
+}
+
+export interface ProfileIdentityBatchPreview {
+  profileId: string
+  planSha256: string
+  status: "ready" | "blocked"
+  producerName: string
+  producerStatus: "existing" | "create" | "blocked"
+  entries: ProfileIdentityEntry[]
+}
+
+export interface ProfileIdentityBatchResult {
+  createdProducers: number
+  createdProducts: number
+  createdReleases: number
+  datesStaged: 0
+  winesLinked: 0
+  published: false
 }
 
 interface RpcOptions {
@@ -116,6 +184,25 @@ function schemaError(label: string, errors: typeof validateProducer.errors) {
   const field = first?.params && ("missingProperty" in first.params ? first.params.missingProperty
     : "additionalProperty" in first.params ? first.params.additionalProperty : "")
   return new Error(`${label}: ${first?.instancePath || "$"}${field ? `/${field}` : ""} ${first?.message || "is invalid"}`)
+}
+
+// An omitted optional description and an empty one mean the same thing in an
+// exchange file. Keep the strict schema for non-empty values, but do not make
+// a whole research package unusable because an optional field was left blank.
+// Never repair identity, source, release or date fields here.
+function omitEmptyOptionalProducerDescriptions(document: Record<string, unknown>): Record<string, unknown> {
+  if (!Array.isArray(document.cuvees)) return document
+  return {
+    ...document,
+    cuvees: document.cuvees.map((value) => {
+      if (!value || typeof value !== "object" || Array.isArray(value)) return value
+      const cuvee = { ...value } as Record<string, unknown>
+      for (const field of ["site_description", "style_summary", "grape"]) {
+        if (cuvee[field] === "") delete cuvee[field]
+      }
+      return cuvee
+    }),
+  }
 }
 
 function validateProducerCrossReferences(document: Record<string, unknown>): FullProfilePreview {
@@ -237,8 +324,9 @@ function validatePlaceCrossReferences(document: Record<string, unknown>): FullPr
 export function previewFullProfileExchange(input: unknown): FullProfilePreview {
   const document = object(input, "Profile")
   if (document.format === "cellarmanager.producer_research") {
-    if (!validateProducer(document)) throw schemaError("Producer profile", validateProducer.errors)
-    return validateProducerCrossReferences(document)
+    const normalized = omitEmptyOptionalProducerDescriptions(document)
+    if (!validateProducer(normalized)) throw schemaError("Producer profile", validateProducer.errors)
+    return validateProducerCrossReferences(normalized)
   }
   if (document.format === "cellarmanager.place_profile") {
     if (!validatePlace(document)) throw schemaError("Place profile", validatePlace.errors)
@@ -292,6 +380,157 @@ export async function exportFullProfileExchange(id: string, options: RpcOptions 
   return object(await call("export_drinking_window_profile_exchange", { p_id: id }, options), "Profile export")
 }
 
+export async function suggestProfileIdentities(profile: FullProfileImport,
+  options: RpcOptions = {}): Promise<ProfileIdentitySuggestions> {
+  if (profile.kind !== "producer") throw new Error("Choose a producer profile")
+  const result = object(await call("suggest_drinking_window_profile_identities", {
+    p_id: profile.id,
+  }, options), "Identity suggestions")
+  if (result.profile_id !== profile.id || result.published !== false || result.wines_linked !== 0 ||
+      !Number.isInteger(result.producer_matches) || (result.producer_matches as number) < 0 ||
+      !Array.isArray(result.ambiguous_cuvees)) throw new Error("Invalid identity suggestions")
+  const cuvees = object(result.cuvees, "Cuvée suggestions")
+  const mapped = Object.fromEntries(Object.entries(cuvees).map(([source, target]) => [
+    string(source, "Profile cuvée ID"), string(target, "Shared cuvée ID"),
+  ]))
+  const producerId = result.producer_id === null ? undefined : string(result.producer_id, "Shared producer ID")
+  if ((result.producer_matches === 1) !== Boolean(producerId) || (!producerId && Object.keys(mapped).length)) {
+    throw new Error("Invalid producer suggestions")
+  }
+  return { map: { ...(producerId ? { producer_id: producerId } : {}),
+    ...(Object.keys(mapped).length ? { cuvees: mapped } : {}) },
+    producerMatches: result.producer_matches as number,
+    ambiguousCuvees: result.ambiguous_cuvees.map((value) => string(value, "Ambiguous cuvée")),
+  }
+}
+
+export async function suggestProfilePlaces(profile: FullProfileImport,
+  options: RpcOptions = {}): Promise<ProfilePlaceSuggestions> {
+  if (profile.kind !== "producer") throw new Error("Choose a producer profile")
+  const result = object(await call("suggest_drinking_window_profile_places", {
+    p_id: profile.id,
+  }, options), "Place suggestions")
+  function parse(items: unknown, kind: "region" | "appellation"): ProfilePlaceSuggestion[] {
+    if (!Array.isArray(items)) throw new Error("Invalid place suggestions")
+    return items.map((value: unknown) => {
+      const item = object(value, "Place suggestion")
+      if (item.kind !== kind || (item.reason !== "parent_region_prefix"
+        && item.reason !== "premier_cru_spelling"
+        && item.reason !== "existing_place_alias"
+        && item.reason !== "classification_parent_appellation")) throw new Error("Invalid place suggestion")
+      return {
+        kind, sourceName: string(item.source_name, "Source place"),
+        targetId: string(item.target_id, "Shared place ID"),
+        targetName: string(item.target_name, "Shared place"), reason: item.reason,
+      }
+    })
+  }
+  return { regions: parse(result.regions, "region"),
+    appellations: parse(result.appellations, "appellation") }
+}
+
+function identityStatus(value: unknown): "existing" | "create" | "blocked" {
+  if (value === "existing" || value === "create" || value === "blocked") return value
+  throw new Error("Invalid identity status")
+}
+
+export interface ProfileLwinCandidate {
+  lwin7: string
+  name: string
+  producer: string
+  region: string | null
+  appellation: string | null
+  site: string | null
+  parcel: string | null
+  color: string | null
+  classification: string | null
+}
+
+export async function searchProfileLwin(profileId: string, cuveeId: string, producerId: string,
+  query: string, options: RpcOptions = {}): Promise<ProfileLwinCandidate[]> {
+  if (!profileId || !cuveeId || !producerId || query.trim().length < 3) throw new Error("Choose a profile, producer and search term")
+  const result = await call("search_drinking_window_profile_lwin", {
+    p_profile_id: profileId, p_cuvee_id: cuveeId, p_producer_id: producerId, p_query: query.trim(),
+  }, options)
+  if (!Array.isArray(result)) throw new Error("Invalid LWIN search response")
+  return result.map((value: unknown) => {
+    const item = object(value, "LWIN candidate")
+    const lwin7 = string(item.lwin7, "LWIN7")
+    if (!/^\d{7}$/.test(lwin7)) throw new Error("Invalid LWIN7")
+    return { lwin7, name: string(item.name, "LWIN wine"), producer: string(item.producer, "LWIN producer"),
+      region: optionalText(item.region), appellation: optionalText(item.appellation),
+      site: optionalText(item.site), parcel: optionalText(item.parcel),
+      color: optionalText(item.color), classification: optionalText(item.classification) }
+  })
+}
+
+export async function reuseProfileLwin(profileId: string, cuveeId: string, producerId: string,
+  lwin7: string, reason: string, confirmed: boolean, options: RpcOptions = {}): Promise<string> {
+  if (!profileId || !cuveeId || !producerId || !/^\d{7}$/.test(lwin7)
+    || !confirmed || reason.trim().length < 30) throw new Error("Review and confirm the LWIN wine identity")
+  const result = object(await call("reuse_drinking_window_profile_lwin", {
+    p_profile_id: profileId, p_cuvee_id: cuveeId, p_producer_id: producerId,
+    p_lwin7: lwin7, p_reason: reason.trim(), p_confirmed: true,
+  }, options), "LWIN reuse")
+  if (result.lwin7 !== lwin7 || result.dates_staged !== 0 || result.wines_linked !== 0 || result.published !== false) {
+    throw new Error("Invalid LWIN reuse response")
+  }
+  return string(result.product_id, "Shared product ID")
+}
+
+export async function previewProfileIdentityBatch(profile: FullProfileImport, identityMap: ProfileIdentityMap,
+  releaseKeys: string[], options: RpcOptions = {}): Promise<ProfileIdentityBatchPreview> {
+  if (profile.kind !== "producer" || !releaseKeys.length || releaseKeys.length > 100) {
+    throw new Error("Select producer-profile releases for identity review")
+  }
+  const result = object(await call("preview_drinking_window_profile_identity_batch", {
+    p_id: profile.id, p_identity_map: identityMap, p_release_keys: releaseKeys,
+  }, options), "Identity batch preview")
+  const hash = string(result.plan_sha256, "Identity plan hash")
+  if (!/^[0-9a-f]{64}$/.test(hash) || !Array.isArray(result.entries)
+    || (result.status !== "ready" && result.status !== "blocked")) {
+    throw new Error("Invalid identity batch preview")
+  }
+  return {
+    profileId: string(result.profile_id, "Profile ID"), planSha256: hash,
+    status: result.status, producerName: string(result.producer_name, "Producer name"),
+    producerStatus: identityStatus(result.producer_status),
+    entries: result.entries.map((value: unknown) => {
+      const item = object(value, "Identity entry")
+      return {
+        key: string(item.key, "Release key"), cuveeId: optionalText(item.cuvee_id),
+        cuveeName: optionalText(item.cuvee_name), vintage: integer(item.vintage),
+        productStatus: identityStatus(item.product_status),
+        releaseStatus: identityStatus(item.release_status), sourceUrls: urls(item.source_urls),
+        reason: optionalText(item.reason),
+      }
+    }),
+  }
+}
+
+export async function createProfileIdentityBatch(profile: FullProfileImport, identityMap: ProfileIdentityMap,
+  releaseKeys: string[], preview: ProfileIdentityBatchPreview, reviewReason: string,
+  confirmed: boolean, options: RpcOptions = {}): Promise<ProfileIdentityBatchResult> {
+  if (profile.kind !== "producer" || preview.profileId !== profile.id || preview.status !== "ready"
+    || !confirmed || reviewReason.trim().length < 30) {
+    throw new Error("Review and confirm the selected shared wine identities")
+  }
+  const result = object(await call("create_drinking_window_profile_identity_batch", {
+    p_id: profile.id, p_identity_map: identityMap, p_release_keys: releaseKeys,
+    p_expected_plan_sha256: preview.planSha256,
+    p_review_reason: reviewReason.trim(), p_confirmed: true,
+  }, options), "Identity batch result")
+  const counts = [result.created_producers, result.created_products, result.created_releases]
+  if (!counts.every((count) => Number.isInteger(count) && (count as number) >= 0)
+    || result.dates_staged !== 0 || result.wines_linked !== 0 || result.published !== false) {
+    throw new Error("Invalid identity batch result")
+  }
+  return {
+    createdProducers: counts[0] as number, createdProducts: counts[1] as number,
+    createdReleases: counts[2] as number, datesStaged: 0, winesLinked: 0, published: false,
+  }
+}
+
 function optionalText(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value : null
 }
@@ -311,7 +550,7 @@ export async function previewProfileStaging(profile: FullProfileImport, versionI
   options: RpcOptions = {}): Promise<ProfileStagePreview> {
   const response = object(await call(profile.kind === "producer"
     ? "preview_drinking_window_profile_exchange"
-    : "preview_drinking_window_place_profile_exchange", {
+    : "preview_selectable_drinking_window_place_profile", {
     p_id: profile.id, p_version_id: versionId,
     ...(profile.kind === "producer" ? { p_identity_map: identityMap } : {}),
   }, options), "Profile staging preview")
@@ -347,8 +586,12 @@ export async function previewProfileStaging(profile: FullProfileImport, versionI
         }
       }), ...windows.map((value: unknown) => {
         const window = object(value, "Place window")
+        const selectionStatus = window.selection_status ?? item.status
+        if (selectionStatus !== "ready" && selectionStatus !== "unchanged" && selectionStatus !== "quarantined") {
+          throw new Error("Invalid window selection status")
+        }
         return {
-          key: `${item.key}:${window.vintage}`, status: item.status as ProfileStageItem["status"],
+          key: `${item.key}:${window.vintage}`, status: selectionStatus as ProfileStageItem["status"],
           reason: optionalText(item.reason), rationale: optionalText(window.rationale),
           name: String(window.vintage), canonicalId: null,
           firstTrialYear: integer(window.first_trial_year), bestStartYear: integer(window.best_start_year),
@@ -388,4 +631,28 @@ export async function stageProfileExchange(profile: FullProfileImport, preview: 
   }
   return { staged: staged as number, unchanged: unchanged as number,
     quarantined: quarantined as number, published: false }
+}
+
+export async function stageSelectedProfileWindows(profile: FullProfileImport, preview: ProfileStagePreview,
+  reviewReason: string, adoptAndShare: boolean, identityMap: ProfileIdentityMap,
+  selectedKeys: string[], options: RpcOptions = {}): Promise<ProfileStageResult> {
+  const selectable = profile.kind === "producer" ? preview.items : preview.items.flatMap((item) => item.children)
+  if (!adoptAndShare || reviewReason.trim().length < 30
+      || !selectedKeys.length || new Set(selectedKeys).size !== selectedKeys.length
+      || selectedKeys.some((key) => !selectable.some((item) => item.key === key && item.status === "ready"
+        && (profile.kind === "producer" || item.firstTrialYear !== null)))) {
+    throw new Error("Review the selected ready rows and explicitly authorize their shared editorial estimates")
+  }
+  const result = object(await call(profile.kind === "producer"
+    ? "stage_selected_drinking_window_profile_exchange" : "stage_selected_drinking_window_place_profile", {
+    p_id: profile.id, p_version_id: preview.versionId,
+    p_expected_preview_sha256: preview.previewSha256, p_review_reason: reviewReason.trim(),
+    p_adopt_and_share: true, p_selected_keys: selectedKeys,
+    ...(profile.kind === "producer" ? { p_identity_map: identityMap } : {}),
+  }, options), "Profile staging result")
+  if (![result.staged, result.unchanged, result.quarantined].every((count) => Number.isInteger(count))) {
+    throw new Error("Invalid staging result")
+  }
+  return { staged: result.staged as number, unchanged: result.unchanged as number,
+    quarantined: result.quarantined as number, published: false }
 }
