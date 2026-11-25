@@ -146,8 +146,14 @@ extrapolating the current AOP onto earlier years. The source discrepancy for
 Terre de Jonquières 2019 was reviewed and recorded: one merchant suggests
 drinking before 2029 whereas the domaine indicates maturity until 2035; the
 staged reference follows the domaine while retaining this uncertainty. Draft
-2 now has **277 unpublished windows**. The draft check passed. No cellar
-wine, local mapping, publication or rollout was changed.
+2 subsequently gained Combariolles 2014–2015 and Terre de Jonquières and
+Feu Sacré 2015 after release-identity checks. The 2015 Terre estimate
+retains a conflicting shorter merchant estimate for magnum as context, not
+as a directly comparable 75 cl assertion. Terre 2014 remains aside:
+[iDealwine](https://www.idealwine.com/fr/prix-vin/128811-2015-Bouteille-Languedoc-Terrasses-du-Larzac-Terre-de-Jonquieres-Mas-Cal-Demoura-rouge)
+states that the wine was called L'Infidèle until the 2014 vintage. Draft 2
+now has **281 unpublished windows**; the draft check passed. No cellar wine,
+local mapping, publication or rollout was changed.
 
 Two existing shared Côte du Py product identities were discovered during
 this intake. The importer initially suggested the one without 2022, whereas
@@ -1926,7 +1932,7 @@ in every PR description.
 | 1. Core selection and private preferences | #228 merged; linked migration applied; owner tested create/select/remove; cross-member offset has automated but not manual coverage | Preserve precedence and private-rule behavior through later gates. |
 | 2. User and curator workflows | #229 merged; CI green; single migration backed up, rehearsed, linked-deployed and checked; no reference published | Preserve workflow; publication and second-cellar effects remain to be verified with an approved real draft and an explicit release decision. |
 | 3. Complete profile exchange | #230 merged in slot 4/6; full CI green, linked migrations backed up/rehearsed/applied; signed-in owner import/preview/export checked; one Burgaud file saved privately and candidates added to Proposals, nothing published live | Preserve full-profile exchange and audited in-app curator path. |
-| 4. Prepare initial common base | **In progress**, draft #231 in slot 5/6. The shared archive contains 46 latest producer profiles and 12 supplied Burgundy appellation/region profiles, plus a reviewed Pommard profile revision. Draft 2 has 277 reviewed but **unpublished** windows. The real reader hierarchy, source-specific three dates, private overrides and member offsets pass 16 synthetic local checks; geographic-denomination and suggestion-safety migrations were tested, rehearsed and applied. No local wine was renamed. | Continue supplied-profile intake and review unusually long generic windows; resolve the Pommard source discrepancy, account for the existing shared Côte du Py duplicate and verify remaining product acceptance criteria. Local-cellar cleanup is not a gate. |
+| 4. Prepare initial common base | **In progress**, draft #231 in slot 5/6. The shared archive contains 46 latest producer profiles and 12 supplied Burgundy appellation/region profiles, plus a reviewed Pommard profile revision. Draft 2 has 281 reviewed but **unpublished** windows. The real reader hierarchy, source-specific three dates, private overrides and member offsets pass 16 synthetic local checks; geographic-denomination and suggestion-safety migrations were tested, rehearsed and applied. No local wine was renamed. | Continue supplied-profile intake and review unusually long generic windows; resolve the Pommard source discrepancy, account for the existing shared Côte du Py duplicate and verify remaining product acceptance criteria. Local-cellar cleanup is not a gate. |
 | 5. Release and verify | Not started | Publish an approved shared base and verify the official app on representative producer, appellation and region cases, private choices, offsets, cross-household behavior and rollback. Report shared, private, legacy-only and missing coverage separately. A 95% match in one cellar is **not** a release threshold; local naming and later profile enrichment are ordinary app use, not developer PRs. The legacy model is a temporary labelled bridge, not shared-profile coverage. |
 
 **Merge/deployment rule:** Do not describe #227 as feature-complete or ask the

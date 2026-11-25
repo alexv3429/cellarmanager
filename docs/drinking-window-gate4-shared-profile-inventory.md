@@ -11,10 +11,14 @@ Meursault village white estimates brought the total to 225. Subsequent
 review added nine Chambolle-Musigny village red, five Puligny-Montrachet
 village white, seven exact-release Mas Jullien, six Vosne-Romanée Premier
 Cru, four Volnay Premier Cru and 21 exact-release Mas Cal Demoura estimates,
-for **277** unpublished windows. The Mas Cal Demoura additions cover
-Combariolles, Terre de Jonquières and Feu Sacré 2016–2022 and use the
+followed by four further Mas Cal Demoura estimates, for **281** unpublished
+windows. The Mas Cal Demoura additions cover Combariolles 2014–2022 and
+Terre de Jonquières and Feu Sacré 2015–2022 and use the
 domaine's vintage table as context with separately identified editorial
 interpretations where the three milestones are not explicit.
+Terre de Jonquières 2014 and earlier remain aside: iDealwine says the wine
+was previously named L'Infidèle through 2014, so the historical release
+identity and appellation must be resolved instead of assuming the later name.
 All 14 Vosne-Romanée and 29 Volnay Premier Cru climat names were checked and
 added to the common geographic reference. For Pommard, 28 such names were
 added; a version 1.0.1 of the shared profile excludes Les Perrières until its
