@@ -13,43 +13,35 @@ merged PR nor a passing synthetic test makes the feature released.
 the most specific applicable shared profile, or a private cellar choice,
 followed by a personal offset when applicable. Curators can maintain and
 publish complete shared profiles from the app without a developer PR or a
-second curator; users can suggest individual changes. The supplied producer
-profiles become a reviewed common base, with appellation and region fallbacks.
+second curator; users can suggest individual changes. The shared system supports producer profiles with appellation and region fallbacks; actual editorial intake is separate operational work.
 The labelled existing model is a **transition-only bridge**, not part of the
 intended end state. The initial pilot is a safety gate, not the permanent way
 to distribute updates. See the contract for exact precedence and acceptance
 examples.
 
-**Owner clarification on 22 November — product versus one cellar:** Gate 4
-and release deliver the *shared application*: profile import, common identity
-and three-date references, selection by specificity, user-local mappings and
-preferences, curator publication and later maintenance without developer PRs.
-The latest supplied producer and place profiles must be processed to prepare a
-useful initial base; successfully parsing a file is not publication. The
-curator can approve checked editorial estimates in batches, with exceptions
-and genuinely ambiguous identities recorded separately.
+## Binding closure roadmap — owner decision, 25 November 2026
 
-The 31 October near-complete-coverage goal remains an outcome to monitor, but
-the 95% working target for this one cellar is **not a Gate 4 or release
-threshold**. Fixing this cellar's local names or authoring every missing
-reference is ongoing app use, not a reason for another developer PR or for
-indefinitely delaying the generic feature. Measure and distinguish private,
-shared-profile, legacy-only and missing windows honestly. Do not claim the old
-model as shared-profile coverage. This clarification supersedes conflicting
-95%-as-blocker statements in the historical notes below. Continue in the
-existing Gate 4 PR #231 (5/6) and final Gate 5 PR (6/6); do not silently open
-a seventh PR.
+The product contract's 25 November clarification governs acceptance. Historical entries below are retained as evidence, not active requirements. Actual cellar reconciliation, real profile intake and editorial publication, and any personal coverage target are separate operational work.
 
-**Current Gate 4 exit checklist:** (1) account for the latest provided
-producer and place profiles, including eligible rows and explicit exclusions;
-(2) prepare a useful reviewed shared base without requiring local-cellar
-cleanup; (3) prove exact producer/cuvée, appellation and region selection on
-representative identities, plus local overrides, offsets, ambiguity and
-missing-data behavior; (4) demonstrate that a curator can import, select and
-approve a profile and that a user can resolve local names through the app;
-(5) record remaining issues, CI and migration/rehearsal evidence in this PR.
-Publication and official-app end-to-end verification belong to Gate 5. The
-historical owner-cellar counts in this record are diagnostic snapshots only.
+### Gate 4 — PR #231 (5/6)
+
+- [ ] Align contract, release record and audit scope.
+- [ ] Make existing SQL fixtures self-contained, including identities; use a compact deterministic synthetic cellar covering producer/cuvée, appellation and region.
+- [ ] Prove full import, validation, matching, review, publication and reader/display for all three profile scopes; test precedence, legacy fallback, missing/ambiguous identities, vintage, colour, format, scope, private choices, offsets, idempotency, quarantine, rollback and authorization/isolation.
+- [ ] Verify reusable audited household mappings without rewriting labels. No real household cleanup required.
+- [ ] Inventory applied migrations; preserve their history and distinguish real-data corrections from generic mechanisms. Rehearse migrations on an isolated database.
+- [ ] Verify concise daily wine-card UX, optional details/personalization and separate permission-controlled curator workflows; complete mobile and role-specific acceptance by Gate 5.
+- [ ] Run SQL/security tests, git diff --check, npm run web:ci and required CI; record results and remaining defects. Owner merges manually.
+
+### Gate 5 — final PR (6/6)
+
+- [ ] Rehearse deployment and rollback; verify permissions and emergency disablement.
+- [ ] Deploy validated schema and code; record versions and migration evidence.
+- [ ] Verify official app/mobile and controlled end-to-end profile publication, cross-cellar visibility, private overrides and rollback. Use isolated or safely scoped test identities; never expose fictitious advice as genuine.
+- [ ] Confirm everyday UX and separate curator workspace; retain provenance and existing profile facts. New pairing inference is not a drinking-window release gate.
+- [ ] Record postflight evidence and owner acceptance. Merge alone is not deployment.
+
+Legacy estimates remain explicitly labelled during transition; retirement requires a separate owner decision after operational review. No real-profile publication or coverage threshold blocks either gate. Keep existing research and drafts for later curation. No seventh PR without explicit owner decision.
 
 **Shared Burgaud intake, 24 November:** The curator used the app's shared
 profile workflow, independently of any household's local names. The reviewed
