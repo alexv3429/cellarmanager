@@ -1,6 +1,6 @@
 # Drinking windows — product contract and execution plan
 
-**Status: owner-confirmed contract, clarified 22 November 2026.** This is
+**Status: owner-confirmed contract, clarified 25 November 2026.** This is
 the single product definition for the drinking-window feature. It records the
 owner's requested end state, not a claim that the current application already
 does it. The [living release record](drinking-window-release-plan.md) tracks
@@ -8,6 +8,18 @@ implementation and deployment. Where older design notes or pilot procedures
 conflict with this contract, this contract governs the target; the older text
 must be reconciled before general release. A passing PR is not a released
 feature.
+
+## Binding delivery clarification — owner decision, 25 November 2026
+
+This section supersedes any conflicting acceptance criteria in this contract, the release record, PR #231 and earlier audits. Gate 4 validates generic functionality; Gate 5 delivers it. Neither requires reconciliation of the owner's real cellar, ingestion or publication of the supplied real profile bundle, or any real-cellar coverage threshold (90%, 95% or otherwise). Preserve existing research for separate operational curation.
+
+Gate 4 (PR #231, slot 5/6): use an isolated deterministic synthetic cellar and self-contained fixtures (roughly 30–50 representative wines, not a mandatory count). Prove complete producer, appellation and region import, schema validation, canonical matching, reusable audited household mappings without rewriting labels, curator review, publication, versioning, rollback and reader/display. Cover nominal and boundary cases: ambiguity, missing identities/vintages, colour, format, classification, scope, precedence, private overrides, offsets, idempotency, quarantine, authorization and cross-household isolation. Published eligible profiles must beat the labelled legacy estimate; unpublished or invalid rows must never become live advice. Reuse existing tests, remove accidental dependencies on preloaded real identities, and verify migrations on an isolated database. Preserve applied migration history; distinguish real-data corrections from generic schema work. Run SQL/security tests, git diff --check and npm run web:ci, plus required repository CI before merge. Record evidence and remaining defects; owner merges manually.
+
+UX acceptance across Gates 4 and 5: everyday wine cards show a concise maturity status, three dates or an honest unavailable state, and source. Details, provenance and personal adjustments are available on demand. Separate advanced profile import, editing, canonical administration, review and publication into permission-controlled workspaces; do not clutter routine inventory operations. Verify mobile usability and ordinary-user versus curator journeys. Preserve existing profile facts and pairing provenance; new pairing inference remains outside the first drinking-window release.
+
+Gate 5 (slot 6/6): deploy validated code and schema, verify official app/mobile, controlled test-profile publication and cross-cellar visibility, private preference protection, authorization, rollback and emergency disablement. Use isolated or safely scoped test identities; never publish fictitious advice as genuine wine guidance. Record build, migration and postflight evidence. Legacy retirement remains a separate explicit owner decision after operational review; it is not required for generic delivery. No real profile is approved by this clarification.
+
+Operational follow-up: reconcile personal labels through persistent mappings, curate and publish real profiles, measure coverage by shared/private/legacy/unavailable source, and review eventual legacy cutover separately. No new feature scope or extra PR is implied. Historical audit evidence remains historical, not a merge gate.
 
 ## 1. What a cellar owner receives
 
