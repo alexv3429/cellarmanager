@@ -6,6 +6,14 @@ follows the [product contract](drinking-window-product-contract.md) and the
 this dossier, a parsed JSON file, or a canonical name match as permission to
 publish drinking advice.
 
+## Closure audit — 25 November 2026
+
+The binding [product contract](drinking-window-product-contract.md) and [closure roadmap](drinking-window-release-plan.md) supersede historical release-blocker statements in this dossier. Real-cellar coverage, canonical cleanup and actual profile curation are operational follow-up, not Gate 4 or 5 acceptance.
+
+Read-only audit findings: substantial generic selection, import, publication and household mapping mechanisms already exist. Existing SQL suites provide a foundation; inspect and remove dependencies on preloaded identities and demonstrate complete producer, appellation and region publication-to-reader flows with deterministic fixtures. The React reader uses the maturity RPC; no automatic legacy/new-engine loop was established. Verify SQL precedence explicitly. Distinguish generic migrations from real identity corrections (including Bernardins and Cazeneuve); verify deployment history before changing any migration. Preserve applied migrations and historical research.
+
+Close Gate 4 using the roadmap's synthetic functional, security, migration and CI evidence. Close Gate 5 using deployment and postflight evidence, including simple mobile wine-card UX and separate permission-controlled curator workflows. No fictitious profile may become genuine public advice. No tests were executed as part of this read-only audit; these findings are not a passing acceptance report.
+
 ## Input and reproducibility
 
 - Owner bundle: `CellarManager_23_profils_audit_qualite_2026-10-26.zip`, SHA-256
